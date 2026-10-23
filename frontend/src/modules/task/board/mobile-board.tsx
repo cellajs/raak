@@ -8,13 +8,13 @@ import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { sortByMembership } from '~/modules/task/helpers/board-helpers';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 
-export function WorkspaceBoardTabs({ projects, workspace, publicView }: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) {
+export function MobileBoard({ projects, workspace, publicView }: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) {
   const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
 
   const sorted = sortByMembership(projects);
 
   // Finding project based on query parameter, default first project
-  const currentProject = sorted.find((p) => p.slug === projectSlug) || sorted[0];
+  const currentProject = sorted.find((project) => project.slug === projectSlug) || sorted[0];
 
   const setActivePanel = useBoardStore((state) => state.setActivePanel);
   useEffect(() => {

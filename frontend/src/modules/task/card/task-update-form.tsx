@@ -6,7 +6,7 @@ import { CollaborativeBlockNote } from '~/modules/common/blocknote/collaborative
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { useProjectMembers } from '~/modules/project/use-project-members';
-import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
+import { TaskCardContentExpanded } from '~/modules/task/card/task-card-content-expanded';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { createTaskUploadPersister } from '~/modules/task/helpers/create-task-upload-persister';
 import { useTaskDescriptionUpdate } from '~/modules/task/hooks/use-task-description-update';
@@ -17,8 +17,7 @@ import { cn } from '~/utils/cn';
 
 // Avoid bare `min-h-8`/`pb-4` here: BlockNoteView copies className to its portal element
 // (see @blocknote/react BlockNoteView), which would add empty trailing height below the editor.
-const expandedStyle = '[&>.bn-editor]:min-h-8 w-full bg-transparent border-none';
-const expandedWrapperStyle = taskDescriptionGutterClass;
+const expandedEditorClass = '[&>.bn-editor]:min-h-8 w-full bg-transparent border-none';
 const checkboxExtensions = [checkedExtension({ persisted: true })];
 
 interface TaskUpdateFormProps {
@@ -43,7 +42,7 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
   const projectMembers = useProjectMembers(task.projectId, tenantId, task.organizationId);
   const updateData = useTaskDescriptionUpdate(task);
 
-  const handleEscapeOrBlur = () => {
+  const handleExitEditing = () => {
     taskCardStore.getState().setTaskState(task.id, 'expanded');
   };
 
@@ -51,7 +50,7 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
   const baseFilePanel = useTaskFilePanelProps(task.projectId, tenantId, task.organizationId, createTaskUploadPersister(task));
 
   return (
-    <div className={expandedWrapperStyle}>
+    <div className={taskDescriptionGutterClass}>
       <CollaborativeBlockNote
         entityType="task"
         entityId={task.id}
@@ -73,10 +72,10 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
         editable
         // No autoFocus: its deferred focus would move the cursor to the start after the slot placed it.
         members={projectMembers}
-        className={expandedStyle}
+        className={expandedEditorClass}
         dense
-        onEnterClick={handleEscapeOrBlur}
-        onEscapeClick={handleEscapeOrBlur}
+        onEnterClick={handleExitEditing}
+        onEscapeClick={handleExitEditing}
         extensions={checkboxExtensions}
         baseFilePanelProps={baseFilePanel}
         trailingBlock={false}

@@ -43,8 +43,8 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
   const isPrimary = isPrimarySection(viewSections, sectionFilters);
 
   const isReadOnly = useIsProjectReadOnly(project.id);
-  const isCreateFormOpen = useTaskInteractionStore((s) => s.draftTasks[project.id] !== undefined);
-  const openDraftStatus = useTaskInteractionStore((s) => s.draftTasks[project.id]?.status);
+  const isCreateFormOpen = useTaskInteractionStore((state) => state.draftTasks[project.id] !== undefined);
+  const openDraftStatus = useTaskInteractionStore((state) => state.draftTasks[project.id]?.status);
   const storedDraftStatus = useDraftStore((state) => (state.forms[`create-task-${project.id}`] as NewTaskFormValues | undefined)?.status);
 
   // Split view: only the panel the form opens in (or has moved to) offers the toggle

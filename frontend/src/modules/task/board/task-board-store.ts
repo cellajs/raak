@@ -19,9 +19,9 @@ export type BoardPanelData = Record<string, { viewSections?: SectionsValue[]; pr
 interface TaskBoardState {
   panelData: Record<string, BoardPanelData>; // boardId → BoardPanelData
 
-  setPanelSections: (boardId: string, projectId: string, sections: SectionsValue[]) => void;
+  setPanelSections: (boardId: string, projectId: string, viewSections: SectionsValue[]) => void;
   dropPanelSections: (boardId: string, projectId: string) => void;
-  togglePanelSectionExpandState: (boardId: string, projectId: string, status: TogglableStatusType, newState?: boolean) => void;
+  setPanelSectionExpanded: (boardId: string, projectId: string, status: TogglableStatusType, expanded: boolean) => void;
 
   reset: () => void; // Resets in-memory state to initial (call on sign-out)
 }
@@ -46,18 +46,18 @@ export const useTaskBoardStore = create<TaskBoardState>()(
       immer((set, get) => ({
         ...initStore,
 
-        setPanelSections: (boardId, projectId, sections) => {
+        setPanelSections: (boardId, projectId, viewSections) => {
           // Persist the generic board layout before entering the Immer recipe,
           // since accessing another store during drafting introduces a side effect.
           const currentViewSections = get().panelData[boardId]?.[projectId]?.viewSections;
           const currentLayout = boardStore.getState().boardLayouts[boardId] ?? {};
-          const nextLayout = computePanelLayoutSplit(currentLayout, projectId, sections, currentViewSections);
+          const nextLayout = computePanelLayoutSplit(currentLayout, projectId, viewSections, currentViewSections);
           boardStore.getState().updateBoardLayout(boardId, nextLayout);
 
           set((state) => {
             const board = ensureBoard(state, boardId);
             const panel = ensurePanel(board, projectId);
-            panel.viewSections = sections;
+            panel.viewSections = viewSections;
           });
         },
 
@@ -69,13 +69,13 @@ export const useTaskBoardStore = create<TaskBoardState>()(
           });
         },
 
-        togglePanelSectionExpandState: (boardId, projectId, status, newState) => {
+        setPanelSectionExpanded: (boardId, projectId, status, expanded) => {
           set((state) => {
             const board = ensureBoard(state, boardId);
             const panel = ensurePanel(board, projectId);
 
             const key = status === 'iced' ? 'expandIced' : 'expandAccepted';
-            panel.prefs[key] = newState ?? !panel.prefs[key];
+            panel.prefs[key] = expanded;
           });
         },
 

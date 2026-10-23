@@ -13,10 +13,10 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { BoardEmpty } from '~/modules/task/board/board-empty';
 import { BoardHeader } from '~/modules/task/board/board-header';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
+import { MobileBoard } from '~/modules/task/board/mobile-board';
 import { ProjectBoard } from '~/modules/task/board/project-board';
 import { WorkspaceBoard } from '~/modules/task/board/workspace-board';
 import { WorkspaceBoardSkeleton } from '~/modules/task/board/workspace-board-skeleton';
-import { WorkspaceBoardTabs } from '~/modules/task/board/workspace-board-tabs';
 import { TaskSearchScope } from '~/modules/task/task-search-scope';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
@@ -27,7 +27,9 @@ export interface BoardProps {
   publicView?: boolean;
 }
 
-export type ResolvedBoardProps = Omit<BoardProps, 'projects'> & { projects: EnrichedProject[] };
+export interface ResolvedBoardProps extends Omit<BoardProps, 'projects'> {
+  projects: EnrichedProject[];
+}
 
 /**
  * Main task board component that conditionally renders desktop or mobile views based on screen size.
@@ -56,11 +58,11 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
   // avoiding one subscription per panel action.
   useEffect(() => router.subscribe('onBeforeLoad', () => dialoger.getState().remove('create-task')), [router]);
 
-  const BoardView = (() => {
+  const boardView = (() => {
     if (isLoadingProjects && workspace) return <WorkspaceBoardSkeleton workspace={workspace} withHeader={false} />;
     if (isLoadingProjects) return <BoardSkeleton boardId={boardId} withHeader={false} publicView={publicView} />;
     if (!projects.length) return <BoardEmpty workspace={workspace} publicView={publicView} />;
-    if (isMobile) return <WorkspaceBoardTabs projects={projects} workspace={workspace} publicView={publicView} />;
+    if (isMobile) return <MobileBoard projects={projects} workspace={workspace} publicView={publicView} />;
     if (!workspace) return <ProjectBoard boardId={boardId} projects={projects} publicView={publicView} />;
     return <WorkspaceBoard boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />;
   })();
@@ -70,7 +72,7 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
     <MotionConfig reducedMotion="user">
       <TaskSearchScope>
         <BoardHeader boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />
-        {BoardView}
+        {boardView}
       </TaskSearchScope>
     </MotionConfig>
   );

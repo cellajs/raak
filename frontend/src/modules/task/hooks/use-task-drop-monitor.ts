@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLatestRef } from '~/hooks/use-latest-ref';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { mobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
+import { mobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-task-drag-indicator-store';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { getEdgeAndTargetOrder, isPanelData, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { isCoarsePointerDevice, resolveMobileTaskDropIndicator } from '~/modules/task/helpers/mobile-drag-indicator';
@@ -42,12 +42,12 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
   };
 
   useEffect(() => {
-    const { clearIndicator, setIndicator } = mobileTaskDragIndicatorStore.getState();
+    const { setIndicator } = mobileTaskDragIndicatorStore.getState();
     const reportReorderFailure = () => toaster.error(t('error:reorder_resource', { resource: t('c:task') }));
 
     const updateMobileIndicator = () => {
-      if (!isCoarsePointerDevice()) return clearIndicator();
-      if (!activeDragSourceRef.current || !latestInputRef.current) return clearIndicator();
+      if (!isCoarsePointerDevice()) return setIndicator(null);
+      if (!activeDragSourceRef.current || !latestInputRef.current) return setIndicator(null);
 
       const indicator = resolveMobileTaskDropIndicator({
         clientX: latestInputRef.current.clientX,
@@ -65,7 +65,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
         window.removeEventListener('scroll', updateMobileIndicator, true);
         activeDragSourceRef.current = null;
         latestInputRef.current = null;
-        clearIndicator();
+        setIndicator(null);
       },
       monitorForElements({
         canMonitor: ({ source: { data } }) => isTaskData(data),
@@ -73,7 +73,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
           if (!isTaskData(source.data)) return;
           activeDragSourceRef.current = source.data.item;
           latestInputRef.current = null;
-          clearIndicator();
+          setIndicator(null);
         },
         onDrag: ({ source, location }) => {
           if (!isTaskData(source.data)) return;
@@ -88,7 +88,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
           source: { data: sourceData },
         }) => {
           const mobileIndicator = mobileTaskDragIndicatorStore.getState().indicator;
-          clearIndicator();
+          setIndicator(null);
           activeDragSourceRef.current = null;
           latestInputRef.current = null;
 

@@ -25,17 +25,17 @@ function TaskSheet({ id, organizationId }: TaskSheetProps) {
 
   // Select public or authenticated options before the unconditional hook call.
   // The cast bridges the factories' incompatible query-key types.
-  const queryOpts = organizationId && tenantId ? taskQueryOptions(id, organizationId, tenantId) : publicTaskQueryOptions(id);
-  const { data: task, isLoading, isError } = useQuery(queryOpts as ReturnType<typeof taskQueryOptions>);
+  const queryOptions = organizationId && tenantId ? taskQueryOptions(id, organizationId, tenantId) : publicTaskQueryOptions(id);
+  const { data: task, isLoading, isError } = useQuery(queryOptions as ReturnType<typeof taskQueryOptions>);
 
   const isReadOnly = useIsProjectReadOnly(task?.projectId);
   // A touch open starts expanded, as a touch tap on a board card does: editing would open the on-screen keyboard.
-  const [editing, setEditing] = useState(() => !isTouchInteraction());
+  const [isEditing, setIsEditing] = useState(() => !isTouchInteraction());
 
   // Sheet manages its own editing state, separate from the shared store.
   // Using the store would set the board card to 'editing' too, causing
   // a duplicate editor whose unmount flush overwrites sheet edits.
-  const taskState = isReadOnly || !editing ? 'expanded' : 'editing';
+  const taskState = isReadOnly || !isEditing ? 'expanded' : 'editing';
 
   if (isError) return <ContentPlaceholder icon={ServerCrashIcon} title="error:request_failed" />;
 
@@ -58,7 +58,7 @@ function TaskSheet({ id, organizationId }: TaskSheetProps) {
   return (
     <TaskSearchScope>
       <div>
-        <TaskCard task={task} state={taskState} isSelected={false} isFocused={true} isSheet onEdit={() => setEditing(true)} />
+        <TaskCard task={task} state={taskState} isSelected={false} isFocused={true} isSheet onEdit={() => setIsEditing(true)} />
       </div>
     </TaskSearchScope>
   );

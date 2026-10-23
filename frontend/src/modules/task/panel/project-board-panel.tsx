@@ -25,15 +25,15 @@ interface ProjectBoardPanelProps {
  * keep the same reference and skip re-rendering entirely.
  */
 export function ProjectBoardPanel({ project, publicView, sectionFilters, windowScroll }: ProjectBoardPanelProps) {
-  const queryOpts = publicView
+  const queryOptions = publicView
     ? publicTasksBoardQueryOptions(project.id)
     : tasksCanonicalOptions({ organizationId: project.organizationId, tenantId: project.tenantId, projectId: project.id });
 
   // Both option variants share the same data shape; widen key type via assertion
-  const { data } = useSuspenseQuery(queryOpts as ReturnType<typeof tasksCanonicalOptions>);
+  const { data } = useSuspenseQuery(queryOptions as ReturnType<typeof tasksCanonicalOptions>);
 
   const isMobile = useBreakpointBelow('sm');
-  const draftTask = useTaskInteractionStore((s) => s.draftTasks[project.id]);
+  const draftTask = useTaskInteractionStore((state) => state.draftTasks[project.id]);
   const viewSections = useProjectViewSections(project.id);
 
   // The open create-form draft renders in exactly one panel and bypasses section filtering,

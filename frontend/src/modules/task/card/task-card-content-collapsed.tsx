@@ -1,17 +1,17 @@
 import { env } from '~/env';
 import { CardCloseExit } from '~/modules/task/card/card-close-button';
-import { TaskCardSummaryButtons } from '~/modules/task/card/card-summary-buttons';
 import { DescriptionEditButton } from '~/modules/task/card/description-edit-button';
-import { TaskSummaryHtml } from '~/modules/task/card/summary-html';
+import { TaskCardSummaryButtons } from '~/modules/task/card/task-card-summary-buttons';
 import { TaskDragHandle } from '~/modules/task/card/task-drag-handle';
 import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
+import { TaskSummaryHtml } from '~/modules/task/card/task-summary-html';
 import { taskCardActionsRevealClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
 
-interface TaskContentCollapsedProps {
+interface TaskCardContentCollapsedProps {
   task: Task;
   /** The card just collapsed: the header's close button pops out beside the options button. */
   animateClose?: boolean;
@@ -20,9 +20,9 @@ interface TaskContentCollapsedProps {
 }
 
 /**
- * TaskContentCollapsed is responsible for rendering the task content in its "collapsed" state, which shows a summary only as main content.
+ * TaskCardContentCollapsed is responsible for rendering the task content in its "collapsed" state, which shows a summary only as main content.
  */
-export function TaskCardContentCollapsed({ task, animateClose = false, showDragHandle = false, onEditRequest }: TaskContentCollapsedProps) {
+export function TaskCardContentCollapsed({ task, animateClose = false, showDragHandle = false, onEditRequest }: TaskCardContentCollapsedProps) {
   return (
     <div className="relative flex w-full flex-row gap-1">
       <div className="flex shrink-0 flex-col">

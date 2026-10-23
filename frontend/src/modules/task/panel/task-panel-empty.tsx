@@ -4,7 +4,11 @@ import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { useReadOnlyHide } from '~/modules/project/use-read-only';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 
-export function TaskPanelEmpty({ projectId }: { projectId?: string }) {
+interface TaskPanelEmptyProps {
+  projectId?: string;
+}
+
+export function TaskPanelEmpty({ projectId }: TaskPanelEmptyProps) {
   const { t } = useTranslation();
 
   const isInWorkspace = useIsWorkspaceRoute();

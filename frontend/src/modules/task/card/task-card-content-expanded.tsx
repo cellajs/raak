@@ -5,8 +5,8 @@ import { Spinner } from '~/modules/common/spinner';
 import { taskDescriptionGutterClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 
-const staticEditorBase = '[&>.bn-static-editor]:min-h-8 w-full bg-transparent border-none';
-const expandedStyle = `${staticEditorBase} ${taskDescriptionGutterClass}`;
+const staticEditorClass = '[&>.bn-static-editor]:min-h-8 w-full bg-transparent border-none';
+const expandedClass = `${staticEditorClass} ${taskDescriptionGutterClass}`;
 
 interface TaskCardContentExpandedProps {
   task: Task;
@@ -43,7 +43,7 @@ export function TaskCardContentExpanded({ task, noGutter, onReady, descriptionOv
       <BlockNoteFullHtml
         id={`blocknote-${task.id}`}
         defaultValue={description}
-        className={noGutter ? staticEditorBase : expandedStyle}
+        className={noGutter ? staticEditorClass : expandedClass}
         dense
         clickOpensPreview
         tenantId={tenantId}

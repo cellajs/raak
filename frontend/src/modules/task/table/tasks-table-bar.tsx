@@ -9,21 +9,22 @@ import { DisplayOptions } from '~/modules/task/board/display-options';
 import { BoardSearch } from '~/modules/task/board-search';
 import { configureForExport } from '~/modules/task/helpers/export-helpers';
 import { deriveTasksQueryParams, fetchTasksForExport } from '~/modules/task/query';
-import type { ResolvedTaskTableProps } from '~/modules/task/table/tasks-table';
+import type { ResolvedTasksTableProps } from '~/modules/task/table/tasks-table';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
 import { taskBarClass } from '~/modules/task/task-styles';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { DropdownMenuCheckboxItem } from '~/modules/ui/dropdown-menu';
 import { cn } from '~/utils/cn';
 
-type TasksTableBarProps = Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'> &
-  Omit<ResolvedTaskTableProps, 'organization' | 'tenantId'> & {
-    total: number | null;
-    /** True in highlight mode too, where `searchVars` (what the table and export fetch) carries no query. */
-    hasQuery: boolean;
-    isCompact: boolean;
-    setIsCompact: (isCompact: boolean) => void;
-  };
+interface TasksTableBarProps
+  extends Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'>,
+    Omit<ResolvedTasksTableProps, 'organization' | 'tenantId'> {
+  total: number | null;
+  /** True in highlight mode too, where `searchVars` (what the table and export fetch) carries no query. */
+  hasQuery: boolean;
+  isCompact: boolean;
+  setIsCompact: (isCompact: boolean) => void;
+}
 
 /** Renders the action and filter toolbar for the tasks table. */
 export function TasksTableBar({
@@ -43,7 +44,7 @@ export function TasksTableBar({
   const { t, i18n } = useTranslation();
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
 
-  const [searchFocused, setSearchFocused] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const fetchExport = async (limit: number, offset: number) => {
     if (!queryParams) return [];
@@ -53,7 +54,7 @@ export function TasksTableBar({
     return configureForExport(items, projects);
   };
 
-  const toggleSearchFocus = () => setSearchFocused((prev) => !prev);
+  const toggleSearchFocus = () => setIsSearchFocused((prev) => !prev);
 
   return (
     <div className={cn(taskBarClass, 'gap-2')}>
@@ -73,7 +74,7 @@ export function TasksTableBar({
         )}
       </BoardSearch>
 
-      {!searchFocused && !hasQuery && <TableCount count={total} label="c:task" className="mr-3" />}
+      {!isSearchFocused && !hasQuery && <TableCount count={total} label="c:task" className="mr-3" />}
       <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns}>
         <DropdownMenuCheckboxItem className="min-h-8" checked={isCompact} onCheckedChange={() => setIsCompact(!isCompact)}>
           {t('c:compact_view')}

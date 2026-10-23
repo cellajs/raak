@@ -41,11 +41,11 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
       onPanelReorder={handlePanelReorder}
     >
       {(panelId) => {
-        const col = panels.find((c) => c.panelId === panelId);
-        if (col?.kind === 'labels') return <LabelsPanel entity="project" entityId={boardId} windowScroll />;
-        if (col?.kind !== 'project') return null;
+        const panel = panels.find((candidate) => candidate.panelId === panelId);
+        if (panel?.kind === 'labels') return <LabelsPanel entity="project" entityId={boardId} windowScroll />;
+        if (panel?.kind !== 'project') return null;
 
-        return <ProjectBoardPanel project={col.project} publicView={publicView} sectionFilters={col.sectionFilters} windowScroll />;
+        return <ProjectBoardPanel project={panel.project} publicView={publicView} sectionFilters={panel.sectionFilters} windowScroll />;
       }}
     </BoardLayout>
   );

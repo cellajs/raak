@@ -43,19 +43,19 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   const [hasFocus, setHasFocus] = useState(false);
   const isVisible = isEdgeVisible || hasFocus;
 
-  const togglePanelSectionExpandState = useTaskBoardStore((state) => state.togglePanelSectionExpandState);
+  const setPanelSectionExpanded = useTaskBoardStore((state) => state.setPanelSectionExpanded);
   const boardId = useBoardStore((state) => state.activeBoardId)!;
 
   const q = useSearch({ strict: false, select: (search) => search.q });
 
   const isIced = type === 'iced';
   const hasOnlyOlderAccepted = !isIced && !counts.accepted && counts.acceptedCutOff > 0;
-  const active = isIced ? !!counts.iced : !!counts.accepted || hasOnlyOlderAccepted;
+  const isActive = isIced ? !!counts.iced : !!counts.accepted || hasOnlyOlderAccepted;
   const count = isIced ? counts.iced : counts.accepted;
   const colors = statusSectionColors[type];
 
   const { expandIced, expandAccepted } = useProjectPanelPrefs(projectId);
-  const showStatus = isIced ? expandIced : expandAccepted;
+  const isExpanded = isIced ? expandIced : expandAccepted;
 
   const { highlight: isHighlightSearch, effectiveQ } = parseSearchQuery(q);
   const showTotal = !effectiveQ.length || isHighlightSearch;
@@ -65,14 +65,14 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   useEffect(() => {
     const prev = prevCountRef.current;
     prevCountRef.current = count;
-    if (count > prev && !showStatus) {
+    if (count > prev && !isExpanded) {
       triggerSectionGlow(type, projectId);
     }
-  }, [count, showStatus, type, projectId]);
+  }, [count, isExpanded, type, projectId]);
 
   const handleToggleClick = () => {
-    onToggle?.(!showStatus, type);
-    togglePanelSectionExpandState(boardId, projectId, type);
+    onToggle?.(!isExpanded, type);
+    setPanelSectionExpanded(boardId, projectId, type, !isExpanded);
   };
 
   // Publish the accepted bar's pinned height as a sticky-stack offset on the panel content,
@@ -94,9 +94,9 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
       host.style.removeProperty('--sticky-stack-top');
       host.style.removeProperty('transition');
     };
-  }, [isVisible, suppressed, isIced, active]);
+  }, [isVisible, suppressed, isIced, isActive]);
 
-  if (!active) return null;
+  if (!isActive) return null;
 
   return (
     <>
@@ -153,11 +153,11 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
                 )}
               </>
             )}
-            <ChevronDownIcon data-rotate={showStatus} className="absolute right-4 transition-transform data-[rotate=true]:rotate-180" />
+            <ChevronDownIcon data-rotate={isExpanded} className="absolute right-4 transition-transform data-[rotate=true]:rotate-180" />
           </span>
         </Button>
       </div>
-      {hasOnlyOlderAccepted && showStatus && (
+      {hasOnlyOlderAccepted && isExpanded && (
         <div className={cn('flex gap-4 px-4 py-5 text-xs', colors.border, colors.fill, colors.text, hintFadeOut)}>
           <InfoIcon className="inline-block" />
           {t('c:older_accepted_table_only', { count: counts.acceptedCutOff })}

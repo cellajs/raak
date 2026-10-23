@@ -36,10 +36,10 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
   const readOnlyHide = useReadOnlyHide(task.projectId);
   const labelsHide = task.labels.length ? '' : readOnlyHide;
 
-  const taskState = useTaskCardStore((s) => s.states[task.id] ?? 'collapsed');
+  const taskState = useTaskCardStore((state) => state.states[task.id] ?? 'collapsed');
   // Task and label selection are mutually exclusive so the board header's remove button targets one kind
-  const hasSelectedLabels = useTaskInteractionStore((s) => s.selectedLabelIds.length > 0);
-  const isOtherProjectSelected = useTaskInteractionStore((s) => !!s.selectedProjectId && s.selectedProjectId !== task.projectId);
+  const hasSelectedLabels = useTaskInteractionStore((state) => state.selectedLabelIds.length > 0);
+  const isOtherProjectSelected = useTaskInteractionStore((state) => !!state.selectedProjectId && state.selectedProjectId !== task.projectId);
   // On mobile, expanded/editing cards move labels onto their own line above the footer,
   // freeing horizontal space to reveal the select checkbox and status dropdown sub-button.
   const isExpandedMobile = isMobile && taskState !== 'collapsed';

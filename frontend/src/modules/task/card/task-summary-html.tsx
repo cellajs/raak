@@ -3,7 +3,10 @@ import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { useMatchHighlight } from '~/modules/common/match-highlight';
 import type { Task } from '~/modules/task/types';
 
-type TaskSummaryHtmlProps = { task: Pick<Task, 'summary' | 'tenantId' | 'organizationId'>; className?: string };
+interface TaskSummaryHtmlProps {
+  task: Pick<Task, 'summary' | 'tenantId' | 'organizationId'>;
+  className?: string;
+}
 
 /** Renders a task's summary, a one-block BlockNote document, with the static description pipeline, search matches painted over it. */
 export function TaskSummaryHtml({ task, className }: TaskSummaryHtmlProps) {

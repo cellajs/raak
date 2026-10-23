@@ -1,11 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { cn } from '~/utils/cn';
 
+interface DescriptionEditButtonProps {
+  onClick: () => void;
+  className: string;
+}
+
 /**
  * Keyboard way into the description editor, laid over the description and shown only as its focus ring. The pointer
  * passes through to the description, which a click edits already. `className` places it.
  */
-export function DescriptionEditButton({ onClick, className }: { onClick: () => void; className: string }) {
+export function DescriptionEditButton({ onClick, className }: DescriptionEditButtonProps) {
   const { t } = useTranslation();
 
   return (

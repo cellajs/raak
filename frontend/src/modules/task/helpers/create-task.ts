@@ -23,9 +23,9 @@ export const revealDraftHostPanel = (projectId: string, draftStatus: TaskStatus)
   const panelId = hostSection ? makePanelKey(projectId, hostSection) : projectId;
   boardStore.getState().togglePanelCollapsedState(panelId, false);
 
-  const { togglePanelSectionExpandState } = taskBoardStore.getState();
-  if (draftStatus === TaskStatus.Accepted) togglePanelSectionExpandState(boardId, projectId, 'accepted', true);
-  if (draftStatus === TaskStatus.Iced) togglePanelSectionExpandState(boardId, projectId, 'iced', true);
+  const { setPanelSectionExpanded } = taskBoardStore.getState();
+  if (draftStatus === TaskStatus.Accepted) setPanelSectionExpanded(boardId, projectId, 'accepted', true);
+  if (draftStatus === TaskStatus.Iced) setPanelSectionExpanded(boardId, projectId, 'iced', true);
 };
 
 export const createTaskFormSchema = z.object({

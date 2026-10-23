@@ -7,12 +7,17 @@ import { BoardHeaderSkeleton, BoardSkeleton } from '~/modules/task/board/board-s
 import { useCurrentUser } from '~/modules/user/user-store';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
+interface WorkspaceBoardSkeletonProps {
+  workspace: Workspace;
+  withHeader?: boolean;
+}
+
 /**
  * Skeleton of a workspace board that anticipates its projects. Until the board's own project list is cached they come
  * from the user's project list the menu keeps: the board lists those same memberships, narrowed to the workspace.
  * A workspace known to hold no projects shows its empty state at once.
  */
-export function WorkspaceBoardSkeleton({ workspace, withHeader = true }: { workspace: Workspace; withHeader?: boolean }) {
+export function WorkspaceBoardSkeleton({ workspace, withHeader = true }: WorkspaceBoardSkeletonProps) {
   const { id: userId } = useCurrentUser();
   const { data: boardProjects } = useInfiniteQuery(
     projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }),

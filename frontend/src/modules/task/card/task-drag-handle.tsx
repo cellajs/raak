@@ -14,17 +14,21 @@ import { Button } from '~/modules/ui/button';
 const folded = { width: 0, height: 0, opacity: 0 };
 const unfolded = { width: 'auto', height: 'auto', opacity: 1 };
 
+interface TaskDragHandleProps {
+  task: Task;
+}
+
 /**
  * Grip before the type button, folded away until it has focus, so only a keyboard reaches it. Unfolding, it pushes that
  * button aside, and the arrow keys step the card within its status: until then they move between cards.
  */
-export function TaskDragHandle({ task }: { task: Task }) {
+export function TaskDragHandle({ task }: TaskDragHandleProps) {
   const { t } = useTranslation();
   const panelTasks = usePanelTasks();
   const { mutate: updateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const refocusAtOrder = useRef<number | null>(null);
+  const refocusAtOrderRef = useRef<number | null>(null);
   const [hasFocus, setHasFocus] = useState(false);
 
   const statusTasks = (panelTasks ?? []).filter((panelTask) => panelTask.status === task.status && !isDraftTask(panelTask));
@@ -39,14 +43,14 @@ export function TaskDragHandle({ task }: { task: Task }) {
     );
     const displayOrder = getRelativeTaskOrder(step < 0 ? 'top' : 'bottom', allStatusTasks, target.displayOrder, task.id);
     if (displayOrder === task.displayOrder) return;
-    refocusAtOrder.current = displayOrder;
+    refocusAtOrderRef.current = displayOrder;
     updateTask({ id: task.id, ops: { displayOrder } });
   };
 
   // React re-inserts a row it moves down, and a removed node drops focus
   useLayoutEffect(() => {
-    if (refocusAtOrder.current === null || refocusAtOrder.current !== task.displayOrder) return;
-    refocusAtOrder.current = null;
+    if (refocusAtOrderRef.current === null || refocusAtOrderRef.current !== task.displayOrder) return;
+    refocusAtOrderRef.current = null;
     buttonRef.current?.focus();
   });
 
@@ -58,7 +62,7 @@ export function TaskDragHandle({ task }: { task: Task }) {
 
   // The blur of a re-inserted row has no next target: the grip stays unfolded through the move
   const handleBlur = (event: FocusEvent<HTMLButtonElement>) => {
-    if (!event.relatedTarget && refocusAtOrder.current !== null) return;
+    if (!event.relatedTarget && refocusAtOrderRef.current !== null) return;
     setHasFocus(false);
   };
 

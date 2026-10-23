@@ -8,39 +8,39 @@ import { cn } from '~/utils/cn';
 
 const views = ['board', 'table'] as const;
 
-interface Props {
+interface DisplayOptionsProps {
   className?: string;
 }
 
-function DisplayOptions({ className = '' }: Props) {
+function DisplayOptions({ className = '' }: DisplayOptionsProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Nearest match, not a route picked with matchRoute: while a navigation commits, matchRoute still tests the page being left.
-  const currentValue = useSearch({ strict: false, select: (search) => search.view }) ?? 'board';
-  // Null means "not hovering": the tooltip and hover resets fall back to the live currentValue,
+  const currentView = useSearch({ strict: false, select: (search) => search.view }) ?? 'board';
+  // Null means "not hovering": the tooltip and hover resets fall back to the live currentView,
   // so a view change while unhovered can't leave a stale captured value behind.
-  const [hoveredValue, setHoveredValue] = useState<(typeof views)[number] | null>(null);
+  const [hoveredView, setHoveredView] = useState<(typeof views)[number] | null>(null);
 
-  const handleItemChange = (value: string | string[]) => {
+  const handleViewChange = (value: string | string[]) => {
     if (value === 'board' || value === 'table') navigate({ to: '.', search: (prev) => ({ ...prev, view: value }) });
   };
 
   return (
-    <TooltipButton toolTipContent={t(`c:${hoveredValue ?? currentValue}_view`)}>
-      <ToggleGroup type="single" variant="merged" className={cn('gap-0', className)} value={currentValue} onValueChange={handleItemChange}>
-        {views.map((value) => (
+    <TooltipButton toolTipContent={t(`c:${hoveredView ?? currentView}_view`)}>
+      <ToggleGroup type="single" variant="merged" className={cn('gap-0', className)} value={currentView} onValueChange={handleViewChange}>
+        {views.map((view) => (
           <ToggleGroupItem
-            key={value}
-            value={value}
-            aria-label={t(`c:${value}_view`)}
-            onMouseEnter={() => setHoveredValue(value)}
-            onMouseLeave={() => setHoveredValue(null)}
-            onFocus={() => setHoveredValue(value)}
-            onBlur={() => setHoveredValue(null)}
+            key={view}
+            value={view}
+            aria-label={t(`c:${view}_view`)}
+            onMouseEnter={() => setHoveredView(view)}
+            onMouseLeave={() => setHoveredView(null)}
+            onFocus={() => setHoveredView(view)}
+            onBlur={() => setHoveredView(null)}
           >
-            {value === 'board' && <SquareKanbanIcon />}
-            {value === 'table' && <Rows4Icon />}
+            {view === 'board' && <SquareKanbanIcon />}
+            {view === 'table' && <Rows4Icon />}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>

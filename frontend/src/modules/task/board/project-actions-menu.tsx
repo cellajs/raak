@@ -17,8 +17,13 @@ import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 
+interface ProjectActionsMenuProps {
+  project: EnrichedProject;
+  className?: string;
+}
+
 /** Project menu: in the project panel header on a workspace board, in the board header on a project page. */
-export function ProjectActionsMenu({ project, className }: { project: EnrichedProject; className?: string }) {
+export function ProjectActionsMenu({ project, className }: ProjectActionsMenuProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -38,7 +43,7 @@ export function ProjectActionsMenu({ project, className }: { project: EnrichedPr
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const isMobile = window.innerWidth < 640;
     const triggerRef = { current: currentTarget };
-    const select = (action: () => void) => () => {
+    const closeThen = (action: () => void) => () => {
       dropdowner.getState().remove();
       action();
     };
@@ -49,7 +54,7 @@ export function ProjectActionsMenu({ project, className }: { project: EnrichedPr
           <DropdownActionItem
             isMobile={isMobile}
             icon={ArrowRightIcon}
-            onSelect={select(() =>
+            onSelect={closeThen(() =>
               navigate({
                 to: '/$tenantId/$organizationSlug/project/$slug',
                 params: { slug: project.slug, organizationSlug: organization.slug, tenantId },
@@ -63,7 +68,7 @@ export function ProjectActionsMenu({ project, className }: { project: EnrichedPr
           <DropdownActionItem
             isMobile={isMobile}
             icon={ArrowRightIcon}
-            onSelect={select(() =>
+            onSelect={closeThen(() =>
               navigate({
                 to: '/$tenantId/$organizationSlug/workspace/$slug',
                 params: { slug: projectWorkspace.slug, organizationSlug: organization.slug, tenantId },
@@ -76,10 +81,10 @@ export function ProjectActionsMenu({ project, className }: { project: EnrichedPr
         )}
         {projectMembership && (
           <>
-            <DropdownActionItem isMobile={isMobile} icon={UsersIcon} onSelect={select(() => openProjectMembersSheet(project, triggerRef))}>
+            <DropdownActionItem isMobile={isMobile} icon={UsersIcon} onSelect={closeThen(() => openProjectMembersSheet(project, triggerRef))}>
               {t('c:project_members')}
             </DropdownActionItem>
-            <DropdownActionItem isMobile={isMobile} icon={SettingsIcon} onSelect={select(() => openProjectSettingsSheet(project, triggerRef))}>
+            <DropdownActionItem isMobile={isMobile} icon={SettingsIcon} onSelect={closeThen(() => openProjectSettingsSheet(project, triggerRef))}>
               {t('c:resource_settings', { resource: t('c:project') })}
             </DropdownActionItem>
           </>
@@ -88,7 +93,7 @@ export function ProjectActionsMenu({ project, className }: { project: EnrichedPr
           <DropdownActionItem
             isMobile={isMobile}
             icon={SquareSplitHorizontalIcon}
-            onSelect={select(() =>
+            onSelect={closeThen(() =>
               viewSections
                 ? dropPanelSections(boardId, project.id)
                 : setPanelSections(boardId, project.id, [

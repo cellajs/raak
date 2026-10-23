@@ -38,18 +38,17 @@ export function getPanelDisplayOrder(panel: BoardResizablePanel, localOrders: Re
   return kindDefaultOrders[panel.kind];
 }
 
+interface BuildBoardExtraPanelsOptions {
+  showExplainer?: boolean;
+  publicView?: boolean;
+}
+
 /** The non-project ("local") panels a board shows, in canonical order: the explainer leads and
  *  the labels panel trails (the kind default orders below re-sort them anyway). Single source of
  *  truth shared by the live boards and the loading skeleton so the two never disagree on which
  *  local panels exist. The explainer appears only when its welcome text is unseen; the labels
  *  panel appears on every board except an anonymous public view. */
-export function buildBoardExtraPanels({
-  showExplainer = false,
-  publicView = false,
-}: {
-  showExplainer?: boolean;
-  publicView?: boolean;
-} = {}): BoardResizablePanel[] {
+export function buildBoardExtraPanels({ showExplainer = false, publicView = false }: BuildBoardExtraPanelsOptions = {}): BoardResizablePanel[] {
   const panels: BoardResizablePanel[] = [];
   if (showExplainer) panels.push({ kind: 'explainer', panelId: EXPLAINER_PANEL_ID });
   if (!publicView) panels.push({ kind: 'labels', panelId: LABELS_PANEL_ID });
@@ -88,10 +87,10 @@ export function computePanelReorder(
   sourcePanelId: string,
   options?: { persist?: 'auto' | 'local' },
 ): PanelReorderResult {
-  const sourcePanel = panels.find((p) => p.panelId === sourcePanelId);
+  const sourcePanel = panels.find((panel) => panel.panelId === sourcePanelId);
   if (!sourcePanel) return null;
 
-  const panelById = new Map(panels.map((p) => [p.panelId, p]));
+  const panelById = new Map(panels.map((panel) => [panel.panelId, panel]));
   const orderAt = (i: number): number | undefined => {
     if (i < 0 || i >= newOrder.length) return undefined;
     const neighbor = panelById.get(newOrder[i]);
@@ -160,7 +159,7 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
   useEffect(() => {
     prunePanelOrders(
       boardId,
-      panels.map((p) => p.panelId),
+      panels.map(({ panelId }) => panelId),
     );
   }, [boardId, panels, prunePanelOrders]);
 

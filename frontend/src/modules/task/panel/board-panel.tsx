@@ -15,9 +15,9 @@ import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
 import { openCreateTaskDialog } from '~/modules/task/mobile-create-task-dialog';
-import { TaskPanelCollapsed } from '~/modules/task/panel/panel-collapsed';
-import { TaskPanelContent } from '~/modules/task/panel/panel-content';
-import { TaskPanelHeader } from '~/modules/task/panel/panel-header';
+import { TaskPanelCollapsed } from '~/modules/task/panel/task-panel-collapsed';
+import { TaskPanelContent } from '~/modules/task/panel/task-panel-content';
+import { TaskPanelHeader } from '~/modules/task/panel/task-panel-header';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskCounts } from '~/modules/task/types';
 
@@ -65,7 +65,7 @@ export const BoardPanel = memo(function BoardPanel({
 
   // Panel-level drop target registered on the outer wrapper so it works in
   // both expanded and collapsed states (mobile uses a different layout).
-  const panelRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const { highlightProject } = usePanelDropTarget({ panelRef, projectId: project.id, tasks });
 
   const counts = useMemo(() => {

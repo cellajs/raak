@@ -24,16 +24,24 @@ import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
-const LIMIT = appConfig.requestLimits.tasksTable;
+const tableLimit = appConfig.requestLimits.tasksTable;
 
 // Stable identity so it never invalidates DataTable's memoized Row components.
 const rowKeyGetter = (row: Task) => row.id;
 
-export type TaskTableProps = { projects?: Project[]; workspace?: Workspace; publicView?: boolean; organization?: Organization; tenantId?: string };
+export interface TasksTableProps {
+  projects?: Project[];
+  workspace?: Workspace;
+  publicView?: boolean;
+  organization?: Organization;
+  tenantId?: string;
+}
 
-export type ResolvedTaskTableProps = Omit<TaskTableProps, 'projects'> & { projects: Project[] };
+export interface ResolvedTasksTableProps extends Omit<TasksTableProps, 'projects'> {
+  projects: Project[];
+}
 
-export function TasksTable({ projects: projectsProp, workspace, publicView, organization, tenantId }: TaskTableProps) {
+export function TasksTable({ projects: projectsProp, workspace, publicView, organization, tenantId }: TasksTableProps) {
   const { t } = useTranslation();
   const { search, setSearch } = useSearchParams<BoardSearchParams>({});
 
@@ -46,7 +54,6 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   // Table state
   const { q, sort, order } = search;
-  const limit = LIMIT;
 
   const [columns, setColumns] = useColumnVisibility(useColumns({ hideProject: !workspace, organization, tenantId, projects }));
   const [selected, setSelected] = useState<Task[]>([]);
@@ -109,7 +116,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   const selectedProjectId = selected[0]?.projectId;
 
-  const onSelectedRowsChange = (value: Set<string>) => {
+  const handleSelectedRowsChange = (value: Set<string>) => {
     if (!rows) return;
     const picked = rows.filter((row) => value.has(row.id));
     // Select-all from an empty selection spans projects; keep the top row's project
@@ -117,7 +124,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     setSelected(picked.filter((row) => row.projectId === projectId));
   };
 
-  const selectedRowIds = useMemo(() => new Set(selected.map((s) => s.id)), [selected]);
+  const selectedRowIds = useMemo(() => new Set(selected.map((task) => task.id)), [selected]);
 
   const isRowSelectionDisabled = useCallback(
     (row: Task) => isProjectReadOnly(row.projectId) || (!!selectedProjectId && row.projectId !== selectedProjectId),
@@ -136,7 +143,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
           total={total}
           hasQuery={!!effectiveQ}
           selected={selected}
-          searchVars={{ ...effectiveSearch, limit }}
+          searchVars={{ ...effectiveSearch, limit: tableLimit }}
           columns={columns}
           setColumns={setColumns}
           projects={projects}
@@ -154,7 +161,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
             columns,
             enableVirtualization: true,
             enableStickyHeader: true,
-            limit,
+            limit: tableLimit,
             error,
             isLoading,
             isFetching,
@@ -163,7 +170,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
             fetchMore,
             rowClass,
             selectedRows: selectedRowIds,
-            onSelectedRowsChange,
+            onSelectedRowsChange: handleSelectedRowsChange,
             isRowSelectionDisabled,
             isCompact,
             sortColumns,

@@ -1,13 +1,17 @@
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
-import { TaskCardFooter } from '~/modules/task/card/card-footer';
-import { TaskSummaryHtml } from '~/modules/task/card/summary-html';
+import { TaskCardFooter } from '~/modules/task/card/task-card-footer';
+import { TaskSummaryHtml } from '~/modules/task/card/task-summary-html';
 import { taskCardVariants } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
 
+interface TaskCardDragPreviewProps {
+  task: Task;
+}
+
 /** A primitive card component for displaying task information during drag operations */
-export function TaskCardDragPreview({ task }: { task: Task }) {
+export function TaskCardDragPreview({ task }: TaskCardDragPreviewProps) {
   return (
     <Card tabIndex={0} className={cn('rounded-none border bg-card/50 opacity-60', taskCardVariants({ status: task.status }))}>
       <CardContent className="flex flex-col p-4">

@@ -13,8 +13,8 @@ import { HighlightText } from '~/modules/common/match-highlight';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
-import { TaskSummaryHtml } from '~/modules/task/card/summary-html';
 import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
+import { TaskSummaryHtml } from '~/modules/task/card/task-summary-html';
 import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
@@ -24,7 +24,7 @@ import { ActorCell } from '~/modules/user/actor-cell';
 import { dateShort } from '~/utils/date-short';
 
 function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
-  const cellRef = useRef<HTMLButtonElement | null>(null);
+  const cellRef = useRef<HTMLButtonElement>(null);
 
   return (
     <Button
@@ -33,8 +33,8 @@ function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
       variant="cell"
       tabIndex={tabIndex}
       className="group inline-flex h-auto w-full flex-wrap justify-start px-0 text-left opacity-100 outline-0 ring-0 focus-visible:ring-0"
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') cellRef.current?.click();
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') cellRef.current?.click();
       }}
       onClick={() => openTaskSheet(row.id)}
     >
@@ -46,20 +46,16 @@ function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
   );
 }
 
-function ProjectCell({
-  row,
-  tabIndex,
-  projects,
-  organization,
-  tenantId,
-}: {
+interface ProjectCellProps {
   row: Task;
   tabIndex: number;
   projects: Project[];
   organization?: Organization;
   tenantId?: string;
-}) {
-  const project = projects.find((p) => p.id === row.projectId);
+}
+
+function ProjectCell({ row, tabIndex, projects, organization, tenantId }: ProjectCellProps) {
+  const project = projects.find(({ id }) => id === row.projectId);
   if (!project || !organization || !tenantId) return row.projectId;
 
   return (

@@ -45,13 +45,13 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
   );
 
   /** Scroll to project panel when projectSlug changes (not on panel reorder) */
-  const lastScrolledSlug = useRef<string | undefined>(undefined);
+  const lastScrolledSlugRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (!projectSlug || projectSlug === lastScrolledSlug.current) return;
-    lastScrolledSlug.current = projectSlug;
-    const targetProject = projects.find((p) => p.slug === projectSlug);
+    if (!projectSlug || projectSlug === lastScrolledSlugRef.current) return;
+    lastScrolledSlugRef.current = projectSlug;
+    const targetProject = projects.find((project) => project.slug === projectSlug);
     if (!targetProject) return;
-    const targetPanel = panels.find((col) => col.kind === 'project' && col.project.id === targetProject.id);
+    const targetPanel = panels.find((panel) => panel.kind === 'project' && panel.project.id === targetProject.id);
     if (!targetPanel) return;
     boardLayoutRef.current?.expandAndScrollToPanel(targetPanel.panelId);
   }, [projectSlug, panels, projects]);
@@ -68,7 +68,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
       onPanelReorder={handlePanelReorder}
     >
       {(panelId) => {
-        const panel = panels.find((c) => c.panelId === panelId);
+        const panel = panels.find((candidate) => candidate.panelId === panelId);
         if (!panel) return null;
         if (panel.kind === 'labels') {
           return workspace ? <LabelsPanel entity="workspace" entityId={workspace.id} /> : null;

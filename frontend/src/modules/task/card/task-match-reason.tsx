@@ -5,8 +5,13 @@ import { useTaskSearchTerms } from '~/modules/task/hooks/use-task-search-terms';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
 
+interface TaskMatchReasonProps {
+  task: Task;
+  className?: string;
+}
+
 /** Where a task matched the search when its summary and labels show no term. */
-export function TaskMatchReason({ task, className }: { task: Task; className?: string }) {
+export function TaskMatchReason({ task, className }: TaskMatchReasonProps) {
   const terms = useTaskSearchTerms();
   const reason = hiddenMatchReason(task, terms);
   if (!reason) return null;

@@ -13,9 +13,9 @@ import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { CardDescriptionSlot } from '~/modules/task/card/card-description-slot';
-import { TaskCardDragPreview } from '~/modules/task/card/card-drag-preview';
-import { TaskCardFooter } from '~/modules/task/card/card-footer';
-import { TaskCardHeader } from '~/modules/task/card/card-header';
+import { TaskCardDragPreview } from '~/modules/task/card/task-card-drag-preview';
+import { TaskCardFooter } from '~/modules/task/card/task-card-footer';
+import { TaskCardHeader } from '~/modules/task/card/task-card-header';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import type { TaskProps } from '~/modules/task/types';
@@ -26,7 +26,7 @@ import { isTouchInteraction } from '~/utils/input-modality';
 
 import '~/modules/task/card/card-glow.css';
 import { StickyBox } from '~/modules/common/sticky-box';
-import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
+import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-task-drag-indicator-store';
 import { taskCardVariants } from '~/modules/task/task-styles';
 
 interface DragPreviewPortal {
@@ -40,7 +40,7 @@ interface DragPreviewPortal {
 const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, isSheet, onEdit }: TaskProps) {
   const taskRef = useRef<HTMLDivElement>(null);
   const isReadOnly = useIsProjectReadOnly(task.projectId);
-  const mobileClosestEdge = useMobileTaskDragIndicatorStore((store) => (store.indicator?.taskId === task.id ? store.indicator.edge : null));
+  const mobileClosestEdge = useMobileTaskDragIndicatorStore((state) => (state.indicator?.taskId === task.id ? state.indicator.edge : null));
 
   // Cap editing to expanded in read-only mode
   const effectiveState = isReadOnly && state === 'editing' ? 'expanded' : state;
@@ -54,11 +54,11 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     setHasToggled(true);
   }
 
-  const [dragging, setDragging] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [portalData, setPortalData] = useState<DragPreviewPortal | null>(null);
 
-  const dragEnd = () => {
+  const clearClosestEdge = () => {
     setClosestEdge(null);
   };
 
@@ -118,8 +118,8 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
           },
         });
       },
-      onDragStart: () => setDragging(true),
-      onDrop: () => setDragging(false),
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
     });
   }, [task, state, isSheet, isReadOnly]);
 
@@ -144,8 +144,8 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         if (!isTaskData(sourceData) || !isTaskData(selfData) || sourceData.item.id === task.id) return;
         setClosestEdge(extractClosestEdge(selfData));
       },
-      onDragLeave: dragEnd,
-      onDrop: dragEnd,
+      onDragLeave: clearClosestEdge,
+      onDrop: clearClosestEdge,
     });
   }, [task, isSheet]);
 
@@ -205,7 +205,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
           'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent to-100% py-0 sm:py-0',
           task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30!' : 'bg-green-300/20 hover:bg-green-300/30!'),
           effectiveState !== 'collapsed' && 'is-expanded',
-          dragging ? 'opacity-30' : 'opacity-100',
+          isDragging ? 'opacity-30' : 'opacity-100',
           !isSheet && 'focus-visible:outline-none focus-visible:ring-0',
           isCurrent && 'is-focused',
           isSheet ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]' : 'hover:bg-card/20',

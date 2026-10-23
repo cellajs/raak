@@ -158,16 +158,14 @@ export function BoardSkeleton({
   );
 }
 
-/** Inert stand-in for the board's task bar; like the live one, a board without projects shows no task count. */
-export function BoardHeaderSkeleton({
-  isInWorkspace = false,
-  hasProjects = false,
-  publicView = false,
-}: {
+interface BoardHeaderSkeletonProps {
   isInWorkspace?: boolean;
   hasProjects?: boolean;
   publicView?: boolean;
-}) {
+}
+
+/** Inert stand-in for the board's task bar; like the live one, a board without projects shows no task count. */
+export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false, publicView = false }: BoardHeaderSkeletonProps) {
   const { t } = useTranslation();
 
   return (
@@ -224,7 +222,11 @@ export function MobilePanelSkeleton() {
   );
 }
 
-function PanelBodySkeleton({ rowHeight = desktopRowHeight }: { rowHeight?: number }) {
+interface PanelBodySkeletonProps {
+  rowHeight?: number;
+}
+
+function PanelBodySkeleton({ rowHeight = desktopRowHeight }: PanelBodySkeletonProps) {
   const renderRowHeight = rowHeight - 8;
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden opacity-100 transition-opacity duration-300 sm:border">
@@ -254,13 +256,13 @@ function LocalPanelBodySkeleton() {
   );
 }
 
-function PanelHeaderSkeleton({
-  boardId,
-  panelId,
-  projectPage,
-  project,
-  sectionFilters,
-}: { panelId: string; projectPage: boolean; boardId: string } & Pick<BoardPanelProps, 'project' | 'sectionFilters'>) {
+interface PanelHeaderSkeletonProps extends Pick<BoardPanelProps, 'project' | 'sectionFilters'> {
+  boardId: string;
+  panelId: string;
+  projectPage: boolean;
+}
+
+function PanelHeaderSkeleton({ boardId, panelId, projectPage, project, sectionFilters }: PanelHeaderSkeletonProps) {
   const { t } = useTranslation();
 
   const viewSections = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.viewSections);

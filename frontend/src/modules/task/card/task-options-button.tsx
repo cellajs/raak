@@ -17,8 +17,13 @@ import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { truncateMiddle } from '~/utils/truncate-middle';
 
+interface TaskOptionsButtonProps {
+  task: Task;
+  isSheet?: boolean;
+}
+
 /** Ellipsis button that opens a task's options menu, on a collapsed card, an expanded card header and the sheet. */
-export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isSheet?: boolean }) {
+export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonProps) {
   const { t } = useTranslation();
   const { copyToClipboard } = useCopyToClipboard(2000);
 
