@@ -219,9 +219,7 @@ interface PanelBodySkeletonProps {
 function PanelBodySkeleton({ rowHeight = desktopRowHeight }: PanelBodySkeletonProps) {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden sm:border">
-      <div
-        className={cn('h-9 shrink-0 border-t border-t-transparent', statusSectionColors.accepted.border, statusSectionColors.accepted.fill)}
-      />
+      <div className={cn('h-9 shrink-0 border-t border-t-transparent', statusSectionColors.accepted.border, statusSectionColors.accepted.fill)} />
       {Array.from({ length: rowCount }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations
         <div key={index} className="border-b px-1 py-2">
