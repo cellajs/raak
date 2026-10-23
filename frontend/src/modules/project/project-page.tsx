@@ -14,7 +14,7 @@ import { lazyNamed } from '~/utils/lazy-named';
 
 const JoinedButton = lazyNamed(() => import('~/modules/memberships/joined-button'), 'JoinedButton');
 
-interface Props {
+interface ProjectPageProps {
   project: EnrichedProject;
   organization: Organization;
   children: ReactNode;
@@ -23,7 +23,7 @@ interface Props {
 /**
  * Project page with header, hotkeys and nested routes.
  */
-export function ProjectPage({ project, organization, children }: Props) {
+export function ProjectPage({ project, organization, children }: ProjectPageProps) {
   const { t } = useTranslation();
 
   // From the policy, so an organization admin without a project admin membership gets the same affordances the API grants.

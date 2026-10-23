@@ -59,7 +59,9 @@ const findProjectInCache = createCacheFinder<Project>('project');
  * Returns `EnrichedProject` because cache entries are populated by the enrichment pipeline.
  */
 export const findProjectByIdOrSlug = (idOrSlug: string, tenantId: string): EnrichedProject | undefined =>
-  findProjectInCache((p) => p.id === idOrSlug || (p.slug === idOrSlug && p.tenantId === tenantId)) as EnrichedProject | undefined;
+  findProjectInCache((project) => project.id === idOrSlug || (project.slug === idOrSlug && project.tenantId === tenantId)) as
+    | EnrichedProject
+    | undefined;
 
 type ProjectsListParams = ProjectFilters & { limit?: number };
 
@@ -179,7 +181,7 @@ export const useProjectDeleteMutation = () => {
 const assignKey = [...keys.update, 'assign'] as const;
 
 /** Provides the React Query mutation for assign project. */
-export const useAssignProjectMutation = () => {
+export const useProjectAssignMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 

@@ -2,7 +2,7 @@ import { ChevronRightIcon, ShrubIcon, SquareMousePointerIcon } from 'lucide-reac
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { CreateProjectForm } from '~/modules/project/create-project-form';
 import { SelectProjectForm } from '~/modules/project/select-project-form';
@@ -23,7 +23,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
     const nextMode = mode === 'create' || mode === 'select' ? mode : null;
     setCreateMode(nextMode);
 
-    useDialoger.getState().update('create-project', {
+    dialoger.getState().update('create-project', {
       titleContent: (
         <div className="flex items-center gap-2 max-sm:justify-center">
           {nextMode ? (

@@ -3,7 +3,7 @@ import { FolderIcon } from 'lucide-react';
 import type { RefObject } from 'react';
 import type { Workspace } from 'sdk';
 import { defineFrontendModule } from '~/lib/module';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import type { ChannelEnrichment } from '~/modules/entities/types';
 import { CreateWorkspaceForm } from '~/modules/workspace/create-workspace-form';
@@ -22,13 +22,13 @@ declare module '~/lib/placements' {
 
 /** Opens the create dialog from the menu section's plus button and lands on the new workspace. */
 const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>) => {
-  const callback = (workspace: Workspace) => {
+  const handleCreated = (workspace: Workspace) => {
     getRouter().navigate(getCreatedChannelRoute('workspace', workspace));
   };
 
   const title = i18n.t('c:create_resource', { resource: i18n.t('c:workspace').toLowerCase() });
 
-  return useDialoger.getState().create(<CreateWorkspaceForm callback={callback} />, {
+  return dialoger.getState().create(<CreateWorkspaceForm callback={handleCreated} />, {
     className: 'md:max-w-2xl',
     id: 'create-workspace',
     description: i18n.t('c:create_workspace.text'),

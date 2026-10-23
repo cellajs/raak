@@ -11,7 +11,7 @@ import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectUpdateMutation } from '~/modules/project/query';
 import { Checkbox } from '~/modules/ui/checkbox';
@@ -21,11 +21,11 @@ import { formResolver } from '~/utils/form-resolver';
 
 const formSchema = zUpdateProjectBody;
 type FormValues = z.infer<typeof formSchema>;
-interface Props {
+interface UpdateProjectFormProps {
   project: Project;
 }
 
-function UpdateProjectForm({ project }: Props) {
+function UpdateProjectForm({ project }: UpdateProjectFormProps) {
   const { t } = useTranslation();
 
   const organizationId = project.organizationId;
@@ -48,7 +48,7 @@ function UpdateProjectForm({ project }: Props) {
       { path: { id: project.id, organizationId, tenantId: project.tenantId }, body: values },
       {
         onSuccess: (updatedProject) => {
-          useSheeter.getState().remove(formContainerId);
+          sheeter.getState().remove(formContainerId);
           form.reset(updatedProject);
           toaster.success(t('c:success.update_resource', { resource: t('c:project') }));
         },

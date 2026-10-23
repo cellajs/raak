@@ -9,17 +9,17 @@ import { queryClient } from '~/query/query-client';
 export const useProjectPublicity = (projectId: string) => {
   const { tenantId } = useOrganizationLayoutContext();
 
-  const projectMatch = useMatch({ from: '/_app/$tenantId/$organizationSlug/project/$slug', shouldThrow: false, select: () => true });
-  const publicProjectMatch = useMatch({
+  const isProjectRoute = useMatch({ from: '/_app/$tenantId/$organizationSlug/project/$slug', shouldThrow: false, select: () => true });
+  const isPublicProjectRoute = useMatch({
     from: '/_public/_content/$tenantId/$organizationSlug/public/project/$slug',
     shouldThrow: false,
     select: () => true,
   });
-  const workspaceMatch = useIsWorkspaceRoute();
+  const isWorkspaceRoute = useIsWorkspaceRoute();
 
-  if (publicProjectMatch) return true;
+  if (isPublicProjectRoute) return true;
 
-  if (workspaceMatch || projectMatch) {
+  if (isWorkspaceRoute || isProjectRoute) {
     const cached = findProjectByIdOrSlug(projectId, tenantId) ?? queryClient.getQueryData<Project>(projectQueryKeys.detail.byId(projectId));
     return cached?.public ?? false;
   }

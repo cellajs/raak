@@ -29,7 +29,7 @@ export const isProjectReadOnly = (projectId: string | undefined): boolean => {
   return false;
 };
 
-const subscribeToQueryCache = (cb: () => void) => queryClient.getQueryCache().subscribe(cb);
+const subscribeToQueryCache = (onStoreChange: () => void) => queryClient.getQueryCache().subscribe(onStoreChange);
 
 /**
  * Hook variant that re-renders only when the read-only answer for this project flips.

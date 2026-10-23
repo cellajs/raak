@@ -12,7 +12,7 @@ const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), '
 const publicProjectApi = getRouteApi('/_public/_content/$tenantId/$organizationSlug/public/project/$slug');
 
 export function PublicProjectRouteComponent() {
-  const projectId = publicProjectApi.useRouteContext({ select: (c) => c.project.id });
+  const projectId = publicProjectApi.useRouteContext({ select: (context) => context.project.id });
   const view = publicProjectApi.useSearch({ select: (search) => search.view });
   const { data } = useSuspenseQuery(publicProjectQueryOptions(projectId));
   const projects = [data];

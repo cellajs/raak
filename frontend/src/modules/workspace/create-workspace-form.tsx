@@ -6,7 +6,7 @@ import type { ChannelBase, Organization, Workspace } from 'sdk';
 import { zCreateWorkspacesBody, zCreateWorkspacesPath } from 'sdk/zod.gen';
 import { generateId } from 'shared/utils/entity-id';
 import { z } from 'zod';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
@@ -14,13 +14,13 @@ import { SelectParentFormField } from '~/modules/common/form-fields/select-combo
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { openCreateOrganizationDialog } from '~/modules/organization/create-organization-form';
+import { organizationsListQueryOptions } from '~/modules/organization/query';
 import { Alert, AlertDescription, AlertTitle } from '~/modules/ui/alert';
 import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { useWorkspaceCreateMutation } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 import { formResolver } from '~/utils/form-resolver';
-import { organizationsListQueryOptions } from '../organization/query';
 
 const formSchema = z.object({
   ...zCreateWorkspacesBody.element.omit({ id: true }).shape,
@@ -70,7 +70,7 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
         onSuccess: (createdWorkspace) => {
           toaster.success(t('c:success.create_resource', { resource: t('c:workspace') }));
           form.reset();
-          useDialoger.getState().remove();
+          dialoger.getState().remove();
 
           callback?.(createdWorkspace);
         },
@@ -78,7 +78,7 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
     );
   };
 
-  const onOrganizationSelect = useCallback(
+  const handleOrganizationSelect = useCallback(
     (selectedOrg: ChannelBase) => {
       form.setValue('tenantId', selectedOrg.tenantId, keepPristine);
 
@@ -90,9 +90,9 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
     [form.setValue, form.getValues, touchedFields.name],
   );
 
-  const organizationCreated = (organization: Organization) => {
+  const handleOrganizationCreated = (organization: Organization) => {
     form.setValue('organizationId', organization.id, keepPristine);
-    onOrganizationSelect(organization);
+    handleOrganizationSelect(organization);
   };
 
   // Async queries mean single-org defaults are not available at first render.
@@ -101,8 +101,8 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
 
     const selectedOrg = items[0];
     form.setValue('organizationId', selectedOrg.id, keepPristine);
-    onOrganizationSelect(selectedOrg);
-  }, [items, organizationId, form.setValue, onOrganizationSelect]);
+    handleOrganizationSelect(selectedOrg);
+  }, [items, organizationId, form.setValue, handleOrganizationSelect]);
 
   // Alert if no organizations exist (wait for query to finish loading first)
   if (!query.isLoading && !organizationId && !items.length)
@@ -111,7 +111,7 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
         <AlertTitle>{t('c:resource_required', { resource: t('c:organization') })}</AlertTitle>
         <AlertDescription className="pr-8">
           <p className="mb-2">{t('c:organization_required.text')}</p>
-          <Button onClick={() => openCreateOrganizationDialog({ current: null }, organizationCreated)}>
+          <Button onClick={() => openCreateOrganizationDialog({ current: null }, handleOrganizationCreated)}>
             <span>{t('c:create_resource', { resource: t('c:organization').toLowerCase() })}</span>
           </Button>
         </AlertDescription>
@@ -128,7 +128,7 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
           control={form.control}
           label={t('c:organization')}
           name="organizationId"
-          onSelect={onOrganizationSelect}
+          onSelect={handleOrganizationSelect}
           required
           disabled={isSingleOrg}
         />

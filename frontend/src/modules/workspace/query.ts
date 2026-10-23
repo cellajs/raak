@@ -39,7 +39,7 @@ const findWorkspaceInCache = createCacheFinder<Workspace>('workspace');
 
 /** Find a workspace in cache by id or slug. Slug matches are scoped to the given tenant. */
 export const findWorkspaceByIdOrSlug = (idOrSlug: string, tenantId: string): Workspace | undefined =>
-  findWorkspaceInCache((ws) => ws.id === idOrSlug || (ws.slug === idOrSlug && ws.tenantId === tenantId));
+  findWorkspaceInCache((workspace) => workspace.id === idOrSlug || (workspace.slug === idOrSlug && workspace.tenantId === tenantId));
 
 type WorkspacesListParams = WorkspaceFilters & { limit?: number };
 
@@ -98,7 +98,7 @@ export const useWorkspaceCreateMutation = () => {
   });
 };
 
-export const useUpdateWorkspaceMutation = () => {
+export const useWorkspaceUpdateMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 

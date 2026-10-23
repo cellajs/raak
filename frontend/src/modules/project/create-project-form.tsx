@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { zCreateProjectsBody } from 'sdk/zod.gen';
 import { generateId } from 'shared/utils/entity-id';
 import type { z } from 'zod';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
@@ -49,7 +49,7 @@ export function CreateProjectForm() {
         onSuccess: async (createdProject) => {
           toaster.success(t('c:success.create_resource', { resource: t('c:project') }));
           form.reset();
-          useDialoger.getState().remove();
+          dialoger.getState().remove();
           selectBoardProject(createdProject.slug);
         },
       },

@@ -6,16 +6,20 @@ import { ChannelTileCard, ChannelTileHeading, ChannelTileRow } from '~/modules/e
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 
+interface WorkspaceTileProps {
+  entity: Workspace;
+}
+
 /**
  * A banner-less workspace tile, showing its name and associated projects as avatars.
  * Reads the shared all-projects query (already fetched by the menu), so no per-workspace fetch.
  */
-export function WorkspaceTile({ entity }: { entity: Workspace }) {
+export function WorkspaceTile({ entity }: WorkspaceTileProps) {
   const { t } = useTranslation();
 
   const { data: projects = [] } = useInfiniteQuery({
     ...projectsListQueryOptions({}),
-    select: (data) => data.pages.flatMap((p) => p.items).filter((p) => p.membership?.workspaceId === entity.id),
+    select: (data) => data.pages.flatMap((page) => page.items).filter((project) => project.membership?.workspaceId === entity.id),
   });
 
   const leading = (

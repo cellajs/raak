@@ -32,41 +32,46 @@ const dropdownVariants = {
   exit: { opacity: 0, y: -5, scale: 0.98, transition: { duration: 0.1 } },
 };
 
-interface Props {
+interface ProjectSuggestionComboboxProps {
   value: ChannelBase[];
   workspaceId: string;
   tenantId: string;
-  targetOrgId: string;
+  organizationId: string;
   organizationName: string;
   onChange: (items: ChannelBase[]) => void;
 }
 
-export function ProjectSuggestionCombobox({ value, workspaceId, tenantId, targetOrgId, organizationName, onChange }: Props) {
+export function ProjectSuggestionCombobox({
+  value,
+  workspaceId,
+  tenantId,
+  organizationId,
+  organizationName,
+  onChange,
+}: ProjectSuggestionComboboxProps) {
   const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const { data, isFetching } = useInfiniteQuery(
-    projectsListQueryOptions({ q: debouncedSearchQuery, organizationId: targetOrgId, excludeArchived: 'true' }),
-  );
+  const { data, isFetching } = useInfiniteQuery(projectsListQueryOptions({ q: debouncedSearchQuery, organizationId, excludeArchived: 'true' }));
   const projects = flattenInfiniteData<EnrichedProject>(data);
 
   // Mirror selection back to value (multi). Compare by id since identities can differ.
-  const selectedIds = new Set(value.map((v) => v.id));
-  const selected = projects.filter((p) => selectedIds.has(p.id));
+  const selectedIds = new Set(value.map((item) => item.id));
+  const selected = projects.filter((project) => selectedIds.has(project.id));
 
   return (
     <Combobox<EnrichedProject, true>
       multiple
       items={projects}
-      itemToStringLabel={(p) => p.name}
-      itemToStringValue={(p) => p.id}
+      itemToStringLabel={(project) => project.name}
+      itemToStringValue={(project) => project.id}
       value={selected}
       onValueChange={(items) => {
         // Preserve selected items that aren't in current results.
-        const carriedOver = value.filter((v) => !projects.some((p) => p.id === v.id));
+        const carriedOver = value.filter((item) => !projects.some((project) => project.id === item.id));
         onChange([...carriedOver, ...items]);
       }}
       inputValue={searchQuery}

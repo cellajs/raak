@@ -3,14 +3,14 @@ import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zChannelBase } from 'sdk/zod.gen';
 import { z } from 'zod';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { useAssignProjectMutation } from '~/modules/project/query';
-import { ProjectSuggestionCombobox } from '~/modules/project/suggestions-combobox';
+import { ProjectSuggestionCombobox } from '~/modules/project/project-suggestion-combobox';
+import { useProjectAssignMutation } from '~/modules/project/query';
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { useOrganizationWorkspaces } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
@@ -41,7 +41,7 @@ export function SelectProjectForm() {
 
   const form = useFormWithDraft<FormValues>(`select-project-${workspaceId}`, { formOptions });
 
-  const { mutateAsync: assign } = useAssignProjectMutation();
+  const { mutateAsync: assign } = useProjectAssignMutation();
 
   const onSubmit = async ({ selectedProjects }: FormValues) => {
     const results = await Promise.allSettled(
@@ -67,7 +67,7 @@ export function SelectProjectForm() {
     }
 
     form.reset();
-    useDialoger.getState().remove();
+    dialoger.getState().remove();
   };
 
   const selectedCount = form.watch('selectedProjects')?.length ?? 0;
@@ -91,7 +91,7 @@ export function SelectProjectForm() {
                 onChange={onChange}
                 workspaceId={workspace.id}
                 tenantId={workspace.tenantId}
-                targetOrgId={workspace.organizationId}
+                organizationId={workspace.organizationId}
                 organizationName={organization.name}
               />
               <FormMessage />

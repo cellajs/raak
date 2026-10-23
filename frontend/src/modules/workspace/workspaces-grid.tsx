@@ -1,8 +1,8 @@
 import { useSearchParams } from '~/hooks/use-search-params';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { BaseEntityGrid, EntityGridBar } from '~/modules/entities/entity-grid';
-import { workspacesListQueryOptions } from './query';
-import { WorkspaceTile } from './tile';
+import { workspacesListQueryOptions } from '~/modules/workspace/query';
+import { WorkspaceTile } from '~/modules/workspace/workspace-tile';
 
 export function WorkspacesGrid() {
   const { search, setSearch } = useSearchParams();

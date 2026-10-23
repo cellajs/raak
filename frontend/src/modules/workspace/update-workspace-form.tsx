@@ -8,23 +8,23 @@ import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { Form } from '~/modules/ui/field';
-import { useUpdateWorkspaceMutation } from '~/modules/workspace/query';
+import { useWorkspaceUpdateMutation } from '~/modules/workspace/query';
 import { formResolver } from '~/utils/form-resolver';
 
 const formSchema = zUpdateWorkspaceBody;
 type FormValues = z.infer<typeof formSchema>;
-interface Props {
+interface UpdateWorkspaceFormProps {
   workspace: Workspace;
   callback?: (workspace: Workspace) => void;
 }
 
-function UpdateWorkspaceForm({ workspace, callback }: Props) {
+function UpdateWorkspaceForm({ workspace, callback }: UpdateWorkspaceFormProps) {
   const { t } = useTranslation();
 
-  const { mutate, isPending } = useUpdateWorkspaceMutation();
+  const { mutate, isPending } = useWorkspaceUpdateMutation();
 
   const formOptions: UseFormProps<FormValues> = { resolver: formResolver(formSchema), defaultValues: { name: workspace.name } };
 
@@ -39,7 +39,7 @@ function UpdateWorkspaceForm({ workspace, callback }: Props) {
       { path: { id: workspace.id, organizationId: workspace.organizationId, tenantId: workspace.tenantId }, body: values },
       {
         onSuccess: (updatedWorkspace) => {
-          useSheeter.getState().remove('update-workspace');
+          sheeter.getState().remove('update-workspace');
           form.reset(updatedWorkspace);
           toaster.success(t('c:success.update_resource', { resource: t('c:workspace') }));
           callback?.(updatedWorkspace);

@@ -7,7 +7,7 @@ import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 import { TasksHotkeys } from '~/modules/task/tasks-hotkeys';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
-interface Props {
+interface WorkspacePageProps {
   workspaceId: string;
   organizationId: string;
   tenantId: string;
@@ -17,7 +17,7 @@ interface Props {
 /**
  * Workspace page with drag-and-drop task management.
  */
-function WorkspacePage({ workspaceId, organizationId, tenantId, children }: Props) {
+function WorkspacePage({ workspaceId, organizationId, tenantId, children }: WorkspacePageProps) {
   const { data: projectsData } = useSuspenseInfiniteQuery(projectsListQueryOptions({ workspaceId, include: 'counts' }));
   const projects = flattenInfiniteData<EnrichedProject>(projectsData);
 

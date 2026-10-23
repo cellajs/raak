@@ -1,18 +1,18 @@
 import { useSearchParams } from '~/hooks/use-search-params';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { BaseEntityGrid, ChannelTile, EntityGridBar } from '~/modules/entities/entity-grid';
+import { projectsListQueryOptions } from '~/modules/project/query';
 import { useUserStore } from '~/modules/user/user-store';
-import { projectsListQueryOptions } from './query';
 
 type ProjectSearch = Parameters<typeof projectsListQueryOptions>[0];
 
-interface Props {
+interface ProjectsGridProps {
   fixedQuery?: Partial<ProjectSearch>;
   focusView?: boolean;
   saveDataInSearch?: boolean;
 }
 
-export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView }: Props) {
+export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView }: ProjectsGridProps) {
   const { search: baseSearch, setSearch } = useSearchParams({ saveDataInSearch });
 
   const search: ProjectSearch = { ...baseSearch, ...fixedQuery };

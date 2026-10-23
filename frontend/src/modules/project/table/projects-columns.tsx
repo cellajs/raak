@@ -1,5 +1,4 @@
 import { Link } from '@tanstack/react-router';
-import i18n from 'i18next';
 import { GlobeIcon, LockIcon, PencilIcon, ShieldIcon, TrashIcon, UserRoundIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { hierarchy, isProduct } from 'shared';
@@ -9,7 +8,7 @@ import { cellLinkTextClass, countColumn, dateColumn, ellipsisColumn } from '~/mo
 import type { EllipsisOption } from '~/modules/common/data-table/table-ellipsis';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { NamedText } from '~/modules/common/named-text';
 import { openPopConfirm } from '~/modules/common/popconfirm';
@@ -61,10 +60,10 @@ export const useColumns = (organization: EnrichedOrganization) => {
       const options: EllipsisOption<EnrichedProject>[] = [];
       if (resolveCan(row.can?.project?.update, row.createdBy)) {
         options.push({
-          label: i18n.t('c:edit'),
+          label: t('c:edit'),
           icon: PencilIcon,
           onSelect: (project, triggerRef) => {
-            useDropdowner.getState().remove();
+            dropdowner.getState().remove();
             openEditSheet({
               id: 'update-project',
               resource: 'c:project',
@@ -76,10 +75,10 @@ export const useColumns = (organization: EnrichedOrganization) => {
       }
       if (resolveCan(row.can?.project?.delete, row.createdBy)) {
         options.push({
-          label: i18n.t('c:delete'),
+          label: t('c:delete'),
           icon: TrashIcon,
           onSelect: (project) => {
-            const close = () => useDropdowner.getState().remove();
+            const close = () => dropdowner.getState().remove();
             openPopConfirm(
               <NamedText i18nKey="c:delete_confirm.text" name={project.name} />,
               <DeleteProjects projects={[project]} callback={close} />,

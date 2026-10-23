@@ -6,18 +6,18 @@ import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
 import { appConfig } from 'shared';
 import type { CallbackArgs } from '~/modules/common/data-table/types';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { NamedText } from '~/modules/common/named-text';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
 import { DeleteWorkspaces } from '~/modules/workspace/delete-workspaces';
+import { useOrganizationWorkspaces } from '~/modules/workspace/query';
 import { UpdateWorkspaceForm } from '~/modules/workspace/update-workspace-form';
-import { useOrganizationWorkspaces } from './query';
 
 export function openWorkspaceSettingsSheet(workspace: Workspace, triggerRef: RefObject<HTMLButtonElement | null>) {
-  useSheeter.getState().create(
+  sheeter.getState().create(
     <div className="container w-full">
       <WorkspaceSettings workspace={workspace} />
     </div>,
@@ -33,7 +33,11 @@ export function openWorkspaceSettingsSheet(workspace: Workspace, triggerRef: Ref
   );
 }
 
-function WorkspaceSettings({ workspace }: { workspace: Workspace }) {
+interface WorkspaceSettingsProps {
+  workspace: Workspace;
+}
+
+function WorkspaceSettings({ workspace }: WorkspaceSettingsProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -45,12 +49,12 @@ function WorkspaceSettings({ workspace }: { workspace: Workspace }) {
 
   const handleDeleted = (args: CallbackArgs<Workspace[]>) => {
     if (args.status !== 'success') return;
-    useSheeter.getState().remove('update-workspace');
+    sheeter.getState().remove('update-workspace');
     navigate({ to: appConfig.defaultRedirectPath, replace: true });
   };
 
   const openDeleteDialog = () => {
-    useDialoger.getState().create(<DeleteWorkspaces dialog workspaces={[workspace]} callback={handleDeleted} />, {
+    dialoger.getState().create(<DeleteWorkspaces dialog workspaces={[workspace]} callback={handleDeleted} />, {
       id: 'delete-workspace',
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',

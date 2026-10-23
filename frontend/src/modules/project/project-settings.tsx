@@ -4,9 +4,9 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import type { CallbackArgs } from '~/modules/common/data-table/types';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { NamedText } from '~/modules/common/named-text';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import { MoveProjectForm } from '~/modules/project/move-project-form';
@@ -19,7 +19,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/mod
 import { useOrganizationWorkspaces } from '~/modules/workspace/query';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 
-export function ProjectSettings({ project }: { project: EnrichedProject }) {
+interface ProjectSettingsProps {
+  project: EnrichedProject;
+}
+
+export function ProjectSettings({ project }: ProjectSettingsProps) {
   const { t } = useTranslation();
   const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
   const isInWorkspace = useIsWorkspaceRoute();
@@ -33,7 +37,7 @@ export function ProjectSettings({ project }: { project: EnrichedProject }) {
   const canMoveProjects = workspaces.length > 1;
 
   const closeSettingsSheet = () => {
-    useSheeter.getState().remove('update-project');
+    sheeter.getState().remove('update-project');
   };
 
   const { isLeavingProject, isRemovingProjectFromWorkspace, leaveProject, projectHasWorkspace, removeProjectFromWorkspace } =
@@ -49,7 +53,7 @@ export function ProjectSettings({ project }: { project: EnrichedProject }) {
   };
 
   const openDeleteDialog = () => {
-    useDialoger.getState().create(<DeleteProjects dialog projects={[project]} callback={handleDeleted} />, {
+    dialoger.getState().create(<DeleteProjects dialog projects={[project]} callback={handleDeleted} />, {
       id: 'delete-project',
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
