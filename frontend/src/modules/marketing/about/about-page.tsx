@@ -40,7 +40,7 @@ function AboutPage() {
             <WaitlistForm
               className="md:flex-row"
               buttonClassName="h-14 rounded-full ring-4 md:max-w-40 ring-primary/10"
-              inputClassName="xs:min-w-80 w-full py-6 h-14 px-8 rounded-full border border-gray-400/40 bg-background/50 text-base/6 ring-4 ring-primary/10 transition focus:border-gray-400 focus:outline-hidden focus-visible:ring-primary/20"
+              inputClassName="xs:min-w-80 w-full py-6 h-14 px-8 rounded-full bg-background/50 text-base/6 ring-4 ring-primary/10 transition focus:outline-hidden focus-visible:ring-primary/20"
               buttonContent={`${t('c:waitlist_request')}`}
               callback={() => setJoinedToWaitlist(true)}
             />

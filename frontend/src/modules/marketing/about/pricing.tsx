@@ -72,18 +72,18 @@ function PricingPlanCard({ plan: { id, className, featureCount, popular, discoun
   return (
     <div className={cn('relative flex flex-col justify-between rounded-lg border bg-card p-6', isFlexLayout && 'md:w-1/2 lg:w-1/3', className)}>
       {popular && (
-        <Badge size="sm" className="-translate-1/2 absolute top-0 left-1/2 px-4 py-1 text-center">
+        <Badge size="sm" className="-translate-1/2 absolute top-0 left-1/2 px-4">
           🚀 {t('about:pricing.popular')}
         </Badge>
       )}
       <div className="mt-4">
         <h3 className="flex justify-center text-center font-bold text-2xl">
           {t(title)}
-          {popular && <SparklesIcon className="ml-1 w-5 text-primary" />}
+          {popular && <SparklesIcon className="ml-1 size-5 text-primary" />}
         </h3>
         <div className="mt-4 flex items-center justify-center text-muted-foreground">
           {discount && (
-            <Badge size="md" className="mr-2 px-2 py-0 text-lg">
+            <Badge size="md" className="mr-2 text-lg">
               {discount}
             </Badge>
           )}

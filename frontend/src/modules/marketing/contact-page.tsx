@@ -26,31 +26,29 @@ export function ContactPage() {
         <p className="mb-8 text-center text-muted-foreground sm:text-left sm:text-lg">{t('c:contact_us.text')}</p>
         <ContactForm />
       </div>
-      <div className="container mb-12">
-        <div className="flex flex-wrap justify-evenly gap-2">
-          {methods.map((method) => {
-            const isWebPage = method.link.startsWith('http');
-            return (
-              <div key={method.title} className="mb-10 h-48 w-40 text-center sm:w-48">
-                <div className="mx-auto mb-5 flex size-24 items-center justify-center rounded-full bg-accent/50 text-primary sm:size-32">
-                  <method.icon className="size-12" strokeWidth={1} />
-                </div>
-                <h3 className="mb-3 font-semibold text-lg">{t(method.title)}</h3>
-                <p>
-                  <a
-                    href={method.link}
-                    className="group focus-effect link-decoration active:link-decoration-strong rounded-md p-0.5 text-sm hover:underline sm:text-base"
-                    target={isWebPage ? '_blank' : undefined}
-                    rel={isWebPage ? 'noreferrer' : undefined}
-                  >
-                    {method.textKey ? t(method.textKey) : method.text}
-                    <ArrowUpRightIcon className="-mt-2 ml-1 inline-block text-primary opacity-50 group-hover:opacity-100" />
-                  </a>
-                </p>
+      <div className="container mb-12 flex flex-wrap justify-evenly gap-2">
+        {methods.map((method) => {
+          const isWebPage = method.link.startsWith('http');
+          return (
+            <div key={method.title} className="mb-10 h-48 w-40 text-center sm:w-48">
+              <div className="mx-auto mb-5 flex size-24 items-center justify-center rounded-full bg-accent/50 text-primary sm:size-32">
+                <method.icon className="size-12" strokeWidth={1} />
               </div>
-            );
-          })}
-        </div>
+              <h3 className="mb-3 font-semibold text-lg">{t(method.title)}</h3>
+              <p>
+                <a
+                  href={method.link}
+                  className="group focus-effect link-decoration active:link-decoration-strong rounded-md p-0.5 text-sm hover:underline sm:text-base"
+                  target={isWebPage ? '_blank' : undefined}
+                  rel={isWebPage ? 'noreferrer' : undefined}
+                >
+                  {method.textKey ? t(method.textKey) : method.text}
+                  <ArrowUpRightIcon className="-mt-2 ml-1 inline-block text-primary opacity-50 group-hover:opacity-100" />
+                </a>
+              </p>
+            </div>
+          );
+        })}
       </div>
     </MarketingLayout>
   );

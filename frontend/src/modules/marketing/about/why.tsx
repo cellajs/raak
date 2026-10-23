@@ -11,29 +11,25 @@ export function Why() {
 
   return (
     <div className="mx-auto my-12 flex max-w-7xl flex-wrap items-center lg:my-16">
-      <div className="w-full lg:w-5/12">
-        <div className="flex flex-wrap">
-          {whyItems.map((item, index) => {
-            const title = `about:why.title_${index + 1}` as TKey;
-            const text = `about:why.text_${index + 1}` as TKey;
+      <div className="flex w-full flex-wrap lg:w-5/12">
+        {whyItems.map((item, index) => {
+          const title = `about:why.title_${index + 1}` as TKey;
+          const text = `about:why.text_${index + 1}` as TKey;
 
-            return (
-              <div className="w-full" key={item.id}>
-                <div className="mb-12 flex">
-                  <div className="mr-4 flex h-8 w-full max-w-8 items-center justify-center rounded-full border-2 border-primary font-semibold text-lg md:-mt-2 md:h-12 md:max-w-12 md:text-xl">
-                    {index + 1}
-                  </div>
-                  <div className="w-full">
-                    <h3 className="mb-2 font-medium text-xl 2xl:text-[1.38rem]">{t(title)}</h3>
-                    <p className="leading-relaxed">
-                      <Trans t={t} i18nKey={text as never} />
-                    </p>
-                  </div>
-                </div>
+          return (
+            <div className="mb-12 flex w-full" key={item.id}>
+              <div className="mr-4 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-primary font-semibold text-lg md:-mt-2 md:size-12 md:text-xl">
+                {index + 1}
               </div>
-            );
-          })}
-        </div>
+              <div className="w-full">
+                <h3 className="mb-2 font-medium text-xl 2xl:text-[1.38rem]">{t(title)}</h3>
+                <p className="leading-relaxed">
+                  <Trans t={t} i18nKey={text as never} />
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
       <div className="w-full lg:w-7/12">
         <Suspense fallback={<Spinner />}>
