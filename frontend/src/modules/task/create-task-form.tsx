@@ -203,13 +203,13 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
           onKeyDown={handleFormKeyDown}
           onSubmit={form.handleSubmit(handleFormSubmit)}
           className={cn(
-            className,
             'flex flex-col gap-2 sm:p-3 sm:pl-11',
             isDialog && 'grow',
             !isDialog &&
               'relative border-b before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-[3px] before:rounded-full before:bg-primary before:opacity-0',
             !isDialog && isFocused && 'before:opacity-100',
             isFocused ? 'is-focused focus-visible:outline-none focus-visible:ring-0' : 'focus-visible:ring-1 focus-visible:ring-ring',
+            className,
           )}
         >
           <Suspense fallback={<Spinner className="my-16" noDelay />}>
@@ -249,7 +249,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                       }}
                     >
                       {primaryLabels.map((label) => (
-                        <ToggleGroupItem tabIndex={0} size="sm" value={label.id} className="group min-w-0 flex-1 shrink font-normal" key={label.id}>
+                        <ToggleGroupItem tabIndex={0} size="sm" value={label.id} className="group flex-1 font-normal" key={label.id}>
                           <PrimaryLabelIcon label={label} />
                           <span className="ml-2 min-w-0 truncate opacity-75 group-data-pressed:font-medium group-data-pressed:opacity-100">
                             {label.name}
@@ -332,7 +332,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                       aria-label={t('c:assign_to')}
                       variant="input"
                       size="sm"
-                      className="relative flex justify-start"
+                      className="flex justify-start"
                       id={`assignedTo-${formId}`}
                       type="button"
                       onClick={({ currentTarget }) =>
@@ -358,11 +358,11 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                                   id={assignee.id}
                                   name={assignee.name}
                                   url={assignee.thumbnailUrl}
-                                  className="h-6 w-6 text-xs"
+                                  className="size-6"
                                 />
                               ))}
                             </AvatarGroupList>
-                            <AvatarOverflowIndicator className="h-6 w-6 text-xs" />
+                            <AvatarOverflowIndicator className="size-6 text-xs" />
                           </AvatarGroup>
                           <span className="truncate">
                             {value.length === 1 && value[0].name}
@@ -372,7 +372,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                         </>
                       ) : (
                         <>
-                          <UserXIcon className="h-4 w-4 opacity-75" /> <span className="font-normal opacity-75">{t('c:assign_to')}</span>
+                          <UserXIcon className="size-4 opacity-75" /> <span className="font-normal opacity-75">{t('c:assign_to')}</span>
                         </>
                       )}
                       <ChevronDownIcon className="ml-auto size-4 shrink-0 opacity-50" />
@@ -385,7 +385,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
           />
 
           <div className="flex flex-col gap-2 py-2 sm:flex-row">
-            <div className="[&:not(.absolute)]:active:press flex">
+            <div className="active:press flex">
               <Button type="submit" disabled={!isDirty} press={false} className="grow rounded-none rounded-l">
                 <span>
                   {t('c:create')}
@@ -404,9 +404,8 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                           type="button"
                           disabled={!isDirty}
                           aria-label={t('c:set_resource', { resource: t('c:status').toLowerCase() })}
-                          variant={'default'}
                           press={false}
-                          className="relative rounded-none rounded-r border-l border-l-background/25"
+                          className="rounded-none rounded-r border-l border-l-background/25"
                           id={`status-${formId}`}
                           onClick={({ currentTarget }) =>
                             openTaskDropdown({

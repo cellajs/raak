@@ -2,17 +2,17 @@ import { Suspense } from 'react';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { Spinner } from '~/modules/common/spinner';
-import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
+import { taskDescriptionGutterClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 
 const staticEditorBase = '[&>.bn-static-editor]:min-h-8 w-full bg-transparent border-none';
-const expandedStyle = `${staticEditorBase} ${taskDescriptionGutterStyle}`;
+const expandedStyle = `${staticEditorBase} ${taskDescriptionGutterClass}`;
 
 interface TaskCardContentExpandedProps {
   task: Task;
   /**
    * Drop the description gutter. Set when this preview is nested inside a wrapper that already
-   * applies `taskDescriptionGutterStyle` (the edit form's waiting-fallback), so the gutter isn't
+   * applies `taskDescriptionGutterClass` (the edit form's waiting-fallback), so the gutter isn't
    * doubled and the preview lines up pixel-for-pixel with the editor that replaces it.
    */
   noGutter?: boolean;

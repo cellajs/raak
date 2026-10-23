@@ -64,11 +64,11 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
           showClear={false}
         />
         <ComboboxHotkeyHint searching={isSearching}>T</ComboboxHotkeyHint>
-        <ComboboxList className="p-1">
+        <ComboboxList>
           {(label: Label) => {
             const index = primaryLabels.findIndex((primaryLabel) => primaryLabel.id === label.id);
             return (
-              <ComboboxItem key={label.id} value={label} className="group flex h-9 w-full items-center gap-2 pr-2">
+              <ComboboxItem key={label.id} value={label} className="h-9 pr-2">
                 <PrimaryLabelIcon label={label} />
                 <div className="grow">{label.name}</div>
                 <HotkeyIndexBadge index={isSearching ? undefined : index} />

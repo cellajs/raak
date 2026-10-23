@@ -10,6 +10,7 @@ import { useProjectMembers } from '~/modules/project/use-project-members';
 import {
   ComboboxHotkeyHint,
   comboboxActionButtonClass,
+  comboboxRowClass,
   comboboxScrollClass,
   comboboxShellClass,
   HotkeyIndexBadge,
@@ -120,18 +121,12 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
         />
         <ComboboxHotkeyHint searching={!!searchValue.length}>U</ComboboxHotkeyHint>
         <ScrollArea className={comboboxScrollClass}>
-          <ComboboxList className="p-1">
+          <ComboboxList>
             {(user: UserMinimalBase) => {
               const index = visibleMembers.findIndex((member) => member.id === user.id);
               return (
-                <ComboboxItem key={user.id} value={user} className="group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal">
-                  <EntityAvatar
-                    type="user"
-                    id={user.id}
-                    name={user.name}
-                    url={user.thumbnailUrl}
-                    className="h-6 w-6 text-xs group-hover:opacity-100"
-                  />
+                <ComboboxItem key={user.id} value={user} className={comboboxRowClass}>
+                  <EntityAvatar type="user" id={user.id} name={user.name} url={user.thumbnailUrl} className="size-6" />
                   <div className="grow">{user.name}</div>
                   <ComboboxItemIndicator className="text-success" />
                   <HotkeyIndexBadge index={!searchValue.length && !showAll ? index : undefined} />

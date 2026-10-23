@@ -65,7 +65,7 @@
   animation: highlight-flash 1s ease-out forwards;
 }
 
-/* The first summary line fades out under the options button, on the states that reveal it (taskCardActionsReveal).
+/* The first summary line fades out under the options button, on the states that reveal it (taskCardActionsRevealClass).
    A mask, not a background-colored overlay, so the card's status gradient and search tint show through unchanged. */
 [data-task-card-id]:is(:hover, :focus-within, .is-focused) .task-summary-fade {
   mask-image: linear-gradient(to left, #000 2.25rem, transparent 4rem), linear-gradient(#000, #000);

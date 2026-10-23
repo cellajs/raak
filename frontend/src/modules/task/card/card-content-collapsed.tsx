@@ -7,7 +7,7 @@ import { TaskDragHandle } from '~/modules/task/card/task-drag-handle';
 import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
-import { taskCardActionsReveal } from '~/modules/task/task-styles';
+import { taskCardActionsRevealClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
 
@@ -38,7 +38,7 @@ export function TaskCardContentCollapsed({ task, animateClose = false, showDragH
       </div>
       {/* Frames the summary from beside it: the summary's fade mask would clip a ring drawn inside it */}
       {onEditRequest && <DescriptionEditButton onClick={onEditRequest} className="top-0 -right-2 bottom-0 left-8" />}
-      <div className={cn('absolute top-0 right-0 flex items-center gap-1', taskCardActionsReveal)}>
+      <div className={cn('absolute top-0 right-0 flex items-center gap-1', taskCardActionsRevealClass)}>
         {animateClose && <CardCloseExit />}
         <TaskOptionsButton task={task} />
       </div>

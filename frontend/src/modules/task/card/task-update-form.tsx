@@ -11,14 +11,14 @@ import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { createTaskUploadPersister } from '~/modules/task/helpers/create-task-upload-persister';
 import { useTaskDescriptionUpdate } from '~/modules/task/hooks/use-task-description-update';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
-import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
+import { taskDescriptionGutterClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
 
 // Avoid bare `min-h-8`/`pb-4` here: BlockNoteView copies className to its portal element
 // (see @blocknote/react BlockNoteView), which would add empty trailing height below the editor.
 const expandedStyle = '[&>.bn-editor]:min-h-8 w-full bg-transparent border-none';
-const expandedWrapperStyle = taskDescriptionGutterStyle;
+const expandedWrapperStyle = taskDescriptionGutterClass;
 const checkboxExtensions = [checkedExtension({ persisted: true })];
 
 interface TaskUpdateFormProps {
@@ -64,7 +64,7 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
         onEditorReady={onEditorReady}
         waitingFallback={
           // The static wherever no live editor is, faded and inert only while an editor is coming.
-          // noGutter: the wrapper already applies taskDescriptionGutterStyle, so the preview
+          // noGutter: the wrapper already applies taskDescriptionGutterClass, so the preview
           // aligns with the editor that replaces it and the swap causes no reflow.
           <div className={cn(canEdit && 'pointer-events-none select-none opacity-50')}>
             <TaskCardContentExpanded task={task} noGutter />

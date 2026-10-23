@@ -18,6 +18,7 @@ import {
   ComboboxHotkeyHint,
   comboboxActionButtonClass,
   comboboxInputPinClass,
+  comboboxRowClass,
   comboboxScrollClass,
   comboboxShellClass,
   HotkeyIndexBadge,
@@ -81,11 +82,7 @@ const renderLabelItem = (
   const isSelected = selectedLabels.some((selected) => selected.slug === label.slug);
   const LabelModeIcon = label.mode === 'epic' ? FlagIcon : TagIcon;
   return (
-    <ComboboxItem
-      key={label.id}
-      value={label.slug}
-      className={cn('group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal', isSelected && 'font-medium')}
-    >
+    <ComboboxItem key={label.id} value={label.slug} className={cn(comboboxRowClass, isSelected && 'font-medium')}>
       <LabelModeIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
       <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
       <span className="pointer-events-none flex size-4 items-center justify-center">

@@ -14,6 +14,7 @@ import type { BoardSearchParams } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/modules/ui/input-group';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 /** The input's DOM id, for the find hotkey. */
 export const boardSearchInputId = 'board-search-input';
@@ -29,6 +30,8 @@ interface BoardSearchProps {
 }
 
 const noStep = () => {};
+
+const iconButtonClass = tw('focus-effect flex size-6 cursor-pointer items-center justify-center rounded-md hover:bg-muted');
 
 export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: BoardSearchProps) {
   const { t } = useTranslation();
@@ -97,10 +100,8 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
     resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() }) : t('c:project').toLowerCase(),
   });
 
-  const iconButtonClass = 'focus-effect flex size-6 cursor-pointer items-center justify-center rounded-md hover:bg-muted';
-
   return (
-    <InputGroup className="relative flex w-full items-center border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
+    <InputGroup className="border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
       <InputGroupAddon className="pl-1.5">
         <SearchSpinner value={inputValue} isSearching={false} />
       </InputGroupAddon>
@@ -113,7 +114,7 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
         onBlur={toggleFocus}
         placeholder={isMobile ? t('c:placeholder.search') : searchLabel}
         aria-label={searchLabel}
-        className={'h-10 w-full border-0 pl-0! shadow-none'}
+        className="pl-0!"
         value={inputValue}
         onChange={(event) => setInputValue(event.target.value)}
       />

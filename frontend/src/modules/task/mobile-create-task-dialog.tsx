@@ -3,8 +3,11 @@ import { Suspense } from 'react';
 import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { Spinner } from '~/modules/common/spinner';
 import { lazyNamed } from '~/utils/lazy-named';
+import { tw } from '~/utils/tw';
 
 const CreateTaskForm = lazyNamed(() => import('~/modules/task/create-task-form'), 'CreateTaskForm');
+
+const createTaskDialogClassName = tw('mt-0 flex h-screen min-w-full flex-col overflow-auto rounded-none border-0 max-sm:max-h-[100dvh]');
 
 interface MobileCreateTaskDialogProps {
   projectId: string;
@@ -23,7 +26,7 @@ export const openCreateTaskDialog = (projectId: string, organizationId: string) 
   return dialoger.getState().create(<MobileCreateTaskDialog projectId={projectId} organizationId={organizationId} />, {
     id: 'create-task',
     drawerOnMobile: false,
-    className: 'min-w-full h-screen max-sm:max-h-[100dvh] border-0 rounded-none flex flex-col mt-0 overflow-auto',
+    className: createTaskDialogClassName,
     triggerRef: { current: null },
     title: i18n.t('c:create_resource', { resource: i18n.t('c:task').toLowerCase() }),
   });

@@ -2,7 +2,7 @@ import { type CSSProperties, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
-import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-parts';
+import { ComboboxHotkeyHint, comboboxRowClass, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-parts';
 import type { SelectStatusProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import { statusOptions, statusOptionsByValue } from '~/modules/task/task-properties';
@@ -62,12 +62,12 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
           showClear={false}
         />
         <ComboboxHotkeyHint searching={!!searchValue.length}>S</ComboboxHotkeyHint>
-        <ComboboxList className="p-1">
+        <ComboboxList>
           {(status: StatusOption) => {
             const index = statusOptions.findIndex((option) => option.value === status.value);
             return (
-              <ComboboxItem key={status.value} value={status} className="group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal">
-                <status.icon className="size-4 group-hover:opacity-100" />
+              <ComboboxItem key={status.value} value={status} className={comboboxRowClass}>
+                <status.icon />
                 <div className="grow">{t(`c:${status.status}`)}</div>
                 <ComboboxItemIndicator className="text-success" />
                 <HotkeyIndexBadge index={searchValue ? undefined : index} />

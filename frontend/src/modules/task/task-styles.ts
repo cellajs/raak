@@ -1,4 +1,5 @@
 import { cva } from 'class-variance-authority';
+import { tw } from '~/utils/tw';
 
 // Glow colors per status live in card-glow.css ([data-status] sets --glow-color-rgb)
 export const taskCardVariants = cva('', {
@@ -16,12 +17,7 @@ export const taskCardVariants = cva('', {
 });
 
 export const statusButtonVariants = cva(
-  [
-    'border-[rgb(var(--sc)_/_0.4)] bg-[rgb(var(--sc)_/_0.03)]',
-    'group-hover/task:border-[rgb(var(--sc)_/_0.5)] group-hover/task:bg-[rgb(var(--sc)_/_0.08)]',
-    'group-[.is-focused]/task:border-[rgb(var(--sc)_/_0.5)] group-[.is-focused]/task:bg-[rgb(var(--sc)_/_0.08)]',
-    'hover:border-[rgb(var(--sc)_/_0.7)] hover:bg-[rgb(var(--sc)_/_0.15)]',
-  ].join(' '),
+  'border-[rgb(var(--sc)_/_0.4)] bg-[rgb(var(--sc)_/_0.03)] hover:border-[rgb(var(--sc)_/_0.7)] hover:bg-[rgb(var(--sc)_/_0.15)] group-hover/task:border-[rgb(var(--sc)_/_0.5)] group-hover/task:bg-[rgb(var(--sc)_/_0.08)] group-[.is-focused]/task:border-[rgb(var(--sc)_/_0.5)] group-[.is-focused]/task:bg-[rgb(var(--sc)_/_0.08)]',
   {
     variants: {
       status: {
@@ -41,17 +37,18 @@ export const statusButtonVariants = cva(
  * Left gutter + bottom padding for a task description, shared by the expanded (read-only) view
  * and the editing form so toggling edit mode doesn't shift the text.
  */
-export const taskDescriptionGutterStyle = 'pl-1 sm:pl-9 pb-4';
+export const taskDescriptionGutterClass = tw('pb-4 pl-1 sm:pl-9');
 
 /**
  * Reveals a task card's action buttons on hover or focus. The collapsed summary fades its first line out under them
  * on the same states (`.task-summary-fade` in card-glow.css): keep the two in step.
  */
-export const taskCardActionsReveal =
-  'opacity-0 transition-opacity group-hover/task:opacity-100 group-focus-within/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-[sheet]/task:opacity-100 has-data-dropdowner-done:opacity-100';
+export const taskCardActionsRevealClass = tw(
+  'opacity-0 transition-opacity group-focus-within/task:opacity-100 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 has-data-dropdowner-done:opacity-100 group-data-[sheet]/task:opacity-100',
+);
 
 /** Shared shell classes for the board/table top bar (search, count, actions). */
-export const taskBarClass = 'z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2';
+export const taskBarClass = tw('z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2');
 
 /** Accepted/iced section-bar colors for the panel section headers, the collapsed panel and the board skeleton, so a strip keeps its fill through a collapse. */
 export const statusSectionColors = {

@@ -3,6 +3,7 @@ import { buttonVariants } from '~/modules/ui/button';
 import { Kbd } from '~/modules/ui/kbd';
 import { cn } from '~/utils/cn';
 import { inNumbersArray } from '~/utils/in-numbers-array';
+import { tw } from '~/utils/tw';
 
 /**
  * Full-width styling for a combobox action row such as "Show all" or "Create label". Filled
@@ -24,17 +25,20 @@ export const comboboxActionButtonClass = cn(
  * the single scroll container (its native touch scroll), and the input pins via `comboboxInputPinClass`.
  * A nested scroll region inside the drawer fights its swipe/touch handling, so we deliberately avoid one.
  */
-export const comboboxShellClass = 'relative rounded-lg sm:flex sm:max-h-[44vh] sm:w-(--trigger-width) sm:flex-col sm:overflow-hidden';
+export const comboboxShellClass = tw('relative rounded-lg sm:flex sm:max-h-[44vh] sm:w-(--trigger-width) sm:flex-col sm:overflow-hidden');
 
 /** Scroll region inside `comboboxShellClass`. Desktop only: fills remaining height so only the list scrolls. */
-export const comboboxScrollClass = 'sm:min-h-0 sm:flex-1';
+export const comboboxScrollClass = tw('sm:min-h-0 sm:flex-1');
 
 /**
  * Pins a combobox search input inside the mobile drawer via `position: sticky` while the drawer scrolls,
  * with an opaque background so the list scrolls underneath it. `top-5` clears the drawer's ~20px sticky
  * drag handle. Reverts to a normal flex child on desktop, where the shell's `ScrollArea` does the scrolling.
  */
-export const comboboxInputPinClass = 'sticky top-5 z-10 shrink-0 bg-background sm:static sm:top-auto sm:z-auto sm:bg-transparent';
+export const comboboxInputPinClass = tw('sticky top-5 z-10 shrink-0 bg-background sm:static sm:top-auto sm:z-auto sm:bg-transparent');
+
+/** Row of a task combobox list, on top of `ComboboxItem`'s base. */
+export const comboboxRowClass = tw('h-9 rounded-md pr-2 leading-normal');
 
 /**
  * Matches a single-digit combobox input value against the 1-based position of an item in `items`.

@@ -94,7 +94,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
   return (
     <SelectionActionBar count={selectedTaskIds.length} onClear={clearSelection}>
       <TooltipButton toolTipContent={t('c:copy_content')} side="top">
-        <Button variant="default" aria-label={t('c:copy_content')} onClick={handleCopy}>
+        <Button aria-label={t('c:copy_content')} onClick={handleCopy}>
           {copied ? <CheckIcon /> : <CopyIcon />}
           <span className="max-sm:hidden">{t('c:copy')}</span>
         </Button>
