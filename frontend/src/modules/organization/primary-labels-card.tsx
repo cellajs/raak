@@ -87,7 +87,7 @@ function ColorCell({ row, onRowChange }: PickerCellProps) {
   );
 }
 
-interface Props {
+interface PrimaryLabelsCardProps {
   organization: Organization;
 }
 
@@ -97,7 +97,7 @@ interface Props {
  * editing. Every interaction persists immediately. Slugs are derived from the name on add and stay
  * stable afterwards, since they are the identity that organization tracking matches on.
  */
-export function PrimaryLabelsCard({ organization }: Props) {
+export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
   const { t } = useTranslation();
   const { mutate, isPending } = useOrganizationUpdateMutation();
 
@@ -109,7 +109,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       body: { setupConfig: { primaryLabels } },
     });
 
-  const onRowsChange = (changed: PrimaryLabelDefinition[], { indexes, column }: RowsChangeData<PrimaryLabelDefinition>) => {
+  const handleRowsChange = (changed: PrimaryLabelDefinition[], { indexes, column }: RowsChangeData<PrimaryLabelDefinition>) => {
     const index = indexes[0];
     if (column.key === 'name') {
       const name = changed[index].name.trim();
@@ -121,7 +121,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
     if (column.key === 'icon' || column.key === 'color') persist(changed);
   };
 
-  const onRowReorder = (fromIdx: number, toIdx: number, edge: 'top' | 'bottom') => {
+  const handleRowReorder = (fromIdx: number, toIdx: number, edge: 'top' | 'bottom') => {
     const next = [...rows];
     const [moved] = next.splice(fromIdx, 1);
     let insertAt = edge === 'bottom' ? toIdx + 1 : toIdx;
@@ -171,7 +171,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       minWidth: 140,
       renderCell: ({ row }) => <span className="truncate">{row.name}</span>,
       renderEditCell: ({ row, onRowChange }) => (
-        <EditCellInput value={row.name} onChange={(e) => onRowChange({ ...row, name: e.target.value })} autoFocus />
+        <EditCellInput value={row.name} onChange={(event) => onRowChange({ ...row, name: event.target.value })} autoFocus />
       ),
     },
     {
@@ -211,8 +211,8 @@ export function PrimaryLabelsCard({ organization }: Props) {
         cellSelectionMode="cell"
         enableVirtualization={false}
         className="mb-0"
-        onRowsChange={onRowsChange}
-        onRowReorder={onRowReorder}
+        onRowsChange={handleRowsChange}
+        onRowReorder={handleRowReorder}
         onCellClick={({ column, selectCell }) => {
           if (column.key === 'name') selectCell(true);
         }}

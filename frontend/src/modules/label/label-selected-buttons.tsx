@@ -1,7 +1,7 @@
 import { TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { NamedText } from '~/modules/common/named-text';
 import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
@@ -49,7 +49,7 @@ export function LabelSelectedButtons({ selectedLabelIds, clearSelection }: Label
     });
     if (!toDelete.length) return;
 
-    const { create, remove } = useDialoger.getState();
+    const { create, remove } = dialoger.getState();
     create(<DeleteLabels dialog labels={toDelete} callback={clearSelection} onCancel={() => remove('delete-labels')} />, {
       id: 'delete-labels',
       triggerRef: { current: currentTarget },

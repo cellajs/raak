@@ -25,15 +25,13 @@ export function ExplainerPanel() {
   const { data: organization } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
   const setAlertSeen = useAlertStore((state) => state.setAlertSeen);
 
-  const setAsSeen = () => setAlertSeen('welcome-text');
-
   return (
     <LocalPanelShell
       panelId={EXPLAINER_PANEL_ID}
       icon={<InfoIcon />}
       title={t('c:getting_started')}
       headerActions={
-        <Button variant="ghost" size="sm" className="font-normal opacity-70 hover:opacity-100" onClick={setAsSeen}>
+        <Button variant="ghost" size="sm" className="font-normal opacity-70 hover:opacity-100" onClick={() => setAlertSeen('welcome-text')}>
           <span>{t('c:dont_show_again')}</span>
         </Button>
       }

@@ -18,3 +18,5 @@ export const useBoardFocusStore = create<BoardFocusState>()((set) => ({
   setMountedItemId: (mountedItemId) => set({ mountedItemId }),
   reset: () => set({ currentItemId: null, mountedItemId: null }),
 }));
+
+export { useBoardFocusStore as boardFocusStore };

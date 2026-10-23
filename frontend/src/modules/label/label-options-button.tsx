@@ -5,18 +5,23 @@ import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { NamedText } from '~/modules/common/named-text';
 import { openPopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteLabels } from '~/modules/label/delete-labels';
-import { useLabelTileStore } from '~/modules/label/label-tile-store';
+import { labelTileStore } from '~/modules/label/label-tile-store';
 import { findLabelInCache } from '~/modules/label/query';
 import type { LabelRow } from '~/modules/label/types';
 import { Button } from '~/modules/ui/button';
 
+interface LabelOptionsButtonProps {
+  row: LabelRow;
+  canManage: boolean;
+}
+
 /** Ellipsis button on an expanded label tile: copy its link and, for members, delete it. */
-export function LabelOptionsButton({ row, canManage }: { row: LabelRow; canManage: boolean }) {
+export function LabelOptionsButton({ row, canManage }: LabelOptionsButtonProps) {
   const { t } = useTranslation();
   const { copyToClipboard } = useCopyToClipboard(2000);
   const isMobile = useBreakpointBelow('sm');
@@ -28,7 +33,7 @@ export function LabelOptionsButton({ row, canManage }: { row: LabelRow; canManag
     const triggerRef = { current: currentTarget };
 
     const handleDeleteClick = () => {
-      const { remove } = useDropdowner.getState();
+      const { remove } = dropdowner.getState();
       const labels = deleteIds.map((id) => findLabelInCache(id)).filter((label): label is Label => !!label);
       openPopConfirm(
         <NamedText i18nKey="c:delete_confirm.text" name={row.name} />,
@@ -36,14 +41,14 @@ export function LabelOptionsButton({ row, canManage }: { row: LabelRow; canManag
           labels={labels.length ? labels : [row]}
           callback={() => {
             remove();
-            useLabelTileStore.getState().collapse(row.id);
+            labelTileStore.getState().collapse(row.id);
           }}
           onCancel={remove}
         />,
       );
     };
 
-    useDropdowner.getState().create(
+    dropdowner.getState().create(
       <>
         <DropdownActionItem
           isMobile={isMobile}
@@ -51,7 +56,7 @@ export function LabelOptionsButton({ row, canManage }: { row: LabelRow; canManag
           closeOnSelect={false}
           onSelect={async () => {
             const link = `${window.location.origin}${window.location.pathname}?labelPageId=${row.id}`;
-            if (await copyToClipboard(link)) useDropdowner.getState().complete(t('c:copied'));
+            if (await copyToClipboard(link)) dropdowner.getState().complete(t('c:copied'));
           }}
         >
           {t('c:copy_as_link')}

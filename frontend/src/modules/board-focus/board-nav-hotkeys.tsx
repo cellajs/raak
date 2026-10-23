@@ -1,13 +1,13 @@
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { boardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { focusItem } from '~/modules/board-focus/focus-item';
 import { findItemPanelId, getPanelNav } from '~/modules/board-focus/panel-nav-registry';
 
 const ignoreTags = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', '[role="grid"]'];
 
 const currentItem = () => {
-  const id = useBoardFocusStore.getState().currentItemId ?? document.activeElement?.id;
+  const id = boardFocusStore.getState().currentItemId ?? document.activeElement?.id;
   if (!id) return null;
   const panelId = findItemPanelId(id);
   if (!panelId) return null;
@@ -26,25 +26,25 @@ const listContext = () => {
 const direction = (event: KeyboardEvent) => (event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1);
 
 const step = (event: KeyboardEvent) => {
-  const ctx = listContext();
-  const target = ctx?.items[ctx.index + direction(event)];
+  const list = listContext();
+  const target = list?.items[list.index + direction(event)];
   if (target) focusItem(target.id);
 };
 
 const toEdge = (event: KeyboardEvent) => {
-  const ctx = listContext();
-  const target = direction(event) === 1 ? ctx?.items.at(-1) : ctx?.items[0];
+  const list = listContext();
+  const target = direction(event) === 1 ? list?.items.at(-1) : list?.items[0];
   if (target) focusItem(target.id);
 };
 
 // Groups appear in list order, so the next group is the next distinct group after the current item's. Nothing at the edges.
 const toGroup = (event: KeyboardEvent) => {
-  const ctx = listContext();
-  if (!ctx) return;
-  const groups = [...new Set(ctx.items.map((item) => item.group))];
-  const targetGroup = groups[groups.indexOf(ctx.items[ctx.index].group) + direction(event)];
+  const list = listContext();
+  if (!list) return;
+  const groups = [...new Set(list.items.map((item) => item.group))];
+  const targetGroup = groups[groups.indexOf(list.items[list.index].group) + direction(event)];
   if (targetGroup === undefined) return;
-  const target = ctx.items.find((item) => item.group === targetGroup);
+  const target = list.items.find((item) => item.group === targetGroup);
   if (target) focusItem(target.id);
 };
 
@@ -70,10 +70,10 @@ const hotkeys: HotkeyItem[] = [
   ['ArrowLeft', acrossPanels],
 ];
 
-const none: HotkeyItem[] = [];
+const noHotkeys: HotkeyItem[] = [];
 
 /** Arrow keys across the board's panel lists: ↑/↓ within a list, ⌘ to its ends, ⌥ across groups, ←/→ across panels. */
 export function BoardNavHotkeys({ disabled }: { disabled?: boolean }) {
-  useHotkeys(disabled ? none : hotkeys, ignoreTags);
+  useHotkeys(disabled ? noHotkeys : hotkeys, ignoreTags);
   return null;
 }

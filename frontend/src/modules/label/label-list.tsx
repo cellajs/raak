@@ -12,8 +12,8 @@ import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-n
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
-import { LabelTile } from '~/modules/label/label-tile';
-import { labelTileDomId, useLabelTileStore } from '~/modules/label/label-tile-store';
+import { LabelTile, labelTileDomId } from '~/modules/label/label-tile';
+import { labelTileStore } from '~/modules/label/label-tile-store';
 import { labelsCanonicalOptions } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps, LabelsScopeProps } from '~/modules/label/types';
 import { type LabelUsage, useLabelUsage } from '~/modules/label/use-label-usage';
@@ -33,7 +33,9 @@ const combinePanelLabels = (results: { data?: { items: Label[] }; isLoading: boo
   pending: results.some((result) => result.isLoading),
 });
 
-type LabelListScopeProps = { entityId: string } & LabelsHostProps;
+interface LabelListScopeProps extends LabelsHostProps {
+  entityId: string;
+}
 
 /** Newest-first by creation, mirroring the tasks table's default order. */
 const byCreatedAtDesc = (a: LabelRow, b: LabelRow) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0);
@@ -78,11 +80,11 @@ function WorkspaceLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   return <LabelListView labels={labels} usage={usage} isLoading={projectIds === undefined || pending} {...hostProps} />;
 }
 
-type LabelListViewProps = {
+interface LabelListViewProps extends LabelsHostProps {
   labels: Label[];
   usage: LabelUsage;
   isLoading: boolean;
-} & LabelsHostProps;
+}
 
 /**
  * Renders label tiles using internal or page scrolling.
@@ -115,7 +117,7 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
     if (!labelPageId || isLoading) return;
     const row = rows.find((candidate) => candidate.siblingIds.includes(labelPageId));
     if (row) {
-      useLabelTileStore.getState().expand(row.id, tileProps.singleExpand);
+      labelTileStore.getState().expand(row.id, tileProps.singleExpand);
       requestAnimationFrame(() => document.getElementById(labelTileDomId(row.id))?.scrollIntoView({ block: 'nearest' }));
     }
     navigate({ to: '.', replace: true, resetScroll: false, search: (prev) => ({ ...prev, labelPageId: undefined }) });
@@ -150,7 +152,9 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
   );
 }
 
+interface LabelListProps extends LabelsScopeProps, LabelsHostProps {}
+
 /** Labels panel body: canonical per-project list at project scope, aggregated list at workspace scope. */
-export function LabelList({ entity, entityId, ...hostProps }: LabelsScopeProps & LabelsHostProps) {
+export function LabelList({ entity, entityId, ...hostProps }: LabelListProps) {
   return entity === 'workspace' ? <WorkspaceLabelList entityId={entityId} {...hostProps} /> : <ProjectLabelList entityId={entityId} {...hostProps} />;
 }

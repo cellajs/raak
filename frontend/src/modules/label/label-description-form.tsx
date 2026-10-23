@@ -5,9 +5,9 @@ import { useLabelDescriptionUpdate } from '~/modules/label/use-label-description
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { useProjectMembers } from '~/modules/project/use-project-members';
 
-const editorStyle = '[&>.bn-editor]:min-h-24 w-full bg-transparent border-none';
+const editorClass = '[&>.bn-editor]:min-h-24 w-full bg-transparent border-none';
 /** Left gutter gives the block drag handle (side menu) room; it renders outside the text edge. */
-const gutterStyle = 'pt-3 pr-4 pb-5 pl-2 sm:pl-9';
+const gutterClass = 'pt-3 pr-4 pb-5 pl-2 sm:pl-9';
 
 /**
  * Hosts the collaborative BlockNote editor for documenting an epic label; the shared
@@ -22,7 +22,7 @@ export function LabelDescriptionForm({ label }: { label: Label }) {
   const updateData = useLabelDescriptionUpdate(label);
 
   return (
-    <div className={gutterStyle}>
+    <div className={gutterClass}>
       <CollaborativeBlockNote
         entityType="label"
         entityId={label.id}
@@ -32,7 +32,7 @@ export function LabelDescriptionForm({ label }: { label: Label }) {
         description={label.description}
         updateData={updateData}
         members={projectMembers}
-        className={editorStyle}
+        className={editorClass}
         dense
         excludeBlockTypes={['checklistItem']}
         excludeFileBlockTypes={['file', 'image', 'audio', 'video']}
