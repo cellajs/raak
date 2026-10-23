@@ -311,6 +311,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                         </>
                       )}
                     </div>
+                    <ChevronDownIcon className="ml-auto size-4 shrink-0 opacity-50" />
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -373,6 +374,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                           <UserXIcon className="h-4 w-4 opacity-75" /> <span className="font-normal opacity-75">{t('c:assign_to')}</span>
                         </>
                       )}
+                      <ChevronDownIcon className="ml-auto size-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
                   <FormMessage />

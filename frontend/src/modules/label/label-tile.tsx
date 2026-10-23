@@ -128,7 +128,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
         highlighted && searchHighlightRowClass,
       )}
     >
-      <div className="flex min-h-11 items-center gap-2 px-3 py-1.5">
+      <div className="flex min-h-11 items-center gap-2 px-4 py-1.5">
         {selectable && (
           <Checkbox
             className="relative z-10 data-[state=checked]:border-primary"
@@ -193,7 +193,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
 
         {/* Floating and in-flow actions share the row's right padding, so filter and options keep their place
             when the tile expands; close joins on their left */}
-        <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : cn('absolute inset-y-0 right-3', actionsReveal))}>
+        <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : cn('absolute inset-y-0 right-4', actionsReveal))}>
           <AnimatePresence initial={false}>
             {expanded && <CardCloseButton key="close" onClick={() => useLabelTileStore.getState().collapse(row.id)} />}
           </AnimatePresence>

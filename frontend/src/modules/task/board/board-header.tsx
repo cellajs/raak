@@ -64,12 +64,7 @@ export function BoardHeader({
         tenantId={queryParams?.tenantId ?? ''}
         orderTasks={(tasks) => sortTasksAsOnBoard(tasks, projects)}
       />
-      <LabelSelectedButtons
-        selectedLabelIds={selectedLabelIds}
-        clearSelection={clearSelection}
-        organizationId={queryParams?.organizationId ?? ''}
-        tenantId={queryParams?.tenantId ?? ''}
-      />
+      <LabelSelectedButtons selectedLabelIds={selectedLabelIds} clearSelection={clearSelection} />
 
       <BoardSearch
         isInWorkspace={isInWorkspace}
