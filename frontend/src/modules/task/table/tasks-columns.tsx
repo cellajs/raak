@@ -63,7 +63,7 @@ function ProjectCell({ row, tabIndex, projects, organization, tenantId }: Projec
       to="/$tenantId/$organizationSlug/project/$slug"
       params={{ slug: project.slug, organizationSlug: organization.slug, tenantId }}
       tabIndex={tabIndex}
-      className="group flex items-center space-x-2 truncate outline-0 ring-0"
+      className="group flex items-center space-x-2 truncate outline-0"
       data-tooltip="compact"
       data-tooltip-content={project.name}
     >

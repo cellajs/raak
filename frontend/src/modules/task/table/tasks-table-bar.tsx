@@ -14,7 +14,6 @@ import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
 import { taskBarClass } from '~/modules/task/task-styles';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { DropdownMenuCheckboxItem } from '~/modules/ui/dropdown-menu';
-import { cn } from '~/utils/cn';
 
 interface TasksTableBarProps
   extends Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'>,
@@ -57,7 +56,7 @@ export function TasksTableBar({
   const toggleSearchFocus = () => setIsSearchFocused((prev) => !prev);
 
   return (
-    <div className={cn(taskBarClass, 'gap-2')}>
+    <div className={taskBarClass}>
       <TaskSelectedButtons
         selectedTaskIds={selected.map(({ id }) => id)}
         clearSelection={clearSelection}

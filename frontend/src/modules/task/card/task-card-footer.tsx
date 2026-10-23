@@ -96,15 +96,10 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
   );
 
   return (
-    <div
-      className={cn(
-        'flex flex-col',
-        isExpandedMobile && 'group-[.is-expanded]/task:fade-in group-[.is-expanded]/task:animate-in group-[.is-expanded]/task:duration-300',
-      )}
-    >
+    <div className="group-not-data-[state=collapsed]/task:fade-in flex flex-col group-not-data-[state=collapsed]/task:animate-in group-not-data-[state=collapsed]/task:duration-300">
       {/* On mobile, show labels on their own line above the footer when expanded */}
       {isExpandedMobile && <div className={cn('mb-1 flex items-center', labelsHide)}>{labelsButton}</div>}
-      <div className="group-[.is-expanded]/task:fade-in flex items-center group-[.is-expanded]/task:animate-in group-[.is-expanded]/task:duration-300 sm:gap-1">
+      <div className="flex items-center sm:gap-1">
         {!isSheet && (
           <Checkbox
             className={cn('mx-1', !isExpandedMobile && 'max-sm:hidden', readOnlyHide)}

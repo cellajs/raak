@@ -203,9 +203,8 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         ref={taskRef}
         className={cn(
           'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent py-0 sm:py-0',
-          effectiveState !== 'collapsed' && 'is-expanded',
           isDragging && 'opacity-30',
-          !isSheet && 'focus-visible:outline-none focus-visible:ring-0',
+          !isSheet && 'focus-visible:outline-none',
           isCurrent && 'is-focused',
           isSheet ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]' : 'hover:bg-card/20',
           taskCardVariants({ status: task.status }),

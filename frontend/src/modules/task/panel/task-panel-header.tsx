@@ -14,13 +14,11 @@ import { type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskStatus } from '~/modules/task/task-properties';
+import { newTaskButtonClass, panelHandleClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
-import { tw } from '~/utils/tw';
-
-const handleClass = tw('flex h-auto items-center justify-start gap-2 p-0 hover:bg-transparent');
 
 /**
  * Header component for task board panels in desktop view. Displays project name/avatar or section filters, along with actions like creating a new task or accessing project actions.
@@ -63,7 +61,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
           fallbackLabel={project.name}
           icon={projectAvatar}
           preview={<EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl} />}
-          className={cn(handleClass, 'truncate no-underline', isCollapsed ? 'w-full justify-center' : 'pr-2')}
+          className={cn(panelHandleClass, 'truncate no-underline', isCollapsed ? 'w-full justify-center' : 'pr-2')}
         >
           {!isCollapsed && <div className="truncate font-semibold leading-6">{project.name}</div>}
         </PanelDragHandleButton>
@@ -76,7 +74,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
 
       // In workspace: show project avatar with funnel badge
       if (isInWorkspace) {
-        const splitName = `${project.name} — ${sectionName}`;
+        const splitName = `${project.name}: ${sectionName}`;
         return (
           <PanelDragHandleButton
             name={splitName}
@@ -93,7 +91,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
                 {splitName}
               </EntityChip>
             }
-            className={cn(handleClass, 'min-w-0', isCollapsed && 'w-full justify-center')}
+            className={cn(panelHandleClass, 'min-w-0', isCollapsed && 'w-full justify-center')}
           >
             {!isCollapsed && (
               <div className="truncate font-semibold leading-6">
@@ -114,13 +112,9 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
               <FunnelIcon className="size-4 shrink-0" />
             </div>
           }
-          className={cn(handleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
+          className={cn(panelHandleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
         >
-          {!isCollapsed && (
-            <div className="truncate font-semibold leading-6">
-              <span>{sectionName}</span>
-            </div>
-          )}
+          {!isCollapsed && <div className="truncate font-semibold leading-6">{sectionName}</div>}
         </PanelDragHandleButton>
       );
     }
@@ -135,7 +129,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
             <SquareCheckBigIcon className="size-4 shrink-0" />
           </div>
         }
-        className={cn(handleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
+        className={cn(panelHandleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
       >
         {!isCollapsed && <div className="truncate font-semibold leading-6">{t('c:task_other')}</div>}
       </PanelDragHandleButton>
@@ -151,7 +145,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
       )}
       {!publicView && isInWorkspace && isPrimary && <ProjectActionsMenu project={project} className="h-8 px-2" />}
       {!isReadOnly && hostsCreateButton && (
-        <Button data-form-dirty={hasDraft} variant="plain" size="xs" className="relative hidden rounded sm:inline-flex" onClick={toggleCreateForm}>
+        <Button data-form-dirty={hasDraft} variant="plain" size="xs" className={newTaskButtonClass} onClick={toggleCreateForm}>
           <Badge className="absolute -top-1 -right-1 z-100 in-data-[form-dirty=false]:hidden size-2 p-0" />
           <PlusIcon className={cn('size-4.5 transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />
           <span>{t('c:task')}</span>

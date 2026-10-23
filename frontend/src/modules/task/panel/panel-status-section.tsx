@@ -123,9 +123,9 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
           variant="ghost"
           size="sm"
           className={cn(
-            'relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs ring-inset transition-[translate,opacity,color,background-color,border-color,box-shadow] duration-300 ease-in-out focus-visible:ring-offset-0 sm:px-2',
+            'focus-inset relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs transition-[translate,opacity,color,background-color,border-color,box-shadow] duration-300 ease-in-out sm:px-2',
             // Hidden state slides the button toward its sticky edge
-            isVisible ? 'pointer-events-auto translate-y-0 opacity-100' : isIced ? 'translate-y-full opacity-0' : '-translate-y-full opacity-0',
+            isVisible ? 'pointer-events-auto' : isIced ? 'translate-y-full opacity-0' : '-translate-y-full opacity-0',
             colors.fill,
             colors.text,
             isIced

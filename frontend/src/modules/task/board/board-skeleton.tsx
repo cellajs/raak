@@ -19,7 +19,7 @@ import { BoardSearch } from '~/modules/task/board-search';
 import { formatSectionLabel, isPrimarySection, panelHostsDraft } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { TaskStatus } from '~/modules/task/task-properties';
-import { statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
+import { newTaskButtonClass, panelHandleClass, statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
 import type { BoardResizablePanel } from '~/modules/task/types';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
@@ -27,9 +27,9 @@ import { cn } from '~/utils/cn';
 
 const idealPanelWidth = panelMinWidth * idealWidthFactor;
 const columnGap = 8;
-const desktopRowHeight = 88;
+const desktopRowHeight = 80;
 // A phone wraps a card's title over its own footer row, so mobile cards stand taller than desktop rows
-const mobileRowHeight = 110;
+const mobileRowHeight = 102;
 const rowCount = 12;
 
 /** The mobile placeholder column carries no project or kind; desktop columns are real board panels. */
@@ -227,7 +227,6 @@ interface PanelBodySkeletonProps {
 }
 
 function PanelBodySkeleton({ rowHeight = desktopRowHeight }: PanelBodySkeletonProps) {
-  const renderRowHeight = rowHeight - 8;
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden sm:border">
       <div
@@ -236,7 +235,7 @@ function PanelBodySkeleton({ rowHeight = desktopRowHeight }: PanelBodySkeletonPr
       {Array.from({ length: rowCount }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations
         <div key={index} className="border-b px-1 py-2">
-          <Skeleton className="w-full rounded" style={{ height: `${renderRowHeight}px` }} />
+          <Skeleton className="w-full rounded" style={{ height: rowHeight }} />
         </div>
       ))}
       <div className={cn('h-9', statusSectionColors.iced.fill)} />
@@ -276,13 +275,7 @@ function PanelHeaderSkeleton({ boardId, panelId, projectPage, project, sectionFi
       className="bg-background"
       isCollapsed={!!isCollapsed}
       leading={
-        <div
-          className={cn(
-            buttonVariants({ variant: 'ghost' }),
-            'flex h-auto items-center justify-start gap-2 truncate p-0 hover:bg-transparent',
-            isCollapsed && 'w-full justify-center',
-          )}
-        >
+        <div className={cn(buttonVariants({ variant: 'ghost' }), panelHandleClass, 'truncate', isCollapsed && 'w-full justify-center')}>
           {!projectPage && isPrimary && <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />}
           {(projectPage || !isPrimary) && sectionFilters && (
             <div className="flex min-w-8 justify-center">
@@ -308,7 +301,7 @@ function PanelHeaderSkeleton({ boardId, panelId, projectPage, project, sectionFi
               </Button>
             )}
             {hostsCreateButton && (
-              <Button variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
+              <Button variant="plain" size="xs" className={newTaskButtonClass}>
                 <PlusIcon className="size-4.5" />
                 <span>{t('c:task')}</span>
               </Button>

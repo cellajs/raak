@@ -16,7 +16,7 @@ interface TaskPrimaryLabelButtonProps {
 /**
  * The task's primary label (task type) icon rendered as a button that opens the primary
  * label dropdown. Shared by the collapsed card content and the expanded card header.
- * `group-data-[sheet]` is a no-op outside a sheet, so the collapsed (non-sheet) case is unaffected.
+ * `group-data-[sheet=true]` is a no-op outside a sheet, so the collapsed (non-sheet) case is unaffected.
  */
 export function TaskPrimaryLabelButton({ task, isSheet = false }: TaskPrimaryLabelButtonProps) {
   const { t } = useTranslation();
@@ -30,7 +30,7 @@ export function TaskPrimaryLabelButton({ task, isSheet = false }: TaskPrimaryLab
       aria-label={t('c:set_resource', { resource: t('c:type').toLowerCase() })}
       variant="ghost"
       size="xs"
-      className={cn(taskCardDimClass, 'focus-inset -ml-0.5 group-data-[sheet]/task:opacity-100')}
+      className={cn(taskCardDimClass, 'focus-inset -ml-0.5 group-data-[sheet=true]/task:opacity-100')}
       {...readOnlyInert}
     >
       <PrimaryLabelIcon label={task.primaryLabel} />

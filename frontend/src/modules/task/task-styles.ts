@@ -41,8 +41,14 @@ export const taskCardDimClass = tw('opacity-80 group-hover/task:opacity-100 grou
 
 /** Reveals a task card's action buttons on hover or focus; keep in step with `.task-summary-fade` in card-glow.css. */
 export const taskCardActionsRevealClass = tw(
-  'opacity-0 transition-opacity group-focus-within/task:opacity-100 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 has-data-dropdowner-done:opacity-100 group-data-[sheet]/task:opacity-100',
+  'opacity-0 transition-opacity group-focus-within/task:opacity-100 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 has-data-dropdowner-done:opacity-100 group-data-[sheet=true]/task:opacity-100',
 );
+
+/** Shared by the panel header's drag handle and the board skeleton's stand-in, so the strip keeps its shape through loading. */
+export const panelHandleClass = tw('flex h-auto items-center justify-start gap-2 p-0 hover:bg-transparent');
+
+/** Shared by the panel header's "+ Task" button and the board skeleton's stand-in. */
+export const newTaskButtonClass = tw('relative hidden rounded sm:inline-flex');
 
 export const taskBarClass = tw('z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2');
 
