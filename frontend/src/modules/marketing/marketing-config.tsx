@@ -1,11 +1,11 @@
-import { Building2Icon, CloudIcon, FolderIcon, StickyNoteIcon, UsersIcon } from 'lucide-react';
+import { Building2Icon, FolderIcon, StickyNoteIcon, UsersIcon } from 'lucide-react';
 import { appConfig } from 'shared';
 import { nanoid } from 'shared/utils/nanoid';
 import type { TKey } from '~/lib/i18n-locales';
-import type { IconComponent } from '~/modules/common/icons/types';
 import type { InfoCard } from '~/modules/marketing/about/info-cards';
 import type { PricingPlan } from '~/modules/marketing/about/pricing';
 import type { ShowcaseItem } from '~/modules/marketing/about/showcase';
+import type { FooterLinkProps } from '~/modules/marketing/footer';
 import type { InfoGridItem } from '~/modules/marketing/info-grid';
 
 /*************************************************************************************************
@@ -22,19 +22,13 @@ export const marketingNavConfig: { id: TKey; url: string; hash: string }[] = [
  * Footer
  ************************************************************************************************/
 
-export interface FooterLink {
-  title: TKey;
-  href: string;
-  icon?: IconComponent;
-}
-
 interface FooterSection {
   title: TKey;
-  links: FooterLink[];
+  links: FooterLinkProps[];
   hideOnMobile?: boolean;
 }
 
-const socials: FooterLink[] = [{ title: 'Social' as TKey, href: appConfig.company.socialUrl, icon: CloudIcon }];
+const socials: FooterLinkProps[] = [{ title: 'c:social', href: appConfig.company.socialUrl }];
 
 /** Lists the link sections shown in the marketing footer. */
 export const footerSections: FooterSection[] = [
@@ -60,7 +54,7 @@ export const footerSections: FooterSection[] = [
  * Legal
  ************************************************************************************************/
 
-export const legalLinks: FooterLink[] = [{ title: 'c:legal', href: '/legal' }];
+export const legalLinks: FooterLinkProps[] = [{ title: 'c:legal', href: '/legal' }];
 
 /*************************************************************************************************
  * About - Integrations

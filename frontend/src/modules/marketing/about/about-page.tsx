@@ -8,16 +8,13 @@ import { scrollToSectionById } from '~/hooks/use-scroll-spy-store';
 import { FAQ } from '~/modules/marketing/about/faq';
 import { Hero } from '~/modules/marketing/about/hero';
 import { AboutSection } from '~/modules/marketing/about/section';
-import '~/modules/marketing/about/glow-button.css';
 import { Why } from '~/modules/marketing/about/why';
 import { MarketingFooter } from '~/modules/marketing/footer';
 import { MarketingNav } from '~/modules/marketing/nav';
 import { WaitlistForm } from '~/modules/requests/waitlist-form';
 import { Button } from '~/modules/ui/button';
 
-export type AboutSectionId = (typeof aboutSectionIds)[number];
-
-const aboutSectionIds = ['welcome', 'product', 'faqs'];
+const aboutSectionIds = ['welcome', 'product', 'faqs'] as const;
 
 function AboutPage() {
   const { t } = useTranslation();

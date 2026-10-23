@@ -13,10 +13,9 @@ interface HeroProps {
   title: TKey;
   children: React.ReactNode;
   text?: AboutKey;
-  chips?: TKey[];
 }
 
-export function Hero({ title, text, children, chips }: HeroProps) {
+export function Hero({ title, text, children }: HeroProps) {
   const { t } = useTranslation();
   const theme = useUIStore((state) => state.theme);
   const { ref, inView } = useInView({ once: true, threshold: 0.5 });
@@ -47,13 +46,6 @@ export function Hero({ title, text, children, chips }: HeroProps) {
           <h2 className="mx-auto mb-8 max-w-4xl text-foreground/90 text-xl leading-8 md:text-2xl md:leading-10">
             <Trans t={t} i18nKey={text} components={{ em: <em className="italic" />, strong: <strong /> }} />
           </h2>
-        )}
-        {chips && chips.length > 0 && (
-          <div className="mb-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-muted-foreground">
-            {chips.map((chip) => (
-              <span key={chip}>{t(chip)}</span>
-            ))}
-          </div>
         )}
         <div className="">{children}</div>
       </header>
