@@ -21,10 +21,6 @@ import { taskBarClass } from '~/modules/task/task-styles';
 import { WorkspaceActionButtons } from '~/modules/workspace/header/action-buttons';
 import { cn } from '~/utils/cn';
 
-/**
- * Header component for the task board, including search, task count and action buttons.
- * Used for both project boards and workspace boards, with conditional rendering based on context.
- */
 export function BoardHeader({
   boardId,
   projects,
@@ -56,7 +52,6 @@ export function BoardHeader({
 
   return (
     <div data-search-focused={isSearchFocused} className={cn('group/boardHeader', taskBarClass)}>
-      {/* Floating bottom action bars; task and label selection are mutually exclusive */}
       <TaskSelectedButtons
         selectedTaskIds={selectedTaskIds}
         clearSelection={clearSelection}

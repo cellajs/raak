@@ -25,7 +25,6 @@ interface TasksTableBarProps
   setIsCompact: (isCompact: boolean) => void;
 }
 
-/** Renders the action and filter toolbar for the tasks table. */
 export function TasksTableBar({
   total,
   hasQuery,

@@ -29,17 +29,12 @@ interface PanelStatusSectionProps {
   suppressed?: boolean;
 }
 
-/**
- * A section header for "Accepted" or "Iced" tasks within a project panel.
- * Displays the count of tasks in that status, and allows toggling visibility.
- * The header is sticky at its edge (accepted top, iced bottom) and animates
- * in/out based on scroll direction, like the floating nav buttons. Visibility
- * state lives here so scroll flips re-render only this header, not the panel.
- */
+/** Sticky header of the Accepted or Iced section, with its count and expand toggle; it hides on scroll like the floating nav buttons. */
 export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRef, windowMode, suppressed }: PanelStatusSectionProps) {
   const { t } = useTranslation();
+  // Visibility lives here so scroll flips re-render only this header, not the panel
   const isEdgeVisible = useSectionEdgeVisibility({ edge: type === 'iced' ? 'bottom' : 'top', scrollRef, windowMode });
-  // Keyboard focus must not land on a bar slid out of view
+  // A focused bar stays visible: keyboard focus never rests on a bar slid out of view
   const [hasFocus, setHasFocus] = useState(false);
   const isVisible = isEdgeVisible || hasFocus;
 
@@ -65,9 +60,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   useEffect(() => {
     const prev = prevCountRef.current;
     prevCountRef.current = count;
-    if (count > prev && !isExpanded) {
-      triggerSectionGlow(type, projectId);
-    }
+    if (count > prev && !isExpanded) triggerSectionGlow(type, projectId);
   }, [count, isExpanded, type, projectId]);
 
   const handleToggleClick = () => {
@@ -75,10 +68,8 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
     setPanelSectionExpanded(boardId, projectId, type, !isExpanded);
   };
 
-  // Publish the accepted bar's pinned height as a sticky-stack offset on the panel content,
-  // so card headers (StickyBox) pin below the bar and glide with its show/hide transition.
-  // The registered variable transitions here on the host; consumers track the animating
-  // value through calc(). Set imperatively to avoid re-rendering the panel's cards.
+  // Publishes the accepted bar's pinned height as --sticky-stack-top on the panel content, so card headers (StickyBox)
+  // pin below the bar and glide with its transition. Set imperatively to avoid re-rendering the panel's cards.
   const wrapperRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -124,7 +115,6 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
           size="sm"
           className={cn(
             'focus-inset relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs transition-[translate,opacity,color,background-color,border-color,box-shadow] duration-300 ease-in-out sm:px-2',
-            // Hidden state slides the button toward its sticky edge
             isVisible ? 'pointer-events-auto' : isIced ? 'translate-y-full opacity-0' : '-translate-y-full opacity-0',
             colors.fill,
             colors.text,

@@ -18,10 +18,7 @@ interface TaskDragHandleProps {
   task: Task;
 }
 
-/**
- * Grip before the type button, folded away until it has focus, so only a keyboard reaches it. Unfolding, it pushes that
- * button aside, and the arrow keys step the card within its status: until then they move between cards.
- */
+/** Grip before the type button, folded away until focused so only a keyboard reaches it; its arrow keys step the card within its status. */
 export function TaskDragHandle({ task }: TaskDragHandleProps) {
   const { t } = useTranslation();
   const panelTasks = usePanelTasks();
@@ -37,7 +34,7 @@ export function TaskDragHandle({ task }: TaskDragHandleProps) {
   const move = (step: -1 | 1) => {
     const target = statusTasks[index + step];
     if (!target) return;
-    // Every task of the status, so the card lands right beside its visible neighbor even past tasks the search hides
+    // Every task of the status, so the card moves right beside its visible neighbor even past tasks the search hides
     const allStatusTasks = cachedTasks().filter(
       (cached) => cached.projectId === task.projectId && cached.status === task.status && !isDraftTask(cached),
     );

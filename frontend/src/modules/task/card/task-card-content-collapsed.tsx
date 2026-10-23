@@ -19,9 +19,6 @@ interface TaskCardContentCollapsedProps {
   onEditRequest?: () => void;
 }
 
-/**
- * TaskCardContentCollapsed is responsible for rendering the task content in its "collapsed" state, which shows a summary only as main content.
- */
 export function TaskCardContentCollapsed({ task, animateClose = false, showDragHandle = false, onEditRequest }: TaskCardContentCollapsedProps) {
   return (
     <div className="relative flex w-full gap-1">
@@ -29,7 +26,7 @@ export function TaskCardContentCollapsed({ task, animateClose = false, showDragH
         {showDragHandle && <TaskDragHandle task={task} />}
         <TaskPrimaryLabelButton task={task} />
       </div>
-      {/* Grows to the card edge so the fade under the options button sits at the edge, not at the end of a short title */}
+      {/* Grows to the card edge so the fade under the options button sits at the edge */}
       <div className="task-summary-fade mt-1.5 mb-1 ml-1 min-w-0 grow leading-tight">
         <TaskSummaryHtml className="inline leading-tight" task={task} />
         {env.VITE_DEBUG_MODE && <span className="ml-2 text-muted-foreground/50">#{task.displayOrder}</span>}

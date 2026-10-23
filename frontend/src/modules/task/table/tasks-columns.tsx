@@ -81,7 +81,6 @@ function ProjectCell({ row, tabIndex, projects, organization, tenantId }: Projec
   );
 }
 
-/** Builds the column definitions for the enclosing table. */
 export const useColumns = (opts: {
   hideProject: boolean;
   projects: Project[];
@@ -246,7 +245,6 @@ export const useColumns = (opts: {
       width: 180,
       placeholderValue: '-',
       renderCell: ({ row, tabIndex }) => row.createdBy && <ActorCell compactable actor={row.createdBy} tabIndex={tabIndex} />,
-      // Compact toggle: creator avatar merges inline before the created date
       modes: { compact: { merge: { into: 'createdAt', side: 'left' } } },
     },
     {
@@ -265,7 +263,6 @@ export const useColumns = (opts: {
       width: 180,
       placeholderValue: '-',
       renderCell: ({ row, tabIndex }) => row.updatedBy && <ActorCell compactable actor={row.updatedBy} tabIndex={tabIndex} />,
-      // Compact toggle: updater avatar merges inline before the updated date
       modes: { compact: { merge: { into: 'updatedAt', side: 'left' } } },
     },
     {

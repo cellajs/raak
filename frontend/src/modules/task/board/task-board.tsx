@@ -31,18 +31,28 @@ export interface ResolvedBoardProps extends Omit<BoardProps, 'projects'> {
   projects: EnrichedProject[];
 }
 
-/**
- * Main task board component that conditionally renders desktop or mobile views based on screen size.
- */
-export function Board({ boardId, projects: projectsProp, workspace, publicView }: BoardProps) {
+interface BoardViewProps extends ResolvedBoardProps {
+  isLoading: boolean;
+}
+
+function BoardView({ boardId, projects, workspace, publicView, isLoading }: BoardViewProps) {
   const isMobile = useBreakpointBelow('sm');
+
+  if (isLoading && workspace) return <WorkspaceBoardSkeleton workspace={workspace} withHeader={false} />;
+  if (isLoading) return <BoardSkeleton boardId={boardId} withHeader={false} publicView={publicView} />;
+  if (!projects.length) return <BoardEmpty workspace={workspace} publicView={publicView} />;
+  if (isMobile) return <MobileBoard projects={projects} workspace={workspace} publicView={publicView} />;
+  if (!workspace) return <ProjectBoard boardId={boardId} projects={projects} publicView={publicView} />;
+  return <WorkspaceBoard boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />;
+}
+
+export function Board({ boardId, projects: projectsProp, workspace, publicView }: BoardProps) {
   const router = useRouter();
   const setActiveBoard = useBoardStore((state) => state.setActiveBoard);
 
   // Preload BlockNoteFullHtml so expanding a task card doesn't show a spinner
   usePreloadLazyComponents([BlockNoteFullHtml]);
 
-  // Fetch projects for workspace boards; use provided projects for single-project boards
   const { data: fetchedData, isPending } = useInfiniteQuery({
     ...projectsListQueryOptions({ workspaceId: workspace?.id, include: 'counts', excludeArchived: 'true' }),
     enabled: !projectsProp,
@@ -54,25 +64,14 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
     setActiveBoard(boardId, workspace ? 'workspace' : 'project');
   }, [boardId, workspace, setActiveBoard]);
 
-  // One board-level subscription closes the mobile create-task dialog on navigation,
-  // avoiding one subscription per panel action.
+  // One board-level subscription closes the mobile create-task dialog on navigation, not one per panel action
   useEffect(() => router.subscribe('onBeforeLoad', () => dialoger.getState().remove('create-task')), [router]);
 
-  const boardView = (() => {
-    if (isLoadingProjects && workspace) return <WorkspaceBoardSkeleton workspace={workspace} withHeader={false} />;
-    if (isLoadingProjects) return <BoardSkeleton boardId={boardId} withHeader={false} publicView={publicView} />;
-    if (!projects.length) return <BoardEmpty workspace={workspace} publicView={publicView} />;
-    if (isMobile) return <MobileBoard projects={projects} workspace={workspace} publicView={publicView} />;
-    if (!workspace) return <ProjectBoard boardId={boardId} projects={projects} publicView={publicView} />;
-    return <WorkspaceBoard boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />;
-  })();
-
-  // Card layout and form animations follow the system's reduced motion setting.
   return (
     <MotionConfig reducedMotion="user">
       <TaskSearchScope>
         <BoardHeader boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />
-        {boardView}
+        <BoardView boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} isLoading={isLoadingProjects} />
       </TaskSearchScope>
     </MotionConfig>
   );

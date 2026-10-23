@@ -1,5 +1,5 @@
 import { useSearch } from '@tanstack/react-router';
-import { type RefObject, useCallback, useEffect, useMemo, useRef } from 'react';
+import { type RefObject, useEffect, useRef } from 'react';
 import { getOrderBetween } from 'shared/utils/display-order';
 import { useShallow } from 'zustand/react/shallow';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
@@ -12,19 +12,15 @@ import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { normalizePanelWidths, pickViewSections, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardResizablePanel } from '~/modules/task/types';
 
-/** Default anchors for panels the server doesn't own: the explainer leads the board, the
- *  labels panel trails it, and project panels without an enriched membership (e.g. the
- *  single-project board) sit in between. Finite values keep the fractional reorder math working
- *  when a neighboring panel is dragged against them; user reorders (local orders) override. */
+// Finite anchors keep the fractional reorder math working when a neighboring panel is dragged against them
+
 const kindDefaultOrders: Record<BoardResizablePanel['kind'], number> = { explainer: -1_000_000, project: 0, labels: 1_000_000 };
 
-/** Gap between the seeded default orders of a project's split panels. Small enough to keep the
- *  group at its membership anchor, large enough for `getOrderBetween` to fit drops in between. */
+// Small enough to keep a split group at its membership anchor, large enough for `getOrderBetween` to fit drops in between
+
 const splitSectionOrderStep = 0.001;
 
-/** Resolve a panel's displayOrder.
- *  A device-local order (set by drag) wins; then the server-owned membership order (split panels
- *  offset it by sectionIndex so siblings get distinct, insertable orders); then the kind default. */
+/** A device-local order wins, then the membership order (split panels offset it by sectionIndex), then the kind default. */
 export function getPanelDisplayOrder(panel: BoardResizablePanel, localOrders: Record<string, number> = {}): number | undefined {
   const localOrder = localOrders[panel.panelId];
   if (localOrder !== undefined) return localOrder;
@@ -43,11 +39,7 @@ interface BuildBoardExtraPanelsOptions {
   publicView?: boolean;
 }
 
-/** The non-project ("local") panels a board shows, in canonical order: the explainer leads and
- *  the labels panel trails (the kind default orders below re-sort them anyway). Single source of
- *  truth shared by the live boards and the loading skeleton so the two never disagree on which
- *  local panels exist. The explainer appears only when its welcome text is unseen; the labels
- *  panel appears on every board except an anonymous public view. */
+/** The local panels a board shows: the explainer while its welcome text is unseen, the labels panel except in a public view. */
 export function buildBoardExtraPanels({ showExplainer = false, publicView = false }: BuildBoardExtraPanelsOptions = {}): BoardResizablePanel[] {
   const panels: BoardResizablePanel[] = [];
   if (showExplainer) panels.push({ kind: 'explainer', panelId: EXPLAINER_PANEL_ID });
@@ -55,8 +47,7 @@ export function buildBoardExtraPanels({ showExplainer = false, publicView = fals
   return panels;
 }
 
-/** Sort panels by their resolved displayOrder. Panels without an order keep their
- *  incoming relative position and trail at the end. Pure: returns a new array. */
+/** Sorts panels by resolved displayOrder; panels without an order keep their relative position and trail. */
 export function sortPanelsByOrder(panels: BoardResizablePanel[], localOrders: Record<string, number> = {}): BoardResizablePanel[] {
   return panels
     .map((panel, idx) => ({ panel, idx, order: getPanelDisplayOrder(panel, localOrders) }))
@@ -69,17 +60,13 @@ export function sortPanelsByOrder(panels: BoardResizablePanel[], localOrders: Re
     .map(({ panel }) => panel);
 }
 
-/** What a panel drag-reorder should persist: a server-owned membership update, a local-only
- *  panel order, or nothing (null) when the drop is a no-op. */
-export type PanelReorderResult =
+/** What a panel drag-reorder persists: a membership update, a local panel order, or null for a no-op. */
+type PanelReorderResult =
   | { kind: 'membership'; membershipId: string; tenantId: string; organizationId: string; projectId: string; displayOrder: number }
   | { kind: 'local'; panelId: string; displayOrder: number }
   | null;
 
-/**
- * Computes fractional panel order using the render comparator.
- * Unsplit projects persist membership order; split and local panels persist device-local order.
- */
+/** Fractional panel order from the render comparator; unsplit projects persist membership order, split and local panels a local one. */
 export function computePanelReorder(
   panels: BoardResizablePanel[],
   localOrders: Record<string, number> | undefined,
@@ -121,41 +108,31 @@ export function computePanelReorder(
     };
   }
 
-  // Split panel or local-only panel (explainer, labels, …): device-local order.
+  // Split panels and local-only panels (explainer, labels) persist a device-local order
   return { kind: 'local', panelId: sourcePanelId, displayOrder: newDisplayOrder };
 }
 
 /** The board's panels in display order with their stored widths; the loading skeleton lays out the same way. */
 export function usePanelLayout(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[]) {
-  // Projected past prefs so an iced/accepted expand toggle doesn't rebuild every panel.
+  // Projected past the expand prefs so an iced/accepted toggle does not rebuild every panel
   const viewSections = useTaskBoardStore(useShallow((state) => pickViewSections(state.panelData[boardId])));
   const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
   const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);
 
-  const panels: BoardResizablePanel[] = useMemo(() => {
-    const all = [...prepareBoardPanels(projects, viewSections), ...(extraPanels ?? [])];
-    return sortPanelsByOrder(all, localOrders);
-  }, [projects, extraPanels, viewSections, localOrders]);
-
-  const defaultLayout = useMemo(
-    () =>
-      normalizePanelWidths(
-        storedBoardLayout ?? {},
-        panels.map(({ panelId }) => panelId),
-      ),
-    [storedBoardLayout, panels],
+  const panels = sortPanelsByOrder([...prepareBoardPanels(projects, viewSections), ...(extraPanels ?? [])], localOrders);
+  const defaultLayout = normalizePanelWidths(
+    storedBoardLayout ?? {},
+    panels.map(({ panelId }) => panelId),
   );
 
   return { panels, defaultLayout };
 }
 
-/** Shared board panel setup: panels, layout, and resize handler. */
 export function useBoardPanels(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[]) {
   const { panels, defaultLayout } = usePanelLayout(boardId, projects, extraPanels);
   const prunePanelOrders = useBoardStore((state) => state.prunePanelOrders);
   const updateBoardLayout = useBoardStore((state) => state.updateBoardLayout);
 
-  // Drop stale local orders once their panels disappear
   useEffect(() => {
     prunePanelOrders(
       boardId,
@@ -163,14 +140,11 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
     );
   }, [boardId, panels, prunePanelOrders]);
 
-  const layoutPanels: BoardLayoutPanel[] = useMemo(() => panels.map(({ panelId }) => ({ panelId })), [panels]);
+  const layoutPanels: BoardLayoutPanel[] = panels.map(({ panelId }) => ({ panelId }));
 
-  const handleLayoutChanged = useCallback(
-    (layout: Record<string, number>) => {
-      updateBoardLayout(boardId, layout);
-    },
-    [boardId, updateBoardLayout],
-  );
+  const handleLayoutChanged = (layout: Record<string, number>) => {
+    updateBoardLayout(boardId, layout);
+  };
 
   return { panels, layoutPanels, defaultLayout, handleLayoutChanged };
 }

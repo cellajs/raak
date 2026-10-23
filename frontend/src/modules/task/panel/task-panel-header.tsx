@@ -10,7 +10,7 @@ import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
 import { useProjectViewSections } from '~/modules/task/board/task-board-store';
 import { formatSectionLabel, isPrimarySection, makePanelKey, panelHostsDraft } from '~/modules/task/helpers/board-helpers';
-import { type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
+import { createTaskFormId, type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskStatus } from '~/modules/task/task-properties';
@@ -20,9 +20,96 @@ import { Button } from '~/modules/ui/button';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 
-/**
- * Header component for task board panels in desktop view. Displays project name/avatar or section filters, along with actions like creating a new task or accessing project actions.
- */
+interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'sectionFilters'> {
+  isInWorkspace: boolean;
+  isPrimary: boolean;
+  isCollapsed: boolean;
+}
+
+function PanelLeading({ project, sectionFilters, isInWorkspace, isPrimary, isCollapsed }: PanelLeadingProps) {
+  const { t } = useTranslation();
+
+  const projectAvatar = <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />;
+
+  if (isInWorkspace && isPrimary) {
+    return (
+      <PanelDragHandleButton
+        name={project.name}
+        fallbackLabel={project.name}
+        icon={projectAvatar}
+        preview={<EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl} />}
+        className={cn(panelHandleClass, 'truncate no-underline', isCollapsed ? 'w-full justify-center' : 'pr-2')}
+      >
+        {!isCollapsed && <div className="truncate font-semibold leading-6">{project.name}</div>}
+      </PanelDragHandleButton>
+    );
+  }
+
+  if (sectionFilters) {
+    const sectionName = formatSectionLabel(sectionFilters);
+
+    if (isInWorkspace) {
+      const splitName = `${project.name}: ${sectionName}`;
+      return (
+        <PanelDragHandleButton
+          name={splitName}
+          icon={
+            <div className="relative shrink-0">
+              {projectAvatar}
+              <div className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full border bg-background">
+                <FunnelIcon className="size-2.5" />
+              </div>
+            </div>
+          }
+          preview={
+            <EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl}>
+              {splitName}
+            </EntityChip>
+          }
+          className={cn(panelHandleClass, 'min-w-0', isCollapsed && 'w-full justify-center')}
+        >
+          {!isCollapsed && (
+            <div className="truncate font-semibold leading-6">
+              <span className="pr-1 text-sm">{sectionName}</span>
+            </div>
+          )}
+        </PanelDragHandleButton>
+      );
+    }
+
+    return (
+      <PanelDragHandleButton
+        name={sectionName}
+        fallbackLabel={sectionName}
+        icon={
+          <div className="flex min-w-8 justify-center">
+            <FunnelIcon className="size-4 shrink-0" />
+          </div>
+        }
+        className={cn(panelHandleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
+      >
+        {!isCollapsed && <div className="truncate font-semibold leading-6">{sectionName}</div>}
+      </PanelDragHandleButton>
+    );
+  }
+
+  // Unsplit panel in a project view: the project identity lives in the page header
+  return (
+    <PanelDragHandleButton
+      name={t('c:task_other')}
+      fallbackLabel={t('c:task_other')}
+      icon={
+        <div className="flex min-w-8 justify-center">
+          <SquareCheckBigIcon className="size-4 shrink-0" />
+        </div>
+      }
+      className={cn(panelHandleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
+    >
+      {!isCollapsed && <div className="truncate font-semibold leading-6">{t('c:task_other')}</div>}
+    </PanelDragHandleButton>
+  );
+}
+
 export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<BoardPanelProps, 'project' | 'sectionFilters' | 'publicView'>) {
   const { t } = useTranslation();
 
@@ -32,11 +119,10 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
   const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
-  // Check if a stored draft exists for this project's create-task form with unsaved changes
+  const formId = createTaskFormId(project.id);
   const hasDraft = useDraftStore((state) => {
-    const dirtyForm = state.forms[`create-task-${project.id}`] as NewTaskFormValues | undefined;
-    if (!dirtyForm) return false;
-    return newTaskFormIsDirty(dirtyForm);
+    const storedForm = state.getForm<NewTaskFormValues>(formId);
+    return !!storedForm && newTaskFormIsDirty(storedForm);
   });
 
   const isPrimary = isPrimarySection(viewSections, sectionFilters);
@@ -44,97 +130,12 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
   const isReadOnly = useIsProjectReadOnly(project.id);
   const isCreateFormOpen = useTaskInteractionStore((state) => state.draftTasks[project.id] !== undefined);
   const openDraftStatus = useTaskInteractionStore((state) => state.draftTasks[project.id]?.status);
-  const storedDraftStatus = useDraftStore((state) => (state.forms[`create-task-${project.id}`] as NewTaskFormValues | undefined)?.status);
+  const storedDraftStatus = useDraftStore((state) => state.getForm<NewTaskFormValues>(formId)?.status);
 
   // Split view: only the panel the form opens in (or has moved to) offers the toggle
   const hostsCreateButton = panelHostsDraft(viewSections, project.id, panelId, openDraftStatus ?? storedDraftStatus ?? TaskStatus.Unstarted);
 
   const toggleCreateForm = () => toggleCreateTaskForm(project);
-
-  const projectAvatar = <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />;
-
-  const leadingSlot = (() => {
-    if (isInWorkspace && isPrimary) {
-      return (
-        <PanelDragHandleButton
-          name={project.name}
-          fallbackLabel={project.name}
-          icon={projectAvatar}
-          preview={<EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl} />}
-          className={cn(panelHandleClass, 'truncate no-underline', isCollapsed ? 'w-full justify-center' : 'pr-2')}
-        >
-          {!isCollapsed && <div className="truncate font-semibold leading-6">{project.name}</div>}
-        </PanelDragHandleButton>
-      );
-    }
-
-    // Secondary panel with section filters (split view)
-    if (sectionFilters) {
-      const sectionName = formatSectionLabel(sectionFilters);
-
-      // In workspace: show project avatar with funnel badge
-      if (isInWorkspace) {
-        const splitName = `${project.name}: ${sectionName}`;
-        return (
-          <PanelDragHandleButton
-            name={splitName}
-            icon={
-              <div className="relative shrink-0">
-                {projectAvatar}
-                <div className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full border bg-background">
-                  <FunnelIcon className="size-2.5" />
-                </div>
-              </div>
-            }
-            preview={
-              <EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl}>
-                {splitName}
-              </EntityChip>
-            }
-            className={cn(panelHandleClass, 'min-w-0', isCollapsed && 'w-full justify-center')}
-          >
-            {!isCollapsed && (
-              <div className="truncate font-semibold leading-6">
-                <span className="pr-1 text-sm">{sectionName}</span>
-              </div>
-            )}
-          </PanelDragHandleButton>
-        );
-      }
-
-      // In project view: funnel icon + section label as the drag handle.
-      return (
-        <PanelDragHandleButton
-          name={sectionName}
-          fallbackLabel={sectionName}
-          icon={
-            <div className="flex min-w-8 justify-center">
-              <FunnelIcon className="size-4 shrink-0" />
-            </div>
-          }
-          className={cn(panelHandleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
-        >
-          {!isCollapsed && <div className="truncate font-semibold leading-6">{sectionName}</div>}
-        </PanelDragHandleButton>
-      );
-    }
-
-    // Unsplit panel in project view: generic tasks handle; project identity lives in the page header.
-    return (
-      <PanelDragHandleButton
-        name={t('c:task_other')}
-        fallbackLabel={t('c:task_other')}
-        icon={
-          <div className="flex min-w-8 justify-center">
-            <SquareCheckBigIcon className="size-4 shrink-0" />
-          </div>
-        }
-        className={cn(panelHandleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
-      >
-        {!isCollapsed && <div className="truncate font-semibold leading-6">{t('c:task_other')}</div>}
-      </PanelDragHandleButton>
-    );
-  })();
 
   const actionsSlot = !isCollapsed ? (
     <>
@@ -154,5 +155,20 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
     </>
   ) : undefined;
 
-  return <BoardPanelHeader className="bg-card" leading={leadingSlot} actions={actionsSlot} isCollapsed={!!isCollapsed} />;
+  return (
+    <BoardPanelHeader
+      className="bg-card"
+      leading={
+        <PanelLeading
+          project={project}
+          sectionFilters={sectionFilters}
+          isInWorkspace={isInWorkspace}
+          isPrimary={isPrimary}
+          isCollapsed={!!isCollapsed}
+        />
+      }
+      actions={actionsSlot}
+      isCollapsed={!!isCollapsed}
+    />
+  );
 }

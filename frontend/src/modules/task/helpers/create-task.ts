@@ -44,6 +44,9 @@ export const newTaskFormDefaults: NewTaskFormValues = { ...getSchemaDefaults(cre
 export const newTaskFormIsDirty = ({ assignedTo, labels, description }: Pick<NewTaskFormValues, 'assignedTo' | 'labels' | 'description'>) =>
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
 
+/** The create-task form's element id; card-glow.css styles ids starting with `create-task-`. */
+export const createTaskFormId = (projectId: string) => `create-task-${projectId}`;
+
 /** Closes a project's create-task form; unlike the toggle, a repeated or late call never reopens it. */
 export const closeCreateTaskForm = (projectId: string) => {
   setCurrentItem(null);
@@ -52,7 +55,7 @@ export const closeCreateTaskForm = (projectId: string) => {
 
 /** Opens a project's create-task form, or closes it when open; its open-ness is derived from the draft. */
 export const toggleCreateTaskForm = (project: { id: string; organizationId: string; tenantId: string }) => {
-  const id = `create-task-${project.id}`;
+  const id = createTaskFormId(project.id);
   const store = taskInteractionStore.getState();
 
   if (store.draftTasks[project.id]) return closeCreateTaskForm(project.id);

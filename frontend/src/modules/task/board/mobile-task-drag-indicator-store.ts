@@ -11,7 +11,7 @@ interface MobileTaskDragIndicatorState {
   setIndicator: (indicator: MobileTaskDragIndicator | null) => void;
 }
 
-/** Where the mobile touch-drag drop indicator currently sits (resolved by hit-testing on move). */
+/** The mobile touch-drag drop indicator, set by hit-testing on move. */
 export const useMobileTaskDragIndicatorStore = create<MobileTaskDragIndicatorState>()((set) => ({
   indicator: null,
   setIndicator: (indicator) => set({ indicator }),

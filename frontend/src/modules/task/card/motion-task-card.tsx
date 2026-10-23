@@ -10,11 +10,7 @@ interface MotionTaskCardProps {
   task: TaskProps['task'];
 }
 
-/**
- * Memoized wrapper for motion.div + TaskCard.
- * Prevents motion.div from rerendering when the panel rerenders
- * but individual task props haven't changed.
- */
+/** Prevents motion.div from rerendering when the panel rerenders but individual task props haven't changed. */
 export const MotionTaskCard = memo(function MotionTaskCard({ task }: MotionTaskCardProps) {
   const state = useTaskCardStore((state) => state.states[task.id] ?? 'collapsed');
   const isSelected = useTaskInteractionStore((state) => state.selectedTaskIds.includes(task.id));

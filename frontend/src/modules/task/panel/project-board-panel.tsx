@@ -19,31 +19,27 @@ interface ProjectBoardPanelProps {
   windowScroll?: boolean;
 }
 
-/**
- * Fetches canonical task data for its project and merges draft tasks from Zustand.
- * Stabilises per-panel task arrays so panels whose tasks didn't change
- * keep the same reference and skip re-rendering entirely.
- */
+/** Fetches a project's canonical tasks and merges the open draft task. */
 export function ProjectBoardPanel({ project, publicView, sectionFilters, windowScroll }: ProjectBoardPanelProps) {
   const queryOptions = publicView
     ? publicTasksBoardQueryOptions(project.id)
     : tasksCanonicalOptions({ organizationId: project.organizationId, tenantId: project.tenantId, projectId: project.id });
 
-  // Both option variants share the same data shape; widen key type via assertion
+  // The public and authenticated options share a data shape; the cast widens the key type
   const { data } = useSuspenseQuery(queryOptions as ReturnType<typeof tasksCanonicalOptions>);
 
   const isMobile = useBreakpointBelow('sm');
   const draftTask = useTaskInteractionStore((state) => state.draftTasks[project.id]);
   const viewSections = useProjectViewSections(project.id);
 
-  // The open create-form draft renders in exactly one panel and bypasses section filtering,
-  // so a lit "+ Task" badge always corresponds to a visible form somewhere on the board.
+  // The open create-form draft renders in exactly one panel and bypasses section filtering, so a lit "+ Task" badge always has a visible form.
   // Mobile creates through a dialog, so no draft row enters its list.
   const hostsDraft =
     !isMobile &&
     !!draftTask &&
     (!sectionFilters || panelHostsDraft(viewSections, project.id, makePanelKey(project.id, sectionFilters), draftTask.status));
 
+  // The previous arrays let a panel whose tasks did not change keep its reference and skip re-rendering
   const projectTasksRef = useRef<Task[]>([]);
   const panelTasksRef = useRef<Task[]>([]);
 

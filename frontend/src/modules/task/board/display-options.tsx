@@ -12,14 +12,13 @@ interface DisplayOptionsProps {
   className?: string;
 }
 
-function DisplayOptions({ className = '' }: DisplayOptionsProps) {
+export function DisplayOptions({ className = '' }: DisplayOptionsProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Nearest match, not a route picked with matchRoute: while a navigation commits, matchRoute still tests the page being left.
   const currentView = useSearch({ strict: false, select: (search) => search.view }) ?? 'board';
-  // Null means "not hovering": the tooltip and hover resets fall back to the live currentView,
-  // so a view change while unhovered can't leave a stale captured value behind.
+  // Null means not hovering: the tooltip falls back to the live currentView,
+  // so a view change while unhovered leaves no stale captured value.
   const [hoveredView, setHoveredView] = useState<(typeof views)[number] | null>(null);
 
   const handleViewChange = (value: string | string[]) => {
@@ -47,5 +46,3 @@ function DisplayOptions({ className = '' }: DisplayOptionsProps) {
     </TooltipButton>
   );
 }
-
-export { DisplayOptions };

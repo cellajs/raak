@@ -1,5 +1,5 @@
 import { useSearch } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { BoardLayout, type BoardLayoutHandle } from '~/modules/common/board/board-layout';
 import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
 import { ExplainerPanel } from '~/modules/common/board/explainer-panel';
@@ -15,36 +15,32 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
 
   const showExplainer = useShowExplainer(!!workspace);
 
-  const extraPanels = useMemo(() => buildBoardExtraPanels({ showExplainer }), [showExplainer]);
+  const extraPanels = buildBoardExtraPanels({ showExplainer });
   const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
   useExpandLabelsPanel(boardLayoutRef);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
   const { mutateAsync: updateMembership } = useMemberUpdateMutation();
 
-  const handlePanelReorder = useCallback(
-    (newOrder: string[], sourcePanelId: string) => {
-      const localOrders = boardStore.getState().boardPanelOrders[boardId];
-      const result = computePanelReorder(panels, localOrders, newOrder, sourcePanelId);
-      if (!result) return;
+  const handlePanelReorder = (newOrder: string[], sourcePanelId: string) => {
+    const localOrders = boardStore.getState().boardPanelOrders[boardId];
+    const result = computePanelReorder(panels, localOrders, newOrder, sourcePanelId);
+    if (!result) return;
 
-      if (result.kind === 'membership') {
-        updateMembership({
-          path: { id: result.membershipId, tenantId: result.tenantId, organizationId: result.organizationId },
-          body: { displayOrder: result.displayOrder },
-          channelId: result.projectId,
-          channelType: 'project',
-        });
-        return;
-      }
+    if (result.kind === 'membership') {
+      updateMembership({
+        path: { id: result.membershipId, tenantId: result.tenantId, organizationId: result.organizationId },
+        body: { displayOrder: result.displayOrder },
+        channelId: result.projectId,
+        channelType: 'project',
+      });
+      return;
+    }
 
-      // Local-only panel (explainer, ai-chat, etc.), persist its new order.
-      setPanelOrder(boardId, result.panelId, result.displayOrder);
-    },
-    [boardId, panels, setPanelOrder, updateMembership],
-  );
+    setPanelOrder(boardId, result.panelId, result.displayOrder);
+  };
 
-  /** Scroll to project panel when projectSlug changes (not on panel reorder) */
+  // Scrolls to the project panel when projectSlug changes, not on panel reorder
   const lastScrolledSlugRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!projectSlug || projectSlug === lastScrolledSlugRef.current) return;

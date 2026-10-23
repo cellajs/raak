@@ -13,7 +13,6 @@ export function MobileBoard({ projects, workspace, publicView }: Pick<ResolvedBo
 
   const sorted = sortByMembership(projects);
 
-  // Finding project based on query parameter, default first project
   const currentProject = sorted.find((project) => project.slug === projectSlug) || sorted[0];
 
   const setActivePanel = useBoardStore((state) => state.setActivePanel);
@@ -21,10 +20,10 @@ export function MobileBoard({ projects, workspace, publicView }: Pick<ResolvedBo
     setActivePanel(currentProject.id);
   }, [currentProject.id, setActivePanel]);
 
-  // Mobile prefetches only the open project's tasks, so a tab switch can suspend too
   return (
     <ScrollReset>
       {workspace && <ProjectTabNav projects={projects} />}
+      {/* Mobile prefetches only the open project's tasks, so a tab switch can suspend too */}
       <Suspense fallback={<MobilePanelSkeleton />}>
         <ProjectBoardPanel project={currentProject} publicView={publicView} />
       </Suspense>

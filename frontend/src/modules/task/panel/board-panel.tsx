@@ -1,6 +1,6 @@
 import { useSearch } from '@tanstack/react-router';
 import { PlusIcon } from 'lucide-react';
-import { memo, useMemo, useRef } from 'react';
+import { memo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -49,45 +49,37 @@ export const BoardPanel = memo(function BoardPanel({
   const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
-  // Filter tasks based on search and filters; the open create-form draft always stays visible
-  const filteredTasks = useMemo(() => {
-    const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || matchesBoardSearch({ q, matchMode }, task));
+  // The open create-form draft always stays visible
+  const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || matchesBoardSearch({ q, matchMode }, task));
+  const matchedIds = new Set(matchedTasks.map(({ id }) => id));
+  const filteredTasks = parseSearchQuery(q).highlight
+    ? fetchedTasks.map((task) => (matchedIds.has(task.id) ? { ...task, isMatchingSearch: true } : task))
+    : matchedTasks;
 
-    const isHighlightMode = parseSearchQuery(q).highlight;
-    if (!isHighlightMode) return matchedTasks;
+  const tasks = prepareBoardTasks(filteredTasks, expandAccepted, expandIced);
 
-    const matchedIds = new Set(matchedTasks.map(({ id }) => id));
-    return fetchedTasks.map((task) => (matchedIds.has(task.id) ? { ...task, isMatchingSearch: true } : task));
-  }, [fetchedTasks, q, matchMode]);
-
-  // Sort tasks and filter out accepted and iced based of config
-  const tasks = useMemo(() => prepareBoardTasks(filteredTasks, expandAccepted, expandIced), [filteredTasks, expandIced, expandAccepted]);
-
-  // Panel-level drop target registered on the outer wrapper so it works in
-  // both expanded and collapsed states (mobile uses a different layout).
+  // The drop target sits on the outer wrapper so it works expanded and collapsed; mobile uses a different layout
   const panelRef = useRef<HTMLDivElement>(null);
   const { highlightProject } = usePanelDropTarget({ panelRef, projectId: project.id, tasks });
 
-  const counts = useMemo(() => {
-    const accepted = filteredTasks.filter(({ status }) => status === TaskStatus.Accepted).length;
-    const iced = filteredTasks.filter(({ status }) => status === TaskStatus.Iced).length;
+  const acceptedCount = filteredTasks.filter(({ status }) => status === TaskStatus.Accepted).length;
+  const icedCount = filteredTasks.filter(({ status }) => status === TaskStatus.Iced).length;
 
-    // Derive hidden accepted count: total tasks in DB minus tasks the board fetched for this project
-    const totalTasks = project.included?.counts?.entities?.task ?? 0;
-    const hiddenAccepted = Math.max(0, totalTasks - projectFetchedCount);
+  // Accepted tasks beyond the cut-off: the project's task total minus those the board fetched
+  const totalTasks = project.included?.counts?.entities?.task ?? 0;
+  const hiddenAccepted = Math.max(0, totalTasks - projectFetchedCount);
 
-    const showAccepted = !sectionFilters || sectionFilters.status.includes(TaskStatus.Accepted);
-    const showIced = !sectionFilters || sectionFilters.status.includes(TaskStatus.Iced);
+  const showAccepted = !sectionFilters || sectionFilters.status.includes(TaskStatus.Accepted);
+  const showIced = !sectionFilters || sectionFilters.status.includes(TaskStatus.Iced);
 
-    return {
-      total: filteredTasks.length,
-      acceptedCutOff: hiddenAccepted,
-      showAccepted,
-      showIced,
-      accepted: showAccepted ? accepted : 0,
-      iced: showIced ? iced : 0,
-    } satisfies TaskCounts;
-  }, [filteredTasks, project.included?.counts?.entities?.task, projectFetchedCount, sectionFilters]);
+  const counts = {
+    total: filteredTasks.length,
+    acceptedCutOff: hiddenAccepted,
+    showAccepted,
+    showIced,
+    accepted: showAccepted ? acceptedCount : 0,
+    iced: showIced ? icedCount : 0,
+  } satisfies TaskCounts;
 
   return (
     <div data-search={!!q} className="group/panel h-full">

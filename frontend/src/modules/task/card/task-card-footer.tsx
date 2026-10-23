@@ -40,8 +40,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
   // Task and label selection are mutually exclusive so the board header's remove button targets one kind
   const hasSelectedLabels = useTaskInteractionStore((state) => state.selectedLabelIds.length > 0);
   const isOtherProjectSelected = useTaskInteractionStore((state) => !!state.selectedProjectId && state.selectedProjectId !== task.projectId);
-  // On mobile, expanded/editing cards move labels onto their own line above the footer,
-  // freeing horizontal space to reveal the select checkbox and status dropdown sub-button.
+  // On mobile an open card moves labels onto their own line, freeing room for the select checkbox and status button
   const isExpandedMobile = isMobile && taskState !== 'collapsed';
 
   const handlers = useTaskFieldHandlers(task);
@@ -75,18 +74,16 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
           </div>
         ) : (
           <div className="flex flex-wrap gap-0.5 truncate">
-            {task.labels.map(({ name, id }) => {
-              return (
-                <div key={id} className="flex max-w-full flex-wrap items-center justify-center">
-                  <Badge
-                    variant="outline"
-                    className="inline-block min-h-4 max-w-full shrink truncate border-0 px-1 py-0 font-normal text-muted-foreground leading-4 shadow-none"
-                  >
-                    <HighlightText text={name} />
-                  </Badge>
-                </div>
-              );
-            })}
+            {task.labels.map(({ name, id }) => (
+              <div key={id} className="flex max-w-full flex-wrap items-center justify-center">
+                <Badge
+                  variant="outline"
+                  className="inline-block min-h-4 max-w-full shrink truncate border-0 px-1 py-0 font-normal text-muted-foreground leading-4 shadow-none"
+                >
+                  <HighlightText text={name} />
+                </Badge>
+              </div>
+            ))}
           </div>
         )
       ) : (
@@ -97,7 +94,6 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
 
   return (
     <div className="group-not-data-[state=collapsed]/task:fade-in flex flex-col group-not-data-[state=collapsed]/task:animate-in group-not-data-[state=collapsed]/task:duration-300">
-      {/* On mobile, show labels on their own line above the footer when expanded */}
       {isExpandedMobile && <div className={cn('mb-1 flex items-center', labelsHide)}>{labelsButton}</div>}
       <div className="flex items-center sm:gap-1">
         {!isSheet && (
@@ -109,7 +105,6 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             onCheckedChange={(checked) => setTaskSelected(checked, task)}
           />
         )}
-        {/* Labels are rendered above on mobile when expanded */}
         {!isExpandedMobile && labelsButton}
         <div className="ml-auto flex">
           <Button

@@ -20,7 +20,6 @@ const makeSplitPanel = (projectId: string, displayOrder: number, sectionIndex: n
   project: { id: projectId, tenantId: 't', organizationId: 'o', membership: { id: `m-${projectId}`, displayOrder } } as unknown as EnrichedProject,
 });
 
-// A local non-project panel representing any order-only board column.
 const makeExtraPanel = (panelId: string): BoardResizablePanel => ({ kind: 'explainer', panelId });
 
 const makeLabelsPanel = (panelId = 'labels'): BoardResizablePanel => ({ kind: 'labels', panelId });
@@ -57,7 +56,6 @@ describe('getPanelDisplayOrder', () => {
   it('seeds split panels with distinct per-section offsets from the membership anchor', () => {
     expect(getPanelDisplayOrder(makeSplitPanel('a', 20, 0, 'a-s0'))).toBe(20);
     expect(getPanelDisplayOrder(makeSplitPanel('a', 20, 1, 'a-s1'))).toBe(20.001);
-    // Local override beats the seeded order
     expect(getPanelDisplayOrder(makeSplitPanel('a', 20, 1, 'a-s1'), { 'a-s1': 5 })).toBe(5);
   });
 });
@@ -69,9 +67,9 @@ describe('sortPanelsByOrder', () => {
   });
 
   it('intersperses local-only panels by their stored displayOrder', () => {
-    const panels = [makeProjectPanel('a', 30), makeProjectPanel('b', 10), makeExtraPanel('explainer'), makeExtraPanel('ai-chat')];
-    const sorted = sortPanelsByOrder(panels, { explainer: 5, 'ai-chat': 20 });
-    expect(sorted.map((p) => p.panelId)).toEqual(['explainer', 'b', 'ai-chat', 'a']);
+    const panels = [makeProjectPanel('a', 30), makeProjectPanel('b', 10), makeExtraPanel('explainer'), makeLabelsPanel()];
+    const sorted = sortPanelsByOrder(panels, { explainer: 5, labels: 20 });
+    expect(sorted.map((p) => p.panelId)).toEqual(['explainer', 'b', 'labels', 'a']);
   });
 
   it('anchors kind defaults: explainer leads, labels trails, unknown kinds park at the end', () => {

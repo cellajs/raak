@@ -6,7 +6,6 @@ import { computePanelLayoutSplit } from '~/modules/task/helpers/board-helpers';
 import type { Task } from '~/modules/task/types';
 import { idbKvStorage } from '~/query/idb-kv-storage';
 
-/** Defines the initial board panel preferences. */
 export const defaultPanelPrefs = { expandAccepted: false, expandIced: false };
 
 type PanelPrefs = typeof defaultPanelPrefs;
@@ -26,7 +25,6 @@ interface TaskBoardState {
   reset: () => void; // Resets in-memory state to initial (call on sign-out)
 }
 
-// Default state values
 const initStore: Pick<TaskBoardState, 'panelData'> = { panelData: {} };
 
 const ensureBoard = (state: TaskBoardState, boardId: string) => {
@@ -39,7 +37,6 @@ const ensurePanel = (board: BoardPanelData, projectId: string) => {
   return board[projectId];
 };
 
-/** Provides access to shared task-board state. */
 export const useTaskBoardStore = create<TaskBoardState>()(
   devtools(
     persist(

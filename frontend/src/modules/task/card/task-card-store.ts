@@ -5,18 +5,16 @@ import type { TaskState } from '~/modules/task/types';
 
 interface TaskCardState {
   states: Record<string, TaskState>;
-  /** Set a task's view state (collapsed / expanded / editing).
-   *  When entering editing, all other editing tasks are demoted to expanded. */
+  /** Sets a task's view state; entering editing demotes every other editing task to expanded. */
   setTaskState: (taskId: string, taskState: TaskState) => void;
-  /** Revert an editing task to expanded; keep collapsed tasks collapsed. */
+  /** Reverts an editing task to expanded; collapsed tasks stay collapsed. */
   suppressEdit: (taskId: string) => void;
-  /** Demote every editing task to expanded (single-editor rule, e.g. when the sheet opens). */
+  /** Demotes every editing task to expanded (single-editor rule, e.g. when the sheet opens). */
   suppressAllEditing: () => void;
-  /** Clear all per-task view state. Call when leaving a workspace/board so the map can't grow forever. */
+  /** Clears all view state; called when leaving a board so the map cannot grow forever. */
   reset: () => void;
 }
 
-/** Provides access to shared task-card interaction state. */
 export const useTaskCardStore = create<TaskCardState>()(
   devtools(
     (set) => ({
@@ -26,8 +24,6 @@ export const useTaskCardStore = create<TaskCardState>()(
           (state) => {
             if (state.states[taskId] === taskState) return state;
             const next = { ...state.states, [taskId]: taskState };
-            // Enforce single editor: demote all other editing tasks
-
             if (taskState === 'editing') {
               for (const id in next) {
                 if (id !== taskId && next[id] === 'editing') next[id] = 'expanded';

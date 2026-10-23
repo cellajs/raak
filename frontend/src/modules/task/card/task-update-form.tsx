@@ -25,15 +25,10 @@ interface TaskUpdateFormProps {
   task: Task;
   /** Exposes the editor's imperative API to the parent slot (handoff, warm-on-hover, checkbox toggle). */
   contentApiRef?: RefObject<BlockNoteContentApi | null>;
-  /** Fires once the editor is mounted. */
   onEditorReady?: () => void;
 }
 
-/**
- * Hosts the collaborative BlockNote editor for editing a task description; the shared
- * CollaborativeBlockNote owns the Yjs connection and its status, this wires task specifics
- * (permission, members, attachments, card-state handlers, cache policy).
- */
+/** Hosts the collaborative editor for a task description; the shared CollaborativeBlockNote owns the Yjs connection. */
 export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdateFormProps) {
   const { tenantId } = useOrganizationLayoutContext();
 
@@ -64,8 +59,7 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
         onEditorReady={onEditorReady}
         waitingFallback={
           // The static wherever no live editor is, faded and inert only while an editor is coming.
-          // noGutter: the wrapper already applies taskDescriptionGutterClass, so the preview
-          // aligns with the editor that replaces it and the swap causes no reflow.
+          // noGutter: the wrapper already applies taskDescriptionGutterClass, so the swap causes no reflow.
           <div className={cn(canEdit && 'pointer-events-none select-none opacity-50')}>
             <TaskCardContentExpanded task={task} noGutter />
           </div>

@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import type { Project } from 'sdk';
 import { Virtualizer, WindowVirtualizer } from 'virtua';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -44,8 +44,6 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   const setActivePanel = useBoardStore((state) => state.setActivePanel);
   const hasSelectedTasks = useTaskInteractionStore((state) => state.selectedTaskIds.length > 0);
 
-  // Scroll machinery (virtualizer/viewport refs, section-toggle + create-form /
-  // new-task scroll-into-view). Kept in a hook so this component stays layout-only.
   const { virtualizerRef, scrollViewportRef, handleSectionToggle } = usePanelScrolling({
     projectId: project.id,
     panelId,
@@ -54,13 +52,13 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
     windowScroll: !!windowScroll,
   });
   const sectionWindowMode = isMobile || !!windowScroll;
-  const itemIds = useMemo(() => tasks.map(({ id }) => id), [tasks]);
+  const itemIds = tasks.map(({ id }) => id);
 
   const hasContent = !!tasks.length || !!counts.accepted || !!counts.iced;
   const draftIndex = tasks.findIndex(isDraftTask);
   // The sticky status headers would overlap the create form
   const hostsDraft = draftIndex !== -1;
-  // Mounted wherever the panel is scrolled, so the form is measured before the jump to it and lands in one step.
+  // Mounted wherever the panel is scrolled, so the form is measured before the jump to it.
   // An unmeasured form is jumped to by estimate: a blank panel while it mounts, then visible corrections.
   const keepDraftMounted = hostsDraft ? [draftIndex] : undefined;
 
@@ -70,7 +68,6 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
     taskInteractionStore.getState().updateDraftTask(project.id, { status: newStatus, displayOrder: getDraftDisplayOrder(newStatus, project.id) });
   };
 
-  // Status section slots (sticky at their edge, shown/hidden by scroll direction)
   const statusSection = (type: TogglableStatusType) => (
     <PanelStatusSection
       type={type}
@@ -92,12 +89,10 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
     counts.showIced && !hostsDraft && '[&_[data-task-card-id]]:scroll-mb-9',
   );
 
-  // Activate panel on mouse enter or focus (desktop)
   const handlePanelActivation = () => {
     if (!isMobile) setActivePanel(project.id);
   };
 
-  // Shared task renderer for both virtualizer branches
   const renderTask = (task: TaskProps['task']) => {
     if (isDraftTask(task)) return <DraftTaskItem key={task.id} task={task} project={project} onStatusChange={handleStatusChange} />;
     return <MotionTaskCard key={task.id} task={task} />;
@@ -114,7 +109,6 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
       >
         {isMobile || windowScroll ? (
           <div className="mb-10 flex h-full flex-col" id={`tasks-list-${project.id}`}>
-            {/* Accepted section (window-scroll sticky, direction-based visibility) */}
             {topSlot}
 
             <div className={hintFadeOut}>
@@ -134,7 +128,6 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
               )}
             </div>
 
-            {/* Iced section (window-scroll sticky, direction-based visibility) */}
             {bottomSlot}
           </div>
         ) : (
@@ -150,13 +143,11 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
             viewportClassName="[&>div]:flex! [&>div]:flex-col! [&>div]:grow! [&>div]:h-auto! [&>div]:min-h-full! [&>div]:pl-px"
             disableTrackClick
           >
-            {/* Accepted section: sticky top, shown when scrolling up or resting at the top */}
             {topSlot}
 
-            {/* Fallback container for create task form */}
+            {/* The create task form mounts here */}
             <div id={`fallback-container-${project.id}`} className={cn('z-104 mx-2', hintFadeOut)} />
 
-            {/* Render tasks */}
             <div className={cn('flex flex-1 flex-col', hintFadeOut)} id={`tasks-list-${project.id}`}>
               {hasContent ? (
                 <ListFocusScope
@@ -182,7 +173,6 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
               )}
             </div>
 
-            {/* Iced section: sticky bottom, shown when scrolling down or resting at the bottom */}
             {bottomSlot}
           </ScrollArea>
         )}

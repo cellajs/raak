@@ -15,10 +15,7 @@ interface PaintMatchesProps {
   children: ReactNode;
 }
 
-/**
- * Paints the search terms over the expanded static or the editor; the collapsed summary paints its own. A component
- * of its own because the hook binds to the element present when it mounts.
- */
+// The hook binds to the element present at mount, so each layer gets its own. The collapsed summary paints its own matches.
 function PaintMatches({ children }: PaintMatchesProps) {
   const ref = useRef<HTMLDivElement>(null);
   useMatchHighlight(ref);
@@ -39,12 +36,7 @@ interface CardDescriptionSlotProps {
   onEditRequest?: () => void;
 }
 
-/**
- * The task description in one place, with a single editor instance: the collapsed summary or the expanded static,
- * the editor warmed behind it on hover, and the live editor. Only the expanded static matches the editor's layout,
- * so only there does a click place the cursor at its point and leaving editing hold the editor until the static is
- * ready; the collapsed summary paints from the cache at once.
- */
+/** Collapsed summary, expanded static and live editor over one editor instance, warmed behind them on hover. */
 export function CardDescriptionSlot({
   task,
   state,
@@ -53,6 +45,7 @@ export function CardDescriptionSlot({
   showDragHandle = false,
   onEditRequest,
 }: CardDescriptionSlotProps) {
+  // Only the expanded static matches the editor's layout: a click places the cursor at its point, and leaving editing holds the editor.
   const slot = useDescriptionSlot({
     editing: state === 'editing',
     canEdit: !isReadOnly,

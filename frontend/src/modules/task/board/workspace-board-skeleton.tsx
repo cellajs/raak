@@ -12,11 +12,7 @@ interface WorkspaceBoardSkeletonProps {
   withHeader?: boolean;
 }
 
-/**
- * Skeleton of a workspace board that anticipates its projects. Until the board's own project list is cached they come
- * from the user's project list the menu keeps: the board lists those same memberships, narrowed to the workspace.
- * A workspace known to hold no projects shows its empty state at once.
- */
+/** Until the board's own project list is cached, its projects come from the user's menu list, narrowed to the workspace. */
 export function WorkspaceBoardSkeleton({ workspace, withHeader = true }: WorkspaceBoardSkeletonProps) {
   const { id: userId } = useCurrentUser();
   const { data: boardProjects } = useInfiniteQuery(

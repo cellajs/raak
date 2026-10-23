@@ -1,5 +1,4 @@
 import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, InfoIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -32,7 +31,6 @@ const desktopRowHeight = 80;
 const mobileRowHeight = 102;
 const rowCount = 12;
 
-/** The mobile placeholder column carries no project or kind; desktop columns are real board panels. */
 type SkeletonColumn = { kind: 'mobile'; panelId: string } | BoardResizablePanel;
 
 interface BoardSkeletonProps {
@@ -45,11 +43,7 @@ interface BoardSkeletonProps {
   withHeader?: boolean;
 }
 
-/**
- * Render skeleton per panel based on the current board layout. Project panels get task-row
- * placeholders; the labels and getting-started panels render through their real `LocalPanelShell`
- * frame so their header, collapsed handle and persisted width match the live board exactly.
- */
+/** Loading skeleton per panel; local panels use their real `LocalPanelShell`, so header, collapsed handle and width match the live board. */
 export function BoardSkeleton({
   boardId,
   projects = [],
@@ -63,25 +57,21 @@ export function BoardSkeleton({
 
   const panelCollapseState = useBoardStore((state) => state.panelCollapseState);
 
-  // Match the live board's local-panel set so the skeleton shows the same labels / explainer columns.
   const showExplainer = useShowExplainer(isInWorkspace);
-  const extraPanels = useMemo(() => buildBoardExtraPanels({ showExplainer, publicView }), [showExplainer, publicView]);
+  const extraPanels = buildBoardExtraPanels({ showExplainer, publicView });
 
   const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, projects, extraPanels);
   const panels: SkeletonColumn[] = isMobile ? [{ kind: 'mobile', panelId: 'mobilePanel' }] : boardPanels;
 
   // The row sizes itself like the live panel group (resizable-panels.md, G6): it fills its parent when every open panel
   // fits at its ideal width, and otherwise scrolls at the ideal or the stored total, whichever is wider.
-  const rowMinWidth = useMemo(() => {
-    if (isMobile) return undefined;
-    const gaps = Math.max(0, panels.length - 1) * columnGap;
-    const total = (openWidth: (panelId: string) => number) =>
-      panels.reduce((sum, { panelId }) => sum + (panelCollapseState[panelId] ? collapsedPanelMinWidth : openWidth(panelId)), gaps);
-    const ideal = total(() => idealPanelWidth);
-    const stored = total((panelId) => defaultSizes[panelId]);
-    // `(ideal - 100%) * 9999` is a switch on the parent's width: far above `stored` while the parent is narrower than `ideal`, negative once it fits.
-    return `max(${ideal}px, min(${stored}px, (${ideal}px - 100%) * 9999))`;
-  }, [isMobile, panels, panelCollapseState, defaultSizes]);
+  const gaps = Math.max(0, panels.length - 1) * columnGap;
+  const total = (openWidth: (panelId: string) => number) =>
+    panels.reduce((sum, { panelId }) => sum + (panelCollapseState[panelId] ? collapsedPanelMinWidth : openWidth(panelId)), gaps);
+  const ideal = total(() => idealPanelWidth);
+  const stored = total((panelId) => defaultSizes[panelId]);
+  // `(ideal - 100%) * 9999` is a switch on the parent's width: far above `stored` while the parent is narrower than `ideal`, negative once it fits.
+  const rowMinWidth = isMobile ? undefined : `max(${ideal}px, min(${stored}px, (${ideal}px - 100%) * 9999))`;
 
   const renderColumn = (panel: SkeletonColumn) => {
     switch (panel.kind) {
@@ -243,7 +233,6 @@ function PanelBodySkeleton({ rowHeight = desktopRowHeight }: PanelBodySkeletonPr
   );
 }
 
-/** Placeholder rows for a local panel body (labels / getting-started), shown inside its real shell. */
 function LocalPanelBodySkeleton() {
   return (
     <div className="flex flex-1 flex-col gap-2 p-2">

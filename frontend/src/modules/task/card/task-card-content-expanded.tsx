@@ -11,28 +11,15 @@ const staticEditorClass = tw('w-full border-none bg-transparent [&>.bn-static-ed
 
 interface TaskCardContentExpandedProps {
   task: Task;
-  /**
-   * Drop the description gutter. Set when this preview is nested inside a wrapper that already
-   * applies `taskDescriptionGutterClass` (the edit form's waiting-fallback), so the gutter isn't
-   * doubled and the preview lines up pixel-for-pixel with the editor that replaces it.
-   */
+  /** Drops the description gutter when a wrapper already applies `taskDescriptionGutterClass`, so it is not doubled. */
   noGutter?: boolean;
   /** Fires once the static description HTML is computed, letting the parent defer the edit->static swap. */
   onReady?: () => void;
-  /**
-   * Description content that overrides `task.description`. Set by the edit->static handoff to the
-   * editor's just-committed content, so the swap paints the final edit even before the cache settles
-   * (the relay materializes and re-patches the cache moments later with the same content).
-   */
+  /** Replaces `task.description` with the editor's just-committed content, so the edit->static swap paints before the cache settles. */
   descriptionOverride?: string;
 }
 
-/**
- * Renders the task description as static HTML in the expanded (non-editing) state.
- *
- * We intentionally do NOT apply `inert` here even in read-only mode. `inert` blocks
- * text selection in the entire subtree, preventing read-only users from copying the description.
- */
+/** The task description as static HTML. Never `inert`, which would block text selection for read-only users. */
 export function TaskCardContentExpanded({ task, noGutter, onReady, descriptionOverride }: TaskCardContentExpandedProps) {
   const { tenantId } = useOrganizationLayoutContext();
 

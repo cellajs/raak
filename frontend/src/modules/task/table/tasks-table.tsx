@@ -1,6 +1,6 @@
 import { type InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 import { BirdIcon } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project, Workspace } from 'sdk';
 import { appConfig } from 'shared';
@@ -43,16 +43,14 @@ export interface ResolvedTasksTableProps extends Omit<TasksTableProps, 'projects
 
 export function TasksTable({ projects: projectsProp, workspace, publicView, organization, tenantId }: TasksTableProps) {
   const { t } = useTranslation();
-  const { search, setSearch } = useSearchParams<BoardSearchParams>({});
+  const { search, setSearch } = useSearchParams<BoardSearchParams>();
 
-  // Fetch projects for workspace tables; use provided projects for single-project tables
   const { data: fetchedData } = useInfiniteQuery({
     ...projectsListQueryOptions({ workspaceId: workspace?.id, include: 'counts' }),
     enabled: !projectsProp,
   });
   const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
 
-  // Table state
   const { q, sort, order } = search;
 
   const [columns, setColumns] = useColumnVisibility(useColumns({ hideProject: !workspace, organization, tenantId, projects }));
@@ -81,12 +79,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     hasNextPage: boolean;
   };
 
-  // Flatten pages into a single array, preserving item references from previous
-  // pages so memo'd Row components don't re-render when a new page loads.
-  const fetchedRows = useMemo(() => {
-    if (!data) return undefined;
-    return data.pages.flatMap(({ items }) => items);
-  }, [data]);
+  const fetchedRows = data?.pages.flatMap(({ items }) => items);
 
   // Highlight mode counts matches over all tasks, not the loaded rows: the filtered query's total, the cache entry filter
   // mode reads. Same page size on purpose, since the table key leaves out the limit.
@@ -96,23 +89,16 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const total = useListQueryTotal(highlight ? matchOptions.queryKey : queryOptions.queryKey);
 
   const isOnline = useOnlineManager();
-  // Stable row references prevent memoized rows from rerendering on unchanged offline filters.
-  const rows = useMemo(() => {
-    if (!fetchedRows) return undefined;
-    return isOnline || highlight ? fetchedRows : fetchedRows.filter((row) => matchesBoardSearch(search, row));
-  }, [fetchedRows, isOnline, highlight, search]);
+  const rows = isOnline || highlight ? fetchedRows : fetchedRows?.filter((row) => matchesBoardSearch(search, row));
 
   // Tint matches among the loaded rows in highlight mode (search-filter strips the marker)
-  const rowClass = useMemo(
-    () => (highlight ? (row: Task) => (matchesBoardSearch(search, row) ? searchHighlightRowClass : undefined) : undefined),
-    [highlight, search],
-  );
+  const rowClass = highlight ? (row: Task) => (matchesBoardSearch(search, row) ? searchHighlightRowClass : undefined) : undefined;
 
-  // isFetching already includes next page fetch scenario
-  const fetchMore = useCallback(async () => {
+  // isFetching includes a next-page fetch
+  const fetchMore = async () => {
     if (!hasNextPage || isLoading || isFetching) return;
     await fetchNextPage();
-  }, [hasNextPage, isLoading, isFetching, fetchNextPage]);
+  };
 
   const selectedProjectId = selected[0]?.projectId;
 
@@ -124,17 +110,11 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     setSelected(picked.filter((row) => row.projectId === projectId));
   };
 
-  const selectedRowIds = useMemo(() => new Set(selected.map((task) => task.id)), [selected]);
+  const selectedRowIds = new Set(selected.map((task) => task.id));
 
-  const isRowSelectionDisabled = useCallback(
-    (row: Task) => isProjectReadOnly(row.projectId) || (!!selectedProjectId && row.projectId !== selectedProjectId),
-    [selectedProjectId],
-  );
+  const isRowSelectionDisabled = (row: Task) => isProjectReadOnly(row.projectId) || (!!selectedProjectId && row.projectId !== selectedProjectId);
 
-  const noRowsComponent = useMemo(
-    () => <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:task_other').toLowerCase() }} />,
-    [t],
-  );
+  const noRowsComponent = <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:task_other').toLowerCase() }} />;
 
   return (
     <TaskSearchScope>

@@ -6,10 +6,7 @@ interface DescriptionEditButtonProps {
   className: string;
 }
 
-/**
- * Keyboard way into the description editor, laid over the description and shown only as its focus ring. The pointer
- * passes through to the description, which a click edits already. `className` places it.
- */
+/** Keyboard way into the description editor: laid over the description, visible only as its focus ring; `className` places it. */
 export function DescriptionEditButton({ onClick, className }: DescriptionEditButtonProps) {
   const { t } = useTranslation();
 

@@ -10,9 +10,6 @@ interface TaskPanelCollapsedProps {
   counts: TaskCounts;
 }
 
-/**
- * Task-specific collapsed panel mapping TaskCounts to the generic CollapsedPanelView.
- */
 export function TaskPanelCollapsed({ counts }: TaskPanelCollapsedProps) {
   const sections: CollapsedSection[] = [];
 

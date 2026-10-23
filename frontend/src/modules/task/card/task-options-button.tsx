@@ -22,7 +22,6 @@ interface TaskOptionsButtonProps {
   isSheet?: boolean;
 }
 
-/** Ellipsis button that opens a task's options menu, on a collapsed card, an expanded card header and the sheet. */
 export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonProps) {
   const { t } = useTranslation();
   const { copyToClipboard } = useCopyToClipboard(2000);
@@ -32,8 +31,7 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const { create } = dropdowner.getState();
     const isMobile = window.innerWidth < 640;
-    // Anchor the dropdown to the clicked element. The button carries no `id`, because a
-    // caller-supplied `id` on a Base UI tooltip trigger makes the tooltip flash and close.
+    // The button carries no `id`: a caller-supplied `id` on a Base UI tooltip trigger makes the tooltip flash and close.
     const triggerRef = { current: currentTarget };
 
     const handleDeleteClick = () => {
@@ -95,7 +93,6 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
         triggerRef,
         align: 'end',
         kind: 'menu',
-        // Match the task panel header's ellipsis menu width.
         popupClassName: 'min-w-48',
       },
     );

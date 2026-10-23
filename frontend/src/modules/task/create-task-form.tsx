@@ -21,6 +21,7 @@ import { useProjectMembers } from '~/modules/project/use-project-members';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
   closeCreateTaskForm,
+  createTaskFormId,
   createTaskFormSchema,
   type NewTaskFormValues,
   newTaskFormDefaults,
@@ -65,7 +66,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
   const isMobile = useBreakpointBelow('sm');
   const setForm = useDraftStore((state) => state.setForm);
 
-  const formId = `create-task-${projectId}`;
+  const formId = createTaskFormId(projectId);
   const isFocused = useBoardFocusStore((state) => state.currentItemId === formId);
 
   const [defaultId] = useState(generateId());
