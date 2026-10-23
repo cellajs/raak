@@ -10,11 +10,7 @@ const editorClass = tw('w-full border-none bg-transparent [&>.bn-editor]:min-h-2
 /** Left gutter gives the block drag handle (side menu) room; it renders outside the text edge. */
 const gutterClass = tw('pt-3 pr-4 pb-5 pl-2 sm:pl-9');
 
-/**
- * Hosts the collaborative BlockNote editor for documenting an epic label; the shared
- * CollaborativeBlockNote owns the Yjs connection and its status. Task-only primitives
- * (checklist) and file blocks (no label attachment host yet) are excluded.
- */
+/** Collaborative editor for an epic label's description. Checklists are task-only and labels have no attachment host yet, so both block kinds are excluded. */
 export function LabelDescriptionForm({ label }: { label: Label }) {
   const project = findProjectByIdOrSlug(label.projectId, label.tenantId);
   const canEdit = isUnconditionalCan(project?.can?.label?.update);

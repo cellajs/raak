@@ -1,16 +1,11 @@
 import type { LabelColorToken } from 'shared/config/labels-config';
 
 interface LabelPaletteEntry {
-  /** Accent color for icons and standalone glyphs */
   icon: string;
-  /** Solid color dot */
   dot: string;
 }
 
-/**
- * Theme-aware class triples per curated label color token.
- * Secondary labels may contain free-form hex values and require a token check.
- */
+/** Theme-aware classes per curated color token. A stored color may be free-form hex: check it with `isLabelColorToken` first. */
 export const labelPalette: Record<LabelColorToken, LabelPaletteEntry> = {
   red: { icon: 'text-red-600 dark:text-red-400', dot: 'bg-red-500' },
   orange: {
@@ -51,5 +46,4 @@ export const labelPalette: Record<LabelColorToken, LabelPaletteEntry> = {
   },
 };
 
-/** Narrows a stored label color to a curated palette token. */
 export const isLabelColorToken = (color: string | null | undefined): color is LabelColorToken => color != null && color in labelPalette;

@@ -21,9 +21,8 @@ interface LocalPanelShellProps {
 }
 
 /**
- * Frame for local (non-project) board panels such as the explainer and the labels panel:
- * collapsed icon handle, pinned header with drag handle + title + optional actions, and a
- * body slot. Collapse/resize/drag persistence rides the generic panel stores via panelId.
+ * Frame for the local board panels (explainer, labels): a collapsed icon handle, or a pinned header with
+ * drag handle, title and actions above the body. Collapse, size and order persist per `panelId`.
  */
 export function LocalPanelShell({ panelId, icon, title, headerActions, windowScroll, children }: LocalPanelShellProps) {
   const isCollapsed = !!useBoardStore((state) => state.panelCollapseState[panelId]);

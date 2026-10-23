@@ -22,14 +22,14 @@ const openLabelsDrawer = ({ entity, entityId }: LabelsScopeProps, triggerRef: Tr
   create(list, { id: labelsDrawerId, triggerRef, side: 'right', title: i18n.t('c:label_other').toLowerCase() });
 };
 
-function MobileLabelsDrawerButton({ entity, entityId }: LabelsScopeProps) {
+function MobileLabelsDrawerButton(props: LabelsScopeProps) {
   const { t } = useTranslation();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
 
   // Mirrors the desktop board revealing its labels panel for a label link
   useEffect(() => {
-    if (labelPageId) openLabelsDrawer({ entity, entityId }, triggerRef);
+    if (labelPageId) openLabelsDrawer(props, triggerRef);
   }, [labelPageId]);
 
   // Past the breakpoint the sheeter would turn the drawer into a sheet beside the labels panel
@@ -41,7 +41,7 @@ function MobileLabelsDrawerButton({ entity, entityId }: LabelsScopeProps) {
       variant="ghost"
       aria-label={t('c:label_other')}
       className="group-data-[search-focused=true]/boardHeader:hidden"
-      onClick={() => openLabelsDrawer({ entity, entityId }, triggerRef)}
+      onClick={() => openLabelsDrawer(props, triggerRef)}
     >
       <TagIcon />
     </Button>

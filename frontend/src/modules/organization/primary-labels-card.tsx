@@ -22,7 +22,6 @@ const centeredCellClass = tw('flex items-center justify-center');
 
 const IconPicker = lazyNamed(() => import('~/modules/common/icon-picker/icon-picker'), 'IconPicker');
 
-/** Stable row key getter, defined outside the component to keep its identity stable. */
 function rowKeyGetter(row: PrimaryLabelDefinition) {
   return row.slug;
 }
@@ -95,10 +94,8 @@ interface PrimaryLabelsCardProps {
 }
 
 /**
- * Admin card managing the organization's primary label set (setupConfig.primaryLabels): the task
- * types provisioned into every new project, in a data grid with drag reorder and in-place cell
- * editing. Every interaction persists immediately. Slugs are derived from the name on add and stay
- * stable afterwards, since they are the identity that organization tracking matches on.
+ * Admin card for the organization's primary labels (setupConfig.primaryLabels), the task types provisioned into every
+ * new project. Slugs derive from the name on add and then stay fixed: organization tracking matches on them.
  */
 export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
   const { t } = useTranslation();
@@ -136,7 +133,6 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
   const addEntry = () => {
     const name = t('c:label');
     const slugBase = labelSlug(name) || 'label';
-    // Slugs are identity: suffix until unique within the set
     let slug = slugBase;
     for (let i = 2; rows.some((row) => row.slug === slug); i++) slug = `${slugBase}-${i}`;
     persist([...rows, { slug, name, color: 'blue', icon: null }]);

@@ -29,36 +29,31 @@ export function LabelOptionsButton({ row, canManage }: LabelOptionsButtonProps) 
   // Epics keep per-row identity across projects; a secondary tag is one logical label over its slug group
   const deleteIds = row.mode === 'epic' ? [row.id] : row.siblingIds;
 
+  const handleCopyLink = async () => {
+    const link = `${window.location.origin}${window.location.pathname}?labelPageId=${row.id}`;
+    if (await copyToClipboard(link)) dropdowner.getState().complete(t('c:copied'));
+  };
+
+  const handleDeleteClick = () => {
+    const { remove } = dropdowner.getState();
+    const labels = deleteIds.map((id) => findLabelInCache(id)).filter((label): label is Label => !!label);
+    openPopConfirm(
+      <NamedText i18nKey="c:delete_confirm.text" name={row.name} />,
+      <DeleteLabels
+        labels={labels.length ? labels : [row]}
+        callback={() => {
+          remove();
+          labelTileStore.getState().collapse(row.id);
+        }}
+        onCancel={remove}
+      />,
+    );
+  };
+
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
-    const triggerRef = { current: currentTarget };
-
-    const handleDeleteClick = () => {
-      const { remove } = dropdowner.getState();
-      const labels = deleteIds.map((id) => findLabelInCache(id)).filter((label): label is Label => !!label);
-      openPopConfirm(
-        <NamedText i18nKey="c:delete_confirm.text" name={row.name} />,
-        <DeleteLabels
-          labels={labels.length ? labels : [row]}
-          callback={() => {
-            remove();
-            labelTileStore.getState().collapse(row.id);
-          }}
-          onCancel={remove}
-        />,
-      );
-    };
-
     dropdowner.getState().create(
       <>
-        <DropdownActionItem
-          isMobile={isMobile}
-          icon={LinkIcon}
-          closeOnSelect={false}
-          onSelect={async () => {
-            const link = `${window.location.origin}${window.location.pathname}?labelPageId=${row.id}`;
-            if (await copyToClipboard(link)) dropdowner.getState().complete(t('c:copied'));
-          }}
-        >
+        <DropdownActionItem isMobile={isMobile} icon={LinkIcon} closeOnSelect={false} onSelect={handleCopyLink}>
           {t('c:copy_as_link')}
         </DropdownActionItem>
         {canManage && (
@@ -70,7 +65,7 @@ export function LabelOptionsButton({ row, canManage }: LabelOptionsButtonProps) 
       {
         id: `label-options-${row.id}`,
         triggerId: `label-options-btn-${row.id}`,
-        triggerRef,
+        triggerRef: { current: currentTarget },
         align: 'end',
         kind: 'menu',
         popupClassName: 'min-w-48',

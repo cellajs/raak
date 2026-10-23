@@ -46,10 +46,7 @@ interface LabelTileProps extends Pick<LabelsHostProps, 'selectable' | 'singleExp
 /** DOM id of a label tile, so a label link can scroll its tile into view. */
 export const labelTileDomId = (labelId: string) => `label-tile-${labelId}`;
 
-/**
- * One label in the labels list. A click expands it in place, like a task card: the tile grows to show
- * its details and a click on the expanded name renames it. On the board, Enter does the same.
- */
+/** A click expands the tile in place, like a task card; a click on the expanded name renames it, and on the board Enter does both. */
 export function LabelTile({ row, highlighted, selectable = true, singleExpand, onFilterToggle, onBoard }: LabelTileProps) {
   const { t } = useTranslation();
 
@@ -91,6 +88,8 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
     if (onBoard) requestAnimationFrame(() => tileRef.current?.focus());
   };
 
+  const collapse = () => labelTileStore.getState().collapse(row.id);
+
   const handleTileFocus = () => {
     if (onBoard && boardFocusStore.getState().currentItemId !== domId) setCurrentItem(domId);
   };
@@ -102,7 +101,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
       event.preventDefault();
       handleNameClick();
     } else if (event.key === 'Escape') {
-      if (expanded) labelTileStore.getState().collapse(row.id);
+      if (expanded) collapse();
       else event.currentTarget.blur();
     }
   };
@@ -201,9 +200,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
         {/* Floating and in-flow actions share the row's right padding, so filter and options keep their place
             when the tile expands; close joins on their left */}
         <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : ['absolute inset-y-0 right-4', actionsReveal])}>
-          <AnimatePresence initial={false}>
-            {expanded && <CardCloseButton key="close" onClick={() => labelTileStore.getState().collapse(row.id)} />}
-          </AnimatePresence>
+          <AnimatePresence initial={false}>{expanded && <CardCloseButton key="close" onClick={collapse} />}</AnimatePresence>
           <LabelFilterButton name={row.name} onToggle={onFilterToggle} />
           <LabelOptionsButton row={row} canManage={!isReadOnly} />
         </div>

@@ -11,7 +11,6 @@ import { labelQueryKeys } from '~/modules/label/query';
 import { Button } from '~/modules/ui/button';
 import { getQueryItems, getSimilarQueries } from '~/query/basic/mutate-query';
 
-/** All labels currently present in list query caches, by id. */
 const cachedLabels = () => {
   const queries = getSimilarQueries<Label>(labelQueryKeys.list.base);
   const labels = queries.flatMap(([, data]) => (data ? getQueryItems(data) : []));
@@ -23,7 +22,7 @@ interface LabelSelectedButtonsProps {
   clearSelection: () => void;
 }
 
-/** Floating action bar for label rows selected in the labels panel: delete + clear. */
+/** Floating action bar for the label rows selected in the labels panel. */
 export function LabelSelectedButtons({ selectedLabelIds, clearSelection }: LabelSelectedButtonsProps) {
   const { t } = useTranslation();
 
@@ -32,10 +31,8 @@ export function LabelSelectedButtons({ selectedLabelIds, clearSelection }: Label
   const resource = t('c:label', { count }).toLowerCase();
 
   const openDeleteDialog = (currentTarget: HTMLButtonElement) => {
-    // A secondary row aggregates same-slug labels across projects; removing it removes the whole
-    // group. Epics keep per-row identity even when their slug-group shows as one row, so removing
-    // one deletes only the selected epic, not its same-slug siblings in other projects.
-    // Groups are re-derived from the cache at action time so stale selection snapshots can't leak in.
+    // A secondary row deletes its whole slug group, an epic only its own row. Groups are re-derived from the
+    // cache at action time, so a stale selection cannot leak in.
     const byId = cachedLabels();
     const labels = [...byId.values()];
     const toDelete = selectedLabelIds.flatMap((selectedId) => {

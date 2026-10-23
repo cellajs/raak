@@ -3,16 +3,12 @@ import type { Label } from 'sdk';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { labelsCanonicalOptions } from '~/modules/label/query';
 
-/** Filter a project's label list down to its live primary labels, ordered by displayOrder. */
 const primaryLabelsInOrder = (labels: Label[]): Label[] =>
   labels
     .filter((label) => label.mode === 'primary')
     .sort((a, b) => (a.displayOrder ?? Number.MAX_SAFE_INTEGER) - (b.displayOrder ?? Number.MAX_SAFE_INTEGER));
 
-/**
- * Live primary labels of a project from the canonical label list, sorted by displayOrder
- * (first entry is the default for new tasks).
- */
+/** Primary labels of a project by displayOrder; the first is the default for new tasks. */
 export const usePrimaryLabels = (projectId: string): Label[] => {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const { data } = useQuery({

@@ -11,13 +11,9 @@ import { organizationQueryOptions } from '~/modules/organization/query';
 import { Button } from '~/modules/ui/button';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
-/** Stable id for the explainer ("getting started") panel. Also a persisted board-layout /
- *  collapse-state key, so this string value must not change. */
+/** Keys the persisted panel layout and collapse state, so the value is fixed. */
 export const EXPLAINER_PANEL_ID = 'explainer';
 
-/**
- * Explainer panel content for a board showing organization welcome text.
- */
 export function ExplainerPanel() {
   const { t } = useTranslation();
 

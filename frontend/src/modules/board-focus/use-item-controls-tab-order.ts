@@ -3,9 +3,8 @@ import { type RefObject, useEffect, useRef } from 'react';
 const focusableSelector = 'a[href], button, textarea, input, select, [tabindex], [contenteditable="true"]';
 
 /**
- * Keeps a board item's own controls (task card, create form, label tile) out of the Tab order until the item is current,
- * so a panel list is one Tab stop and Tab leaves it after the current item's controls. Escape inside a current item
- * returns focus to its main element.
+ * Keeps a board item's own controls out of the Tab order until the item is current, so a panel list is one Tab stop.
+ * Escape inside a current item returns focus to its main element.
  */
 export function useItemControlsTabOrder(containerRef: RefObject<HTMLElement | null>, mainId: string, isCurrent: boolean) {
   const removedRef = useRef(new Set<HTMLElement>());

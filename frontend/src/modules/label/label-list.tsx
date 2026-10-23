@@ -23,11 +23,10 @@ import { ScrollArea } from '~/modules/ui/scroll-area';
 /** Highlight-mode match over the same columns the server search filters on (name + keywords). */
 const matchesSearch = (row: LabelRow, terms: string[]) => matchesTerms([row.nameFolded, row.keywordsFolded], terms);
 
-/** The panel lists secondary tags and epics; primary labels live on the task cards, not here. */
 const isPanelLabel = (mode: string) => mode !== 'primary';
 
 // Module-scoped so its identity is stable: useQueries returns a fresh combined value each render
-// unless the combine function is referentially stable (mirrors the label picker, select-labels).
+// unless the combine function is referentially stable.
 const combinePanelLabels = (results: { data?: { items: Label[] }; isLoading: boolean }[]) => ({
   labels: results.flatMap((result) => result.data?.items ?? []).filter((label) => isPanelLabel(label.mode)),
   pending: results.some((result) => result.isLoading),
@@ -37,14 +36,9 @@ interface LabelListScopeProps extends LabelsHostProps {
   entityId: string;
 }
 
-/** Newest-first by creation, mirroring the tasks table's default order. */
 const byCreatedAtDesc = (a: LabelRow, b: LabelRow) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0);
 
-/**
- * Project scope reads the canonical per-project list (the same key the optimistic create splices
- * into, mirroring the task board), then filters modes/search client-side. That keeps a label a
- * user just created visible immediately in the tab that created it, without a refetch.
- */
+/** Reads the canonical per-project list the optimistic create splices into, so a just-created label shows without a refetch. */
 function ProjectLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
 
@@ -57,12 +51,7 @@ function ProjectLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   return <LabelListView labels={data ?? []} usage={usage} isLoading={isLoading} {...hostProps} />;
 }
 
-/**
- * Workspace scope aggregates labels across the workspace's projects. Labels are project-homed, so it
- * reads each project's canonical home list (the keys the optimistic create splices into) via
- * useQueries and groups client-side, mirroring the label picker (select-labels). A just-created
- * label therefore shows immediately in the creating tab here too.
- */
+/** Aggregates each project's canonical list client-side, so a just-created label shows without a refetch. */
 function WorkspaceLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
 
@@ -86,10 +75,7 @@ interface LabelListViewProps extends LabelsHostProps {
   isLoading: boolean;
 }
 
-/**
- * Renders label tiles using internal or page scrolling.
- * Standard searches filter rows; '=' queries highlight matches.
- */
+/** A plain search filters the rows; a '=' search keeps them all and highlights the matches. */
 function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -143,7 +129,6 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
     list
   );
 
-  // With windowScroll the panel grows with content and the page scrolls; otherwise scroll internally
   if (windowScroll) return <div className="flex-1">{body}</div>;
   return (
     <ScrollArea className="min-h-0 flex-1" viewportRef={viewportRef}>
@@ -154,7 +139,6 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
 
 interface LabelListProps extends LabelsScopeProps, LabelsHostProps {}
 
-/** Labels panel body: canonical per-project list at project scope, aggregated list at workspace scope. */
 export function LabelList({ entity, entityId, ...hostProps }: LabelListProps) {
   return entity === 'workspace' ? <WorkspaceLabelList entityId={entityId} {...hostProps} /> : <ProjectLabelList entityId={entityId} {...hostProps} />;
 }

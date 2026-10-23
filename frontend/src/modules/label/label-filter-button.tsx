@@ -10,7 +10,7 @@ interface LabelFilterButtonProps {
   onToggle?: () => void;
 }
 
-/** Toggle button for highlighting a label across the board from its tile: sets the search to `=name`, or clears it. */
+/** Toggles the board search `=name` to highlight this label's tasks. */
 export function LabelFilterButton({ name, onToggle }: LabelFilterButtonProps) {
   const { t } = useTranslation();
   const { search, setSearch } = useSearchParams<{ q?: string }>({});
