@@ -9,7 +9,7 @@ import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import type { EnrichedProject } from '~/modules/project/types';
-import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { type SectionsValue, useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
 import { makePanelKey, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
@@ -42,11 +42,10 @@ export const BoardPanel = memo(function BoardPanel({
   const isMobile = useBreakpointBelow('sm');
   const q = useSearch({ strict: false, select: (search) => search.q });
   const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
-  const boardId = useBoardStore((state) => state.activeBoardId)!;
 
   const { isVisible: showFab } = useScrollVisibility(isMobile);
 
-  const { expandIced, expandAccepted } = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.prefs || defaultPanelPrefs);
+  const { expandIced, expandAccepted } = useProjectPanelPrefs(project.id);
   const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
@@ -70,14 +69,8 @@ export const BoardPanel = memo(function BoardPanel({
   const { highlightProject } = usePanelDropTarget({ panelRef, projectId: project.id, tasks });
 
   const counts = useMemo(() => {
-    const { accepted, iced } = filteredTasks.reduce(
-      (acc, { status }) => {
-        if (status === TaskStatus.Accepted) acc.accepted++;
-        if (status === TaskStatus.Iced) acc.iced++;
-        return acc;
-      },
-      { accepted: 0, iced: 0 },
-    );
+    const accepted = filteredTasks.filter(({ status }) => status === TaskStatus.Accepted).length;
+    const iced = filteredTasks.filter(({ status }) => status === TaskStatus.Iced).length;
 
     // Derive hidden accepted count: total tasks in DB minus tasks the board fetched for this project
     const totalTasks = project.included?.counts?.entities?.task ?? 0;

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { useBoardStore } from '~/modules/common/board/board-store';
+import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
 import { computePanelLayoutSplit } from '~/modules/task/helpers/board-helpers';
 import type { Task } from '~/modules/task/types';
 import { idbKvStorage } from '~/query/idb-kv-storage';
@@ -34,7 +34,7 @@ const ensureBoard = (state: TaskBoardState, boardId: string) => {
   return state.panelData[boardId];
 };
 
-const ensurePanel = (board: TaskBoardState['panelData'][string], projectId: string) => {
+const ensurePanel = (board: BoardPanelData, projectId: string) => {
   if (!board[projectId]) board[projectId] = { prefs: { ...defaultPanelPrefs } };
   return board[projectId];
 };
@@ -43,16 +43,16 @@ const ensurePanel = (board: TaskBoardState['panelData'][string], projectId: stri
 export const useTaskBoardStore = create<TaskBoardState>()(
   devtools(
     persist(
-      immer((set) => ({
+      immer((set, get) => ({
         ...initStore,
 
         setPanelSections: (boardId, projectId, sections) => {
           // Persist the generic board layout before entering the Immer recipe,
           // since accessing another store during drafting introduces a side effect.
-          const currentViewSections = useTaskBoardStore.getState().panelData[boardId]?.[projectId]?.viewSections;
-          const currentLayout = useBoardStore.getState().boardLayouts[boardId] ?? {};
+          const currentViewSections = get().panelData[boardId]?.[projectId]?.viewSections;
+          const currentLayout = boardStore.getState().boardLayouts[boardId] ?? {};
           const nextLayout = computePanelLayoutSplit(currentLayout, projectId, sections, currentViewSections);
-          useBoardStore.getState().updateBoardLayout(boardId, nextLayout);
+          boardStore.getState().updateBoardLayout(boardId, nextLayout);
 
           set((state) => {
             const board = ensureBoard(state, boardId);
@@ -74,12 +74,8 @@ export const useTaskBoardStore = create<TaskBoardState>()(
             const board = ensureBoard(state, boardId);
             const panel = ensurePanel(board, projectId);
 
-            const current = status === 'iced' ? panel.prefs.expandIced : panel.prefs.expandAccepted;
-            if (typeof newState === 'boolean' && newState === current) return;
-
-            const next = typeof newState === 'boolean' ? newState : !current;
-            if (status === 'iced') panel.prefs.expandIced = next;
-            else panel.prefs.expandAccepted = next;
+            const key = status === 'iced' ? 'expandIced' : 'expandAccepted';
+            panel.prefs[key] = newState ?? !panel.prefs[key];
           });
         },
 
@@ -89,3 +85,17 @@ export const useTaskBoardStore = create<TaskBoardState>()(
     ),
   ),
 );
+
+export { useTaskBoardStore as taskBoardStore };
+
+/** The active board's split sections of a project; undefined while it is unsplit. */
+export const useProjectViewSections = (projectId: string) => {
+  const boardId = useBoardStore((state) => state.activeBoardId);
+  return useTaskBoardStore((state) => (boardId ? state.panelData[boardId]?.[projectId]?.viewSections : undefined));
+};
+
+/** The active board's expand preferences of a project's accepted and iced sections. */
+export const useProjectPanelPrefs = (projectId: string) => {
+  const boardId = useBoardStore((state) => state.activeBoardId);
+  return useTaskBoardStore((state) => (boardId ? state.panelData[boardId]?.[projectId]?.prefs : undefined)) ?? defaultPanelPrefs;
+};

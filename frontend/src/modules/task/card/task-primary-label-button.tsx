@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { useReadOnlyInert } from '~/modules/project/use-read-only';
-import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
+import { openTaskFieldDropdown, taskFieldTriggerId } from '~/modules/task/helpers/open-task-dropdown';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -13,23 +13,13 @@ import { Button } from '~/modules/ui/button';
  */
 export function TaskPrimaryLabelButton({ task, isSheet = false }: { task: Task; isSheet?: boolean }) {
   const { t } = useTranslation();
-  const { onPrimaryLabelChange } = useTaskFieldHandlers(task);
+  const handlers = useTaskFieldHandlers(task);
   const readOnlyInert = useReadOnlyInert(task.projectId);
 
   return (
     <Button
-      id={`primaryLabel-${task.id}${isSheet ? '-sheet' : ''}`}
-      onClick={({ currentTarget }) =>
-        openTaskDropdown({
-          dropdownType: 'primaryLabel',
-          value: task.primaryLabelId,
-          projectId: task.projectId,
-          onChange: onPrimaryLabelChange,
-          triggerId: currentTarget.id,
-          triggerRef: { current: currentTarget },
-          taskId: task.id,
-        })
-      }
+      id={taskFieldTriggerId('primaryLabel', task.id, isSheet)}
+      onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'primaryLabel', handlers, currentTarget)}
       aria-label={t('c:set_resource', { resource: t('c:type').toLowerCase() })}
       variant="ghost"
       size="xs"

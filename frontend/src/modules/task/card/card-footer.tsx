@@ -9,9 +9,8 @@ import { HighlightText } from '~/modules/common/match-highlight';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import type { TaskDropdownType } from '~/modules/task/dropdowns/types';
 import { copyStartedTask } from '~/modules/task/helpers/copy-tasks';
-import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
+import { openTaskFieldDropdown, taskFieldTriggerId } from '~/modules/task/helpers/open-task-dropdown';
 import { setTaskSelected } from '~/modules/task/helpers/task-selection';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -56,38 +55,10 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       ? t('c:status_updated_at', { when: statusChangedRelative })
       : t('c:status_updated_on', { when: statusChangedRelative });
 
-  const onDropdownOpen = (currentTarget: EventTarget & HTMLButtonElement, dropdownType: TaskDropdownType) => {
-    const base = { triggerId: currentTarget.id, triggerRef: { current: currentTarget }, taskId: task.id };
-
-    if (dropdownType === 'labels') {
-      openTaskDropdown({
-        ...base,
-        dropdownType,
-        value: task.labels,
-        projectId: task.projectId,
-        onChange: handlers.onLabelsChange,
-        // Collapse the selected section when the card already shows its selected labels.
-        initialSelectedCollapsed: !isMobile || isExpandedMobile,
-      });
-    } else if (dropdownType === 'assignedTo') {
-      openTaskDropdown({ ...base, dropdownType, value: task.assignedTo, projectId: task.projectId, onChange: handlers.onAssignedToChange });
-    } else if (dropdownType === 'status') {
-      openTaskDropdown({ ...base, dropdownType, value: task.status, onChange: handlers.onStatusChange });
-    } else {
-      openTaskDropdown({
-        ...base,
-        dropdownType: 'primaryLabel',
-        value: task.primaryLabelId,
-        projectId: task.projectId,
-        onChange: handlers.onPrimaryLabelChange,
-      });
-    }
-  };
-
   const labelsButton = (
     <Button
-      id={`labels-${task.id}${isSheet ? '-sheet' : ''}`}
-      onClick={({ currentTarget }) => onDropdownOpen(currentTarget, 'labels')}
+      id={taskFieldTriggerId('labels', task.id, isSheet)}
+      onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'labels', handlers, currentTarget, !isMobile || isExpandedMobile)}
       aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
       variant="ghost"
       size="xs"
@@ -109,7 +80,6 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
                 <div key={id} className="flex max-w-full flex-wrap items-center justify-center rounded-full px-0">
                   <Badge
                     variant="outline"
-                    key={id}
                     className="inline-block min-h-4 max-w-full shrink truncate border-0 bg-transparent px-1 py-0 font-normal text-[.75rem] text-muted-foreground leading-4 shadow-none last:mr-0"
                   >
                     <HighlightText text={name} />
@@ -148,8 +118,8 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
         {!isExpandedMobile && labelsButton}
         <div className="ml-auto flex">
           <Button
-            id={`assignedTo-${task.id}${isSheet ? '-sheet' : ''}`}
-            onClick={({ currentTarget }) => onDropdownOpen(currentTarget, 'assignedTo')}
+            id={taskFieldTriggerId('assignedTo', task.id, isSheet)}
+            onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'assignedTo', handlers, currentTarget)}
             aria-label={t('c:assign_to')}
             variant="ghost"
             size="xs"
@@ -193,8 +163,8 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
           </TooltipButton>
           <TooltipButton toolTipContent={statusTooltip} side="top">
             <Button
-              id={`status-${task.id}${isSheet ? '-sheet' : ''}`}
-              onClick={({ currentTarget }) => onDropdownOpen(currentTarget, 'status')}
+              id={taskFieldTriggerId('status', task.id, isSheet)}
+              onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'status', handlers, currentTarget)}
               aria-label={t('c:set_resource', { resource: t('c:status').toLowerCase() })}
               variant="outlineGhost"
               size="xs"

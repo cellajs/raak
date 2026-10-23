@@ -5,12 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import type { EnrichedProject } from '~/modules/project/types';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { useProjectViewSections, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { TaskStatus } from '~/modules/task/task-properties';
 import { Button } from '~/modules/ui/button';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
@@ -25,7 +25,7 @@ export function ProjectActionsMenu({ project, className }: { project: EnrichedPr
   const boardId = useBoardStore((state) => state.activeBoardId)!;
   const isInWorkspace = useIsWorkspaceRoute();
 
-  const panelsSectionView = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.viewSections);
+  const viewSections = useProjectViewSections(project.id);
   const setPanelSections = useTaskBoardStore((state) => state.setPanelSections);
   const dropPanelSections = useTaskBoardStore((state) => state.dropPanelSections);
 
@@ -39,11 +39,11 @@ export function ProjectActionsMenu({ project, className }: { project: EnrichedPr
     const isMobile = window.innerWidth < 640;
     const triggerRef = { current: currentTarget };
     const select = (action: () => void) => () => {
-      useDropdowner.getState().remove();
+      dropdowner.getState().remove();
       action();
     };
 
-    useDropdowner.getState().create(
+    dropdowner.getState().create(
       <>
         {isInWorkspace && (
           <DropdownActionItem
@@ -89,7 +89,7 @@ export function ProjectActionsMenu({ project, className }: { project: EnrichedPr
             isMobile={isMobile}
             icon={SquareSplitHorizontalIcon}
             onSelect={select(() =>
-              panelsSectionView
+              viewSections
                 ? dropPanelSections(boardId, project.id)
                 : setPanelSections(boardId, project.id, [
                     { status: [TaskStatus.Accepted, TaskStatus.Reviewed, TaskStatus.Delivered, TaskStatus.Finished, TaskStatus.Started] },
@@ -97,7 +97,7 @@ export function ProjectActionsMenu({ project, className }: { project: EnrichedPr
                   ]),
             )}
           >
-            {panelsSectionView ? t('c:merge') : t('c:split')}
+            {viewSections ? t('c:merge') : t('c:split')}
           </DropdownActionItem>
         )}
       </>,

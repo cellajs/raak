@@ -21,7 +21,7 @@ export const useTasksTotal = (queryParams?: BaseTasksQueryParam) => {
   const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
 
   const isSearching = !!q?.trim();
-  const queryKey = queryParams ? taskKeys.list.org(queryParams.organizationId) : taskKeys.publicList.filtered({ projectId: '', public: true });
+  const queryKey = queryParams ? taskKeys.list.org(queryParams.organizationId) : taskKeys.publicList.base;
 
   return useSyncExternalStore(subscribeToTaskCache, () => {
     const queries = queryClient.getQueriesData<QueryData<Task>>({ queryKey, type: 'active' });

@@ -4,7 +4,7 @@ import { focusWhenMounted, setCurrentItem } from '~/modules/board-focus/focus-it
 import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
 import { boardStore } from '~/modules/common/board/board-store';
 import { draftStore } from '~/modules/common/form-draft/draft-store';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { taskBoardStore } from '~/modules/task/board/task-board-store';
 import { makePanelKey, resolveDraftHostSection } from '~/modules/task/helpers/board-helpers';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
@@ -18,12 +18,12 @@ export const revealDraftHostPanel = (projectId: string, draftStatus: TaskStatus)
   const boardId = boardStore.getState().activeBoardId;
   if (!boardId) return;
 
-  const viewSections = useTaskBoardStore.getState().panelData[boardId]?.[projectId]?.viewSections;
+  const viewSections = taskBoardStore.getState().panelData[boardId]?.[projectId]?.viewSections;
   const hostSection = resolveDraftHostSection(viewSections, draftStatus);
   const panelId = hostSection ? makePanelKey(projectId, hostSection) : projectId;
   boardStore.getState().togglePanelCollapsedState(panelId, false);
 
-  const { togglePanelSectionExpandState } = useTaskBoardStore.getState();
+  const { togglePanelSectionExpandState } = taskBoardStore.getState();
   if (draftStatus === TaskStatus.Accepted) togglePanelSectionExpandState(boardId, projectId, 'accepted', true);
   if (draftStatus === TaskStatus.Iced) togglePanelSectionExpandState(boardId, projectId, 'iced', true);
 };

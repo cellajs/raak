@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { DotIcon, PaperclipIcon } from 'lucide-react';
-import { createContext, useContext, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project } from 'sdk';
 import { exportDate } from '~/lib/export';
@@ -46,14 +46,19 @@ function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
   );
 }
 
-/**
- * Supplies current projects to memoized cells.
- * Context keeps cold-load updates visible after column definitions are frozen.
- */
-export const TableProjectsContext = createContext<Project[]>([]);
-
-function ProjectCell({ row, tabIndex, organization, tenantId }: { row: Task; tabIndex: number; organization?: Organization; tenantId?: string }) {
-  const projects = useContext(TableProjectsContext);
+function ProjectCell({
+  row,
+  tabIndex,
+  projects,
+  organization,
+  tenantId,
+}: {
+  row: Task;
+  tabIndex: number;
+  projects: Project[];
+  organization?: Organization;
+  tenantId?: string;
+}) {
   const project = projects.find((p) => p.id === row.projectId);
   if (!project || !organization || !tenantId) return row.projectId;
 
@@ -81,197 +86,200 @@ function ProjectCell({ row, tabIndex, organization, tenantId }: { row: Task; tab
 }
 
 /** Builds the column definitions for the enclosing table. */
-export const useColumns = (opts?: { hideProject?: boolean; organization?: Organization; tenantId?: string }) => {
+export const useColumns = (opts: {
+  hideProject: boolean;
+  projects: Project[];
+  organization?: Organization;
+  tenantId?: string;
+}): ColumnOrColumnGroup<Task>[] => {
   const { t } = useTranslation();
 
-  // Build once to preserve column-management state; changing project data comes from context.
-  return useState<ColumnOrColumnGroup<Task>[]>(() => {
-    const cols: ColumnOrColumnGroup<Task>[] = [
-      { ...SelectColumn, key: 'checkbox-column', minBreakpoint: 'sm' },
-      {
-        key: 'primaryLabel',
-        name: t('c:type'),
-        minBreakpoint: 'sm',
-        renderCell: ({ row }) => {
-          if (!row.primaryLabel) return null;
-          return (
-            <>
-              <span className="mr-2 inline-flex shrink-0" data-tooltip="compact" data-tooltip-content={row.primaryLabel.name}>
-                <PrimaryLabelIcon label={row.primaryLabel} />
-              </span>
-              <span className="in-data-[is-compact=true]:hidden truncate">{row.primaryLabel.name}</span>
-            </>
-          );
-        },
-        width: 140,
-        modes: {
-          compact: { width: 32, minWidth: 32 },
-          // On mobile the type icon merges into the summary cell (icon-only via the slot's data-is-compact)
-          mobile: { merge: { into: 'summary', side: 'left' } },
-        },
-      },
-      {
-        key: 'summary',
-        name: t('c:summary'),
-        minWidth: 280,
-        resizable: true,
-        wrapText: 3,
-        estimateLines: (row, { width }) => estimateWrappedLines(row.summaryLength ?? 0, width),
-        renderCell: (props) => <SummaryCell {...props} />,
-      },
-      {
-        key: 'todos',
-        name: t('c:todo_other'),
-        minBreakpoint: 'sm',
-        width: 70,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          const checked = row.checkedCount ?? 0;
-          const total = row.checkboxCount ?? 0;
-          if (total === 0) return null;
-          return (
-            <div className="inline-flex items-center gap-1">
-              <span className="text-success">{checked}</span>
-              <span className="opacity-50">/</span>
-              <span>{total}</span>
-            </div>
-          );
-        },
-      },
-      {
-        key: 'attachments',
-        name: t('c:attachment_other'),
-        minBreakpoint: 'sm',
-        width: 70,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          const count = row.attachments?.length ?? 0;
-          if (count === 0) return null;
-          return (
-            <div className="inline-flex items-center gap-1">
-              <PaperclipIcon className="size-3 -rotate-45 opacity-50" />
-              <span className="">{count}</span>
-            </div>
-          );
-        },
-      },
-      {
-        key: 'status',
-        name: t('c:status'),
-        sortable: true,
-        minBreakpoint: 'sm',
-        width: 140,
-        renderCell: ({ row }) => {
-          const status = statusOptionsByValue[row.status];
-          return (
-            <>
-              <SeenMark
-                productId={row.id}
-                tenantId={row.tenantId}
-                organizationId={row.organizationId}
-                channelId={getSeenChannelId('task', row)}
-                productType="task"
-              />
-              <status.icon className="mr-2 size-4 shrink-0" aria-hidden="true" />
-              <span>{t(`c:${status.status}`)}</span>
-            </>
-          );
-        },
-      },
-      {
-        key: 'assignedTo',
-        name: t('c:assigned_to'),
-        hidden: true,
-        width: 100,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          if (!row.assignedTo.length) return null;
-          return (
-            <span className="inline-flex" data-tooltip="compact" data-tooltip-content={row.assignedTo.map((user) => user.name).join(', ')}>
-              <AvatarGroup limit={3}>
-                <AvatarGroupList>
-                  {row.assignedTo.map((user) => (
-                    <EntityAvatar type="user" key={user.id} id={user.id} name={user.name} url={user.thumbnailUrl} className="h-8 w-8 text-xs" />
-                  ))}
-                </AvatarGroupList>
-                <AvatarOverflowIndicator className="h-8 w-8 text-xs" />
-              </AvatarGroup>
+  return [
+    { ...SelectColumn, key: 'checkbox-column', minBreakpoint: 'sm' },
+    {
+      key: 'primaryLabel',
+      name: t('c:type'),
+      minBreakpoint: 'sm',
+      renderCell: ({ row }) => {
+        if (!row.primaryLabel) return null;
+        return (
+          <>
+            <span className="mr-2 inline-flex shrink-0" data-tooltip="compact" data-tooltip-content={row.primaryLabel.name}>
+              <PrimaryLabelIcon label={row.primaryLabel} />
             </span>
-          );
-        },
+            <span className="in-data-[is-compact=true]:hidden truncate">{row.primaryLabel.name}</span>
+          </>
+        );
       },
-      {
-        key: 'labels',
-        name: t('c:label_other'),
-        hidden: true,
-        width: 190,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          if (!row.labels.length) return null;
-          return (
-            <div className="flex flex-col">
-              {row.labels.map((label) => (
-                <div key={label.id} className="flex items-center gap-1">
-                  <DotIcon className="size-2 shrink-0 rounded-md text-background" style={{ background: label.color || undefined }} strokeWidth={4} />
-                  <span className="text-xs">
-                    <HighlightText text={label.name} />
-                  </span>
-                </div>
-              ))}
-            </div>
-          );
-        },
+      width: 140,
+      modes: {
+        compact: { width: 32, minWidth: 32 },
+        // On mobile the type icon merges into the summary cell (icon-only via the slot's data-is-compact)
+        mobile: { merge: { into: 'summary', side: 'left' } },
       },
-      {
-        key: 'projectId',
-        name: t('c:project'),
-        sortable: true,
-        hidden: opts?.hideProject,
-        minBreakpoint: 'sm',
-        width: 180,
-        renderCell: ({ row, tabIndex }) => <ProjectCell row={row} tabIndex={tabIndex} organization={opts?.organization} tenantId={opts?.tenantId} />,
-        modes: { compact: { width: 50 } },
+    },
+    {
+      key: 'summary',
+      name: t('c:summary'),
+      minWidth: 280,
+      resizable: true,
+      wrapText: 3,
+      estimateLines: (row, { width }) => estimateWrappedLines(row.summaryLength ?? 0, width),
+      renderCell: (props) => <SummaryCell {...props} />,
+    },
+    {
+      key: 'todos',
+      name: t('c:todo_other'),
+      minBreakpoint: 'sm',
+      width: 70,
+      placeholderValue: '-',
+      renderCell: ({ row }) => {
+        const checked = row.checkedCount ?? 0;
+        const total = row.checkboxCount ?? 0;
+        if (total === 0) return null;
+        return (
+          <div className="inline-flex items-center gap-1">
+            <span className="text-success">{checked}</span>
+            <span className="opacity-50">/</span>
+            <span>{total}</span>
+          </div>
+        );
       },
-      {
-        key: 'createdBy',
-        name: t('c:created_by'),
-        sortable: true,
-        minBreakpoint: 'sm',
-        width: 180,
-        placeholderValue: '-',
-        renderCell: ({ row, tabIndex }) => row.createdBy && <ActorCell compactable actor={row.createdBy} tabIndex={tabIndex} />,
-        // Compact toggle: creator avatar merges inline before the created date
-        modes: { compact: { merge: { into: 'createdAt', side: 'left' } } },
+    },
+    {
+      key: 'attachments',
+      name: t('c:attachment_other'),
+      minBreakpoint: 'sm',
+      width: 70,
+      placeholderValue: '-',
+      renderCell: ({ row }) => {
+        const count = row.attachments?.length ?? 0;
+        if (count === 0) return null;
+        return (
+          <div className="inline-flex items-center gap-1">
+            <PaperclipIcon className="size-3 -rotate-45 opacity-50" />
+            <span className="">{count}</span>
+          </div>
+        );
       },
-      {
-        key: 'createdAt',
-        name: t('c:created_at'),
-        sortable: true,
-        minBreakpoint: 'sm',
-        width: 180,
-        renderCell: ({ row }) => dateShort(row.createdAt),
-        exportValue: (row) => exportDate(row.createdAt),
+    },
+    {
+      key: 'status',
+      name: t('c:status'),
+      sortable: true,
+      minBreakpoint: 'sm',
+      width: 140,
+      renderCell: ({ row }) => {
+        const status = statusOptionsByValue[row.status];
+        return (
+          <>
+            <SeenMark
+              productId={row.id}
+              tenantId={row.tenantId}
+              organizationId={row.organizationId}
+              channelId={getSeenChannelId('task', row)}
+              productType="task"
+            />
+            <status.icon className="mr-2 size-4 shrink-0" aria-hidden="true" />
+            <span>{t(`c:${status.status}`)}</span>
+          </>
+        );
       },
-      {
-        key: 'updatedBy',
-        name: t('c:updated_by'),
-        hidden: true,
-        width: 180,
-        placeholderValue: '-',
-        renderCell: ({ row, tabIndex }) => row.updatedBy && <ActorCell compactable actor={row.updatedBy} tabIndex={tabIndex} />,
-        // Compact toggle: updater avatar merges inline before the updated date
-        modes: { compact: { merge: { into: 'updatedAt', side: 'left' } } },
+    },
+    {
+      key: 'assignedTo',
+      name: t('c:assigned_to'),
+      hidden: true,
+      width: 100,
+      placeholderValue: '-',
+      renderCell: ({ row }) => {
+        if (!row.assignedTo.length) return null;
+        return (
+          <span className="inline-flex" data-tooltip="compact" data-tooltip-content={row.assignedTo.map((user) => user.name).join(', ')}>
+            <AvatarGroup limit={3}>
+              <AvatarGroupList>
+                {row.assignedTo.map((user) => (
+                  <EntityAvatar type="user" key={user.id} id={user.id} name={user.name} url={user.thumbnailUrl} className="h-8 w-8 text-xs" />
+                ))}
+              </AvatarGroupList>
+              <AvatarOverflowIndicator className="h-8 w-8 text-xs" />
+            </AvatarGroup>
+          </span>
+        );
       },
-      {
-        key: 'updatedAt',
-        name: t('c:updated_at'),
-        sortable: true,
-        hidden: true,
-        width: 180,
-        renderCell: ({ row }) => dateShort(row.updatedAt),
-        exportValue: (row) => exportDate(row.updatedAt),
+    },
+    {
+      key: 'labels',
+      name: t('c:label_other'),
+      hidden: true,
+      width: 190,
+      placeholderValue: '-',
+      renderCell: ({ row }) => {
+        if (!row.labels.length) return null;
+        return (
+          <div className="flex flex-col">
+            {row.labels.map((label) => (
+              <div key={label.id} className="flex items-center gap-1">
+                <DotIcon className="size-2 shrink-0 rounded-md text-background" style={{ background: label.color || undefined }} strokeWidth={4} />
+                <span className="text-xs">
+                  <HighlightText text={label.name} />
+                </span>
+              </div>
+            ))}
+          </div>
+        );
       },
-    ];
-    return cols;
-  });
+    },
+    {
+      key: 'projectId',
+      name: t('c:project'),
+      sortable: true,
+      hidden: opts.hideProject,
+      minBreakpoint: 'sm',
+      width: 180,
+      renderCell: ({ row, tabIndex }) => (
+        <ProjectCell row={row} tabIndex={tabIndex} projects={opts.projects} organization={opts.organization} tenantId={opts.tenantId} />
+      ),
+      modes: { compact: { width: 50 } },
+    },
+    {
+      key: 'createdBy',
+      name: t('c:created_by'),
+      sortable: true,
+      minBreakpoint: 'sm',
+      width: 180,
+      placeholderValue: '-',
+      renderCell: ({ row, tabIndex }) => row.createdBy && <ActorCell compactable actor={row.createdBy} tabIndex={tabIndex} />,
+      // Compact toggle: creator avatar merges inline before the created date
+      modes: { compact: { merge: { into: 'createdAt', side: 'left' } } },
+    },
+    {
+      key: 'createdAt',
+      name: t('c:created_at'),
+      sortable: true,
+      minBreakpoint: 'sm',
+      width: 180,
+      renderCell: ({ row }) => dateShort(row.createdAt),
+      exportValue: (row) => exportDate(row.createdAt),
+    },
+    {
+      key: 'updatedBy',
+      name: t('c:updated_by'),
+      hidden: true,
+      width: 180,
+      placeholderValue: '-',
+      renderCell: ({ row, tabIndex }) => row.updatedBy && <ActorCell compactable actor={row.updatedBy} tabIndex={tabIndex} />,
+      // Compact toggle: updater avatar merges inline before the updated date
+      modes: { compact: { merge: { into: 'updatedAt', side: 'left' } } },
+    },
+    {
+      key: 'updatedAt',
+      name: t('c:updated_at'),
+      sortable: true,
+      hidden: true,
+      width: 180,
+      renderCell: ({ row }) => dateShort(row.updatedAt),
+      exportValue: (row) => exportDate(row.updatedAt),
+    },
+  ];
 };

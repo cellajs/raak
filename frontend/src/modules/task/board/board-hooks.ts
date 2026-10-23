@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useSearch } from '@tanstack/react-router';
+import { type RefObject, useCallback, useEffect, useMemo, useRef } from 'react';
 import { getOrderBetween } from 'shared/utils/display-order';
 import { useShallow } from 'zustand/react/shallow';
-import type { BoardLayoutPanel } from '~/modules/common/board/board-layout';
+import { useAlertStore } from '~/modules/common/alerter/alert-store';
+import type { BoardLayoutHandle, BoardLayoutPanel } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
 import { LABELS_PANEL_ID } from '~/modules/label/types';
@@ -124,19 +126,35 @@ export function computePanelReorder(
   return { kind: 'local', panelId: sourcePanelId, displayOrder: newDisplayOrder };
 }
 
-/** Shared board panel setup: panels, layout, and resize handler. */
-export function useBoardPanels(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[]) {
+/** The board's panels in display order with their stored widths; the loading skeleton lays out the same way. */
+export function usePanelLayout(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[]) {
   // Projected past prefs so an iced/accepted expand toggle doesn't rebuild every panel.
   const viewSections = useTaskBoardStore(useShallow((state) => pickViewSections(state.panelData[boardId])));
   const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
   const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);
-  const prunePanelOrders = useBoardStore((state) => state.prunePanelOrders);
-  const updateBoardLayout = useBoardStore((state) => state.updateBoardLayout);
 
   const panels: BoardResizablePanel[] = useMemo(() => {
     const all = [...prepareBoardPanels(projects, viewSections), ...(extraPanels ?? [])];
     return sortPanelsByOrder(all, localOrders);
   }, [projects, extraPanels, viewSections, localOrders]);
+
+  const defaultLayout = useMemo(
+    () =>
+      normalizePanelWidths(
+        storedBoardLayout ?? {},
+        panels.map(({ panelId }) => panelId),
+      ),
+    [storedBoardLayout, panels],
+  );
+
+  return { panels, defaultLayout };
+}
+
+/** Shared board panel setup: panels, layout, and resize handler. */
+export function useBoardPanels(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[]) {
+  const { panels, defaultLayout } = usePanelLayout(boardId, projects, extraPanels);
+  const prunePanelOrders = useBoardStore((state) => state.prunePanelOrders);
+  const updateBoardLayout = useBoardStore((state) => state.updateBoardLayout);
 
   // Drop stale local orders once their panels disappear
   useEffect(() => {
@@ -148,15 +166,6 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
 
   const layoutPanels: BoardLayoutPanel[] = useMemo(() => panels.map(({ panelId }) => ({ panelId })), [panels]);
 
-  const defaultLayout = useMemo(
-    () =>
-      normalizePanelWidths(
-        storedBoardLayout ?? {},
-        panels.map(({ panelId }) => panelId),
-      ),
-    [storedBoardLayout, panels],
-  );
-
   const handleLayoutChanged = useCallback(
     (layout: Record<string, number>) => {
       updateBoardLayout(boardId, layout);
@@ -165,4 +174,22 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
   );
 
   return { panels, layoutPanels, defaultLayout, handleLayoutChanged };
+}
+
+/** Whether the board shows the getting-started panel: in a workspace, until its welcome text has been seen. */
+export function useShowExplainer(isInWorkspace: boolean) {
+  const isWelcomeSeen = useAlertStore((state) => state.alertsSeen.includes('welcome-text'));
+  return isInWorkspace && !isWelcomeSeen;
+}
+
+/** A label link expands and reveals the labels panel, whose list then opens that label's tile. */
+export function useExpandLabelsPanel(boardLayoutRef: RefObject<BoardLayoutHandle | null>) {
+  const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
+  const lastExpandedLabelPageRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!labelPageId || labelPageId === lastExpandedLabelPageRef.current) return;
+    lastExpandedLabelPageRef.current = labelPageId;
+    boardLayoutRef.current?.expandAndScrollToPanel(LABELS_PANEL_ID);
+  }, [labelPageId, boardLayoutRef]);
 }

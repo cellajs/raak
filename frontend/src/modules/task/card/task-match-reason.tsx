@@ -12,7 +12,7 @@ export function TaskMatchReason({ task, className }: { task: Task; className?: s
   if (!reason) return null;
 
   return (
-    <div data-match-reason="" className={cn('flex flex-col gap-0.5 text-muted-foreground text-xs leading-tight', className)}>
+    <div className={cn('flex flex-col gap-0.5 text-muted-foreground text-xs leading-tight', className)}>
       {reason.description && (
         <span>
           <HighlightText text={reason.description} />

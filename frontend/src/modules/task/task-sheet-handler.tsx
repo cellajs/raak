@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { focusItem } from '~/modules/board-focus/focus-item';
 import { useUrlSheet } from '~/modules/common/sheeter/use-url-sheet';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
-import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { suppressGlowAttr, triggerTaskGlow } from '~/modules/task/helpers/task-glow';
@@ -44,7 +44,7 @@ export function TaskSheetHandler() {
   // The sheet edits locally, so the board card must not also render an update form, and its glow is suppressed while the sheet is open.
   useEffect(() => {
     if (!taskSheetId) return;
-    useTaskCardStore.getState().suppressAllEditing();
+    taskCardStore.getState().suppressAllEditing();
     const boardCard = document.getElementById(taskSheetId);
     if (boardCard) boardCard.setAttribute(suppressGlowAttr, '');
     return () => boardCard?.removeAttribute(suppressGlowAttr);

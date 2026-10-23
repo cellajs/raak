@@ -1,10 +1,9 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
-import { useBoardStore } from '~/modules/common/board/board-store';
 import type { EnrichedProject } from '~/modules/project/types';
-import { type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { makePanelKey, resolveDraftHostSection } from '~/modules/task/helpers/board-helpers';
+import { type SectionsValue, useProjectViewSections } from '~/modules/task/board/task-board-store';
+import { inSections, makePanelKey, panelHostsDraft } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { BoardPanel } from '~/modules/task/panel/board-panel';
 import { publicTasksBoardQueryOptions } from '~/modules/task/public-query';
@@ -35,17 +34,15 @@ export function ProjectBoardPanel({ project, publicView, sectionFilters, windowS
 
   const isMobile = useBreakpointBelow('sm');
   const draftTask = useTaskInteractionStore((s) => s.draftTasks[project.id]);
-  const boardId = useBoardStore((s) => s.activeBoardId)!;
-  const viewSections = useTaskBoardStore((s) => s.panelData[boardId]?.[project.id]?.viewSections);
+  const viewSections = useProjectViewSections(project.id);
 
   // The open create-form draft renders in exactly one panel and bypasses section filtering,
   // so a lit "+ Task" badge always corresponds to a visible form somewhere on the board.
   // Mobile creates through a dialog, so no draft row enters its list.
-  const hostSection = draftTask ? resolveDraftHostSection(viewSections, draftTask.status) : null;
   const hostsDraft =
     !isMobile &&
     !!draftTask &&
-    (sectionFilters ? !!hostSection && makePanelKey(project.id, hostSection) === makePanelKey(project.id, sectionFilters) : true);
+    (!sectionFilters || panelHostsDraft(viewSections, project.id, makePanelKey(project.id, sectionFilters), draftTask.status));
 
   const projectTasksRef = useRef<Task[]>([]);
   const panelTasksRef = useRef<Task[]>([]);
@@ -54,16 +51,7 @@ export function ProjectBoardPanel({ project, publicView, sectionFilters, windowS
   const projectTasks = stableArray(projectTasksRef.current, rawProjectTasks);
   projectTasksRef.current = projectTasks;
 
-  const rawPanelTasks = sectionFilters
-    ? projectTasks.filter(
-        (task) =>
-          isDraftTask(task) ||
-          Object.entries(sectionFilters).every(([key, value]) => {
-            const taskValue = task[key as keyof SectionsValue];
-            return value.includes(taskValue);
-          }),
-      )
-    : projectTasks;
+  const rawPanelTasks = sectionFilters ? projectTasks.filter((task) => isDraftTask(task) || inSections(task, sectionFilters)) : projectTasks;
   const panelTasks = stableArray(panelTasksRef.current, rawPanelTasks);
   panelTasksRef.current = panelTasks;
 

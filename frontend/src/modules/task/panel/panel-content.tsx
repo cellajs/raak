@@ -6,6 +6,7 @@ import { ListFocusScope } from '~/modules/board-focus/list-focus-scope';
 import { BoardPanelBody } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
+import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { MotionTaskCard } from '~/modules/task/card/motion-task-card';
 import { DraftTaskItem } from '~/modules/task/draft-task-item';
 import { revealDraftHostPanel } from '~/modules/task/helpers/create-task';
@@ -16,7 +17,7 @@ import { collapsedMainCount } from '~/modules/task/panel/panel-collapsed';
 import { TaskPanelEmpty } from '~/modules/task/panel/panel-empty';
 import { PanelStatusSection } from '~/modules/task/panel/panel-status-section';
 import { PanelTasksContext } from '~/modules/task/panel/panel-tasks-context';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
+import { taskInteractionStore, useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskCounts, TaskProps } from '~/modules/task/types';
 import { ScrollArea } from '~/modules/ui/scroll-area';
@@ -25,6 +26,7 @@ import { cn } from '~/utils/cn';
 // virtua keeps measured heights by index and never renders a row it measured at 0px, so that row is never measured again.
 // Opening or closing the create form hands the form's height to whichever row takes its index, and the form collapses to 0px on submit.
 const rowHeightGuard = '[&>ul>li]:min-h-px';
+const raisedRowClass = '[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10';
 
 interface PanelProps {
   project: Project;
@@ -64,13 +66,13 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   const onStatusChange = (newStatus: TaskStatus) => {
     revealDraftHostPanel(project.id, newStatus);
 
-    useTaskInteractionStore.getState().updateDraftTask(project.id, { status: newStatus, displayOrder: getDraftDisplayOrder(newStatus, project.id) });
+    taskInteractionStore.getState().updateDraftTask(project.id, { status: newStatus, displayOrder: getDraftDisplayOrder(newStatus, project.id) });
   };
 
-  // Build status section slots (sticky at their edge, shown/hidden by scroll direction)
-  const topSlot = counts.showAccepted ? (
+  // Status section slots (sticky at their edge, shown/hidden by scroll direction)
+  const statusSection = (type: TogglableStatusType) => (
     <PanelStatusSection
-      type={'accepted'}
+      type={type}
       counts={counts}
       projectId={project.id}
       scrollRef={scrollViewportRef}
@@ -78,19 +80,9 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
       onToggle={handleSectionToggle}
       suppressed={hostsDraft}
     />
-  ) : undefined;
-
-  const bottomSlot = counts.showIced ? (
-    <PanelStatusSection
-      type={'iced'}
-      counts={counts}
-      projectId={project.id}
-      scrollRef={scrollViewportRef}
-      windowMode={sectionWindowMode}
-      onToggle={handleSectionToggle}
-      suppressed={hostsDraft}
-    />
-  ) : undefined;
+  );
+  const topSlot = counts.showAccepted ? statusSection('accepted') : undefined;
+  const bottomSlot = counts.showIced ? statusSection('iced') : undefined;
 
   // Keyboard focus scrolls a card only to the viewport edge, under a pinned section bar (h-9). The margin holds even
   // while a bar is slid away: it slides in on the scroll that focus makes, too late for a margin that followed it.
@@ -128,7 +120,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
               {hasContent ? (
                 <ListFocusScope
                   id={`panel-tasks-${project.id}`}
-                  className={cn(rowHeightGuard, cardScrollMargin, '[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10')}
+                  className={cn(rowHeightGuard, cardScrollMargin, raisedRowClass)}
                   itemIds={itemIds}
                   viewportRef={scrollViewportRef}
                 >
@@ -168,7 +160,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
               {hasContent ? (
                 <ListFocusScope
                   id={`panel-tasks-${project.id}`}
-                  className={cn(rowHeightGuard, cardScrollMargin, 'grow [&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10')}
+                  className={cn(rowHeightGuard, cardScrollMargin, raisedRowClass, 'grow')}
                   itemIds={itemIds}
                   viewportRef={scrollViewportRef}
                 >

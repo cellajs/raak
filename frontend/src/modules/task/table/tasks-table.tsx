@@ -10,17 +10,19 @@ import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
+import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
 import { searchHighlightRowClass } from '~/modules/common/search-highlight';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
-import { TableProjectsContext, useColumns } from '~/modules/task/table/tasks-columns';
+import { useColumns } from '~/modules/task/table/tasks-columns';
 import { TasksTableBar } from '~/modules/task/table/tasks-table-bar';
 import { TaskSearchScope } from '~/modules/task/task-search-scope';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { flattenInfiniteData } from '~/query/basic/flatten';
+import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 const LIMIT = appConfig.requestLimits.tasksTable;
 
@@ -40,15 +42,13 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     ...projectsListQueryOptions({ workspaceId: workspace?.id, include: 'counts' }),
     enabled: !projectsProp,
   });
-  // Memoized so the reactive project cells (TableProjectsContext) only re-render when the list
-  // actually changes, not on every table render.
-  const projects = useMemo(() => projectsProp ?? flattenInfiniteData<Project>(fetchedData), [projectsProp, fetchedData]);
+  const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
 
   // Table state
   const { q, sort, order } = search;
   const limit = LIMIT;
 
-  const [columns, setColumns] = useColumns({ hideProject: !workspace, organization, tenantId });
+  const [columns, setColumns] = useColumnVisibility(useColumns({ hideProject: !workspace, organization, tenantId, projects }));
   const [selected, setSelected] = useState<Task[]>([]);
   const [isCompact, setIsCompact] = useState(true);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
@@ -83,13 +83,10 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   // Highlight mode counts matches over all tasks, not the loaded rows: the filtered query's total, the cache entry filter
   // mode reads. Same page size on purpose, since the table key leaves out the limit.
+  const matchOptions = optionsFor({ ...search, q: effectiveQ });
   // biome-ignore lint/suspicious/noExplicitAny: union of query options with different key shapes
-  const { data: matchData } = useInfiniteQuery({ ...(optionsFor({ ...search, q: effectiveQ }) as any), enabled: highlight }) as {
-    data: InfiniteData<{ items: Task[]; total: number }> | undefined;
-  };
-
-  const countData = highlight ? matchData : data;
-  const total = countData?.pages.length ? countData.pages[countData.pages.length - 1].total : null;
+  useInfiniteQuery({ ...(matchOptions as any), enabled: highlight });
+  const total = useListQueryTotal(highlight ? matchOptions.queryKey : queryOptions.queryKey);
 
   const isOnline = useOnlineManager();
   // Stable row references prevent memoized rows from rerendering on unchanged offline filters.
@@ -112,16 +109,13 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   const selectedProjectId = selected[0]?.projectId;
 
-  const onSelectedRowsChange = useCallback(
-    (value: Set<string>) => {
-      if (!rows) return;
-      const picked = rows.filter((row) => value.has(row.id));
-      // Select-all from an empty selection spans projects; keep the top row's project
-      const projectId = selectedProjectId ?? picked[0]?.projectId;
-      setSelected(picked.filter((row) => row.projectId === projectId));
-    },
-    [rows, selectedProjectId],
-  );
+  const onSelectedRowsChange = (value: Set<string>) => {
+    if (!rows) return;
+    const picked = rows.filter((row) => value.has(row.id));
+    // Select-all from an empty selection spans projects; keep the top row's project
+    const projectId = selectedProjectId ?? picked[0]?.projectId;
+    setSelected(picked.filter((row) => row.projectId === projectId));
+  };
 
   const selectedRowIds = useMemo(() => new Set(selected.map((s) => s.id)), [selected]);
 
@@ -136,50 +130,48 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   );
 
   return (
-    <TableProjectsContext.Provider value={projects}>
-      <TaskSearchScope>
-        <div className="flex h-full flex-col gap-4">
-          <TasksTableBar
-            total={total}
-            hasQuery={!!effectiveQ}
-            selected={selected}
-            searchVars={{ ...effectiveSearch, limit }}
-            columns={columns}
-            setColumns={setColumns}
-            projects={projects}
-            workspace={workspace}
-            publicView={publicView}
-            clearSelection={() => setSelected([])}
-            isCompact={isCompact}
-            setIsCompact={setIsCompact}
-          />
-          <DataTable<Task>
-            {...{
-              rows,
-              rowHeight: 52,
-              rowKeyGetter,
-              columns,
-              enableVirtualization: true,
-              enableStickyHeader: true,
-              limit,
-              error,
-              isLoading,
-              isFetching,
-              isFiltered: !highlight && !!q,
-              hasNextPage,
-              fetchMore,
-              rowClass,
-              selectedRows: selectedRowIds,
-              onSelectedRowsChange,
-              isRowSelectionDisabled,
-              isCompact,
-              sortColumns,
-              onSortColumnsChange,
-              NoRowsComponent: noRowsComponent,
-            }}
-          />
-        </div>
-      </TaskSearchScope>
-    </TableProjectsContext.Provider>
+    <TaskSearchScope>
+      <div className="flex h-full flex-col gap-4">
+        <TasksTableBar
+          total={total}
+          hasQuery={!!effectiveQ}
+          selected={selected}
+          searchVars={{ ...effectiveSearch, limit }}
+          columns={columns}
+          setColumns={setColumns}
+          projects={projects}
+          workspace={workspace}
+          publicView={publicView}
+          clearSelection={() => setSelected([])}
+          isCompact={isCompact}
+          setIsCompact={setIsCompact}
+        />
+        <DataTable<Task>
+          {...{
+            rows,
+            rowHeight: 52,
+            rowKeyGetter,
+            columns,
+            enableVirtualization: true,
+            enableStickyHeader: true,
+            limit,
+            error,
+            isLoading,
+            isFetching,
+            isFiltered: !highlight && !!q,
+            hasNextPage,
+            fetchMore,
+            rowClass,
+            selectedRows: selectedRowIds,
+            onSelectedRowsChange,
+            isRowSelectionDisabled,
+            isCompact,
+            sortColumns,
+            onSortColumnsChange,
+            NoRowsComponent: noRowsComponent,
+          }}
+        />
+      </div>
+    </TaskSearchScope>
   );
 }

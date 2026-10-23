@@ -6,9 +6,7 @@ import { TaskCardContentCollapsed } from '~/modules/task/card/card-content-colla
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
 import { DescriptionEditButton } from '~/modules/task/card/description-edit-button';
 import { TaskUpdateForm } from '~/modules/task/card/task-update-form';
-import type { Task } from '~/modules/task/types';
-
-type SlotState = 'collapsed' | 'expanded' | 'editing';
+import type { Task, TaskState } from '~/modules/task/types';
 
 /** A pointer passing over the board warms nothing: only a hover this long does. */
 const warmHoverMs = 200;
@@ -42,7 +40,7 @@ export function CardDescriptionSlot({
   onEditRequest,
 }: {
   task: Task;
-  state: SlotState;
+  state: TaskState;
   isReadOnly: boolean;
   animateClose?: boolean;
   showDragHandle?: boolean;

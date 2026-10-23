@@ -7,7 +7,7 @@ import { checkedExtension } from '~/modules/common/blocknote/custom-elements/che
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { useProjectMembers } from '~/modules/project/use-project-members';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
-import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { createTaskUploadPersister } from '~/modules/task/helpers/create-task-upload-persister';
 import { useTaskDescriptionUpdate } from '~/modules/task/hooks/use-task-description-update';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
@@ -44,7 +44,7 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
   const updateData = useTaskDescriptionUpdate(task);
 
   const handleEscapeOrBlur = () => {
-    useTaskCardStore.getState().setTaskState(task.id, 'expanded');
+    taskCardStore.getState().setTaskState(task.id, 'expanded');
   };
 
   // Task linkage for uploads rides the description's attachmentId block props.

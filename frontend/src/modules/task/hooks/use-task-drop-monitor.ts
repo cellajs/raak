@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLatestRef } from '~/hooks/use-latest-ref';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
+import { mobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { getEdgeAndTargetOrder, isPanelData, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { isCoarsePointerDevice, resolveMobileTaskDropIndicator } from '~/modules/task/helpers/mobile-drag-indicator';
@@ -42,7 +42,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
   };
 
   useEffect(() => {
-    const { clearIndicator, setIndicator } = useMobileTaskDragIndicatorStore.getState();
+    const { clearIndicator, setIndicator } = mobileTaskDragIndicatorStore.getState();
     const reportReorderFailure = () => toaster.error(t('error:reorder_resource', { resource: t('c:task') }));
 
     const updateMobileIndicator = () => {
@@ -87,7 +87,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
           },
           source: { data: sourceData },
         }) => {
-          const mobileIndicator = useMobileTaskDragIndicatorStore.getState().indicator;
+          const mobileIndicator = mobileTaskDragIndicatorStore.getState().indicator;
           clearIndicator();
           activeDragSourceRef.current = null;
           latestInputRef.current = null;

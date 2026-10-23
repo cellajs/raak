@@ -18,3 +18,5 @@ export const useMobileTaskDragIndicatorStore = create<MobileTaskDragIndicatorSta
   clearIndicator: () => set({ indicator: null }),
   setIndicator: (indicator) => set({ indicator }),
 }));
+
+export { useMobileTaskDragIndicatorStore as mobileTaskDragIndicatorStore };

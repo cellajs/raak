@@ -4,7 +4,7 @@ import { useRelativeDate } from '~/hooks/use-relative-date';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
-import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskDragHandle } from '~/modules/task/card/task-drag-handle';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
@@ -55,7 +55,7 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
         {/* The ellipsis comes last so it sits where a collapsed card shows it. A phone has no hover to reveal them. */}
         <div className={cn('flex flex-row items-center gap-1', taskCardActionsRevealClass, 'max-sm:opacity-100')}>
-          {!isSheet && <CardCloseButton animateIn={animateClose} onClick={() => useTaskCardStore.getState().setTaskState(task.id, 'collapsed')} />}
+          {!isSheet && <CardCloseButton animateIn={animateClose} onClick={() => taskCardStore.getState().setTaskState(task.id, 'collapsed')} />}
           <TaskOptionsButton task={task} isSheet={isSheet} />
         </div>
       </div>

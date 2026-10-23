@@ -19,7 +19,7 @@ export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
   const createProjectAction = isTablet ? (
     <Button variant="plain" onClick={createNewProject}>
       <PlusIcon />
-      <span>{`${t('c:add')} ${t('c:project').toLowerCase()}`}</span>
+      <span>{t('c:add_resource', { resource: t('c:project').toLowerCase() })}</span>
     </Button>
   ) : (
     <>

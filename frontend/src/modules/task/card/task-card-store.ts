@@ -41,8 +41,8 @@ export const useTaskCardStore = create<TaskCardState>()(
       suppressEdit: (taskId) =>
         set(
           (s) => {
-            const cur = s.states[taskId] ?? 'collapsed';
-            const next = cur === 'collapsed' ? 'collapsed' : ('expanded' as TaskState);
+            const current = s.states[taskId] ?? 'collapsed';
+            const next: TaskState = current === 'collapsed' ? 'collapsed' : 'expanded';
             if (s.states[taskId] === next) return s;
             return { states: { ...s.states, [taskId]: next } };
           },
@@ -75,3 +75,5 @@ export const useTaskCardStore = create<TaskCardState>()(
 useBoardFocusStore.subscribe(({ currentItemId }, prev) => {
   if (prev.currentItemId && prev.currentItemId !== currentItemId) useTaskCardStore.getState().suppressEdit(prev.currentItemId);
 });
+
+export { useTaskCardStore as taskCardStore };

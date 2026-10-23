@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
-import { defaultPanelPrefs, type TogglableStatusType, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { type TogglableStatusType, useProjectPanelPrefs, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
 import { useSectionEdgeVisibility } from '~/modules/task/hooks/use-section-edge-visibility';
 import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
@@ -54,10 +54,8 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   const count = isIced ? counts.iced : counts.accepted;
   const colors = statusSectionColors[type];
 
-  const showStatus = useTaskBoardStore((state) => {
-    const { expandIced, expandAccepted } = state.panelData[boardId]?.[projectId]?.prefs || defaultPanelPrefs;
-    return isIced ? expandIced : expandAccepted;
-  });
+  const { expandIced, expandAccepted } = useProjectPanelPrefs(projectId);
+  const showStatus = isIced ? expandIced : expandAccepted;
 
   const { highlight: isHighlightSearch, effectiveQ } = parseSearchQuery(q);
   const showTotal = !effectiveQ.length || isHighlightSearch;

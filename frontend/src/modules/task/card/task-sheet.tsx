@@ -20,7 +20,7 @@ interface TaskSheetProps {
 
 function TaskSheet({ id, organizationId }: TaskSheetProps) {
   const isOnline = useOnlineManager();
-  const { tenantId } = useParams({ strict: false });
+  const tenantId = useParams({ strict: false, select: (params) => params.tenantId });
   const { t } = useTranslation();
 
   // Select public or authenticated options before the unconditional hook call.

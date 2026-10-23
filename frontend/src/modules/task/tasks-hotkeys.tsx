@@ -11,11 +11,11 @@ import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { boardSearchInputId } from '~/modules/task/board-search';
-import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { taskCardStore } from '~/modules/task/card/task-card-store';
 import type { TaskDropdownType } from '~/modules/task/dropdowns/types';
 import { currentActiveTask } from '~/modules/task/helpers/active-task';
 import { closeCreateTaskForm, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
-import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
+import { openTaskFieldDropdown, taskFieldTriggerId } from '~/modules/task/helpers/open-task-dropdown';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { taskSheetParam } from '~/modules/task/search-params-schemas';
@@ -70,7 +70,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     const taskCard = document.getElementById(task.id);
     const state = taskCard?.dataset.state;
     if (state === 'collapsed') return;
-    return useTaskCardStore.getState().setTaskState(task.id, state === 'editing' ? 'expanded' : 'collapsed');
+    return taskCardStore.getState().setTaskState(task.id, state === 'editing' ? 'expanded' : 'collapsed');
   };
 
   const handleEnter = () => {
@@ -80,7 +80,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     const taskCard = document.getElementById(isSheetOpen ? `sheet-${task.id}` : task.id);
     const currentState = taskCard?.dataset.state ?? 'collapsed';
     if (isProjectReadOnly(task.projectId) && currentState === 'expanded') return;
-    useTaskCardStore.getState().setTaskState(task.id, currentState === 'collapsed' ? 'expanded' : 'editing');
+    taskCardStore.getState().setTaskState(task.id, currentState === 'collapsed' ? 'expanded' : 'editing');
   };
 
   const handleNewTask = () => {
@@ -105,42 +105,10 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     if (!taskCard) return;
     if (document.activeElement !== taskCard) taskCard.focus();
 
-    const triggerId = `${field}-${targetTask.id}${isSheetOpen ? '-sheet' : ''}`;
-    const trigger = taskCard.querySelector(`#${triggerId}`);
+    const trigger = taskCard.querySelector(`#${taskFieldTriggerId(field, targetTask.id, isSheetOpen)}`);
     if (!(trigger instanceof HTMLButtonElement)) return dropdowner.getState().remove();
 
-    const handlers = buildFieldHandlers(targetTask, { taskMutation, user });
-    const base = { triggerId, triggerRef: { current: trigger }, taskId: targetTask.id };
-
-    // The switch keeps each call matched to its discriminated-union member without a cast.
-    switch (field) {
-      case 'labels':
-        return openTaskDropdown({
-          ...base,
-          dropdownType: 'labels',
-          value: targetTask.labels,
-          projectId: targetTask.projectId,
-          onChange: handlers.onLabelsChange,
-        });
-      case 'assignedTo':
-        return openTaskDropdown({
-          ...base,
-          dropdownType: 'assignedTo',
-          value: targetTask.assignedTo,
-          projectId: targetTask.projectId,
-          onChange: handlers.onAssignedToChange,
-        });
-      case 'status':
-        return openTaskDropdown({ ...base, dropdownType: 'status', value: targetTask.status, onChange: handlers.onStatusChange });
-      case 'primaryLabel':
-        return openTaskDropdown({
-          ...base,
-          dropdownType: 'primaryLabel',
-          value: targetTask.primaryLabelId,
-          projectId: targetTask.projectId,
-          onChange: handlers.onPrimaryLabelChange,
-        });
-    }
+    openTaskFieldDropdown(targetTask, field, buildFieldHandlers(targetTask, { taskMutation, user }), trigger);
   };
 
   // A letter alone fires by accident under speech input (WCAG 2.1.4); Alt + A is the account sheet, so assignee is U

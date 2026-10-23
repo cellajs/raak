@@ -6,7 +6,7 @@ import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { setCurrentItem } from '~/modules/board-focus/focus-item';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { NamedText } from '~/modules/common/named-text';
 import { openPopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
@@ -25,14 +25,14 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
   const shareLink = `${appConfig.backendUrl}/t/${task.id}`;
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
-    const { create } = useDropdowner.getState();
+    const { create } = dropdowner.getState();
     const isMobile = window.innerWidth < 640;
     // Anchor the dropdown to the clicked element. The button carries no `id`, because a
     // caller-supplied `id` on a Base UI tooltip trigger makes the tooltip flash and close.
     const triggerRef = { current: currentTarget };
 
     const handleDeleteClick = () => {
-      const { remove } = useDropdowner.getState();
+      const { remove } = dropdowner.getState();
       // `task.name` is empty for a task made in the app: its title is the text of its summary block
       const title = titleFromDocument(task.summary);
       openPopConfirm(
@@ -54,7 +54,7 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
             onSelect={() => {
               setCurrentItem(null);
               openTaskSheet(task.id);
-              useDropdowner.getState().remove();
+              dropdowner.getState().remove();
             }}
           >
             {t('c:expand')}
@@ -65,7 +65,7 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
           icon={CopyIcon}
           closeOnSelect={false}
           onSelect={async () => {
-            if (await copyTasksToClipboard([task])) useDropdowner.getState().complete(t('c:copied'));
+            if (await copyTasksToClipboard([task])) dropdowner.getState().complete(t('c:copied'));
           }}
         >
           {t('c:copy_content')}
@@ -75,7 +75,7 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
           icon={LinkIcon}
           closeOnSelect={false}
           onSelect={async () => {
-            if (await copyToClipboard(shareLink)) useDropdowner.getState().complete(t('c:copied'));
+            if (await copyToClipboard(shareLink)) dropdowner.getState().complete(t('c:copied'));
           }}
         >
           {t('c:copy_as_link')}

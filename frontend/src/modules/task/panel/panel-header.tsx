@@ -8,8 +8,8 @@ import { EntityChip } from '~/modules/common/entity-chip';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { formatSectionLabel, makePanelKey, resolveDraftHostSection } from '~/modules/task/helpers/board-helpers';
+import { useProjectViewSections } from '~/modules/task/board/task-board-store';
+import { formatSectionLabel, isPrimarySection, makePanelKey, panelHostsDraft } from '~/modules/task/helpers/board-helpers';
 import { type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -19,16 +19,17 @@ import { Button } from '~/modules/ui/button';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 
+const handleClass = 'flex h-auto items-center justify-start gap-2 p-0 hover:bg-transparent';
+
 /**
  * Header component for task board panels in desktop view. Displays project name/avatar or section filters, along with actions like creating a new task or accessing project actions.
  */
 export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<BoardPanelProps, 'project' | 'sectionFilters' | 'publicView'>) {
   const { t } = useTranslation();
 
-  const boardId = useBoardStore((state) => state.activeBoardId)!;
   const isInWorkspace = useIsWorkspaceRoute();
 
-  const panelsSectionView = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.viewSections);
+  const viewSections = useProjectViewSections(project.id);
   const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
@@ -39,10 +40,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
     return newTaskFormIsDirty(dirtyForm);
   });
 
-  const isPrimary = (() => {
-    if (!panelsSectionView?.length) return true;
-    return panelsSectionView[0] === sectionFilters;
-  })();
+  const isPrimary = isPrimarySection(viewSections, sectionFilters);
 
   const isReadOnly = useIsProjectReadOnly(project.id);
   const isCreateFormOpen = useTaskInteractionStore((s) => s.draftTasks[project.id] !== undefined);
@@ -50,12 +48,11 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
   const storedDraftStatus = useDraftStore((state) => (state.forms[`create-task-${project.id}`] as NewTaskFormValues | undefined)?.status);
 
   // Split view: only the panel the form opens in (or has moved to) offers the toggle
-  const hostsCreateButton = (() => {
-    const hostSection = resolveDraftHostSection(panelsSectionView, openDraftStatus ?? storedDraftStatus ?? TaskStatus.Unstarted);
-    return !hostSection || makePanelKey(project.id, hostSection) === panelId;
-  })();
+  const hostsCreateButton = panelHostsDraft(viewSections, project.id, panelId, openDraftStatus ?? storedDraftStatus ?? TaskStatus.Unstarted);
 
   const toggleCreateForm = () => toggleCreateTaskForm(project);
+
+  const projectAvatar = <EntityAvatar className="h-8 w-8" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />;
 
   const leadingSlot = (() => {
     if (isInWorkspace && isPrimary) {
@@ -63,12 +60,9 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
         <PanelDragHandleButton
           name={project.name}
           fallbackLabel={project.name}
-          icon={<EntityAvatar className="h-8 w-8" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />}
+          icon={projectAvatar}
           preview={<EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl} />}
-          className={cn(
-            'flex h-auto items-center gap-2 truncate p-0 no-underline hover:bg-transparent',
-            isCollapsed ? 'w-full justify-center' : 'justify-start pr-2',
-          )}
+          className={cn(handleClass, 'truncate no-underline', isCollapsed ? 'w-full justify-center' : 'pr-2')}
         >
           {!isCollapsed && <div className="truncate font-semibold leading-6">{project.name}</div>}
         </PanelDragHandleButton>
@@ -77,14 +71,17 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
 
     // Secondary panel with section filters (split view)
     if (sectionFilters) {
+      const sectionName = formatSectionLabel(sectionFilters);
+
       // In workspace: show project avatar with funnel badge
       if (isInWorkspace) {
+        const splitName = `${project.name} — ${sectionName}`;
         return (
           <PanelDragHandleButton
-            name={`${project.name} — ${formatSectionLabel(sectionFilters)}`}
+            name={splitName}
             icon={
               <div className="relative shrink-0">
-                <EntityAvatar className="h-8 w-8" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
+                {projectAvatar}
                 <div className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full border bg-background">
                   <FunnelIcon className="h-2.5 w-2.5" />
                 </div>
@@ -92,14 +89,14 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
             }
             preview={
               <EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl}>
-                {`${project.name} — ${formatSectionLabel(sectionFilters)}`}
+                {splitName}
               </EntityChip>
             }
-            className={cn('flex h-auto min-w-0 items-center gap-2 p-0 hover:bg-transparent', isCollapsed ? 'w-full justify-center' : 'justify-start')}
+            className={cn(handleClass, 'min-w-0', isCollapsed && 'w-full justify-center')}
           >
             {!isCollapsed && (
               <div className="truncate font-semibold leading-6">
-                <span className="pr-1 text-sm">{formatSectionLabel(sectionFilters)}</span>
+                <span className="pr-1 text-sm">{sectionName}</span>
               </div>
             )}
           </PanelDragHandleButton>
@@ -109,21 +106,18 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
       // In project view: funnel icon + section label as the drag handle.
       return (
         <PanelDragHandleButton
-          name={formatSectionLabel(sectionFilters)}
-          fallbackLabel={formatSectionLabel(sectionFilters)}
+          name={sectionName}
+          fallbackLabel={sectionName}
           icon={
-            <div className={cn('flex justify-center', 'min-w-8')}>
+            <div className="flex min-w-8 justify-center">
               <FunnelIcon className="h-4 w-4 shrink-0" />
             </div>
           }
-          className={cn(
-            'flex h-auto min-h-8 items-center justify-start gap-2 truncate p-0 hover:bg-transparent',
-            isCollapsed ? 'w-full justify-center' : 'justify-start pr-2',
-          )}
+          className={cn(handleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
         >
           {!isCollapsed && (
             <div className="truncate font-semibold leading-6">
-              <span>{formatSectionLabel(sectionFilters)}</span>
+              <span>{sectionName}</span>
             </div>
           )}
         </PanelDragHandleButton>
@@ -136,14 +130,11 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
         name={t('c:task_other')}
         fallbackLabel={t('c:task_other')}
         icon={
-          <div className={cn('flex justify-center', 'min-w-8')}>
+          <div className="flex min-w-8 justify-center">
             <SquareCheckBigIcon className="h-4 w-4 shrink-0" />
           </div>
         }
-        className={cn(
-          'flex h-auto min-h-8 items-center justify-start gap-2 truncate p-0 hover:bg-transparent',
-          isCollapsed ? 'w-full justify-center' : 'justify-start pr-2',
-        )}
+        className={cn(handleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
       >
         {!isCollapsed && <div className="truncate font-semibold leading-6">{t('c:task_other')}</div>}
       </PanelDragHandleButton>

@@ -2,12 +2,12 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
 import { MotionConfig } from 'motion/react';
 import { useEffect } from 'react';
-import type { Project, Workspace } from 'sdk';
+import type { Workspace } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { usePreloadLazyComponents } from '~/hooks/use-preload-lazy-components';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { BoardEmpty } from '~/modules/task/board/board-empty';
@@ -45,7 +45,7 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
     ...projectsListQueryOptions({ workspaceId: workspace?.id, include: 'counts', excludeArchived: 'true' }),
     enabled: !projectsProp,
   });
-  const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
+  const projects = projectsProp ?? flattenInfiniteData<EnrichedProject>(fetchedData);
   const isLoadingProjects = !projectsProp && isPending;
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
 
   // One board-level subscription closes the mobile create-task dialog on navigation,
   // avoiding one subscription per panel action.
-  useEffect(() => router.subscribe('onBeforeLoad', () => useDialoger.getState().remove('create-task')), [router]);
+  useEffect(() => router.subscribe('onBeforeLoad', () => dialoger.getState().remove('create-task')), [router]);
 
   const BoardView = (() => {
     if (isLoadingProjects && workspace) return <WorkspaceBoardSkeleton workspace={workspace} withHeader={false} />;

@@ -3,7 +3,7 @@ import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { panelMinWidth } from '~/modules/common/board/board-layout';
 import type { EnrichedProject } from '~/modules/project/types';
 import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
-import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
@@ -32,6 +32,19 @@ export const resolveDraftHostSection = (viewSections: SectionsValue[] | undefine
   if (!viewSections?.length) return null;
   return viewSections.find((section) => section.status.includes(status)) ?? viewSections[0];
 };
+
+/** Whether this panel is the project's primary one: the unsplit panel, or the first split section. */
+export const isPrimarySection = (viewSections: SectionsValue[] | undefined, sectionFilters: SectionsValue | undefined) =>
+  !viewSections?.length || viewSections[0] === sectionFilters;
+
+/** Whether this panel hosts the create-form draft of a status; every panel of an unsplit project does. */
+export const panelHostsDraft = (viewSections: SectionsValue[] | undefined, projectId: string, panelId: string, status: Task['status']) => {
+  const hostSection = resolveDraftHostSection(viewSections, status);
+  return !hostSection || makePanelKey(projectId, hostSection) === panelId;
+};
+
+/** Whether a task's status is one of a split panel's sections. */
+export const inSections = (task: Task, sectionFilters: SectionsValue) => sectionFilters.status.includes(task.status);
 
 export const makePanelKey = (projectId: string, section: SectionsValue) => {
   const keyParts = Object.entries(section)
@@ -144,7 +157,7 @@ export const resetTaskInteraction = (boardKey?: string) => {
   lastInteractionBoardKey = boardKey ?? null;
   taskInteractionStore.getState().reset();
   useBoardFocusStore.getState().reset();
-  useTaskCardStore.getState().reset();
+  taskCardStore.getState().reset();
 };
 
 /** The tasks a panel renders, in render order: the board search, the panel's section filters, then the accepted/iced folds. */
@@ -156,9 +169,7 @@ export const renderedPanelTasks = (
 ) => {
   const inPanel = tasks.filter(
     (task) =>
-      task.projectId === panel.project.id &&
-      matchesBoardSearch(search, task) &&
-      (!panel.sectionFilters || Object.entries(panel.sectionFilters).every(([key, value]) => value.includes(task[key as keyof SectionsValue]))),
+      task.projectId === panel.project.id && matchesBoardSearch(search, task) && (!panel.sectionFilters || inSections(task, panel.sectionFilters)),
   );
   return prepareBoardTasks(inPanel, prefs.expandAccepted, prefs.expandIced);
 };

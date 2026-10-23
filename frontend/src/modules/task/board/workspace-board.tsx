@@ -1,33 +1,30 @@
 import { useSearch } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { BoardLayout, type BoardLayoutHandle } from '~/modules/common/board/board-layout';
-import { useBoardStore } from '~/modules/common/board/board-store';
+import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
 import { ExplainerPanel } from '~/modules/common/board/explainer-panel';
 import { LabelsPanel } from '~/modules/label/labels-panel';
-import { LABELS_PANEL_ID } from '~/modules/label/types';
 import { useMemberUpdateMutation } from '~/modules/memberships/query-mutations';
-import { buildBoardExtraPanels, computePanelReorder, useBoardPanels } from '~/modules/task/board/board-hooks';
+import { buildBoardExtraPanels, computePanelReorder, useBoardPanels, useExpandLabelsPanel, useShowExplainer } from '~/modules/task/board/board-hooks';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 
 export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
   const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
-  const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
-  const alertsSeen = useAlertStore((s) => s.alertsSeen);
-  const showExplainer = !!workspace && !alertsSeen.includes('welcome-text');
+  const showExplainer = useShowExplainer(!!workspace);
 
   const extraPanels = useMemo(() => buildBoardExtraPanels({ showExplainer }), [showExplainer]);
   const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
+  useExpandLabelsPanel(boardLayoutRef);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
   const { mutateAsync: updateMembership } = useMemberUpdateMutation();
 
   const handlePanelReorder = useCallback(
     (newOrder: string[], sourcePanelId: string) => {
-      const localOrders = useBoardStore.getState().boardPanelOrders[boardId];
+      const localOrders = boardStore.getState().boardPanelOrders[boardId];
       const result = computePanelReorder(panels, localOrders, newOrder, sourcePanelId);
       if (!result) return;
 
@@ -46,14 +43,6 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
     },
     [boardId, panels, setPanelOrder, updateMembership],
   );
-
-  /** A label link expands and reveals the labels panel, whose list then opens that label's tile */
-  const lastExpandedLabelPage = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    if (!labelPageId || labelPageId === lastExpandedLabelPage.current) return;
-    lastExpandedLabelPage.current = labelPageId;
-    boardLayoutRef.current?.expandAndScrollToPanel(LABELS_PANEL_ID);
-  }, [labelPageId]);
 
   /** Scroll to project panel when projectSlug changes (not on panel reorder) */
   const lastScrolledSlug = useRef<string | undefined>(undefined);
