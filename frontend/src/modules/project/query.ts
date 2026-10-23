@@ -1,5 +1,4 @@
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Project } from 'sdk';
 import {
   type AssignProjectWorkspaceData,
   type AssignProjectWorkspaceResponse,
@@ -15,6 +14,10 @@ import {
   type MoveProjectToWorkspaceData,
   type MoveProjectToWorkspaceResponse,
   moveProjectToWorkspace,
+  type Project,
+  type RemoveProjectWorkspaceData,
+  type RemoveProjectWorkspaceResponse,
+  removeProjectWorkspace,
   type UpdateProjectData,
   type UpdateProjectResponse,
   updateProject,
@@ -36,7 +39,7 @@ import { getSimilarQueries } from '~/query/basic/mutate-query';
 import { preserveIncluded } from '~/query/basic/preserve-included';
 import type { MutationData } from '~/query/types';
 
-type ProjectFilters = Omit<GetProjectsData['query'], 'limit' | 'offset'>;
+type ProjectFilters = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 'offset'>;
 
 const keys = createEntityKeys<ProjectFilters>('project');
 
@@ -58,7 +61,7 @@ const findProjectInCache = createCacheFinder<Project>('project');
 export const findProjectByIdOrSlug = (idOrSlug: string, tenantId: string): EnrichedProject | undefined =>
   findProjectInCache((p) => p.id === idOrSlug || (p.slug === idOrSlug && p.tenantId === tenantId)) as EnrichedProject | undefined;
 
-type ProjectsListParams = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 'offset'> & { limit?: number };
+type ProjectsListParams = ProjectFilters & { limit?: number };
 
 /**
  * Paginated projects infinite query. `include` is deliberately not part of the cache key because
@@ -233,6 +236,19 @@ export const useProjectMoveMutation = () => {
     },
     onSettled: () => {
       invalidateIfLastMutation(queryClient, keys.all, listKey);
+    },
+  });
+};
+
+export const useProjectRemoveWorkspaceMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<RemoveProjectWorkspaceResponse, ApiError, MutationData<RemoveProjectWorkspaceData>>({
+    mutationFn: ({ path }) => removeProjectWorkspace({ path }),
+    onSuccess: (updatedProject) => {
+      const membership = getApiIncludedMembership(updatedProject);
+      if (membership) upsertMyMembershipCache(membership);
+      queryClient.invalidateQueries({ queryKey: keys.list.base, refetchType: 'active' });
     },
   });
 };

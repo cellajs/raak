@@ -6,14 +6,14 @@ import type { ChannelBase, Organization, Workspace } from 'sdk';
 import { zCreateWorkspacesBody, zCreateWorkspacesPath } from 'sdk/zod.gen';
 import { generateId } from 'shared/utils/entity-id';
 import { z } from 'zod';
-import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
+import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { CreateOrganizationForm } from '~/modules/organization/create-organization-form';
+import { openCreateOrganizationDialog } from '~/modules/organization/create-organization-form';
 import { Alert, AlertDescription, AlertTitle } from '~/modules/ui/alert';
 import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
@@ -37,11 +37,10 @@ type FormValues = z.infer<typeof formSchema>;
 const keepPristine = { shouldDirty: false, shouldTouch: false, shouldValidate: true } as const;
 
 interface CreateWorkspaceFormProps {
-  dialog?: boolean;
   callback?: (workspace: Workspace) => void;
 }
 
-function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceFormProps) {
+function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
   const { t } = useTranslation();
 
   const query = useInfiniteQuery(organizationsListQueryOptions({}));
@@ -71,24 +70,12 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
         onSuccess: (createdWorkspace) => {
           toaster.success(t('c:success.create_resource', { resource: t('c:workspace') }));
           form.reset();
-          if (isDialog) useDialoger.getState().remove();
+          useDialoger.getState().remove();
 
           callback?.(createdWorkspace);
         },
       },
     );
-  };
-
-  const organizationCreated = (args: CallbackArgs<Organization>) => {
-    if (args.status === 'success') {
-      form.setValue('organizationId', args.data.id, keepPristine);
-      form.setValue('tenantId', args.data.tenantId, keepPristine);
-
-      const currentName = form.getValues('name');
-      if (!touchedFields.name && !currentName) {
-        form.setValue('name', args.data.name, keepPristine);
-      }
-    }
   };
 
   const onOrganizationSelect = useCallback(
@@ -103,6 +90,11 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
     [form.setValue, form.getValues, touchedFields.name],
   );
 
+  const organizationCreated = (organization: Organization) => {
+    form.setValue('organizationId', organization.id, keepPristine);
+    onOrganizationSelect(organization);
+  };
+
   // Async queries mean single-org defaults are not available at first render.
   useEffect(() => {
     if (items.length !== 1 || organizationId) return;
@@ -113,22 +105,13 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
   }, [items, organizationId, form.setValue, onOrganizationSelect]);
 
   // Alert if no organizations exist (wait for query to finish loading first)
-  if (!query.isLoading && !form.getValues('organizationId') && !items.length)
+  if (!query.isLoading && !organizationId && !items.length)
     return (
       <Alert variant="plain" className="w-auto">
         <AlertTitle>{t('c:resource_required', { resource: t('c:organization') })}</AlertTitle>
         <AlertDescription className="pr-8">
           <p className="mb-2">{t('c:organization_required.text')}</p>
-          <Button
-            onClick={() => {
-              useDialoger.getState().create(<CreateOrganizationForm callback={organizationCreated} dialog />, {
-                triggerRef: { current: null },
-                className: 'md:max-w-2xl',
-                id: 'create-organization',
-                title: t('c:create_resource', { resource: t('c:organization').toLowerCase() }),
-              });
-            }}
-          >
+          <Button onClick={() => openCreateOrganizationDialog({ current: null }, organizationCreated)}>
             <span>{t('c:create_resource', { resource: t('c:organization').toLowerCase() })}</span>
           </Button>
         </AlertDescription>
@@ -156,15 +139,7 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
           <SubmitButton disabled={!isValid} loading={isPending}>
             {t('c:create')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={form.isDirty ? '' : 'invisible'}
-            aria-label={t('c:cancel')}
-            onClick={() => form.reset()}
-          >
-            {t('c:cancel')}
-          </Button>
+          <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
         </div>
       </form>
     </Form>

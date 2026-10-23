@@ -5,7 +5,7 @@ import { findProjectByIdOrSlug, projectQueryKeys } from '~/modules/project/query
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { queryClient } from '~/query/query-client';
 
-/** Provides project publicity state and actions. */
+/** Whether the project is public: always on the public route, else read from the cache. */
 export const useProjectPublicity = (projectId: string) => {
   const { tenantId } = useOrganizationLayoutContext();
 

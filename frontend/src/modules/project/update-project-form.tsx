@@ -5,16 +5,15 @@ import type { Project } from 'sdk';
 import { zUpdateProjectBody } from 'sdk/zod.gen';
 import type { z } from 'zod';
 import { useBeforeUnload } from '~/hooks/use-before-unload';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { AvatarFormField } from '~/modules/common/form-fields/avatar';
+import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectUpdateMutation } from '~/modules/project/query';
-import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { cleanUrl } from '~/utils/clean-url';
@@ -24,12 +23,9 @@ const formSchema = zUpdateProjectBody;
 type FormValues = z.infer<typeof formSchema>;
 interface Props {
   project: Project;
-  dialog?: boolean;
-  sheet?: boolean;
-  callback?: (project: Project) => void;
 }
 
-function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet }: Props) {
+function UpdateProjectForm({ project }: Props) {
   const { t } = useTranslation();
 
   const organizationId = project.organizationId;
@@ -52,11 +48,9 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
       { path: { id: project.id, organizationId, tenantId: project.tenantId }, body: values },
       {
         onSuccess: (updatedProject) => {
-          if (isDialog) useDialoger.getState().remove();
-          if (isSheet) useSheeter.getState().remove(formContainerId);
+          useSheeter.getState().remove(formContainerId);
           form.reset(updatedProject);
           toaster.success(t('c:success.update_resource', { resource: t('c:project') }));
-          callback?.(updatedProject);
         },
       },
     );
@@ -96,9 +90,7 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:save_changes')}
           </SubmitButton>
-          <Button type="reset" variant="secondary" onClick={() => form.reset()} className={form.isDirty ? '' : 'invisible'}>
-            {t('c:cancel')}
-          </Button>
+          <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
         </div>
       </form>
     </Form>

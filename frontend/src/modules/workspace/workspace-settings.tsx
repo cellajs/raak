@@ -1,39 +1,56 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import i18n from 'i18next';
 import { CircleAlertIcon, Trash2Icon } from 'lucide-react';
-import { useRef } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { type RefObject, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
 import { appConfig } from 'shared';
+import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { NamedText } from '~/modules/common/named-text';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
 import { DeleteWorkspaces } from '~/modules/workspace/delete-workspaces';
 import { UpdateWorkspaceForm } from '~/modules/workspace/update-workspace-form';
-import { workspacesListQueryOptions } from './query';
+import { useOrganizationWorkspaces } from './query';
 
-export function WorkspaceSettings({ workspace, sheet: isSheet }: { workspace: Workspace; sheet?: boolean }) {
+export function openWorkspaceSettingsSheet(workspace: Workspace, triggerRef: RefObject<HTMLButtonElement | null>) {
+  useSheeter.getState().create(
+    <div className="container w-full">
+      <WorkspaceSettings workspace={workspace} />
+    </div>,
+    {
+      id: 'update-workspace',
+      triggerRef,
+      side: 'right',
+      className: 'max-w-full lg:max-w-4xl',
+      title: i18n.t('c:resource_settings', { resource: i18n.t('c:workspace') }),
+      titleContent: <UnsavedBadge title={i18n.t('c:resource_settings', { resource: i18n.t('c:workspace') })} />,
+      description: i18n.t('c:workspace_settings.text', { name: workspace.name }),
+    },
+  );
+}
+
+function WorkspaceSettings({ workspace }: { workspace: Workspace }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const deleteButtonRef = useRef(null);
 
   // Check if workspace can be deleted
-  const { data: workspaces = [] } = useInfiniteQuery({
-    ...workspacesListQueryOptions({ organizationId: workspace.organizationId }),
-    select: (data) => data.pages.flatMap((p) => p.items),
-  });
+  const workspaces = useOrganizationWorkspaces(workspace.organizationId);
   const canDelete = workspaces.length > 1;
 
-  const callback = () => {
-    if (isSheet) useSheeter.getState().remove('update-workspace');
+  const handleDeleted = (args: CallbackArgs<Workspace[]>) => {
+    if (args.status !== 'success') return;
+    useSheeter.getState().remove('update-workspace');
     navigate({ to: appConfig.defaultRedirectPath, replace: true });
   };
 
   const openDeleteDialog = () => {
-    useDialoger.getState().create(<DeleteWorkspaces dialog workspaces={[workspace]} callback={callback} />, {
+    useDialoger.getState().create(<DeleteWorkspaces dialog workspaces={[workspace]} callback={handleDeleted} />, {
       id: 'delete-workspace',
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
@@ -54,22 +71,20 @@ export function WorkspaceSettings({ workspace, sheet: isSheet }: { workspace: Wo
             callback={(updatedWorkspace) => {
               if (workspace.slug !== updatedWorkspace.slug) {
                 navigate({
+                  from: '/$tenantId/$organizationSlug/workspace/$slug',
                   to: '/$tenantId/$organizationSlug/workspace/$slug',
-                  params: { tenantId: workspace.tenantId, slug: updatedWorkspace.slug, organizationSlug: updatedWorkspace.organizationId },
+                  params: (prev) => ({ ...prev, slug: updatedWorkspace.slug }),
                   replace: true,
                 });
               }
             }}
-            sheet={isSheet}
           />
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
           <CardTitle level={2}>{t('c:delete_resource', { resource: t('c:workspace').toLowerCase() })}</CardTitle>
-          <CardDescription>
-            <Trans i18nKey={'c:delete_workspace_notice.text'} values={{ name: workspace.name, resource: t('c:workspace').toLowerCase() }} />
-          </CardDescription>
+          <CardDescription>{t('c:delete_workspace_notice.text')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button disabled={!canDelete} ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>

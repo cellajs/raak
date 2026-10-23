@@ -8,10 +8,7 @@ import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules
 
 /**
  * A banner-less workspace tile, showing its name and associated projects as avatars.
- *
- * Reads from the shared all-projects query (already fetched by sidebar/menu) and filters
- * by `membership.workspaceId`. React Query memoizes the `select` per subscriber, so each
- * tile only re-renders when its own slice changes. There are no N per-workspace project fetches.
+ * Reads the shared all-projects query (already fetched by the menu), so no per-workspace fetch.
  */
 export function WorkspaceTile({ entity }: { entity: Workspace }) {
   const { t } = useTranslation();

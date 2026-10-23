@@ -1,43 +1,33 @@
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
-import { DeleteForm } from '~/modules/common/delete-form';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import type { CallbackArgs } from '~/modules/common/data-table/types';
+import { DeleteItems, type DeleteItemsProps } from '~/modules/common/delete-items';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectDeleteMutation } from '~/modules/project/query';
 
-interface Props {
+interface DeleteProjectsProps extends Pick<DeleteItemsProps<Project, unknown>, 'dialog' | 'callback'> {
   projects: Project[];
-  dialog?: boolean;
-  callback?: (project: Project[]) => void;
-  onCancel?: () => void;
 }
 
-function DeleteProjects({ projects, callback, dialog: isDialog, onCancel }: Props) {
+export function DeleteProjects({ projects, callback, ...props }: DeleteProjectsProps) {
   const { t } = useTranslation();
-  const removeDialog = () => useDialoger.getState().remove();
-  const organizationId = projects[0].organizationId;
-  const tenantId = projects[0].tenantId;
+  const mutation = useProjectDeleteMutation();
+  const toVariables = (items: Project[]) => ({
+    path: { organizationId: items[0].organizationId, tenantId: items[0].tenantId },
+    body: { ids: items.map(({ id }) => id) },
+    projects: items,
+  });
 
-  const { mutate: deleteProjects, isPending } = useProjectDeleteMutation();
-
-  const onDelete = () => {
-    deleteProjects(
-      { path: { organizationId, tenantId }, body: { ids: projects.map(({ id }) => id) }, projects },
-      {
-        onSuccess: () => {
-          toaster.success(
-            projects.length === 1
-              ? t('c:success.delete_resource', { resource: t('c:project') })
-              : t('c:success.delete_counted_resources', { count: projects.length, resources: t('c:project_other').toLowerCase() }),
-          );
-          if (isDialog) removeDialog();
-          callback?.(projects);
-        },
-      },
-    );
+  const handleDeleted = (args: CallbackArgs<Project[]>) => {
+    if (args.status === 'success') {
+      toaster.success(
+        args.data.length === 1
+          ? t('c:success.delete_resource', { resource: t('c:project') })
+          : t('c:success.delete_counted_resources', { count: args.data.length, resources: t('c:project_other').toLowerCase() }),
+      );
+    }
+    callback?.(args);
   };
 
-  return <DeleteForm onDelete={onDelete} onCancel={onCancel ?? removeDialog} pending={isPending} />;
+  return <DeleteItems items={projects} mutation={mutation} toVariables={toVariables} callback={handleDeleted} {...props} />;
 }
-
-export { DeleteProjects };

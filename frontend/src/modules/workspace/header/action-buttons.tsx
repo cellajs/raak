@@ -1,4 +1,4 @@
-import { useSuspenseInfiniteQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import type { VariantProps } from 'class-variance-authority';
 import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, UsersIcon } from 'lucide-react';
 import { type RefObject, useRef } from 'react';
@@ -6,31 +6,24 @@ import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
-import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Button, type buttonVariants } from '~/modules/ui/button';
-import { workspaceQueryOptions } from '~/modules/workspace/query';
 import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
-import { WorkspaceSettings } from '~/modules/workspace/workspace-settings';
+import { openWorkspaceSettingsSheet } from '~/modules/workspace/workspace-settings';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 import { cn } from '~/utils/cn';
 
 /**
- * Action buttons for the workspace header, including create project and workspace settings.
- * Labels are managed in the always-present labels board panel.
+ * Action buttons for the workspace header: add project and workspace settings.
  */
 export function WorkspaceActionButtons() {
   const { t } = useTranslation();
 
-  const { workspace: initialWorkspace } = useWorkspaceContext();
+  const { workspace } = useWorkspaceContext();
 
-  const { data: workspace } = useSuspenseQuery(
-    workspaceQueryOptions(initialWorkspace.id, initialWorkspace.organizationId, initialWorkspace.tenantId),
-  );
   const { data: projectsData } = useSuspenseInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }));
   const projects = flattenInfiniteData<Project>(projectsData);
   const projectSlug = workspaceRouteApi.useSearch({ select: (search) => search.projectSlug });
@@ -39,23 +32,9 @@ export function WorkspaceActionButtons() {
   const project: EnrichedProject | undefined = projects.find((p) => p.slug === projectSlug) || projects[0];
   const projectMembership = project?.membership;
 
-  const refs = { add: useRef(null), workspace: useRef(null), project: useRef(null) };
+  const refs = { add: useRef(null), workspace: useRef(null) };
 
-  const openPreferencesSheet = (triggerRef: RefObject<HTMLButtonElement | null>) =>
-    useSheeter.getState().create(
-      <div className="container w-full">
-        <WorkspaceSettings workspace={workspace} sheet />
-      </div>,
-      {
-        id: 'update-workspace',
-        triggerRef,
-        side: 'right',
-        className: 'max-w-full lg:max-w-4xl',
-        title: t('c:resource_settings', { resource: t('c:workspace') }),
-        titleContent: <UnsavedBadge title={t('c:resource_settings', { resource: t('c:workspace') })} />,
-        description: t('c:workspace_settings.text', { name: workspace.name }),
-      },
-    );
+  const openPreferencesSheet = (triggerRef: RefObject<HTMLButtonElement | null>) => openWorkspaceSettingsSheet(workspace, triggerRef);
 
   const actions = [
     {

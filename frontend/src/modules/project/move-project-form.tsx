@@ -2,19 +2,19 @@ import { useMemo } from 'react';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
-import { zMoveProjectToWorkspacePath, zMoveProjectToWorkspaceQuery } from 'sdk/zod.gen';
-import { z } from 'zod';
+import { zMoveProjectToWorkspaceQuery } from 'sdk/zod.gen';
+import type { z } from 'zod';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
+import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectMoveMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
-import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { formResolver } from '~/utils/form-resolver';
 
-const formSchema = z.object({ ...zMoveProjectToWorkspacePath.shape, ...zMoveProjectToWorkspaceQuery.shape });
+const formSchema = zMoveProjectToWorkspaceQuery;
 type FormValues = z.infer<typeof formSchema>;
 
 interface MoveProjectFormProps {
@@ -26,17 +26,12 @@ interface MoveProjectFormProps {
 export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectFormProps) {
   const { t } = useTranslation();
 
-  const options = workspaces.map(({ id: value, name: label, thumbnailUrl: url }) => ({ value, label, url })) || [];
+  const options = workspaces.map(({ id: value, name: label, thumbnailUrl: url }) => ({ value, label, url }));
 
   const formOptions: UseFormProps<FormValues> = useMemo(
     () => ({
       resolver: formResolver(formSchema),
-      defaultValues: {
-        id: project.id,
-        organizationId: project.organizationId,
-        tenantId: project.tenantId,
-        workspaceId: project.membership?.workspaceId ?? '',
-      },
+      defaultValues: { workspaceId: project.membership?.workspaceId ?? '' },
     }),
     [],
   );
@@ -48,7 +43,7 @@ export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectF
   const onSubmit = (values: FormValues) => {
     move(
       {
-        path: { id: values.id, organizationId: values.organizationId, tenantId: values.tenantId },
+        path: { id: project.id, organizationId: project.organizationId, tenantId: project.tenantId },
         query: { workspaceId: values.workspaceId },
         currentWorkspaceId: project.membership?.workspaceId ?? values.workspaceId,
       },
@@ -72,15 +67,7 @@ export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectF
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:move')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={form.isDirty ? '' : 'invisible'}
-            aria-label={t('c:cancel')}
-            onClick={() => form.reset()}
-          >
-            {t('c:cancel')}
-          </Button>
+          <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
         </div>
       </form>
     </Form>

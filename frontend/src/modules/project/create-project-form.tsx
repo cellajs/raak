@@ -6,13 +6,13 @@ import { generateId } from 'shared/utils/entity-id';
 import type { z } from 'zod';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
+import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectCreateMutation } from '~/modules/project/query';
 import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
-import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
@@ -20,12 +20,7 @@ import { formResolver } from '~/utils/form-resolver';
 
 const formSchema = zCreateProjectsBody.element.omit({ id: true });
 type FormValues = z.infer<typeof formSchema>;
-interface CreateProjectFormProps {
-  callback?: () => void;
-  dialog?: boolean;
-}
-
-export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) {
+export function CreateProjectForm() {
   const { t } = useTranslation();
 
   const { workspace } = useWorkspaceContext();
@@ -54,7 +49,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
         onSuccess: async (createdProject) => {
           toaster.success(t('c:success.create_resource', { resource: t('c:project') }));
           form.reset();
-          if (isDialog) useDialoger.getState().remove();
+          useDialoger.getState().remove();
           selectBoardProject(createdProject.slug);
         },
       },
@@ -90,15 +85,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:create')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={form.isDirty ? '' : 'invisible'}
-            aria-label={t('c:cancel')}
-            onClick={() => form.reset()}
-          >
-            {t('c:cancel')}
-          </Button>
+          <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
         </div>
       </form>
     </Form>

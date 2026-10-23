@@ -27,7 +27,7 @@ export function ProjectRouteComponent() {
 
   return (
     <Suspense fallback={<Spinner size="lg" className="mt-[45vh]" />}>
-      <ProjectPage key={project.slug} projectId={project.id} organizationId={project.organizationId} organization={organization} tenantId={tenantId}>
+      <ProjectPage key={project.slug} project={project} organization={organization}>
         {view === 'table' ? (
           <Suspense>
             <TasksTable projects={projects} organization={organization} tenantId={tenantId} />

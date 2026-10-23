@@ -1,5 +1,4 @@
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Workspace } from 'sdk';
 import {
   type CreateWorkspacesData,
   createWorkspaces,
@@ -10,9 +9,11 @@ import {
   getWorkspaces,
   type UpdateWorkspaceData,
   updateWorkspace,
+  type Workspace,
 } from 'sdk';
 import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
+import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { addMyMembershipCache, getApiIncludedMembership } from '~/modules/memberships/query-mutations';
 import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesOnceUnobserved } from '~/query/basic/cache-mutations';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
@@ -24,7 +25,7 @@ import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { preserveIncluded } from '~/query/basic/preserve-included';
 import type { MutationData } from '~/query/types';
 
-type WorkspaceFilters = Omit<GetWorkspacesData['query'], 'limit' | 'offset'>;
+type WorkspaceFilters = Omit<NonNullable<GetWorkspacesData['query']>, 'limit' | 'offset'>;
 
 const keys = createEntityKeys<WorkspaceFilters>('workspace');
 
@@ -40,7 +41,7 @@ const findWorkspaceInCache = createCacheFinder<Workspace>('workspace');
 export const findWorkspaceByIdOrSlug = (idOrSlug: string, tenantId: string): Workspace | undefined =>
   findWorkspaceInCache((ws) => ws.id === idOrSlug || (ws.slug === idOrSlug && ws.tenantId === tenantId));
 
-type WorkspacesListParams = Omit<NonNullable<GetWorkspacesData['query']>, 'limit' | 'offset'> & { limit?: number };
+type WorkspacesListParams = WorkspaceFilters & { limit?: number };
 
 /** Paginated workspaces infinite query. `include` is deliberately not part of the cache key. */
 export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) => {
@@ -62,6 +63,10 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
     refetchOnMount: refetchOnMountForIncluded(include),
   });
 };
+
+/** The organization's workspaces from the list cache, which the menu fills. */
+export const useOrganizationWorkspaces = (organizationId: string) =>
+  useInfiniteRows({ ...workspacesListQueryOptions({ organizationId }), refetchOnMount: false }).rows ?? [];
 
 export const workspaceQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({

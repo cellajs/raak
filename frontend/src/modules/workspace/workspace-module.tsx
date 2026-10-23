@@ -28,7 +28,7 @@ const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>) 
 
   const title = i18n.t('c:create_resource', { resource: i18n.t('c:workspace').toLowerCase() });
 
-  return useDialoger.getState().create(<CreateWorkspaceForm dialog callback={callback} />, {
+  return useDialoger.getState().create(<CreateWorkspaceForm callback={callback} />, {
     className: 'md:max-w-2xl',
     id: 'create-workspace',
     description: i18n.t('c:create_workspace.text'),

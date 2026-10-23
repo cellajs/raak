@@ -11,11 +11,9 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { fallbackContentRef } from '~/utils/fallback-content-ref';
 
 export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject<HTMLButtonElement | null>) => {
-  const channel = { ...project, tenantId: project.tenantId };
-
   useSheeter.getState().create(
     <div className="container w-full">
-      <MembersTable channel={channel} isSheet />
+      <MembersTable channel={project} isSheet />
     </div>,
     {
       id: 'project-members',
@@ -32,7 +30,7 @@ export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject
 export const openProjectSettingsSheet = (project: EnrichedProject, triggerRef?: RefObject<HTMLButtonElement | null>) => {
   useSheeter.getState().create(
     <div className="container w-full">
-      <ProjectSettings project={project} sheet />
+      <ProjectSettings project={project} />
     </div>,
     {
       id: 'update-project',
@@ -46,10 +44,9 @@ export const openProjectSettingsSheet = (project: EnrichedProject, triggerRef?: 
   );
 };
 
-/** Creates a project and opens its page. */
-export const createNewProject = () => {
+const openAddProjectsDialog = (mode?: 'select') => {
   const title = t('c:add_resource', { resource: t('c:project').toLowerCase() });
-  useDialoger.getState().create(<AddProjects dialog />, {
+  useDialoger.getState().create(<AddProjects mode={mode} />, {
     triggerRef: { current: null },
     className: 'md:max-w-4xl',
     id: 'create-project',
@@ -59,17 +56,8 @@ export const createNewProject = () => {
   });
 };
 
-/**
- * Opens the add-projects dialog directly on the "select existing projects" step.
- */
-export const selectExistingProjects = () => {
-  const title = t('c:add_resource', { resource: t('c:project').toLowerCase() });
-  useDialoger.getState().create(<AddProjects dialog mode="select" />, {
-    triggerRef: { current: null },
-    className: 'md:max-w-4xl',
-    id: 'create-project',
-    title,
-    titleContent: <UnsavedBadge title={title} />,
-    description: t('c:add_projects.text'),
-  });
-};
+/** Opens the add-projects dialog, where a project is created or an existing one selected. */
+export const createNewProject = () => openAddProjectsDialog();
+
+/** Opens the add-projects dialog directly on the "select existing projects" step. */
+export const selectExistingProjects = () => openAddProjectsDialog('select');

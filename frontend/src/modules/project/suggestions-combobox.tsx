@@ -48,13 +48,9 @@ export function ProjectSuggestionCombobox({ value, workspaceId, tenantId, target
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Check if project is already assigned to any workspace (via enrichment pipeline)
-  const getAssignedWorkspaceId = (project: EnrichedProject) => project.membership?.workspaceId ?? null;
-
-  const { data, isFetching } = useInfiniteQuery({
-    ...projectsListQueryOptions({ q: debouncedSearchQuery, organizationId: targetOrgId, excludeArchived: 'true' }),
-    enabled: true,
-  });
+  const { data, isFetching } = useInfiniteQuery(
+    projectsListQueryOptions({ q: debouncedSearchQuery, organizationId: targetOrgId, excludeArchived: 'true' }),
+  );
   const projects = flattenInfiniteData<EnrichedProject>(data);
 
   // Mirror selection back to value (multi). Compare by id since identities can differ.
@@ -70,9 +66,8 @@ export function ProjectSuggestionCombobox({ value, workspaceId, tenantId, target
       value={selected}
       onValueChange={(items) => {
         // Preserve selected items that aren't in current results.
-        const inResultsIds = new Set(items.map((p) => p.id));
         const carriedOver = value.filter((v) => !projects.some((p) => p.id === v.id));
-        onChange([...carriedOver, ...items.filter((p) => inResultsIds.has(p.id))]);
+        onChange([...carriedOver, ...items]);
       }}
       inputValue={searchQuery}
       onInputValueChange={setSearchQuery}
@@ -108,32 +103,29 @@ export function ProjectSuggestionCombobox({ value, workspaceId, tenantId, target
             <AnimatePresence mode="wait">
               {!isFetching && !projects.length ? (
                 <motion.div key="empty-state" initial="hidden" animate="visible" exit="exit" variants={dropdownVariants} className="h-full">
-                  {debouncedSearchQuery.length ? (
-                    <ComboboxEmpty>
+                  <ComboboxEmpty>
+                    {debouncedSearchQuery.length ? (
                       <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleProps={{ resource: t('c:project').toLowerCase() }} />
-                    </ComboboxEmpty>
-                  ) : (
-                    <ComboboxEmpty>
+                    ) : (
                       <ContentPlaceholder icon={BriefcaseIcon} title="c:select_project.text" titleProps={{ name: organizationName }} />
-                    </ComboboxEmpty>
-                  )}
+                    )}
+                  </ComboboxEmpty>
                 </motion.div>
               ) : (
                 projects.length > 0 && (
                   <motion.div key="results" initial="hidden" animate="visible" exit="exit" variants={dropdownVariants}>
                     {projects.map((project) => {
                       const { id, entityType, name, thumbnailUrl } = project;
-                      const isSelected = value.some((v) => v.id === id);
-                      const assignedWsId = getAssignedWorkspaceId(project);
-                      const isAssigned = !!assignedWsId;
-                      const assignedWorkspace = assignedWsId ? findWorkspaceByIdOrSlug(assignedWsId, tenantId) : null;
+                      const isSelected = selectedIds.has(id);
+                      const assignedWorkspaceId = project.membership?.workspaceId;
+                      const isAssigned = !!assignedWorkspaceId;
+                      const assignedWorkspace = assignedWorkspaceId ? findWorkspaceByIdOrSlug(assignedWorkspaceId, tenantId) : null;
 
                       return (
                         <ComboboxItem
                           key={id}
                           value={project}
                           disabled={isAssigned && !isSelected}
-                          data-project-selected={isSelected}
                           data-assigned-workspace={isAssigned}
                           className="group w-full justify-between"
                         >
@@ -147,7 +139,7 @@ export function ProjectSuggestionCombobox({ value, workspaceId, tenantId, target
                           <div className="flex items-center gap-0.5">
                             <Badge size="sm" variant="plain" className="invisible gap-1 group-data-[assigned-workspace=true]:visible max-sm:hidden">
                               <span className="max-w-32 truncate">
-                                {assignedWsId === workspaceId
+                                {assignedWorkspaceId === workspaceId
                                   ? t('c:in_current_workspace')
                                   : (assignedWorkspace?.name ?? t('c:in_another_workspace'))}
                               </span>

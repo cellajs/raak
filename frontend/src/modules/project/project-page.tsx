@@ -1,4 +1,3 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { type ReactNode, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization } from 'sdk';
@@ -6,7 +5,7 @@ import { FocusViewContainer } from '~/modules/common/focus-view';
 import { PageHeader } from '~/modules/common/page/header';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
-import { projectQueryOptions, useProjectUpdateMutation } from '~/modules/project/query';
+import { useProjectUpdateMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskDropMonitor } from '~/modules/task/hooks/use-task-drop-monitor';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
@@ -16,21 +15,16 @@ import { lazyNamed } from '~/utils/lazy-named';
 const JoinedButton = lazyNamed(() => import('~/modules/memberships/joined-button'), 'JoinedButton');
 
 interface Props {
-  projectId: string;
-  organizationId: string;
+  project: EnrichedProject;
   organization: Organization;
-  tenantId: string;
   children: ReactNode;
 }
 
 /**
  * Project page with header, hotkeys and nested routes.
  */
-export function ProjectPage({ projectId, organizationId, organization, tenantId, children }: Props) {
+export function ProjectPage({ project, organization, children }: Props) {
   const { t } = useTranslation();
-
-  const { data } = useSuspenseQuery(projectQueryOptions(projectId, organizationId, tenantId));
-  const project = data as EnrichedProject;
 
   // From the policy, so an organization admin without a project admin membership gets the same affordances the API grants.
   const resolveCan = useResolveCan();
@@ -38,11 +32,11 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
 
   const updateProject = useProjectUpdateMutation();
 
-  useTaskDropMonitor(tenantId, organizationId);
+  useTaskDropMonitor(project.tenantId, project.organizationId);
 
   const coverUpdateCallback = (bannerUrl: string) => {
     updateProject.mutate(
-      { path: { id: projectId, organizationId, tenantId }, body: { bannerUrl } },
+      { path: { id: project.id, organizationId: project.organizationId, tenantId: project.tenantId }, body: { bannerUrl } },
       { onSuccess: () => toaster.success(t('c:success.upload_cover')) },
     );
   };
@@ -53,7 +47,7 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
         entity={project}
         canUpdate={canUpdate}
         organizationId={project.organizationId}
-        parent={organization}
+        parents={[organization]}
         coverUpdateCallback={coverUpdateCallback}
         panel={
           project.membership && (

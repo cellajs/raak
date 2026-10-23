@@ -1,10 +1,9 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import { LogOutIcon, Trash2Icon, UnlinkIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Project, Workspace } from 'sdk';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import type { Project } from 'sdk';
+import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { NamedText } from '~/modules/common/named-text';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
@@ -17,13 +16,11 @@ import { useProjectMembershipActions } from '~/modules/project/use-project-membe
 import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
-import { workspacesListQueryOptions } from '~/modules/workspace/query';
+import { useOrganizationWorkspaces } from '~/modules/workspace/query';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
-import { flattenInfiniteData } from '~/query/basic/flatten';
 
-export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; project: EnrichedProject }) {
+export function ProjectSettings({ project }: { project: EnrichedProject }) {
   const { t } = useTranslation();
-  const { tenantId } = useOrganizationLayoutContext();
   const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
   const isInWorkspace = useIsWorkspaceRoute();
 
@@ -32,31 +29,27 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
   const canUpdate = resolveCan(project.can?.project?.update, project.createdBy);
   const canDelete = resolveCan(project.can?.project?.delete, project.createdBy);
 
-  const { data: workspacesData } = useInfiniteQuery({
-    ...workspacesListQueryOptions({ organizationId: project.organizationId }),
-    refetchOnMount: false,
-  });
-  const workspaces = flattenInfiniteData<Workspace>(workspacesData);
+  const workspaces = useOrganizationWorkspaces(project.organizationId);
   const canMoveProjects = workspaces.length > 1;
 
   const closeSettingsSheet = () => {
-    if (isSheet) useSheeter.getState().remove('update-project');
+    useSheeter.getState().remove('update-project');
   };
 
   const { isLeavingProject, isRemovingProjectFromWorkspace, leaveProject, projectHasWorkspace, removeProjectFromWorkspace } =
-    useProjectMembershipActions({ isInWorkspace, project, tenantId, onSuccess: closeSettingsSheet });
+    useProjectMembershipActions({ isInWorkspace, project, onSuccess: closeSettingsSheet });
 
-  const callback = (deletedProjects: Project[]) => {
+  const handleDeleted = (args: CallbackArgs<Project[]>) => {
+    if (args.status !== 'success') return;
     closeSettingsSheet();
 
     // If the deleted project is the currently selected one, clear the search param
     // so the board defaults to the first remaining project
-    const deletedSlugs = new Set(deletedProjects.map(({ slug }) => slug));
-    if (projectSlug && deletedSlugs.has(projectSlug)) selectBoardProject();
+    if (projectSlug === project.slug) selectBoardProject();
   };
 
   const openDeleteDialog = () => {
-    useDialoger.getState().create(<DeleteProjects dialog projects={[project]} callback={callback} />, {
+    useDialoger.getState().create(<DeleteProjects dialog projects={[project]} callback={handleDeleted} />, {
       id: 'delete-project',
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
@@ -73,7 +66,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
             <CardTitle level={2}>{t('c:general')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <UpdateProjectForm project={project} sheet={isSheet} />
+            <UpdateProjectForm project={project} />
           </CardContent>
         </Card>
       )}

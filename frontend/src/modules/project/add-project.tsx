@@ -2,7 +2,6 @@ import { ChevronRightIcon, ShrubIcon, SquareMousePointerIcon } from 'lucide-reac
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Organization } from 'sdk';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { CreateProjectForm } from '~/modules/project/create-project-form';
@@ -10,31 +9,25 @@ import { SelectProjectForm } from '~/modules/project/select-project-form';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 
 interface AddProjectsProps {
-  organization?: Organization | null;
-  callback?: () => void;
-  dialog?: boolean;
-  mode?: 'create' | 'select' | null;
+  mode?: 'create' | 'select';
 }
 
 function AddProjects({ mode: baseMode }: AddProjectsProps) {
-  //organization, callback, dialog: isDialog,
   const { t } = useTranslation();
 
-  const [createMode, setCreateMode] = useState(baseMode);
+  const [createMode, setCreateMode] = useState<'create' | 'select' | null>(baseMode ?? null);
 
   const updateMode = (mode: string | string[]) => {
     const baseTitle = t('c:add_resource', { resource: t('c:project').toLowerCase() });
 
-    // If mode is empty, go back to initial state
-    const modes = Array.isArray(mode) ? mode : [mode];
-    modes[0] ? setCreateMode(modes[0] as 'create' | 'select') : setCreateMode(null);
+    const nextMode = mode === 'create' || mode === 'select' ? mode : null;
+    setCreateMode(nextMode);
 
-    // Update dialog title
     useDialoger.getState().update('create-project', {
       titleContent: (
         <div className="flex items-center gap-2 max-sm:justify-center">
-          {mode[0] ? (
-            <button type="button" aria-label={t('c:back')} onClick={() => updateMode([])}>
+          {nextMode ? (
+            <button type="button" aria-label={t('c:back')} onClick={() => updateMode('')}>
               {baseTitle}
             </button>
           ) : (
@@ -43,7 +36,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
             </div>
           )}
           <AnimatePresence>
-            {mode[0] && (
+            {nextMode && (
               <motion.span
                 className="flex items-center gap-2"
                 initial={{ opacity: 0 }}
@@ -52,7 +45,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
                 transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
               >
                 <ChevronRightIcon className="opacity-50" />
-                <UnsavedBadge title={mode[0] === 'select' ? t('c:select') : t('c:create')} />
+                <UnsavedBadge title={nextMode === 'select' ? t('c:select') : t('c:create')} />
               </motion.span>
             )}
           </AnimatePresence>
@@ -71,14 +64,13 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
             animate={{ x: 0, scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
           >
-            <ToggleGroup type="multiple" onValueChange={updateMode} className="w-full items-stretch gap-2 py-3 max-sm:flex-col sm:h-40 sm:gap-3">
+            <ToggleGroup type="single" onValueChange={updateMode} className="w-full items-stretch gap-2 py-3 max-sm:flex-col sm:h-40 sm:gap-3">
               <ToggleGroupItem
                 size="tile"
                 variant="tile"
                 value="create"
                 aria-label={t('c:create_resource', { resource: t('c:project').toLowerCase() })}
                 className="w-auto grow py-6 sm:py-10"
-                id="create-project-option"
               >
                 <ShrubIcon className="size-12" strokeWidth={1} />
                 <div className="flex flex-col truncate pl-3">
@@ -110,7 +102,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
         )}
         {createMode && (
           <motion.div key="add-form" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col gap-4">
-            {createMode === 'create' ? <CreateProjectForm dialog /> : <SelectProjectForm dialog />}
+            {createMode === 'create' ? <CreateProjectForm /> : <SelectProjectForm />}
           </motion.div>
         )}
       </AnimatePresence>
