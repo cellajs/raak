@@ -256,7 +256,7 @@ function PanelBodySkeleton({ rowHeight = 88, rowCount = 12 }: { rowHeight?: numb
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden opacity-100 transition-opacity duration-300 sm:border">
       <div
-        className={`-mt-[.05rem] flex h-9 w-full shrink-0 justify-start gap-1 rounded-none border-t border-t-transparent ${statusSectionColors.accepted.border} ${statusSectionColors.accepted.fill} ring-inset`}
+        className={`flex h-9 w-full shrink-0 justify-start gap-1 rounded-none border-t border-t-transparent ${statusSectionColors.accepted.border} ${statusSectionColors.accepted.fill} ring-inset`}
       />
       {Array.from({ length: rowCount }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations

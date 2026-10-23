@@ -148,11 +148,13 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
           // h-auto/min-h-full override the content div's inline height:100% so it spans the full
           // scroll content: it is the sticky section headers' containing block, and a
           // viewport-height block would stop them pinning after one viewport of scrolling.
+          // The viewport spans the frame's left line and pads its content back off it: a focused card's bar draws
+          // on that line, and the viewport clips whatever lies past its own edge.
           <ScrollArea
             id={project.id}
-            className="mx-[-.05rem] min-h-0 flex-1"
+            className="-ml-px min-h-0 flex-1"
             viewportRef={scrollViewportRef}
-            viewportClassName="[&>div]:!flex [&>div]:!flex-col [&>div]:!grow [&>div]:!h-auto [&>div]:!min-h-full"
+            viewportClassName="[&>div]:!flex [&>div]:!flex-col [&>div]:!grow [&>div]:!h-auto [&>div]:!min-h-full [&>div]:pl-px"
             disableTrackClick
           >
             {/* Accepted section: sticky top, shown when scrolling up or resting at the top */}

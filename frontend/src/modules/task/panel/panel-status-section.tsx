@@ -111,7 +111,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
       <div
         ref={wrapperRef}
         className={cn(
-          'pointer-events-none sticky z-20 -mt-[.05rem] shrink-0 overflow-clip transition-[top,bottom] duration-300 ease-in-out motion-reduce:transition-none',
+          'pointer-events-none sticky z-20 shrink-0 overflow-clip transition-[top,bottom] duration-300 ease-in-out motion-reduce:transition-none',
           // Accepted pins below a page-level sticky nav (mobile tabs); iced pins to the bottom
           isIced ? (suppressed ? '-bottom-9' : 'bottom-0') : suppressed ? '-top-9' : 'top-(--sticky-stack-nav)',
         )}
