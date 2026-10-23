@@ -36,7 +36,7 @@ export function ExplainerPanel() {
         </Button>
       }
     >
-      <ScrollArea id={'explainer-scrollarea'} className="h-full">
+      <ScrollArea className="h-full">
         <div className="select-text p-4">
           <Suspense fallback={<Spinner className="my-4" noDelay />}>
             <BlockNoteFullHtml

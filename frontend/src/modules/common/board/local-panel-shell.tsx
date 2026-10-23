@@ -33,11 +33,11 @@ export function LocalPanelShell({ panelId, icon, title, headerActions, windowScr
     <BoardPanelBody
       windowScroll={windowScroll}
       className={cn(
-        'rounded-md rounded-b-none',
+        'rounded-lg rounded-b-none',
         isCollapsed ? 'sm:border-0' : frameBorderFade,
         // The header renders inside this frame, so it also spans the board header row
         // (smaller offset than project panel bodies, which sit below their header).
-        windowScroll ? 'h-full' : 'sm:h-[calc(100vh-var(--local-panel-offset))]',
+        windowScroll ? 'h-full' : 'sm:h-[calc(100dvh-var(--local-panel-offset))]',
       )}
     >
       <div
@@ -45,7 +45,7 @@ export function LocalPanelShell({ panelId, icon, title, headerActions, windowScr
           'flex min-h-13 items-center',
           isCollapsed
             ? 'justify-center'
-            : ['justify-between gap-2 truncate border-b bg-card/[calc(var(--content-opacity,1)*100%)] px-2 font-semibold text-sm', frameBorderFade],
+            : ['gap-2 truncate border-b bg-card/[calc(var(--content-opacity,1)*100%)] px-2 font-semibold text-sm', frameBorderFade],
         )}
       >
         <PanelDragHandleButton
@@ -55,7 +55,7 @@ export function LocalPanelShell({ panelId, icon, title, headerActions, windowScr
           // Collapsed, the panel clips its overflow, so the handle stays a collapsed avatar's size to keep its focus ring in view
           className={isCollapsed ? 'size-8 p-0 hover:bg-transparent' : 'h-8 truncate p-2 hover:bg-transparent'}
         >
-          {!isCollapsed && <div className="truncate">{title}</div>}
+          {!isCollapsed && title}
         </PanelDragHandleButton>
         {!isCollapsed && headerActions && <div className={cn('ml-auto', hintFadeOut)}>{headerActions}</div>}
       </div>
