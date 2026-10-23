@@ -23,15 +23,17 @@ const listContext = () => {
   return current;
 };
 
+const direction = (event: KeyboardEvent) => (event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1);
+
 const step = (event: KeyboardEvent) => {
   const ctx = listContext();
-  const target = ctx?.items[ctx.index + (event.key === 'ArrowDown' ? 1 : -1)];
+  const target = ctx?.items[ctx.index + direction(event)];
   if (target) focusItem(target.id);
 };
 
 const toEdge = (event: KeyboardEvent) => {
   const ctx = listContext();
-  const target = event.key === 'ArrowDown' ? ctx?.items.at(-1) : ctx?.items[0];
+  const target = direction(event) === 1 ? ctx?.items.at(-1) : ctx?.items[0];
   if (target) focusItem(target.id);
 };
 
@@ -40,7 +42,7 @@ const toGroup = (event: KeyboardEvent) => {
   const ctx = listContext();
   if (!ctx) return;
   const groups = [...new Set(ctx.items.map((item) => item.group))];
-  const targetGroup = groups[groups.indexOf(ctx.items[ctx.index].group) + (event.key === 'ArrowDown' ? 1 : -1)];
+  const targetGroup = groups[groups.indexOf(ctx.items[ctx.index].group) + direction(event)];
   if (targetGroup === undefined) return;
   const target = ctx.items.find((item) => item.group === targetGroup);
   if (target) focusItem(target.id);
@@ -52,7 +54,7 @@ const acrossPanels = (event: KeyboardEvent) => {
     .map((panel) => panel.getAttribute('data-panel'))
     .filter((panelId): panelId is string => !!panelId && !!getPanelNav(panelId));
   const currentIndex = panelIds.indexOf(currentItem()?.panelId ?? '');
-  const nextNav = getPanelNav(panelIds[currentIndex + (event.key === 'ArrowRight' ? 1 : -1)] ?? '');
+  const nextNav = getPanelNav(panelIds[currentIndex + direction(event)] ?? '');
   const targetId = nextNav?.firstInView() ?? nextNav?.items()[0]?.id;
   if (targetId) focusItem(targetId);
 };

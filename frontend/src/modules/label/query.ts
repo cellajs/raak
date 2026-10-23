@@ -68,8 +68,19 @@ const labelCreateKeys = Object.keys(zCreateLabelsBody.element.shape);
 // `keywords` is derived from the description, so it follows the description's stamp.
 registerYjsOwnedFields('label', ['description', 'keywords']);
 
-const labelsMutationKeyBase = ['label'] as const;
 const handleError = createResourceError('label');
+
+/** Refetches the organization's lists once no other label mutation is pending. */
+const invalidateOrgLists = (queryClient: QueryClient, organizationId: string) =>
+  invalidateIfLastMutation(queryClient, keys.all, keys.list.org(organizationId));
+
+/** Writes an edit into the cached row of the org lists and the detail, and into the host products embedding it. */
+const patchCachedLabel = (queryClient: QueryClient, organizationId: string, row: Label, ops: UpdateLabelFields) => {
+  const patched = { ...row, ...ops, updatedAt: new Date().toISOString() };
+  cacheUpdate(keys.list.org(organizationId), [patched]);
+  queryClient.setQueryData(keys.detail.byId(row.id), patched);
+  propagateEmbeddedProduct('label', [row.id], 'update');
+};
 
 /** Look up a cached label entity by id across the org's label lists. */
 export const findLabelInCache = createCacheFinder<Label>('label');
@@ -149,7 +160,7 @@ const labelCreateOptions = (queryClient: QueryClient): UseMutationOptions<Create
     insertEntitiesIntoHome(queryClient, createdLabels);
   },
   onSettled: (_data, error, variables) => {
-    if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
+    if (error) invalidateOrgLists(queryClient, variables.organizationId);
   },
 });
 
@@ -166,13 +177,7 @@ const labelUpdateOptions = (
     await queryClient.cancelQueries({ queryKey: orgKey });
     await queryClient.cancelQueries({ queryKey: keys.detail.byId(id) });
     const previousLabel = findLabelInCache(id);
-    if (previousLabel) {
-      const optimisticLabel = { ...previousLabel, ...ops, updatedAt: new Date().toISOString() };
-      cacheUpdate(orgKey, [optimisticLabel]);
-      queryClient.setQueryData(keys.detail.byId(id), optimisticLabel);
-      // Refresh embedded copies on host products (e.g. task.labels) from the optimistic row
-      propagateEmbeddedProduct('label', [id], 'update');
-    }
+    if (previousLabel) patchCachedLabel(queryClient, organizationId, previousLabel, ops);
     return { previousLabel };
   },
   onError: (error, variables, context) => {
@@ -195,7 +200,7 @@ const labelUpdateOptions = (
     syncEntityToCache({ entity: merged, listKey: orgKey, detailKey: keys.detail.byId(updatedLabel.id), queryClient });
   },
   onSettled: (_data, error, variables) => {
-    if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
+    if (error) invalidateOrgLists(queryClient, variables.organizationId);
   },
 });
 
@@ -233,7 +238,7 @@ const labelDeleteOptions = (queryClient: QueryClient): UseMutationOptions<Delete
   },
   onSettled: (data, error, variables) => {
     // A row put back is as the delete held it: remote changes were kept from the cache while it was pending.
-    if (error || data?.rejectedIds?.length) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
+    if (error || data?.rejectedIds?.length) invalidateOrgLists(queryClient, variables.organizationId);
   },
 });
 
@@ -262,12 +267,7 @@ export const useLabelUpdateMutation = (tenantId: string, organizationId: string)
     const ops = rawOps.name ? { ...rawOps, name: labelName(rawOps.name, findLabelInCache(id)?.mode) } : rawOps;
     if (squashIntoPendingCreate(queryClient, keys.create, id, ops, labelCreateKeys)) {
       const cached = findLabelInCache(id);
-      if (cached) {
-        const optimisticLabel = { ...cached, ...ops, updatedAt: new Date().toISOString() };
-        cacheUpdate(keys.list.org(organizationId), [optimisticLabel]);
-        queryClient.setQueryData(keys.detail.byId(id), optimisticLabel);
-        propagateEmbeddedProduct('label', [id], 'update');
-      }
+      if (cached) patchCachedLabel(queryClient, organizationId, cached, ops);
       return { kind: 'coalesced' };
     }
     const newStx = createStxForUpdate(Object.keys(ops));

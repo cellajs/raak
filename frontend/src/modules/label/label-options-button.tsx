@@ -1,5 +1,7 @@
 import { EllipsisVerticalIcon, LinkIcon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import type { Label } from 'sdk';
+import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
@@ -9,7 +11,7 @@ import { openPopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteLabels } from '~/modules/label/delete-labels';
 import { useLabelTileStore } from '~/modules/label/label-tile-store';
-import { findLabelInCache, type Label } from '~/modules/label/query';
+import { findLabelInCache } from '~/modules/label/query';
 import type { LabelRow } from '~/modules/label/types';
 import { Button } from '~/modules/ui/button';
 
@@ -17,12 +19,12 @@ import { Button } from '~/modules/ui/button';
 export function LabelOptionsButton({ row, canManage }: { row: LabelRow; canManage: boolean }) {
   const { t } = useTranslation();
   const { copyToClipboard } = useCopyToClipboard(2000);
+  const isMobile = useBreakpointBelow('sm');
 
   // Epics keep per-row identity across projects; a secondary tag is one logical label over its slug group
   const deleteIds = row.mode === 'epic' ? [row.id] : row.siblingIds;
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
-    const isMobile = window.innerWidth < 640;
     const triggerRef = { current: currentTarget };
 
     const handleDeleteClick = () => {

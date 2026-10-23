@@ -10,7 +10,6 @@ interface LabelRecencyState {
   usageMap: Record<string, number>; // "orgId:labelSlug" → epoch ms
   trackUsage: (organizationId: string, slugs: string[]) => void;
   getScore: (organizationId: string, slug: string) => number;
-  clear: () => void;
   reset: () => void; // Resets in-memory state to initial (call on sign-out)
 }
 
@@ -34,7 +33,6 @@ export const useLabelRecencyStore = create<LabelRecencyState>()(
             return { usageMap: updated };
           }),
         getScore: (organizationId, slug) => get().usageMap[`${organizationId}:${slug}`] ?? 0,
-        clear: () => set({ usageMap: {} }),
         reset: () => set({ usageMap: {} }),
       }),
       {

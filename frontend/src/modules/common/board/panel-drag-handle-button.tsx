@@ -36,7 +36,6 @@ export function PanelDragHandleButton({ name, fallbackLabel, className, icon, pr
   return (
     <>
       <Button
-        type="button"
         variant="ghost"
         ref={panelDrag?.registerHandle}
         className={cn(className, panelDrag && 'group/drag cursor-grab active:cursor-grabbing')}

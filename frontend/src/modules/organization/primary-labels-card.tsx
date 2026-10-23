@@ -1,8 +1,8 @@
 import { GripVerticalIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization } from 'sdk';
-import { labelSlug, type PrimaryLabelDefinition, primaryLabelLimits } from 'shared/config/labels-config';
+import { labelColorTokens, labelSlug, type PrimaryLabelDefinition, primaryLabelLimits } from 'shared/config/labels-config';
 import type { RowsChangeData } from '~/modules/common/data-grid';
 import { EditCellInput } from '~/modules/common/data-grid/cell-renderers';
 import { DataTable } from '~/modules/common/data-table/data-table';
@@ -15,8 +15,9 @@ import { useOrganizationUpdateMutation } from '~/modules/organization/query';
 import { Button } from '~/modules/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '~/modules/ui/popover';
 import { cn } from '~/utils/cn';
+import { lazyNamed } from '~/utils/lazy-named';
 
-const IconPicker = lazy(() => import('~/modules/common/icon-picker/icon-picker').then((m) => ({ default: m.IconPicker })));
+const IconPicker = lazyNamed(() => import('~/modules/common/icon-picker/icon-picker'), 'IconPicker');
 
 /** Stable row key getter, defined outside the component to keep its identity stable. */
 function rowKeyGetter(row: PrimaryLabelDefinition) {
@@ -65,7 +66,7 @@ function ColorCell({ row, onRowChange }: PickerCellProps) {
       </PopoverTrigger>
       <PopoverContent className="w-auto p-2" onMouseDown={(event) => event.stopPropagation()}>
         <div className="grid grid-cols-7 gap-1">
-          {Object.entries(labelPalette).map(([token, palette]) => (
+          {labelColorTokens.map((token) => (
             <button
               key={token}
               type="button"
@@ -73,11 +74,11 @@ function ColorCell({ row, onRowChange }: PickerCellProps) {
               aria-label={token}
               onClick={() => {
                 setOpen(false);
-                onRowChange({ ...row, color: token as PrimaryLabelDefinition['color'] });
+                onRowChange({ ...row, color: token });
               }}
               className={cn('flex items-center justify-center rounded-md p-1.5 hover:bg-accent', row.color === token && 'bg-accent ring-1 ring-ring')}
             >
-              <span className={cn('size-4 rounded-full', palette.dot)} />
+              <span className={cn('size-4 rounded-full', labelPalette[token].dot)} />
             </button>
           ))}
         </div>

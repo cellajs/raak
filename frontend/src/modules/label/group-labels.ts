@@ -1,6 +1,6 @@
+import type { Label } from 'sdk';
 import { foldText } from 'shared/utils/text-match';
 import { labelRecencyStore } from '~/modules/label/label-recency-store';
-import type { Label } from '~/modules/label/query';
 import type { LabelRow } from '~/modules/label/types';
 import type { LabelUsage } from '~/modules/label/use-label-usage';
 

@@ -1,8 +1,9 @@
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { BirdIcon } from 'lucide-react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Label } from 'sdk';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { matchesTerms } from 'shared/utils/text-match';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
@@ -13,7 +14,7 @@ import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
 import { LabelTile } from '~/modules/label/label-tile';
 import { labelTileDomId, useLabelTileStore } from '~/modules/label/label-tile-store';
-import { type Label, labelsCanonicalOptions } from '~/modules/label/query';
+import { labelsCanonicalOptions } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps, LabelsScopeProps } from '~/modules/label/types';
 import { type LabelUsage, useLabelUsage } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
@@ -28,22 +29,14 @@ const isPanelLabel = (mode: string) => mode !== 'primary';
 // Module-scoped so its identity is stable: useQueries returns a fresh combined value each render
 // unless the combine function is referentially stable (mirrors the label picker, select-labels).
 const combinePanelLabels = (results: { data?: { items: Label[] }; isLoading: boolean }[]) => ({
-  labels: results.flatMap((r) => r.data?.items ?? []).filter((label) => isPanelLabel(label.mode)),
-  pending: results.some((r) => r.isLoading),
+  labels: results.flatMap((result) => result.data?.items ?? []).filter((label) => isPanelLabel(label.mode)),
+  pending: results.some((result) => result.isLoading),
 });
 
 type LabelListScopeProps = { entityId: string } & LabelsHostProps;
 
 /** Newest-first by creation, mirroring the tasks table's default order. */
 const byCreatedAtDesc = (a: LabelRow, b: LabelRow) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0);
-
-/** Group labels into rows and sort newest-first, then filter (or, in highlight mode, keep all and tint later). */
-const useLabelRows = (labels: Label[], usage: LabelUsage, highlight: boolean, words: string[]) =>
-  useMemo(() => {
-    const grouped = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
-    if (highlight || !words.length) return grouped;
-    return grouped.filter((row) => matchesSearch(row, words));
-  }, [labels, usage, highlight, words]);
 
 /**
  * Project scope reads the canonical per-project list (the same key the optimistic create splices
@@ -52,8 +45,6 @@ const useLabelRows = (labels: Label[], usage: LabelUsage, highlight: boolean, wo
  */
 function ProjectLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
-  const q = useSearch({ strict: false, select: (search) => search.q });
-  const { highlight, terms } = parseSearchQuery(q);
 
   const { data, isLoading } = useQuery({
     ...labelsCanonicalOptions({ organizationId, tenantId, projectId: entityId }),
@@ -61,9 +52,7 @@ function ProjectLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   });
   const usage = useLabelUsage([entityId]);
 
-  const rows = useLabelRows(data ?? [], usage, highlight, terms);
-
-  return <LabelListView rows={rows} isLoading={isLoading} highlight={highlight} highlightWords={highlight ? terms : []} {...hostProps} />;
+  return <LabelListView labels={data ?? []} usage={usage} isLoading={isLoading} {...hostProps} />;
 }
 
 /**
@@ -74,56 +63,52 @@ function ProjectLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
  */
 function WorkspaceLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
-  const q = useSearch({ strict: false, select: (search) => search.q });
-  const { highlight, terms } = parseSearchQuery(q);
 
   const { data: projectIds } = useInfiniteQuery({
     ...projectsListQueryOptions({ workspaceId: entityId }),
-    select: (data) => data.pages.flatMap((page) => page.items.map((p) => p.id)),
+    select: (data) => data.pages.flatMap((page) => page.items.map((project) => project.id)),
   });
 
   const { labels, pending } = useQueries({
-    queries: (projectIds ?? []).map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
+    queries: (projectIds ?? []).map((projectId) => labelsCanonicalOptions({ organizationId, tenantId, projectId })),
     combine: combinePanelLabels,
   });
   const usage = useLabelUsage(projectIds ?? []);
-  const isLoading = projectIds === undefined || pending;
 
-  const rows = useLabelRows(labels, usage, highlight, terms);
-
-  return <LabelListView rows={rows} isLoading={isLoading} highlight={highlight} highlightWords={highlight ? terms : []} {...hostProps} />;
+  return <LabelListView labels={labels} usage={usage} isLoading={projectIds === undefined || pending} {...hostProps} />;
 }
 
 type LabelListViewProps = {
-  rows: LabelRow[];
+  labels: Label[];
+  usage: LabelUsage;
   isLoading: boolean;
-  highlight: boolean;
-  highlightWords: string[];
 } & LabelsHostProps;
 
 /**
  * Renders label tiles using internal or page scrolling.
  * Standard searches filter rows; '=' queries highlight matches.
  */
-function LabelListView({ rows, isLoading, highlight, highlightWords, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
+function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const q = useSearch({ strict: false, select: (search) => search.q });
   const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
+  const { highlight, terms } = parseSearchQuery(q);
 
   const viewportRef = useRef<HTMLDivElement>(null);
-  const itemIds = useMemo(() => rows.map((row) => labelTileDomId(row.id)), [rows]);
-  const itemIdsRef = useRef(itemIds);
-  itemIdsRef.current = itemIds;
+  const grouped = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
+  const rows = highlight || !terms.length ? grouped : grouped.filter((row) => matchesSearch(row, terms));
+  const itemIds = rows.map((row) => labelTileDomId(row.id));
 
   // Every tile is mounted, so bringing one into view is a plain scroll
   useEffect(() => {
     if (!navPanelId) return;
     return registerPanelNav(navPanelId, {
-      items: () => itemIdsRef.current.map((id) => ({ id })),
+      items: () => itemIds.map((id) => ({ id })),
       scrollTo: (id) => document.getElementById(id)?.scrollIntoView({ block: 'nearest' }),
-      firstInView: () => firstItemInView(itemIdsRef.current, viewportRef.current),
+      firstInView: () => firstItemInView(itemIds, viewportRef.current),
     });
-  }, [navPanelId]);
+  }, [navPanelId, itemIds]);
 
   // A label link opens its tile once, then leaves the URL: closing the tile must not leave a stale link behind
   useEffect(() => {
@@ -144,7 +129,7 @@ function LabelListView({ rows, isLoading, highlight, highlightWords, windowScrol
   const list = (
     <ul aria-label={t('c:label_other')}>
       {rows.map((row) => (
-        <LabelTile key={row.id} row={row} highlighted={highlight && matchesSearch(row, highlightWords)} onBoard={!!navPanelId} {...tileProps} />
+        <LabelTile key={row.id} row={row} highlighted={highlight && matchesSearch(row, terms)} onBoard={!!navPanelId} {...tileProps} />
       ))}
     </ul>
   );

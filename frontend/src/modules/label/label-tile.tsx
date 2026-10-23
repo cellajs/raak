@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
 import { useItemControlsTabOrder } from '~/modules/board-focus/use-item-controls-tab-order';
@@ -46,7 +45,6 @@ type LabelTileProps = Pick<LabelsHostProps, 'selectable' | 'singleExpand' | 'onF
  */
 export function LabelTile({ row, highlighted, selectable = true, singleExpand, onFilterToggle, onBoard }: LabelTileProps) {
   const { t } = useTranslation();
-  const { organizationId, tenantId } = useOrganizationLayoutContext();
 
   const expanded = useLabelTileStore((s) => !!s.expandedIds[row.id]);
   const isSelected = useTaskInteractionStore((s) => s.selectedLabelIds.includes(row.id));
@@ -55,7 +53,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
 
   // Read-only viewers (guest membership or public access) cannot rename, switch mode or delete
   const isReadOnly = useIsProjectReadOnly(row.projectId);
-  const updateLabel = useLabelUpdateMutation(tenantId, organizationId);
+  const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
   const [editingName, setEditingName] = useState<string | null>(null);
 
   const domId = labelTileDomId(row.id);
@@ -197,7 +195,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
           <AnimatePresence initial={false}>
             {expanded && <CardCloseButton key="close" onClick={() => useLabelTileStore.getState().collapse(row.id)} />}
           </AnimatePresence>
-          <LabelFilterButton name={row.name} size="xs" className="relative z-10 h-8 w-8" onToggle={onFilterToggle} />
+          <LabelFilterButton name={row.name} onToggle={onFilterToggle} />
           <LabelOptionsButton row={row} canManage={!isReadOnly} />
         </div>
       </div>

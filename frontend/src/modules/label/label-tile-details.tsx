@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { EntityChip } from '~/modules/common/entity-chip';
 import { Spinner } from '~/modules/common/spinner';
 import { useLabelUpdateMutation } from '~/modules/label/query';
@@ -36,11 +35,10 @@ interface LabelTileDetailsProps {
  */
 export function LabelTileDetails({ row, indented, canManage }: LabelTileDetailsProps) {
   const { t } = useTranslation();
-  const { organizationId, tenantId } = useOrganizationLayoutContext();
-  const updateLabel = useLabelUpdateMutation(tenantId, organizationId);
+  const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
 
   const switchId = `epic-switch-${row.id}`;
-  const projects = row.projectIds.map((id) => findProjectByIdOrSlug(id, tenantId)).filter((project) => !!project);
+  const projects = row.projectIds.map((id) => findProjectByIdOrSlug(id, row.tenantId)).filter((project) => !!project);
 
   return (
     <>

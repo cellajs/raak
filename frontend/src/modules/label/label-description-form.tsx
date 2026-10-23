@@ -1,6 +1,5 @@
 import type { Label } from 'sdk';
 import { isUnconditionalCan } from 'shared';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { CollaborativeBlockNote } from '~/modules/common/blocknote/collaborative-blocknote';
 import { useLabelDescriptionUpdate } from '~/modules/label/use-label-description-update';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
@@ -16,12 +15,10 @@ const gutterStyle = 'pt-3 pr-4 pb-5 pl-2 sm:pl-9';
  * (checklist) and file blocks (no label attachment host yet) are excluded.
  */
 export function LabelDescriptionForm({ label }: { label: Label }) {
-  const { tenantId } = useOrganizationLayoutContext();
-
-  const project = findProjectByIdOrSlug(label.projectId, tenantId);
+  const project = findProjectByIdOrSlug(label.projectId, label.tenantId);
   const canEdit = isUnconditionalCan(project?.can?.label?.update);
 
-  const projectMembers = useProjectMembers(label.projectId, tenantId, label.organizationId);
+  const projectMembers = useProjectMembers(label.projectId, label.tenantId, label.organizationId);
   const updateData = useLabelDescriptionUpdate(label);
 
   return (
@@ -29,12 +26,11 @@ export function LabelDescriptionForm({ label }: { label: Label }) {
       <CollaborativeBlockNote
         entityType="label"
         entityId={label.id}
-        tenantId={tenantId}
+        tenantId={label.tenantId}
         organizationId={label.organizationId}
         canEdit={canEdit}
         description={label.description}
         updateData={updateData}
-        editable={canEdit}
         members={projectMembers}
         className={editorStyle}
         dense
