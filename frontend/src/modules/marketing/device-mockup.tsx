@@ -20,8 +20,7 @@ export function DeviceMockup({ lightItems, darkItems, type, className }: DeviceM
 
   return (
     <div className={cn('relative transition-opacity duration-700 ease-out', !inView && 'opacity-0', className)} ref={ref}>
-      {/* Grain shadow grounding the device on its surface. First in DOM, so the device paints over the 70% of it that
-          sits behind the device, and the last 30% reaches past the bottom edge. */}
+      {/* First in the DOM, so the device paints over the 70% of the grain behind it and the rest shows below the bottom edge */}
       <div
         aria-hidden="true"
         className={cn(

@@ -128,9 +128,7 @@ export function MarketingNav() {
 
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
         <DrawerContent className="pb-8 sm:hidden">
-          <span className="sr-only">
-            <DrawerTitle>Navigation</DrawerTitle>
-          </span>
+          <DrawerTitle className="sr-only">{t('c:menu')}</DrawerTitle>
           <div className="flex flex-col gap-2 px-4">
             <UserTheme buttonClassName="xs:hidden m-1 self-end" />
             <MarketingNavLinks onNavigate={closeDrawer} />

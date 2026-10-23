@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useInView } from '~/hooks/use-in-view';
 import type { TKey } from '~/lib/i18n-locales';
@@ -11,7 +12,7 @@ type AboutKey = Extract<TKey, `about:${string}`>;
 
 interface HeroProps {
   title: TKey;
-  children: React.ReactNode;
+  children: ReactNode;
   text?: AboutKey;
 }
 
@@ -20,7 +21,7 @@ export function Hero({ title, text, children }: HeroProps) {
   const theme = useUIStore((state) => state.theme);
   const { ref, inView } = useInView({ once: true, threshold: 0.5 });
 
-  // When a theme color is active, derive gradient from --primary CSS variable so any color in appConfig.theme.colors works automatically
+  // The gradient derives from --primary, so any color in appConfig.theme.colors works
   const hasTheme = theme !== 'none';
   const gradientClass = hasTheme ? 'text-transparent' : 'from-slate-200 via-neutral-200 to-stone-300 text-primary/90';
   const gradientStyle = hasTheme

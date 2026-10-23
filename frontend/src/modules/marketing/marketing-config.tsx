@@ -8,9 +8,7 @@ import type { ShowcaseItem } from '~/modules/marketing/about/showcase';
 import type { FooterLinkProps } from '~/modules/marketing/footer';
 import type { InfoGridItem } from '~/modules/marketing/info-grid';
 
-/*************************************************************************************************
- * Nav
- ************************************************************************************************/
+// Nav
 
 export const marketingNavConfig: { id: TKey; url: string; hash: string }[] = [
   { id: 'product', url: '/about', hash: 'product' },
@@ -18,9 +16,7 @@ export const marketingNavConfig: { id: TKey; url: string; hash: string }[] = [
   { id: 'docs', url: '/docs', hash: '' },
 ];
 
-/*************************************************************************************************
- * Footer
- ************************************************************************************************/
+// Footer
 
 interface FooterSection {
   title: TKey;
@@ -30,7 +26,6 @@ interface FooterSection {
 
 const socials: FooterLinkProps[] = [{ title: 'c:social', href: appConfig.company.socialUrl }];
 
-/** Lists the link sections shown in the marketing footer. */
 export const footerSections: FooterSection[] = [
   {
     title: 'c:product',
@@ -50,30 +45,22 @@ export const footerSections: FooterSection[] = [
   },
 ];
 
-/*************************************************************************************************
- * Legal
- ************************************************************************************************/
+// Legal
 
 export const legalLinks: FooterLinkProps[] = [{ title: 'c:legal', href: '/legal' }];
 
-/*************************************************************************************************
- * About - Integrations
- ************************************************************************************************/
+// About - Integrations
 
 export const cards: InfoCard[] = [];
 
-/*************************************************************************************************
- * About - Pricing plan
- ************************************************************************************************/
+// About - Pricing plan
 
 export const pricingPlans: PricingPlan[] = [
   { id: 'free', action: 'waitlist_request', featureCount: 4, discount: 'Free' },
   { id: 'pro', action: 'contact_us', featureCount: 6, className: 'ring-4 ring-primary/5', popular: true },
 ];
 
-/*************************************************************************************************
- * About - FAQ
- ************************************************************************************************/
+// About - FAQ
 
 export const faqsData = [
   { id: 'roadmap', link: '/contact' },
@@ -82,9 +69,7 @@ export const faqsData = [
   { id: 'raak-integration' },
 ];
 
-/*************************************************************************************************
- * About - Counters
- ************************************************************************************************/
+// About - Counters
 
 export const counts = [
   { id: 'user', title: 'c:user_other', icon: UsersIcon },
@@ -93,36 +78,27 @@ export const counts = [
   { id: 'task', title: 'c:task_other', icon: StickyNoteIcon },
 ] as const;
 
-/*************************************************************************************************
- * About - Why
- ************************************************************************************************/
+// About - Why
 
 export const whyItems = [{ id: 'simple' }, { id: 'automation' }, { id: 'instant' }];
 
-// Slides for light and dark themes
-/** Lists the light-theme slides for the product-benefits section. */
 export const whyLightSlides = [
   { id: nanoid(), url: '/static/marketing/screenshots/board.webp' },
   { id: nanoid(), url: '/static/marketing/screenshots/table.webp' },
   { id: nanoid(), url: '/static/marketing/screenshots/task.webp' },
 ];
 
-/** Lists the dark-theme slides for the product-benefits section. */
 export const whyDarkSlides = [
   { id: nanoid(), url: '/static/marketing/screenshots/board-dark.webp' },
   { id: nanoid(), url: '/static/marketing/screenshots/table-dark.webp' },
   { id: nanoid(), url: '/static/marketing/screenshots/task-dark.webp' },
 ];
 
-/*************************************************************************************************
- * Dedicated marketing pages
- ************************************************************************************************/
+// Dedicated marketing pages
 
 export const featuresPageItems: InfoGridItem[] = [];
 export const featureCategoryIcons = {} as const;
 
-/*************************************************************************************************
- * About - Showcase
- ************************************************************************************************/
+// About - Showcase
 
 export const showcaseItems: ShowcaseItem[] = [];

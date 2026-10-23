@@ -77,7 +77,7 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
                     params={{ subject: id }}
                     hash={isMobile ? '' : legalOverviewId}
                     hashScrollIntoView={{ behavior: 'instant' }}
-                    resetScroll={true}
+                    resetScroll
                     draggable={false}
                     // A link to the current subject only changes the hash, which doesn't scroll
                     onClick={() => {
@@ -85,8 +85,7 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
                     }}
                     className={cn(
                       buttonVariants({ variant: 'ghost' }),
-                      'group focus-inset w-full pl-5 text-left font-medium',
-                      'group-data-[active=true]/subject:bg-accent group-data-[active=true]/subject:font-semibold',
+                      'group focus-inset w-full pl-5 text-left font-medium group-data-[active=true]/subject:bg-accent group-data-[active=true]/subject:font-semibold',
                     )}
                   />
                 }

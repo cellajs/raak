@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import type { TKey } from '~/lib/i18n-locales';
 import { cn } from '~/utils/cn';
@@ -9,9 +10,9 @@ interface AboutSectionHeaderProps {
 }
 
 interface AboutSectionProps extends Omit<AboutSectionHeaderProps, 'className'> {
-  /** When set, renders a `spy-<sectionId>` anchor for scroll-spy nav (used on the about page). */
+  /** Sets the section's id to `spy-<sectionId>`, which the scroll spy observes. */
   sectionId?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
   alternate?: boolean;
 }
 
