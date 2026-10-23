@@ -23,7 +23,7 @@ export function PublicProjectRouteComponent() {
           <TasksTable projects={projects} publicView />
         </Suspense>
       ) : (
-        <Suspense fallback={<BoardSkeleton boardId={data.id} projects={projects} projectPage={true} publicView />}>
+        <Suspense fallback={<BoardSkeleton boardId={data.id} projects={projects} projectPage publicView />}>
           <Board boardId={data.id} projects={projects} publicView />
         </Suspense>
       )}

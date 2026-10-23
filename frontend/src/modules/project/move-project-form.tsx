@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
@@ -28,15 +27,11 @@ export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectF
 
   const options = workspaces.map(({ id: value, name: label, thumbnailUrl: url }) => ({ value, label, url }));
 
-  const formOptions: UseFormProps<FormValues> = useMemo(
-    () => ({
-      resolver: formResolver(formSchema),
-      defaultValues: { workspaceId: project.membership?.workspaceId ?? '' },
-    }),
-    [],
-  );
+  const formOptions: UseFormProps<FormValues> = {
+    resolver: formResolver(formSchema),
+    defaultValues: { workspaceId: project.membership?.workspaceId ?? '' },
+  };
 
-  // Form with draft in local storage
   const form = useFormWithDraft<FormValues>(`move-project-${project.id}`, { formOptions });
   const { mutate: move, isPending } = useProjectMoveMutation();
 

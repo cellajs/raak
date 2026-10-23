@@ -29,21 +29,18 @@ type WorkspaceFilters = Omit<NonNullable<GetWorkspacesData['query']>, 'limit' | 
 
 const keys = createEntityKeys<WorkspaceFilters>('workspace');
 
-// Register query keys for dynamic lookup in stream handlers
 registerEntityQueryKeys('workspace', keys);
 
-/** Defines React Query cache keys for workspace. */
 export const workspaceQueryKeys = keys;
 
 const findWorkspaceInCache = createCacheFinder<Workspace>('workspace');
 
-/** Find a workspace in cache by id or slug. Slug matches are scoped to the given tenant. */
 export const findWorkspaceByIdOrSlug = (idOrSlug: string, tenantId: string): Workspace | undefined =>
   findWorkspaceInCache((workspace) => workspace.id === idOrSlug || (workspace.slug === idOrSlug && workspace.tenantId === tenantId));
 
 type WorkspacesListParams = WorkspaceFilters & { limit?: number };
 
-/** Paginated workspaces infinite query. `include` is deliberately not part of the cache key. */
+/** `include` is left out of the cache key. */
 export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) => {
   const {
     q = '',
@@ -85,7 +82,7 @@ export const useWorkspaceCreateMutation = () => {
     mutationFn: async ({ path, body }) => {
       const result = await createWorkspaces({ path, body });
       if (!result.data.length) throw new ApiError({ status: 422, type: 'create_resource', entityType: 'workspace', severity: 'error' });
-      return result.data[0] as Workspace;
+      return result.data[0];
     },
     onSuccess: (createdWorkspace) => {
       const membership = getApiIncludedMembership(createdWorkspace);
@@ -108,7 +105,7 @@ export const useWorkspaceUpdateMutation = () => {
     onSuccess: (updatedWorkspace) => {
       cacheUpdate(listKey, [updatedWorkspace]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
-      // Directly update detail cache so beforeLoad doesn't use stale slug for URL rewrite
+      // Seeds the detail cache so the URL rewrite after a slug change sees the new slug.
       queryClient.setQueryData(keys.detail.byId(updatedWorkspace.id), updatedWorkspace);
     },
     onSettled: () => {

@@ -20,7 +20,7 @@ declare module '~/lib/placements' {
   }
 }
 
-/** Opens the create dialog from the menu section's plus button and lands on the new workspace. */
+/** Opens the create dialog from the menu section's plus button and navigates to the new workspace. */
 const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>) => {
   const handleCreated = (workspace: Workspace) => {
     getRouter().navigate(getCreatedChannelRoute('workspace', workspace));

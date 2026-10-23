@@ -24,25 +24,22 @@ export function ProjectsTableBar({
   const createDialog = useDialoger((state) => state.create);
   const resolveCan = useResolveCan();
 
-  const deleteButtonRef = useRef(null);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
 
   const total = useListQueryTotal(queryKey);
   const barFilters = useTableBarFilters({ searchVars, setSearch, clearSelection, reset: { q: '' } });
-
-  const resourceOf = (count: number) => (count > 1 ? t('c:project_other') : t('c:project')).toLowerCase();
 
   // Bulk delete acts only on rows this user may delete; the badge shows that count when it differs from the selection.
   const deletable = selected.filter((row) => resolveCan(row.can?.project?.delete, row.createdBy));
 
   const openDeleteDialog = () => {
+    const resource = t('c:project', { count: deletable.length }).toLowerCase();
     createDialog(<DeleteProjects dialog projects={deletable} callback={clearSelection} />, {
       id: 'delete-projects',
       triggerRef: deleteButtonRef,
       className: 'max-w-xl',
-      title: t('c:delete_resource', { resource: resourceOf(deletable.length) }),
-      description: (
-        <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: deletable.length, resource: resourceOf(deletable.length) }} />
-      ),
+      title: t('c:delete_resource', { resource }),
+      description: <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: deletable.length, resource }} />,
     });
   };
 

@@ -33,7 +33,7 @@ export function ProjectRouteComponent() {
             <TasksTable projects={projects} organization={organization} tenantId={tenantId} />
           </Suspense>
         ) : (
-          <Suspense fallback={<BoardSkeleton boardId={project.id} projects={projects} projectPage={true} />}>
+          <Suspense fallback={<BoardSkeleton boardId={project.id} projects={projects} projectPage />}>
             <Board boardId={project.id} projects={projects} />
           </Suspense>
         )}

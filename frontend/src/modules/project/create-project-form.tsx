@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zCreateProjectsBody } from 'sdk/zod.gen';
@@ -25,15 +24,10 @@ export function CreateProjectForm() {
 
   const { workspace } = useWorkspaceContext();
 
-  const formOptions: UseFormProps<FormValues> = useMemo(
-    () => ({ resolver: formResolver(formSchema), defaultValues: { name: '', slug: '', public: false } }),
-    [],
-  );
+  const formOptions: UseFormProps<FormValues> = { resolver: formResolver(formSchema), defaultValues: { name: '', slug: '', public: false } };
 
-  // Form with draft in local storage
   const form = useFormWithDraft<FormValues>('create-project', { formOptions });
 
-  // Watch to update slug field
   const name = useWatch({ control: form.control, name: 'name' });
 
   const { mutate: create, isPending } = useProjectCreateMutation();
@@ -46,7 +40,7 @@ export function CreateProjectForm() {
         query: { workspaceId: workspace.id },
       },
       {
-        onSuccess: async (createdProject) => {
+        onSuccess: (createdProject) => {
           toaster.success(t('c:success.create_resource', { resource: t('c:project') }));
           form.reset();
           dialoger.getState().remove();

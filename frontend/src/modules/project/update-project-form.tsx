@@ -25,7 +25,7 @@ interface UpdateProjectFormProps {
   project: Project;
 }
 
-function UpdateProjectForm({ project }: UpdateProjectFormProps) {
+export function UpdateProjectForm({ project }: UpdateProjectFormProps) {
   const { t } = useTranslation();
 
   const organizationId = project.organizationId;
@@ -40,7 +40,6 @@ function UpdateProjectForm({ project }: UpdateProjectFormProps) {
   const formContainerId = 'update-project';
   const form = useFormWithDraft<FormValues>(`update-project-${project.id}`, { formOptions, formContainerId });
 
-  // Prevent data loss
   useBeforeUnload(form.isDirty);
 
   const onSubmit = (values: FormValues) => {
@@ -96,5 +95,3 @@ function UpdateProjectForm({ project }: UpdateProjectFormProps) {
     </Form>
   );
 }
-
-export { UpdateProjectForm };

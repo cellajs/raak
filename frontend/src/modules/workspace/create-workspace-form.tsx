@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { type UseFormProps, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { ChannelBase, Organization, Workspace } from 'sdk';
@@ -25,8 +25,7 @@ import { formResolver } from '~/utils/form-resolver';
 const formSchema = z.object({
   ...zCreateWorkspacesBody.element.omit({ id: true }).shape,
   ...zCreateWorkspacesPath.shape,
-  // Generated path schema only checks max length; require a selection so
-  // `isValid` correctly disables submit and FormMessage surfaces the error.
+  // The generated path schema only checks max length; min(1) makes an empty selection invalid.
   organizationId: z.string().min(1),
   tenantId: z.string().min(1),
 });
@@ -40,7 +39,7 @@ interface CreateWorkspaceFormProps {
   callback?: (workspace: Workspace) => void;
 }
 
-function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
+export function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
   const { t } = useTranslation();
 
   const query = useInfiniteQuery(organizationsListQueryOptions({}));
@@ -52,7 +51,6 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
     defaultValues: { name: '', organizationId: '', tenantId: '' },
   };
 
-  // Form with draft in local storage
   const form = useFormWithDraft<FormValues>('create-workspace', { formOptions });
 
   const organizationId = useWatch({ control: form.control, name: 'organizationId' });
@@ -78,17 +76,14 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
     );
   };
 
-  const handleOrganizationSelect = useCallback(
-    (selectedOrg: ChannelBase) => {
-      form.setValue('tenantId', selectedOrg.tenantId, keepPristine);
+  const handleOrganizationSelect = (selectedOrg: ChannelBase) => {
+    form.setValue('tenantId', selectedOrg.tenantId, keepPristine);
 
-      const currentName = form.getValues('name');
-      if (!touchedFields.name && !currentName) {
-        form.setValue('name', selectedOrg.name, keepPristine);
-      }
-    },
-    [form.setValue, form.getValues, touchedFields.name],
-  );
+    const currentName = form.getValues('name');
+    if (!touchedFields.name && !currentName) {
+      form.setValue('name', selectedOrg.name, keepPristine);
+    }
+  };
 
   const handleOrganizationCreated = (organization: Organization) => {
     form.setValue('organizationId', organization.id, keepPristine);
@@ -104,7 +99,6 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
     handleOrganizationSelect(selectedOrg);
   }, [items, organizationId, form.setValue, handleOrganizationSelect]);
 
-  // Alert if no organizations exist (wait for query to finish loading first)
   if (!query.isLoading && !organizationId && !items.length)
     return (
       <Alert variant="plain" className="w-auto">
@@ -145,5 +139,3 @@ function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
     </Form>
   );
 }
-
-export { CreateWorkspaceForm };

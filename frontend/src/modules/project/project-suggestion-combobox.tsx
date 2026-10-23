@@ -25,7 +25,6 @@ import { ScrollArea } from '~/modules/ui/scroll-area';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
-// Module-scoped: this component re-renders per keystroke, so an inline object would rebuild every render.
 const dropdownVariants = {
   hidden: { opacity: 0, y: -5, scale: 0.98 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.1 } },
@@ -58,7 +57,7 @@ export function ProjectSuggestionCombobox({
   const { data, isFetching } = useInfiniteQuery(projectsListQueryOptions({ q: debouncedSearchQuery, organizationId, excludeArchived: 'true' }));
   const projects = flattenInfiniteData<EnrichedProject>(data);
 
-  // Mirror selection back to value (multi). Compare by id since identities can differ.
+  // Compared by id: the list and the selection hold different object identities.
   const selectedIds = new Set(value.map((item) => item.id));
   const selected = projects.filter((project) => selectedIds.has(project.id));
 
@@ -106,7 +105,7 @@ export function ProjectSuggestionCombobox({
         <ScrollArea>
           <ComboboxList className="h-full px-1">
             <AnimatePresence mode="wait">
-              {!isFetching && !projects.length ? (
+              {!isFetching && !projects.length && (
                 <motion.div key="empty-state" initial="hidden" animate="visible" exit="exit" variants={dropdownVariants} className="h-full">
                   <ComboboxEmpty>
                     {debouncedSearchQuery.length ? (
@@ -116,50 +115,49 @@ export function ProjectSuggestionCombobox({
                     )}
                   </ComboboxEmpty>
                 </motion.div>
-              ) : (
-                projects.length > 0 && (
-                  <motion.div key="results" initial="hidden" animate="visible" exit="exit" variants={dropdownVariants}>
-                    {projects.map((project) => {
-                      const { id, entityType, name, thumbnailUrl } = project;
-                      const isSelected = selectedIds.has(id);
-                      const assignedWorkspaceId = project.membership?.workspaceId;
-                      const isAssigned = !!assignedWorkspaceId;
-                      const assignedWorkspace = assignedWorkspaceId ? findWorkspaceByIdOrSlug(assignedWorkspaceId, tenantId) : null;
+              )}
+              {projects.length > 0 && (
+                <motion.div key="results" initial="hidden" animate="visible" exit="exit" variants={dropdownVariants}>
+                  {projects.map((project) => {
+                    const { id, entityType, name, thumbnailUrl } = project;
+                    const isSelected = selectedIds.has(id);
+                    const assignedWorkspaceId = project.membership?.workspaceId;
+                    const isAssigned = !!assignedWorkspaceId;
+                    const assignedWorkspace = assignedWorkspaceId ? findWorkspaceByIdOrSlug(assignedWorkspaceId, tenantId) : null;
 
-                      return (
-                        <ComboboxItem
-                          key={id}
-                          value={project}
-                          disabled={isAssigned && !isSelected}
-                          data-assigned-workspace={isAssigned}
-                          className="group/project-option justify-between"
-                        >
-                          <div className="flex items-center gap-2">
-                            <EntityAvatar type={entityType} id={id} name={name} url={thumbnailUrl} />
-                            <span className="truncate font-medium underline-offset-4 group-hover/project-option:underline group-data-[assigned-workspace=true]/project-option:no-underline">
-                              {name}
+                    return (
+                      <ComboboxItem
+                        key={id}
+                        value={project}
+                        disabled={isAssigned && !isSelected}
+                        data-assigned-workspace={isAssigned}
+                        className="group/project-option justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <EntityAvatar type={entityType} id={id} name={name} url={thumbnailUrl} />
+                          <span className="truncate font-medium underline-offset-4 group-hover/project-option:underline group-data-[assigned-workspace=true]/project-option:no-underline">
+                            {name}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-0.5">
+                          <Badge
+                            size="sm"
+                            variant="plain"
+                            className="invisible gap-1 group-data-[assigned-workspace=true]/project-option:visible max-sm:hidden"
+                          >
+                            <span className="max-w-32 truncate">
+                              {assignedWorkspaceId === workspaceId
+                                ? t('c:in_current_workspace')
+                                : (assignedWorkspace?.name ?? t('c:in_another_workspace'))}
                             </span>
-                          </div>
-
-                          <div className="flex items-center gap-0.5">
-                            <Badge
-                              size="sm"
-                              variant="plain"
-                              className="invisible gap-1 group-data-[assigned-workspace=true]/project-option:visible max-sm:hidden"
-                            >
-                              <span className="max-w-32 truncate">
-                                {assignedWorkspaceId === workspaceId
-                                  ? t('c:in_current_workspace')
-                                  : (assignedWorkspace?.name ?? t('c:in_another_workspace'))}
-                              </span>
-                            </Badge>
-                            <ComboboxItemIndicator />
-                          </div>
-                        </ComboboxItem>
-                      );
-                    })}
-                  </motion.div>
-                )
+                          </Badge>
+                          <ComboboxItemIndicator />
+                        </div>
+                      </ComboboxItem>
+                    );
+                  })}
+                </motion.div>
               )}
             </AnimatePresence>
           </ComboboxList>

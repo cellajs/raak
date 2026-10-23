@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
 import type { UseFormProps } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zChannelBase } from 'sdk/zod.gen';
 import { z } from 'zod';
@@ -29,15 +29,12 @@ export function SelectProjectForm() {
 
   const workspaces = useOrganizationWorkspaces(organizationId);
 
-  const options = useMemo(() => workspaces.map(({ name: label, thumbnailUrl: url, id: value }) => ({ value, label, url })), [workspaces]);
+  const options = workspaces.map(({ name: label, thumbnailUrl: url, id: value }) => ({ value, label, url }));
 
-  const formOptions: UseFormProps<FormValues> = useMemo(
-    () => ({
-      resolver: formResolver(formSchema),
-      defaultValues: { selectedProjects: [], workspaceId },
-    }),
-    [workspaceId],
-  );
+  const formOptions: UseFormProps<FormValues> = {
+    resolver: formResolver(formSchema),
+    defaultValues: { selectedProjects: [], workspaceId },
+  };
 
   const form = useFormWithDraft<FormValues>(`select-project-${workspaceId}`, { formOptions });
 
@@ -70,7 +67,7 @@ export function SelectProjectForm() {
     dialoger.getState().remove();
   };
 
-  const selectedCount = form.watch('selectedProjects')?.length ?? 0;
+  const selectedCount = useWatch({ control: form.control, name: 'selectedProjects' })?.length ?? 0;
 
   if (form.loading) return null;
 

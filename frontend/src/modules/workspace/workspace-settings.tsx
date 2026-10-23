@@ -41,9 +41,9 @@ function WorkspaceSettings({ workspace }: WorkspaceSettingsProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const deleteButtonRef = useRef(null);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Check if workspace can be deleted
+  // The last workspace of an organization cannot be deleted.
   const workspaces = useOrganizationWorkspaces(workspace.organizationId);
   const canDelete = workspaces.length > 1;
 

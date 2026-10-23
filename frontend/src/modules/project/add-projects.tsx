@@ -37,44 +37,52 @@ function AddProjectsOption({ value, icon: Icon, label, ariaLabel }: AddProjectsO
   );
 }
 
-function AddProjects({ mode: baseMode }: AddProjectsProps) {
+interface AddProjectsTitleProps {
+  mode: 'create' | 'select' | null;
+  onBack: () => void;
+}
+
+function AddProjectsTitle({ mode, onBack }: AddProjectsTitleProps) {
+  const { t } = useTranslation();
+  const baseTitle = t('c:add_resource', { resource: t('c:project').toLowerCase() });
+
+  return (
+    <div className="flex items-center gap-2 max-sm:justify-center">
+      {mode ? (
+        <button type="button" aria-label={t('c:back')} onClick={onBack}>
+          {baseTitle}
+        </button>
+      ) : (
+        <UnsavedBadge title={baseTitle} />
+      )}
+      <AnimatePresence>
+        {mode && (
+          <motion.span
+            className="flex items-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+          >
+            <ChevronRightIcon className="opacity-50" />
+            <UnsavedBadge title={mode === 'select' ? t('c:select') : t('c:create')} />
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export function AddProjects({ mode: baseMode }: AddProjectsProps) {
   const { t } = useTranslation();
 
   const [createMode, setCreateMode] = useState<'create' | 'select' | null>(baseMode ?? null);
 
   const updateMode = (mode: string | string[]) => {
-    const baseTitle = t('c:add_resource', { resource: t('c:project').toLowerCase() });
-
     const nextMode = mode === 'create' || mode === 'select' ? mode : null;
     setCreateMode(nextMode);
 
-    dialoger.getState().update('create-project', {
-      titleContent: (
-        <div className="flex items-center gap-2 max-sm:justify-center">
-          {nextMode ? (
-            <button type="button" aria-label={t('c:back')} onClick={() => updateMode('')}>
-              {baseTitle}
-            </button>
-          ) : (
-            <UnsavedBadge title={baseTitle} />
-          )}
-          <AnimatePresence>
-            {nextMode && (
-              <motion.span
-                className="flex items-center gap-2"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-              >
-                <ChevronRightIcon className="opacity-50" />
-                <UnsavedBadge title={nextMode === 'select' ? t('c:select') : t('c:create')} />
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </div>
-      ),
-    });
+    dialoger.getState().update('create-project', { titleContent: <AddProjectsTitle mode={nextMode} onBack={() => updateMode('')} /> });
   };
 
   return (
@@ -112,5 +120,3 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
     </MotionConfig>
   );
 }
-
-export { AddProjects };

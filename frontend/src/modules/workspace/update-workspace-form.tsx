@@ -21,7 +21,7 @@ interface UpdateWorkspaceFormProps {
   callback?: (workspace: Workspace) => void;
 }
 
-function UpdateWorkspaceForm({ workspace, callback }: UpdateWorkspaceFormProps) {
+export function UpdateWorkspaceForm({ workspace, callback }: UpdateWorkspaceFormProps) {
   const { t } = useTranslation();
 
   const { mutate, isPending } = useWorkspaceUpdateMutation();
@@ -31,7 +31,6 @@ function UpdateWorkspaceForm({ workspace, callback }: UpdateWorkspaceFormProps) 
   const formContainerId = 'update-workspace';
   const form = useFormWithDraft<FormValues>(`update-workspace-${workspace.id}`, { formOptions, formContainerId });
 
-  // Prevent data loss
   useBeforeUnload(form.isDirty);
 
   const onSubmit = (values: FormValues) => {
@@ -62,5 +61,3 @@ function UpdateWorkspaceForm({ workspace, callback }: UpdateWorkspaceFormProps) 
     </Form>
   );
 }
-
-export { UpdateWorkspaceForm };

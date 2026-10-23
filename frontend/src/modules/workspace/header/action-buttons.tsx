@@ -1,5 +1,4 @@
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
-import type { VariantProps } from 'class-variance-authority';
 import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, UsersIcon } from 'lucide-react';
 import { type RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,15 +9,12 @@ import { TooltipButton } from '~/modules/common/tooltip-button';
 import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
-import { Button, type buttonVariants } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 import { openWorkspaceSettingsSheet } from '~/modules/workspace/workspace-settings';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 import { cn } from '~/utils/cn';
 
-/**
- * Action buttons for the workspace header: add project and workspace settings.
- */
 export function WorkspaceActionButtons() {
   const { t } = useTranslation();
 
@@ -32,7 +28,7 @@ export function WorkspaceActionButtons() {
   const project: EnrichedProject | undefined = projects.find((candidate) => candidate.slug === projectSlug) || projects[0];
   const projectMembership = project?.membership;
 
-  const refs = { add: useRef(null), workspace: useRef(null) };
+  const refs = { add: useRef<HTMLButtonElement>(null), workspace: useRef<HTMLButtonElement>(null) };
 
   const openWorkspaceSettings = (triggerRef: RefObject<HTMLButtonElement | null>) => openWorkspaceSettingsSheet(workspace, triggerRef);
 
@@ -43,7 +39,7 @@ export function WorkspaceActionButtons() {
       label: t('c:add_resource', { resource: t('c:project').toLowerCase() }),
       onClick: createNewProject,
       ref: refs.add,
-      variant: 'plain',
+      variant: 'plain' as const,
     },
     {
       key: 'workspace',
@@ -51,7 +47,7 @@ export function WorkspaceActionButtons() {
       label: t('c:resource_settings', { resource: t('c:workspace') }),
       onClick: openWorkspaceSettings,
       ref: refs.workspace,
-      variant: 'outline',
+      variant: 'outline' as const,
     },
   ];
 
@@ -94,10 +90,9 @@ export function WorkspaceActionButtons() {
 
   return (
     <>
-      {/* Desktop Buttons */}
       {actions.map(({ key, icon: Icon, label, onClick, ref, variant }) => (
         <TooltipButton key={key} className="max-md:hidden" toolTipContent={label}>
-          <Button ref={ref} variant={variant as VariantProps<typeof buttonVariants>['variant']} onClick={() => onClick(ref)}>
+          <Button ref={ref} variant={variant} onClick={() => onClick(ref)}>
             <Icon />
             {key === 'add' && (
               <>

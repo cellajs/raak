@@ -20,9 +20,6 @@ interface ProjectPageProps {
   children: ReactNode;
 }
 
-/**
- * Project page with header, hotkeys and nested routes.
- */
 export function ProjectPage({ project, organization, children }: ProjectPageProps) {
   const { t } = useTranslation();
 

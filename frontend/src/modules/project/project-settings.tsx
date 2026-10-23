@@ -47,8 +47,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
     if (args.status !== 'success') return;
     closeSettingsSheet();
 
-    // If the deleted project is the currently selected one, clear the search param
-    // so the board defaults to the first remaining project
+    // Clearing the param makes the board default to the first remaining project.
     if (projectSlug === project.slug) selectBoardProject();
   };
 
@@ -88,7 +87,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
                 variant="destructive"
                 className="w-full sm:w-fit"
                 soft
-                onClick={() => removeProjectFromWorkspace()}
+                onClick={removeProjectFromWorkspace}
                 disabled={isRemovingProjectFromWorkspace}
               >
                 <UnlinkIcon />
@@ -105,7 +104,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
           <CardDescription>{t('c:project_membership_settings.text')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="destructive" className="w-full sm:w-auto" soft onClick={() => leaveProject()} disabled={isLeavingProject}>
+          <Button variant="destructive" className="w-full sm:w-auto" soft onClick={leaveProject} disabled={isLeavingProject}>
             <LogOutIcon />
             <span>{isLeavingProject ? t('c:loading') : t('c:leave_project')}</span>
           </Button>

@@ -14,10 +14,7 @@ interface WorkspacePageProps {
   children: ReactNode;
 }
 
-/**
- * Workspace page with drag-and-drop task management.
- */
-function WorkspacePage({ workspaceId, organizationId, tenantId, children }: WorkspacePageProps) {
+export function WorkspacePage({ workspaceId, organizationId, tenantId, children }: WorkspacePageProps) {
   const { data: projectsData } = useSuspenseInfiniteQuery(projectsListQueryOptions({ workspaceId, include: 'counts' }));
   const projects = flattenInfiniteData<EnrichedProject>(projectsData);
 
@@ -31,5 +28,3 @@ function WorkspacePage({ workspaceId, organizationId, tenantId, children }: Work
     </>
   );
 }
-
-export { WorkspacePage };

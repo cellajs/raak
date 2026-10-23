@@ -13,14 +13,9 @@ type WorkspaceRouteBeforeLoadArgs = {
   search: { projectSlug?: string };
 };
 
-/**
- * beforeLoad logic for the workspace route.
- * Resolves the workspace by slug or ID, seeds caches, rewrites the URL to use the slug,
- * and prefetches projects, labels and tasks so views don't waterfall.
- */
+/** beforeLoad of the workspace route: resolves the workspace by slug or ID, seeds caches, rewrites the URL to the slug and prefetches the views' data. */
 export const workspaceRouteBeforeLoad = async ({ params, context, search }: WorkspaceRouteBeforeLoadArgs) => {
-  // Reset on entering another workspace (onLeave does not fire when only params change); keyed so
-  // search-param-only navigations within the same workspace keep the selection.
+  // Keyed by workspace because onLeave does not fire when only params change; search-param-only navigations keep the selection.
   resetTaskInteraction(`workspace:${params.tenantId}:${params.slug}`);
 
   const { slug, tenantId } = params;
@@ -37,11 +32,8 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
     buildSlugOverrides: (entity) => ({ slug: entity.slug }),
   });
 
-  // Prefetch projects and tasks so views (board/table) don't waterfall. Labels are project-homed,
-  // so they are prefetched per project in the loop below (alongside the per-project task queries).
-  // Board uses excludeArchived='true' as a separate cache key, so prefetch both variants.
-  // Await cache restore first so already-synced lists are visible and these prefetches no-op;
-  // without it a reload races restore, sees an empty cache, and refetches every project's tasks.
+  // Labels are project-homed, so they are prefetched per project with the tasks. The board uses excludeArchived='true'
+  // as a separate cache key, so both project lists are prefetched. Restore first, so synced lists make these no-ops.
   await cacheRestored;
   const projectsQueryOptions = projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' });
   const projectsPrefetch = queryClient.prefetchInfiniteQuery(projectsQueryOptions);

@@ -10,10 +10,7 @@ interface WorkspaceTileProps {
   entity: Workspace;
 }
 
-/**
- * A banner-less workspace tile, showing its name and associated projects as avatars.
- * Reads the shared all-projects query (already fetched by the menu), so no per-workspace fetch.
- */
+/** Reads the all-projects query the menu already fetched, so there is no per-workspace fetch. */
 export function WorkspaceTile({ entity }: WorkspaceTileProps) {
   const { t } = useTranslation();
 

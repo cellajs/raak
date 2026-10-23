@@ -21,7 +21,7 @@ interface ProjectsTableProps {
 }
 
 /** Every project of an organization the user may read, whether or not they are a member of it. */
-function ProjectsTable({ organization }: ProjectsTableProps) {
+export function ProjectsTable({ organization }: ProjectsTableProps) {
   const { t } = useTranslation();
 
   const { search, setSearch } = useSearchParams<ProjectsRouteSearchParams>({ from: '/_app/$tenantId/$organizationSlug/organization/projects' });
@@ -72,5 +72,3 @@ function ProjectsTable({ organization }: ProjectsTableProps) {
     </>
   );
 }
-
-export { ProjectsTable };
