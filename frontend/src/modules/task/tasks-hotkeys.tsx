@@ -45,8 +45,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     // The Escape that closes a tooltip or hover card stops there: the card and its sheet keep their state (WCAG 1.4.13).
     if (isHoverContentOpen()) return;
 
-    // On the create form itself (Escape in its editor first steps out to it): close the form, its values kept as a
-    // draft, and move to its neighbour in the list
+    // On the create form (Escape in its editor first steps out to it): close it, keeping a draft, and focus its neighbour
     const draft = currentDraft();
     if (draft) {
       if (document.activeElement?.id !== draft.id) return;
@@ -89,15 +88,13 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     const { draftTasks } = taskInteractionStore.getState();
     const openDraftProjectId = Object.keys(draftTasks)[0];
 
-    let targetProjectId: string | undefined = openDraftProjectId;
-    if (!targetProjectId) targetProjectId = currentActiveTask(taskSheetId)?.projectId;
+    const targetProjectId = openDraftProjectId || currentActiveTask(taskSheetId)?.projectId;
 
     const targetProject = projects.find((project) => project.id === targetProjectId) ?? projects[0];
     if (isProjectReadOnly(targetProject.id)) return;
     toggleCreateTaskForm(targetProject);
   };
 
-  // Open a field dropdown for the focused task
   const openFieldDropdown = (field: TaskDropdownType) => {
     const targetTask = currentActiveTask(taskSheetId);
     if (!targetTask) return;
@@ -155,7 +152,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     ['Alt + N', handleNewTask],
   ];
 
-  // Browser find cannot see virtualized cards: the first press lands in the search box, and a second press typed there is native find.
+  // Browser find cannot see virtualized cards: the first press goes to the search box, and a second press typed there is native find.
   const handleFind = (event: KeyboardEvent) => {
     const input = document.getElementById(boardSearchInputId);
     if (!(input instanceof HTMLInputElement)) return;

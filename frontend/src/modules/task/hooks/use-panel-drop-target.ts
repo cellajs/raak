@@ -12,16 +12,10 @@ interface UsePanelDropTargetOptions {
   tasks: Task[];
 }
 
-/**
- * Hook to set up drag-and-drop target behavior for a task panel.
- * Handles highlighting when dragging tasks from other projects.
- *
- * Registers on the outer panel wrapper so the drop target is live in both
- * expanded and collapsed states.
- */
+/** Highlights a task panel while a task from another project is dragged over it; registered on the outer wrapper to stay live when collapsed. */
 export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropTargetOptions) {
   const [highlightProject, setHighlightProject] = useState(false);
-  // Use ref so getData() always reads the latest tasks without re-registering listeners
+  // getData() reads the latest tasks without re-registering the listeners
   const tasksRef = useLatestRef(tasks);
 
   useEffect(() => {
@@ -37,10 +31,7 @@ export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropT
       onDragEnter: ({ source: { data } }) => {
         if (!isTaskData(data) || data.item.projectId === projectId) return;
         setHighlightProject(true);
-        // Bring this panel's source-status band into view so the drag gets between-card drop
-        // targets; fires once per panel entry (moving over child cards keeps the panel in the
-        // drop chain). Skipped on coarse pointers: they resolve drops via the rect-derived
-        // mobile indicator, and a window scroll mid-touch-drag would yank the page.
+        // Once per panel entry; skipped on coarse pointers, where a window scroll mid-touch-drag would yank the page
         if (!isCoarsePointerDevice()) scrollStatusIntoView(projectId, data.item.status);
       },
       onDragLeave: () => setHighlightProject(false),

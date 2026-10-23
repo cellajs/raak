@@ -11,7 +11,6 @@ interface TriggerProps {
   triggerRef: RefObject<HTMLButtonElement | null>;
 }
 
-/** Discriminated on `dropdownType` so each branch narrows without a cast. */
 type TaskDropdownProps = TriggerProps &
   (
     | ({ dropdownType: 'labels' } & SelectLabelsProps)

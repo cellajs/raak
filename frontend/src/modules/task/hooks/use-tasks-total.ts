@@ -7,11 +7,8 @@ import { isQueryData } from '~/query/basic/mutate-query';
 import { queryClient } from '~/query/query-client';
 import type { QueryData } from '~/query/types';
 
-// Subscribe only to task-related query cache updates. A broad subscription re-runs the snapshot for
-// every unrelated query lifecycle event (e.g. an AI chat panel mounting its own useQuery hooks),
-// which can schedule a BoardHeader update mid-render of another component and trip React's
-// "setState in render" warning. Hoisted to module scope so useSyncExternalStore doesn't resubscribe
-// on every render.
+// Task keys only: a broad subscription re-runs the snapshot on unrelated query events and can trip React's setState-in-render warning.
+// Module-level, so useSyncExternalStore does not resubscribe each render.
 export const subscribeToTaskCache = (onStoreChange: () => void) =>
   queryClient.getQueryCache().subscribe((event) => {
     const key = event.query?.queryKey;

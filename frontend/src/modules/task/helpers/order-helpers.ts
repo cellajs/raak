@@ -18,10 +18,7 @@ export const getNewTaskOrder = (
   return getEdgeOrder(orders, status >= TaskStatus.Unstarted ? 'top' : 'bottom', false);
 };
 
-/**
- * Calculate a new display order for a task being moved relative to another task (edge) in the same column.
- * Tasks use descending display order (higher = top).
- */
+/** The display order for a task dropped on an edge of another in the same column; orders descend, higher is on top. */
 export const getRelativeTaskOrder = (
   edge: Edge,
   tasks: Pick<Task, 'id' | 'displayOrder' | 'status' | '_draft'>[],
@@ -41,26 +38,20 @@ export const getNewStatusTaskOrder = (task: Task, newStatus: number, placed: Tas
 
   const tasks = [...cachedTasks(), ...placed];
 
-  // Find the closest task with the new status
   const [closestTask] = tasks
     .filter((other) => other.projectId === task.projectId && other.status === newStatus && !isDraftTask(other))
     .sort((a, b) => compareTaskOrder(a, b, direction > 0));
 
-  // Default order if no tasks found with the new status
   if (!closestTask) return defaultOrder;
 
-  // Adjust the order based on direction
   return Math.floor(closestTask.displayOrder) + (direction > 0 ? -orderGap : orderGap);
 };
 
-// Far wider than `orderGap`, so the draft never sorts between two real rows
+// Far beyond the group's edge compared with the `orderGap` between real rows, so the draft stays its outermost row while rows are created next to it
 const draftOrderGap = 1000;
 const draftEmptyOrder = 2000;
 
-/**
- * Return a display order for the draft create-task form card so it sorts
- * at the top (unstarted/iced) or bottom (started/etc.) of its status group.
- */
+/** Sorts the create-form draft at the top of the unstarted/iced groups and the bottom of the others. */
 export const getDraftDisplayOrder = (status: number, projectId: string) => {
   const tasks = cachedTasks();
   const projectTasks = tasks.filter((task) => task.projectId === projectId && !isDraftTask(task) && task.status === status);
@@ -78,10 +69,7 @@ export const getDraftDisplayOrder = (status: number, projectId: string) => {
   return lowest - draftOrderGap;
 };
 
-/**
- * Index of the anchor task to insert a new task next to, given its status.
- * Early-stage statuses (iced/unstarted) search forward; later statuses search backward.
- */
+/** The anchor task to insert next to: the first of its status for iced/unstarted, the last for the later statuses. */
 export const getTargetIndexByStatus = (tasks: Task[], status: TaskStatus) => {
   const isForwardSearch = [TaskStatus.Iced, TaskStatus.Unstarted].includes(status);
   const matchesStatus = (task: Task) => task.status === status;

@@ -3,11 +3,7 @@ import type { TaskLabel, TaskStatusType } from '~/modules/task/types';
 
 export type TaskDropdownType = 'labels' | 'assignedTo' | 'status' | 'primaryLabel';
 
-/**
- * Optional id of the task this dropdown is editing. When present, the dropdown
- * subscribes to the task in the cache and reflects live updates (e.g. from SSE)
- * while open. Omit for create-task forms.
- */
+/** Id of the task being edited: the dropdown then follows its live cache updates (e.g. SSE) while open. Omit for create forms. */
 type TaskSubscriptionProps = { taskId?: string };
 
 /** Layout props for the CSS-var-width dropdowns (labels/members/status). */
@@ -17,11 +13,7 @@ export type SelectLabelsProps = DropdownLayoutProps & {
   value: TaskLabel[];
   projectId: string;
   onChange: (labels: TaskLabel[]) => void;
-  /**
-   * Initial collapsed state of the "Selected" section. Defaults to collapsed on
-   * desktop and expanded on mobile. Openers where the selected labels are already
-   * visible (e.g. an expanded mobile task card) pass `true` to open it collapsed.
-   */
+  /** Defaults to collapsed on desktop and expanded on mobile; openers that already show the selected labels pass `true`. */
   initialSelectedCollapsed?: boolean;
 };
 
@@ -30,7 +22,7 @@ export type SelectMembersProps = DropdownLayoutProps & { value: UserMinimalBase[
 /** `value` is absent for selected tasks whose statuses differ. */
 export type SelectStatusProps = DropdownLayoutProps & { value?: TaskStatusType; onChange: (newValue: TaskStatusType) => void };
 
-// Primary label uses a fixed width (no CSS-var trigger width), so it doesn't inherit triggerWidth.
+// Fixed width, so it takes no triggerWidth.
 export type SelectPrimaryLabelProps = TaskSubscriptionProps & {
   /** Current primary label id (a task's `primaryLabelId`). */
   value: string;

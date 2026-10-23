@@ -2,11 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { taskQueryOptions } from '~/modules/task/query';
 
-/**
- * Subscribe to a task in the cache. When `taskId` is omitted (e.g. inside the
- * create-task form, before any task exists) the query is disabled and `data`
- * stays undefined, so callers should fall back to their own `value` prop.
- */
+/** Subscribes to a task in the cache; without `taskId` (e.g. the create form) the query is disabled and `data` stays undefined. */
 export function useTaskQuery(taskId: string | undefined) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   return useQuery({ ...taskQueryOptions(taskId ?? '', organizationId, tenantId), enabled: !!taskId });

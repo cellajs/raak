@@ -7,8 +7,7 @@ import type { BoardSearchParams, Task } from '~/modules/task/types';
 
 type SearchableText = { text: string; folded: string };
 
-// Cached by task identity: React Query preserves unchanged references, and the WeakMaps release
-// tasks after cache eviction.
+// Cached by task identity: React Query preserves unchanged references, and the WeakMaps release evicted tasks
 const descriptionCache = new WeakMap<Task, SearchableText>();
 const summaryCache = new WeakMap<Task, SearchableText>();
 

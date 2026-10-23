@@ -7,7 +7,7 @@ interface TaskUploadScope {
   projectId: string;
 }
 
-/** Returns a callback that persists the uploads of a task description into the task's project, through the shared attachment create path. */
+/** A callback persisting a task description's uploads into the task's project through the shared attachment create path. */
 export const createTaskUploadPersister =
   ({ organizationId, tenantId, projectId }: TaskUploadScope) =>
   (attachments: Attachment[]) => {

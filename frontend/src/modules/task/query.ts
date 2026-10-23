@@ -45,7 +45,6 @@ import { createResourceError } from '~/utils/resource-error';
 export type GetTasksParam = GetTasksData['path'] & Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset' | 'afterSeq' | 'untilSeq'>;
 export type BaseTasksQueryParam = Pick<GetTasksParam, 'workspaceId' | 'projectId' | 'organizationId' | 'tenantId'>;
 
-/** Derives task query parameters directly from entity objects. */
 export const deriveTasksQueryParams = (
   workspace?: { id: string; organizationId: string; tenantId: string },
   project?: { id: string; organizationId: string; tenantId: string },
@@ -59,7 +58,7 @@ type CreateTaskDataInner = Omit<CreateTasksData['body'][number], 'stx'>;
 type UpdateTaskOps = UpdateTaskData['body']['ops'];
 type BaseUpdateParams = Pick<UpdateTaskData['path'], 'id'> & { ops: UpdateTaskOps };
 
-/** Client-only fields for building correct optimistic cache shape (not in API schema) */
+/** Client-only fields for the optimistic cache shape, not in the API schema. */
 type OptimisticCacheFields = {
   fullLabels: TaskLabel[];
   fullAssignedTo: UserMinimalBase[];
@@ -75,33 +74,19 @@ type TaskDeleteFullVars = DeleteVariables<Task>;
 
 /** Retains API literal unions for task-list sorting and matching filters. */
 type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode'>;
-/** Separate key space for public (unauthenticated) task queries */
+/** Separate key space for public (unauthenticated) task queries. */
 type PublicTaskListFilters = TaskListFilters & { public: true };
 
 const baseKeys = createEntityKeys<TaskListFilters>('task');
 
-/**
- * Task query keys.
- *
- * Key hierarchy:
- *   ['task', 'list']                                   all tasks (broadest prefix)
- *   ['task', 'list', organizationId]                   all tasks for one org
- *   ['task', 'list', organizationId, {projectId, filters}] specific query
- *
- *   ['task', 'detail', id]                             single task detail
- *   ['task', 'detail', 'public', id]                   public task detail
- *
- * Public queries use a dedicated factory to keep them isolated.
- */
 export const taskKeys = {
   ...baseKeys,
   list: {
     ...baseKeys.list,
-    /** Override: org-scoped filtered key for prefix matching */
+    /** Org-scoped, so a prefix match on `list.org` reaches it. */
     filtered: (organizationId: string, filters: TaskListFilters) => ['task', 'list', organizationId, filters] as const,
   },
   detail: { ...baseKeys.detail, public: (id: string) => ['task', 'detail', 'public', id] as const },
-  /** Public task list keys (separate from authenticated queries) */
   publicList: { base: ['task', 'public-list'] as const, filtered: (filters: PublicTaskListFilters) => ['task', 'public-list', filters] as const },
 };
 
@@ -112,10 +97,7 @@ registerEntityQueryKeys('task', taskKeys, ({ organizationId, tenantId, channelId
   return getTasks({ path: { tenantId: tenantId!, organizationId: organizationId! }, query: { ...query, projectId: channelId } });
 });
 
-/**
- * The task columns `deriveDescriptionProps` (backend) stores from a description, minus `keywords`: the server
- * extracts those with its own word list, and they only feed server search.
- */
+/** The columns the backend stores from a description, minus `keywords`: the server extracts those with its own word list for server search. */
 const deriveTaskDescription = (description: string | null) => {
   const { summary, summaryLength, counts } = deriveDocument(description);
   const { expandable, checkboxCount, checkedCount, attachments } = counts;
@@ -136,9 +118,6 @@ const invalidateOrgLists = (queryClient: QueryClient, organizationId: string) =>
 
 const findTaskInCache = createCacheFinder<Task>('task');
 
-// Shared mutation functions rebuild requests from durable variables for interactive and offline replay.
-// Optimistic UI fields are removed before SDK operations.
-
 const createTaskMutationFn = async ({ tenantId, organizationId, data, stx }: TaskCreateFullVars) => {
   const effectiveStx = stx ?? createStxForCreate();
   const body = data.map(({ fullLabels: _fl, fullAssignedTo: _fa, ...row }) => ({ ...row, stx: effectiveStx }));
@@ -152,7 +131,7 @@ const scalarFieldNamesOf = (ops: UpdateTaskOps | undefined) =>
     .filter(([, value]) => !isArrayDelta(value))
     .map(([key]) => key);
 
-/** Sends one task update; exported for the replay test. */
+/** Exported for the replay test. */
 export const updateTaskMutationFn = async ({ tenantId, organizationId, id, ops, stx }: TaskUpdateFullVars) => {
   const effectiveStx = stx ?? createStxForUpdate(scalarFieldNamesOf(ops));
   return updateTask({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
@@ -168,12 +147,7 @@ type CreateData = Awaited<ReturnType<typeof createTaskMutationFn>>;
 type UpdateData = Awaited<ReturnType<typeof updateTaskMutationFn>>;
 type DeleteData = Awaited<ReturnType<typeof deleteTasksMutationFn>>;
 
-/**
- * Apply an update's optimistic cache patch: scalar ops land directly, AWSet fields use the
- * pre-resolved fullLabels/fullAssignedTo, a description change derives its virtual props, and a
- * cross-project move relocates the row between project home lists. Shared by the update onMutate and
- * the prepare step's coalesced branch (folding into a queued create, where onMutate does not run).
- */
+/** Shared by the update onMutate and the prepare step's coalesced branch (folding into a queued create, where onMutate does not run). */
 const applyOptimisticTaskUpdate = (
   queryClient: QueryClient,
   organizationId: string,
@@ -181,7 +155,7 @@ const applyOptimisticTaskUpdate = (
 ): { previousTask: Task | undefined } => {
   const { id: taskId, ops } = variables;
   const orgKey = taskKeys.list.org(organizationId);
-  const mergedOps = (ops ?? {}) as Record<string, unknown>;
+  const mergedOps: Record<string, unknown> = ops ?? {};
   const previousTask = findTaskInCache(taskId);
 
   if (previousTask) {
@@ -192,13 +166,11 @@ const applyOptimisticTaskUpdate = (
       } else if (key === 'assignedTo' && variables.fullAssignedTo) {
         optimisticUpdates.assignedTo = variables.fullAssignedTo;
       } else if (!isArrayDelta(value)) {
-        // Only apply scalar values directly, AWSet deltas use fullLabels/fullAssignedTo.
         (optimisticUpdates as Record<string, unknown>)[key] = value;
       }
     }
 
-    // primaryLabel is a server-hydrated object; rebuild it from the cached label row so
-    // the card and table update before the response lands (onSuccess merges server truth).
+    // primaryLabel is a server-hydrated object: rebuilt from the cached label row so views update before the response.
     if (typeof mergedOps.primaryLabelId === 'string') {
       const freshPrimary = findLabelInCache(mergedOps.primaryLabelId);
       if (freshPrimary) optimisticUpdates.primaryLabel = freshPrimary;
@@ -208,9 +180,8 @@ const applyOptimisticTaskUpdate = (
 
     const optimisticTask: Task = { ...previousTask, ...optimisticUpdates, updatedAt: new Date().toISOString() };
 
-    // Cross-project move: remove from old project cache, add to new project cache
     if ('projectId' in mergedOps && mergedOps.projectId !== previousTask.projectId) {
-      // Strip labels optimistically because they are project-scoped.
+      // Labels are project-scoped.
       optimisticTask.labels = [];
       const oldScopeKey = taskKeys.list.home(organizationId, previousTask.projectId);
       cacheRemove(oldScopeKey, [previousTask]);
@@ -238,9 +209,8 @@ export const taskQueryOptions = (id: string, organizationId: string, tenantId: s
 type TaskCreateMutation = Mutation<CreateData, DefaultError, TaskCreateFullVars, { optimisticTasks: Task[] }>;
 
 /**
- * Starts one project list read and returns what completes it. The server's snapshot may predate every create that had not
- * answered when the read started, so their rows the read lacks are carried over: the optimistic row while the create is
- * out, the stored row once it answered. A failed create, or one of a deleted row, carries nothing.
+ * Starts one project list read and returns what completes it. The server's snapshot may predate creates still unanswered when the
+ * read started, so their rows the read lacks are carried over: the optimistic row while out, the stored row once answered.
  */
 const carryUnansweredCreates = (client: QueryClient, projectId: string) => {
   const startedAt = Date.now();
@@ -268,12 +238,7 @@ const carryUnansweredCreates = (client: QueryClient, projectId: string) => {
   };
 };
 
-/**
- * Canonical task query: one flat query per project scope.
- * Fetches all tasks for a project, stored at taskKeys.list.home(organizationId, projectId).
- * Board/table derive views via select() or client-side filtering.
- * Sync (SSE + delta fetch) keeps this fresh; staleTime follows sync liveness.
- */
+/** One flat query per project scope; board and table views derive from it with select() or client-side filtering. */
 export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) => {
   return queryOptions({
     queryKey: taskKeys.list.home(organizationId, projectId),
@@ -328,11 +293,7 @@ export const tasksTableQueryOptions = ({
   });
 };
 
-/**
- * Full options for one task op, shared by the live hook and the offline-replay defaults so a
- * replay reconciles like the live one. Callbacks take the QueryClient explicitly and derive the org
- * key from durable variables. On replay onMutate does not re-run, so onSettled invalidation recovers.
- */
+/** Shared by the live hook and the offline-replay defaults: callbacks derive the org key from durable variables (onMutate skips replay). */
 const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateData, Error, TaskCreateFullVars, { optimisticTasks: Task[] }> => ({
   mutationKey: taskKeys.create,
   scope: { id: 'task' },
@@ -365,11 +326,10 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
     if (context?.optimisticTasks) cacheRemove(taskKeys.list.org(variables.organizationId), context.optimisticTasks);
   },
   onSuccess: (createdTasks, variables) => {
-    // Replace optimistic with real task in-place to preserve DOM element (and ongoing glow animation).
-    // An update inserts nothing, so a row an SSE delete removed while the POST was out stays gone.
+    // An in-place update keeps the DOM element and its glow; it inserts nothing, so a row an SSE delete removed mid-POST stays gone.
     cacheUpdate(taskKeys.list.org(variables.organizationId), createdTasks);
   },
-  // Error-only: onSuccess patches cache, SSE handles other users
+  // Error-only: onSuccess patches the cache, SSE handles other users
   onSettled: (_data, error, variables) => {
     if (error) invalidateOrgLists(queryClient, variables.organizationId);
   },
@@ -395,7 +355,6 @@ const taskUpdateOptions = (
     handleError('update', error);
     if (context?.previousTask) {
       const orgKey = taskKeys.list.org(variables.organizationId);
-      // Cross-project move rollback: remove from new project, restore to old
       if (variables.ops && 'projectId' in variables.ops && variables.ops.projectId !== context.previousTask.projectId) {
         const newScopeKey = taskKeys.list.home(variables.organizationId, variables.ops.projectId as string);
         cacheRemove(newScopeKey, [context.previousTask]);
@@ -431,7 +390,6 @@ const taskUpdateOptions = (
     }
     syncEntityToCache({ entity: merged, listKey: orgKey, detailKey, queryClient });
   },
-  // Error-only: onSuccess patches cache, SSE handles other users
   onSettled: (_data, error, variables) => {
     if (error) invalidateOrgLists(queryClient, variables.organizationId);
   },
@@ -469,7 +427,6 @@ const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteD
   },
 });
 
-/** Provides the React Query mutation for task create. */
 export const useTaskCreateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(taskCreateOptions(queryClient));
@@ -483,26 +440,22 @@ export const useTaskCreateMutation = (tenantId: string, organizationId: string) 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
-/** Provides the React Query mutation for task update. */
 export const useTaskUpdateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(taskUpdateOptions(queryClient));
 
-  /** Folding into a queued create issues no update and patches the optimistic row here (onMutate won't run). */
+  // Folding into a queued create issues no update and patches the optimistic row here (onMutate won't run).
   const prepare = (input: TaskUpdateMutationFnVariables): PreparedVars<TaskUpdateFullVars> => {
     const { id: taskId, ops } = input;
 
-    if (ops && squashIntoPendingCreate(queryClient, taskKeys.create, taskId, ops as Record<string, unknown>, taskCreateKeys)) {
+    if (ops && squashIntoPendingCreate(queryClient, taskKeys.create, taskId, ops, taskCreateKeys)) {
       applyOptimisticTaskUpdate(queryClient, organizationId, { tenantId, organizationId, ...input });
       return { kind: 'coalesced' };
     }
 
-    // Coalesce queued offline edits; squashPendingMutation keeps each inherited field's original
-    // timestamp so LWW arbitrates by intent time, and only the changed fields carry this edit's stamps.
+    // squashPendingMutation keeps inherited fields' original timestamps so LWW arbitrates by intent time.
     const newStx = createStxForUpdate(scalarFieldNamesOf(ops));
-    const { ops: mergedOps, stx } = ops
-      ? squashPendingMutation(queryClient, taskKeys.update, taskId, ops as Record<string, unknown>, newStx)
-      : { ops: {} as Record<string, unknown>, stx: newStx };
+    const { ops: mergedOps, stx } = ops ? squashPendingMutation(queryClient, taskKeys.update, taskId, ops, newStx) : { ops: {}, stx: newStx };
 
     return { kind: 'run', vars: { tenantId, organizationId, ...input, ops: mergedOps as typeof ops, stx } };
   };
@@ -510,7 +463,6 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
-/** Provides the React Query mutation for task delete. */
 export const useTaskDeleteMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(taskDeleteOptions(queryClient));
@@ -525,8 +477,6 @@ export const useTaskDeleteMutation = (tenantId: string, organizationId: string) 
 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
-
-// Mutation defaults (offline persistence)
 
 addMutationRegistrar((queryClient: QueryClient) => {
   queryClient.setQueryDefaults(taskKeys.detail.base, {

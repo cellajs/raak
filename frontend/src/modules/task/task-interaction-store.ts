@@ -6,23 +6,17 @@ import type { Task } from '~/modules/task/types';
 interface TaskInteractionState {
   /** Ids of tasks selected on the board or table; entities resolve from the query cache at action time. */
   selectedTaskIds: string[];
-  /** Project of the selected tasks, null while none are: a selection stays within one project, so bulk pickers have one set of labels and members. */
+  /** Project of the selected tasks, kept when a later selection passes none; null once the selection is empty. */
   selectedProjectId: string | null;
   setSelectedTaskIds: (ids: string[], projectId?: string) => void;
-  /**
-   * Ids of label rows selected in the labels panel. Task and label selection are mutually exclusive
-   * (checkboxes of the other kind disable), so the board header's remove button acts on one kind.
-   */
+  /** Mutually exclusive with task selection (the other kind's checkboxes disable), so the header's remove button acts on one kind. */
   selectedLabelIds: string[];
   setSelectedLabelIds: (ids: string[]) => void;
-  /**
-   * Draft tasks keyed by projectId for inline create-form placeholders. A project's create form
-   * is open iff it has a draft here, so consumers derive open-ness from `draftTasks[projectId]`.
-   */
+  /** Keyed by projectId: a project's create form is open iff it has a draft here. */
   draftTasks: Record<string, Task>;
   setDraftTask: (projectId: string, task: Task | null) => void;
   updateDraftTask: (projectId: string, updates: Partial<Task>) => void;
-  /** Reset all interaction state. Call when leaving a workspace/board context. */
+  /** Call when leaving a workspace or board context. */
   reset: () => void;
 }
 
@@ -33,10 +27,7 @@ const initialState: Pick<TaskInteractionState, 'selectedTaskIds' | 'selectedProj
   draftTasks: {},
 };
 
-/**
- * Store to manage task interactions such as selection and open create forms across the task board. The current item lives in `useBoardFocusStore`.
- * This allows for consistent state management and avoids prop drilling for these common interactions.
- */
+/** Task selection and open create forms across the board; the current item lives in `useBoardFocusStore`. */
 export const useTaskInteractionStore = create<TaskInteractionState>()(
   devtools(
     immer((set) => ({

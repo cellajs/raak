@@ -15,11 +15,9 @@ type StatusOption = (typeof statusOptions)[number];
 export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWidth = 240 }: SelectStatusProps) {
   const { t } = useTranslation();
 
-  // Live cache subscription reflects remote SSE status changes while open.
   const { data: liveTask } = useTaskQuery(taskId);
   const liveStatus = liveTask?.status ?? currentStatus;
 
-  // Derived during render, without a useState/useEffect copy of liveStatus.
   const selectedStatus = liveStatus === undefined ? null : statusOptionsByValue[liveStatus];
 
   const [searchValue, setSearchValue] = useState('');
@@ -43,8 +41,7 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
       }}
       inputValue={searchValue}
       onInputValueChange={(value) => {
-        // Digit hotkey: 1-7 selects status by index
-        const status = matchDigitHotkey(statusOptions, value, { max: 7 });
+        const status = matchDigitHotkey(statusOptions, value);
         if (status) {
           commit(status.value);
           return;

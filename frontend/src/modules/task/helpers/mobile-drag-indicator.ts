@@ -5,7 +5,6 @@ const taskCardSelector = '[data-task-card-id][data-project-id][data-status]:not(
 
 const coarsePointerQuery = '(pointer: coarse)';
 
-/** Checks whether the active input device uses coarse pointer controls. */
 export const isCoarsePointerDevice = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
   return window.matchMedia(coarsePointerQuery).matches;

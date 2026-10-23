@@ -4,11 +4,7 @@ import { labelPanelSearchSchema } from '~/modules/label/search-params-schemas';
 
 const taskViewSchema = z.enum(['board', 'table']).default('board').catch('board');
 
-/**
- * Default board view state. Single source for URL stripping (route search middleware) and query
- * fallbacks. `order` is `desc` so the table opens newest-first; the board ignores order (its panels
- * sort by displayOrder), so this only shapes the table view.
- */
+/** Single source for URL stripping and query fallbacks. `order` is desc so the table opens newest-first; board panels sort by displayOrder. */
 export const boardSearchDefaults = { q: '', view: 'board', sort: 'createdAt', order: 'desc', matchMode: 'all' } as const;
 
 /** Search param holding the open task's id. Its presence is the sheet's open state. */
@@ -25,8 +21,6 @@ const baseTaskViewSchema = z.object({
   ...labelPanelSearchSchema.shape,
 });
 
-// Search schemas, some are also used in project routes
-/** Validates URL search parameters for tasks table. */
 export const tasksTableSearchSchema = zGetTasksQuery.pick({ q: true, sort: true, order: true, matchMode: true }).extend({
   ...baseTaskViewSchema.shape,
   // Newest-first by default (the API default is ascending); matches `boardSearchDefaults.order`.
@@ -37,5 +31,4 @@ const tasksBoardSearchSchema = zGetTasksQuery
   .pick({ q: true, matchMode: true })
   .extend({ projectSlug: z.string().optional(), ...baseTaskViewSchema.shape });
 
-/** Validates URL search parameters for board. */
 export const boardSearchSchema = z.object({ ...tasksBoardSearchSchema.shape, ...tasksTableSearchSchema.shape });

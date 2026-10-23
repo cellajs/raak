@@ -6,9 +6,7 @@ import { ReviewedIcon } from '~/modules/task/dropdowns/status-icons/reviewed';
 import { StartedIcon } from '~/modules/task/dropdowns/status-icons/started';
 import { UnstartedIcon } from '~/modules/task/dropdowns/status-icons/unstarted';
 
-/**
- * Task status as enum, ordered by workflow (Accepted = completed, Unstarted = not started).
- */
+/** Task status in workflow order: Accepted is completed, Unstarted is not started. */
 export enum TaskStatus {
   Iced = 6,
   Unstarted = 5,
@@ -19,15 +17,9 @@ export enum TaskStatus {
   Accepted = 0,
 }
 
-/**
- * Number of days after which accepted tasks on the board are automatically moved to the backlog.
- * This is a soft rule to keep the board tidy, not a hard cutoff.
- */
+/** Accepted tasks past this many days are left out of the board query. */
 export const boardAcceptedCutOffDays = 14;
 
-/**
- * Task status options as array with metadata for rendering.
- */
 export const statusOptions = [
   { value: TaskStatus.Accepted, action: 'accepted', status: 'accepted', icon: AcceptedIcon },
   { value: TaskStatus.Reviewed, action: 'accept', status: 'reviewed', icon: ReviewedIcon },
@@ -38,11 +30,7 @@ export const statusOptions = [
   { value: TaskStatus.Iced, action: 'iced', status: 'iced', icon: IcedIcon },
 ] as const;
 
-/**
- * Value-keyed lookup for the status options. Prefer this over positional indexing
- * (`statusOptions[value]`), which only works while the array order happens to match
- * the enum values and breaks silently on reorder.
- */
+/** Value-keyed lookup: `statusOptions[value]` only works while the array order matches the enum values. */
 const byValue = <T extends { value: number }>(options: readonly T[]): Record<number, T> =>
   Object.fromEntries(options.map((option) => [option.value, option]));
 

@@ -14,16 +14,11 @@ import { getNewTaskOrder, getRelativeTaskOrder } from '~/modules/task/helpers/or
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { DropTarget, PanelDraggableData, Task, TaskDraggableData } from '~/modules/task/types';
 
-/**
- * Registers the global monitor that commits task drops: same-project reorders, cross-project
- * moves, column drops and the rect-derived mobile drop indicator. Mount once on every page
- * that renders a task board (workspace and project pages).
- */
+/** Registers the global monitor that commits task drops; mount once per page that renders a task board. */
 export const useTaskDropMonitor = (tenantId: string, organizationId: string) => {
   const { t } = useTranslation();
 
   const { mutate: updateTaskMutation } = useTaskUpdateMutation(tenantId, organizationId);
-  // Stable ref so the monitorForElements effect doesn't re-register on mutation state changes
   const updateTaskRef = useLatestRef(updateTaskMutation);
   const activeDragSourceRef = useRef<TaskDraggableData['item'] | null>(null);
   const latestInputRef = useRef<{ clientX: number; clientY: number } | null>(null);
@@ -102,10 +97,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
           const { item: sourceItem } = sourceData;
 
           try {
-            // Resolve mobile drop first: the rect-derived indicator does not depend on Atlaskit's
-            // dropTargets, which are frequently empty after touch autoscroll (virtua sets
-            // pointer-events: none on the list while scrolling, so the native drag resolves to no
-            // drop target). Handling it here keeps mobile drops from becoming a no-op.
+            // The mobile drop resolves first: Atlaskit's dropTargets are often empty after touch autoscroll (virtua blocks pointer events)
             const mobileTargetTask = mobileIndicator ? cachedTasks().find((task) => task.id === mobileIndicator.taskId) : null;
             if (mobileIndicator && mobileTargetTask) {
               const tasks = cachedTasks().filter((task) => task.projectId === mobileTargetTask.projectId);
@@ -113,7 +105,6 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
               return;
             }
 
-            // Identify the drop target types (task or column) from Atlaskit's drop targets
             const taskTargetData =
               dropTargets.find((dropTarget): dropTarget is DropTarget<TaskDraggableData> => isTaskData(dropTarget.data))?.data ?? null;
             const columnTargetData =

@@ -3,18 +3,14 @@ import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 
-/**
- * Returns the task-description update policy.
- * Collaborative edits patch caches while Yjs persists; with Yjs off, edits use the update mutation.
- */
+/** Collaborative edits patch the caches while Yjs persists; without Yjs, edits go through the update mutation. */
 export const useTaskDescriptionUpdate = (task: Task) => {
   const { mutateAsync: updateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
   return async (description: string, collaborative: boolean) => {
     if (collaborative) {
       patchCollaborativeDescription('task', task, description);
-      // Match label/status edits: the standard mutation glows via query.ts, but the collaborative
-      // path patches caches directly. triggerTaskGlow defers itself until the card leaves editing.
+      // The collaborative path skips the mutation that glows via query.ts; triggerTaskGlow waits until the card leaves editing
       triggerTaskGlow(task.id);
       return;
     }

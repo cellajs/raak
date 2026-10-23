@@ -1,5 +1,5 @@
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
-import { type KeyboardEventHandler, type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react';
+import { type KeyboardEventHandler, type MouseEventHandler, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useDebounce } from '~/hooks/use-debounce';
@@ -23,7 +23,7 @@ export const boardSearchInputId = 'board-search-input';
 type BoardSearchMatches = { ids: string[]; onStep?: (id: string) => void; currentId?: string | null };
 
 interface BoardSearchProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
   isInWorkspace?: boolean;
   toggleFocus: () => void;
   matches?: BoardSearchMatches;
@@ -53,8 +53,9 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   const canStep = !!matches?.onStep && steps.total > 0;
 
   const handleClick: MouseEventHandler = (event) => {
-    const target = event.target as HTMLElement; // Cast the target to HTMLElement
-    if (target.id === 'search-close' && document.activeElement !== inputRef.current) inputRef.current?.focus();
+    if (event.target instanceof HTMLElement && event.target.id === 'search-close' && document.activeElement !== inputRef.current) {
+      inputRef.current?.focus();
+    }
 
     setCurrentItem(null);
   };
@@ -81,17 +82,14 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
 
   const toggleSearchMode = () => setSearch({ matchMode: matchMode === 'all' ? 'any' : 'all' });
 
-  // Update parent query only when debouncedQuery changes
   useEffect(() => {
     if (debouncedQuery !== searchQuery) setSearch({ q: debouncedQuery });
   }, [debouncedQuery]);
 
-  // Focus input when filter button clicked (mobile)
   useEffect(() => {
     if (isFilterActive) inputRef.current?.focus();
   }, [isFilterActive]);
 
-  // Keep input value in sync with searchQuery when it changes externally
   useEffect(() => {
     if (searchQuery !== inputValue) setInputValue(searchQuery);
   }, [searchQuery]);

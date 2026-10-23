@@ -45,15 +45,19 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
   }
   const frozenMembers = frozenMembersRef.current ?? projectMembers.slice(0, initialMembersCount);
 
-  const visibleMembers = (() => {
-    if (searchValue.length) return projectMembers.filter((member) => member.name.toLowerCase().includes(searchValue.toLowerCase()));
-    if (showAll) return projectMembers;
-    return frozenMembers;
-  })();
+  const focusInput = () => {
+    if (!isTouchInteraction()) inputRef.current?.focus();
+  };
+
+  const visibleMembers = searchValue.length
+    ? projectMembers.filter((member) => member.name.toLowerCase().includes(searchValue.toLowerCase()))
+    : showAll
+      ? projectMembers
+      : frozenMembers;
 
   const toggleMember = (id: string) => {
     setSearchValue('');
-    if (inputRef.current && !isTouchInteraction()) inputRef.current.focus();
+    focusInput();
 
     const existing = selectedMembers.find((member) => member.id === id);
     if (existing) {
@@ -67,9 +71,8 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
     const updated = getItemsSortedByName([...selectedMembers, newUser]);
     setSelectedMembers(updated);
 
-    // Close dropdown once every visible member is selected (by identity, not just count:
-    // an assignee outside the frozen initial list must not trip the close early).
-    if (visibleMembers.length > 0 && visibleMembers.every((m) => updated.some((u) => u.id === m.id))) {
+    // Closes once every visible member is selected, by identity: an assignee outside the frozen list must not close it early.
+    if (visibleMembers.length > 0 && visibleMembers.every((member) => updated.some((selected) => selected.id === member.id))) {
       dropdowner.getState().remove();
     }
 
@@ -84,12 +87,11 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
       items={visibleMembers}
       itemToStringLabel={(item) => item.name}
       itemToStringValue={(item) => item.id}
-      // Values and items have different object shapes, so compare IDs to keep selection
-      // indicators and toggling aligned.
+      // Values and items have different object shapes, so compare ids to keep the selection indicators aligned.
       isItemEqualToValue={(item, value) => item.id === value.id}
       value={selectedMembers}
       onValueChange={(items) => {
-        // Diff against current selection to drive our own toggle (handles sort + dropdown auto-close).
+        // Diffs against the current selection to drive our own toggle (sorting and auto-close).
         const prevIds = new Set(selectedMembers.map((member) => member.id));
         const nextIds = new Set(items.map((member) => member.id));
         const added = items.find((member) => !prevIds.has(member.id));
@@ -99,7 +101,6 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
       }}
       inputValue={searchValue}
       onInputValueChange={(value) => {
-        // Digit hotkey: select by 1-based index in the initial members
         const target = matchDigitHotkey(projectMembers, value, { max: initialMembersCount, enabled: !showAll });
         if (target) {
           toggleMember(target.id);
@@ -141,8 +142,8 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
                 type="button"
                 className={comboboxActionButtonClass}
                 onClick={() => {
-                  setShowAll(!showAll);
-                  if (inputRef.current && !isTouchInteraction()) inputRef.current.focus();
+                  setShowAll((all) => !all);
+                  focusInput();
                 }}
               >
                 {showAll ? t('c:show_less') : t('c:show_all')}

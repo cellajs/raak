@@ -14,7 +14,7 @@ import type { BoardSearchParams, ProjectResizablePanel, Task } from '~/modules/t
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
 
-/** Prepares board tasks. The open create-form draft is exempt from the accepted/iced collapse. */
+/** Board tasks in order; the open create-form draft is exempt from the accepted/iced collapse. */
 export const prepareBoardTasks = (tasks: Task[], showAccepted: boolean, showIced: boolean) => {
   return tasks
     .filter(
@@ -27,21 +27,15 @@ export const prepareBoardTasks = (tasks: Task[], showAccepted: boolean, showIced
     .sort(compareTaskOrder);
 };
 
-/**
- * Picks the split section that hosts a project's create-form draft: the section matching the
- * draft's status, else the first. Guarantees exactly one panel renders the open form even when
- * no section filter matches. Returns null for an unsplit project (its single panel hosts).
- */
+/** The split section hosting a project's create-form draft: the one matching its status, else the first. Null for an unsplit project. */
 export const resolveDraftHostSection = (viewSections: SectionsValue[] | undefined, status: Task['status']) => {
   if (!viewSections?.length) return null;
   return viewSections.find((section) => section.status.includes(status)) ?? viewSections[0];
 };
 
-/** Builds the stable state key for a board panel. */
 export const makePanelKey = (projectId: string, section: SectionsValue) => {
   const keyParts = Object.entries(section)
     .map(([key, values]) => {
-      // Ensure consistent, lowercase-safe key format
       const normalizedValues = values.map((value) => String(value).toLowerCase()).join('-');
       return `${key}-${normalizedValues}`;
     })
@@ -50,16 +44,10 @@ export const makePanelKey = (projectId: string, section: SectionsValue) => {
   return `${projectId}-${keyParts}`;
 };
 
-/**
- * Checks whether a board-layout key identifies a project's base or split panel.
- * Exact prefixes prevent collisions between IDs containing one another.
- */
+// Exact prefixes keep one project's id from matching another that contains it
 const layoutKeyBelongsToProject = (layoutKey: string, projectId: string) => layoutKey === projectId || layoutKey.startsWith(`${projectId}-`);
 
-/**
- * Recomputes project panel widths after sections change.
- * A single panel retains total width and position; split panels divide that width evenly.
- */
+/** Panel widths after a project's sections change: a single panel keeps the total width and position, split panels share it evenly. */
 export const computePanelLayoutSplit = (
   layout: Record<string, number>,
   projectId: string,
@@ -84,7 +72,6 @@ export const computePanelLayoutSplit = (
   return Object.fromEntries(updated);
 };
 
-/** Sort projects by enriched membership displayOrder. */
 export const sortByMembership = (projects: EnrichedProject[]) => {
   return [...projects].sort((a, b) => (a.membership?.displayOrder ?? 0) - (b.membership?.displayOrder ?? 0));
 };
@@ -113,10 +100,8 @@ export const prepareBoardPanels = (projects: EnrichedProject[], viewSectionsByPr
 
   return sortedProjects.flatMap((project): ProjectResizablePanel[] => {
     const viewSections = viewSectionsByProject[project.id];
-    // If the project has no splits, use a default single panel
     if (!viewSections?.length) return [{ kind: 'project', project, panelId: project.id }];
 
-    // If split filters exist, create a panel for each status
     return viewSections.map((sectionCriteria, sectionIndex) => ({
       kind: 'project',
       project,
@@ -132,7 +117,7 @@ export const formatSectionLabel = (filters: SectionsValue): string => {
     .map(([key, values]) => {
       switch (key) {
         case 'status':
-          return `${values.map((status) => i18n.t(`c:${statusOptionsByValue[status].status}`)).join(', ')}`;
+          return values.map((status) => i18n.t(`c:${statusOptionsByValue[status].status}`)).join(', ');
         default:
           return `${key.charAt(0).toUpperCase() + key.slice(1)}: ${values.join(', ')}`;
       }
@@ -144,7 +129,6 @@ export const normalizePanelWidths = (storedLayout: Record<string, number>, curre
   const layout: Record<string, number> = {};
 
   for (const id of currentProjectIds) {
-    // Use stored pixel width if available, otherwise fall back to the panel minimum width
     layout[id] = storedLayout[id] ?? panelMinWidth;
   }
 
@@ -154,15 +138,7 @@ export const normalizePanelWidths = (storedLayout: Record<string, number>, curre
 /** Board identity of the last `resetTaskInteraction` call, to skip same-board re-entries. */
 let lastInteractionBoardKey: string | null = null;
 
-/**
- * Reset all task interaction state (selection, focus, draft tasks) and per-task card view state.
- * Called from route guards on entering / leaving a workspace or project, so stale UI (e.g. the
- * floating selection bar) never leaks across boards and the card-state map can't grow unbounded.
- * `beforeLoad` also reruns on search-param-only navigations (e.g. typing in board search); pass
- * the board's `boardKey` so those same-board re-entries keep the selection. Calling without a
- * key (route `onLeave`) always resets. Adding a new field to `useTaskInteractionStore` is
- * automatically covered as long as it is included in that store's `initialState`.
- */
+/** Resets selection, focus, drafts and card view state on entering or leaving a board; a `boardKey` skips same-board re-entries. */
 export const resetTaskInteraction = (boardKey?: string) => {
   if (boardKey && boardKey === lastInteractionBoardKey) return;
   lastInteractionBoardKey = boardKey ?? null;

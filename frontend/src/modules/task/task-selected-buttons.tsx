@@ -27,14 +27,14 @@ interface TaskSelectedButtonsProps {
 
 type PickerType = 'status' | 'labels' | 'assignedTo';
 
-/** Floating action bar for tasks selected on the board or table, all of one project: copy, set fields, delete + clear. */
+/** Floating action bar for tasks selected on the board or table, all of one project. */
 export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizationId, tenantId, orderTasks }: TaskSelectedButtonsProps) {
   const { t } = useTranslation();
   const user = useCurrentUser();
   const taskMutation = useTaskUpdateMutation(tenantId, organizationId);
   const [copied, setCopied] = useState(false);
 
-  // Resolve fresh entities from the query cache at action time; list queries overlap, so dedupe by id
+  // Fresh entities from the query cache at action time; list queries overlap, so dedupe by id
   const resolveSelected = () => {
     const cached = new Map(cachedTasks().map((task) => [task.id, task]));
     const tasks = selectedTaskIds.flatMap((id) => cached.get(id) ?? []);

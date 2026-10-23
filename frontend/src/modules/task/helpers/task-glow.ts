@@ -1,5 +1,4 @@
-// Trigger the flash via a data attribute (see card-glow.css). A class would be wiped whenever React
-// reconciles the element's className on re-render; an attribute React does not manage survives.
+// A data attribute (see card-glow.css): a class would be wiped whenever React reconciles the element's className
 const glowAttr = 'data-highlight-flash';
 
 /** Set on a board card to skip its glow, as the open task sheet shows the same task. */

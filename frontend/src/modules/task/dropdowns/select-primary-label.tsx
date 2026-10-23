@@ -16,11 +16,9 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
   const { t } = useTranslation();
   const primaryLabels = usePrimaryLabels(projectId);
 
-  // Live cache subscription reflects remote SSE primary label changes while open.
   const { data: liveTask } = useTaskQuery(taskId);
   const liveId = liveTask?.primaryLabelId ?? currentId;
 
-  // Derived during render, without a useState/useEffect copy of liveId.
   const selected = primaryLabels.find((label) => label.id === liveId) ?? null;
 
   const [searchValue, setSearchValue] = useState('');
@@ -45,7 +43,6 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
       }}
       inputValue={searchValue}
       onInputValueChange={(value) => {
-        // Digit hotkey: selects the corresponding primary label by display order
         const label = matchDigitHotkey(primaryLabels, value);
         if (label) {
           commit(label);

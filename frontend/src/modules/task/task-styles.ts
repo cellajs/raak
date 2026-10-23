@@ -33,24 +33,17 @@ export const statusButtonVariants = cva(
   },
 );
 
-/**
- * Left gutter + bottom padding for a task description, shared by the expanded (read-only) view
- * and the editing form so toggling edit mode doesn't shift the text.
- */
+/** Shared by the expanded view and the editing form so toggling edit mode does not shift the text. */
 export const taskDescriptionGutterClass = tw('pb-4 pl-1 sm:pl-9');
 
-/**
- * Reveals a task card's action buttons on hover or focus. The collapsed summary fades its first line out under them
- * on the same states (`.task-summary-fade` in card-glow.css): keep the two in step.
- */
+/** Reveals a task card's action buttons on hover or focus; keep in step with `.task-summary-fade` in card-glow.css. */
 export const taskCardActionsRevealClass = tw(
   'opacity-0 transition-opacity group-focus-within/task:opacity-100 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 has-data-dropdowner-done:opacity-100 group-data-[sheet]/task:opacity-100',
 );
 
-/** Shared shell classes for the board/table top bar (search, count, actions). */
 export const taskBarClass = tw('z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2');
 
-/** Accepted/iced section-bar colors for the panel section headers, the collapsed panel and the board skeleton, so a strip keeps its fill through a collapse. */
+/** Shared by the panel section headers, the collapsed panel and the board skeleton, so a strip keeps its fill through a collapse. */
 export const statusSectionColors = {
   accepted: { fill: 'bg-green-50 dark:bg-green-950', text: 'text-green-700 dark:text-green-400', border: 'border-b border-b-green-500/10' },
   iced: { fill: 'bg-sky-50 dark:bg-sky-950', text: 'text-sky-700 dark:text-sky-400', border: 'border-t border-t-sky-500/10' },

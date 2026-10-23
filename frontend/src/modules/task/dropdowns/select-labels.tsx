@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQueries } from '@tanstack/react-query';
 import { useMatch } from '@tanstack/react-router';
 import { CheckIcon, ChevronDownIcon, FlagIcon, TagIcon } from 'lucide-react';
-import { type CSSProperties, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { zLabel } from 'sdk/zod.gen';
 import { labelSlug } from 'shared/config/labels-config';
@@ -36,8 +36,7 @@ import { coalescedResult } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
 import { isTouchInteraction } from '~/utils/input-modality';
 
-// Sentinel prefix for the "create label" row's Combobox value, so it can't
-// collide with a real label name when selection flows through onValueChange.
+// Prefix of the create row's value, so it cannot collide with a real label name in onValueChange.
 const createSentinelPrefix = '__create__';
 
 /** Suggested labels shown without a search; the digit hotkeys cover the same range. */
@@ -66,32 +65,10 @@ const labelColors = [
   '#4A90E2',
 ];
 
-// The task label picker offers secondary tags and epics; primary labels have dedicated task-card UI.
-// Module-scoped so its identity is stable: an inline combine rebuilds `labels` every render,
-// cascading through the projectLabels / allLabels memos that depend on it by reference.
+// The picker offers secondary tags and epics; primary labels have dedicated task-card UI.
+// Module-level so `labels` keeps its identity between renders and the compiler's memoization of what derives from it holds.
 const combineTaskLabels = (results: { data?: { items: Label[] } }[]): Label[] =>
   results.flatMap((result) => result.data?.items ?? []).filter((label) => label.mode !== 'primary');
-
-const renderLabelItem = (
-  label: Label | TaskLabel,
-  selectedLabels: (Label | TaskLabel)[],
-  projectId: string,
-  searchValue: string,
-  hotkeyIndex?: number,
-) => {
-  const isSelected = selectedLabels.some((selected) => selected.slug === label.slug);
-  const LabelModeIcon = label.mode === 'epic' ? FlagIcon : TagIcon;
-  return (
-    <ComboboxItem key={label.id} value={label.slug} className={cn(comboboxRowClass, isSelected && 'font-medium')}>
-      <LabelModeIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
-      <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
-      <span className="pointer-events-none flex size-4 items-center justify-center">
-        {isSelected && <CheckIcon className="pointer-coarse:size-5 size-4 text-success" />}
-      </span>
-      <HotkeyIndexBadge index={searchValue ? undefined : hotkeyIndex} />
-    </ComboboxItem>
-  );
-};
 
 export function SelectLabels({ value: currentLabels, projectId, onChange, taskId, triggerWidth = 320, initialSelectedCollapsed }: SelectLabelsProps) {
   const { t } = useTranslation();
@@ -104,21 +81,15 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     select: (match) => match.context.workspace?.id,
   });
 
-  // Reactively read the workspace's projects from cache (enabled → subscribes so labels re-scope
-  // when the list updates; in a workspace route the board has already fetched it).
+  // Subscribed so labels re-scope when the list updates; in a workspace the board has already fetched it.
   const { data: workspaceProjectIds } = useInfiniteQuery({
     ...projectsListQueryOptions({ workspaceId: workspaceId ?? '' }),
     enabled: !!workspaceId,
     select: (data) => data.pages.flatMap((page) => page.items.map((project) => project.id)),
   });
 
-  // Labels are project-homed: aggregate the per-project canonical home lists client-side. Inside a
-  // workspace, span its projects; outside one, just the current project. Falls back to the current
-  // project until the workspace project list has loaded.
-  const labelProjectIds = useMemo(
-    () => (workspaceId && workspaceProjectIds ? workspaceProjectIds : [projectId]),
-    [workspaceId, workspaceProjectIds, projectId],
-  );
+  // Labels are project-homed: inside a workspace span its projects, else the current one (also until the project list has loaded).
+  const labelProjectIds = workspaceId && workspaceProjectIds ? workspaceProjectIds : [projectId];
 
   const labels = useQueries({
     queries: labelProjectIds.map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
@@ -138,64 +109,65 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
   const trackUsage = useLabelRecencyStore((state) => state.trackUsage);
   const getScore = useLabelRecencyStore((state) => state.getScore);
 
-  const projectLabels = useMemo(() => labels.filter((label) => label.projectId === projectId), [labels, projectId]);
-
-  // Derive allLabels directly from query data. Memoized so a keystroke (searchValue) doesn't rebuild
-  // it and invalidate the searchResults / suggestedLabels memos that depend on its identity.
-  const allLabels = useMemo(() => deduplicateLabels(labels, projectId, organizationId, usage), [labels, projectId, organizationId, usage]);
-
-  // Search results filtered by query
-  const searchResults = useMemo(() => {
-    if (!searchValue.length) return [];
-    // Labels are meant to be lowercase, but older and seeded names carry capitals and spaces: normalize them as the input is
-    const matchedLabels = allLabels.filter(({ name }) => name.toLowerCase().replaceAll(' ', '-').includes(searchValue));
-    return getItemsSortedByName(matchedLabels);
-  }, [searchValue, allLabels]);
-
-  // Top labels by recency → usedCount → name, excluding already-selected
-  const suggestedLabels = useMemo(() => {
-    const selectedSlugs = new Set(selectedLabels.map((label) => label.slug));
-    return allLabels
-      .filter((label) => !selectedSlugs.has(label.slug))
-      .sort((a, b) => {
-        const recency = getScore(organizationId, b.slug) - getScore(organizationId, a.slug);
-        if (recency !== 0) return recency;
-        const usageDiff = b.usedCount - a.usedCount;
-        if (usageDiff !== 0) return usageDiff;
-        return a.name.localeCompare(b.name);
-      })
-      .slice(0, suggestedLabelCount);
-  }, [allLabels, selectedLabels, getScore, organizationId]);
-
-  // Combined list for rendering (selected first, then suggested)
-  const visibleLabels = useMemo(
-    () => (searchValue ? searchResults : [...selectedLabels, ...suggestedLabels]),
-    [searchValue, searchResults, selectedLabels, suggestedLabels],
-  );
-
-  const updateTaskLabels = (updatedLabels: (Label | TaskLabel)[]) => {
-    onChange(updatedLabels);
+  const focusInput = () => {
+    if (!isTouchInteraction()) inputRef.current?.focus();
   };
 
-  // For non-create rows `value` is the picked label's slug (the ComboboxItem value); the slug is the
-  // cross-project group identity, so a suggested representative resolves to this project's own row.
+  const projectLabels = labels.filter((label) => label.projectId === projectId);
+
+  const allLabels = deduplicateLabels(labels, projectId, organizationId, usage);
+
+  // Labels are meant to be lowercase, but older and seeded names carry capitals and spaces: normalize them as the input is
+  const searchResults = searchValue.length
+    ? getItemsSortedByName(allLabels.filter(({ name }) => name.toLowerCase().replaceAll(' ', '-').includes(searchValue)))
+    : [];
+
+  // Top labels by recency, then usedCount, then name, excluding the selected
+  const selectedSlugs = new Set(selectedLabels.map((label) => label.slug));
+  const suggestedLabels = allLabels
+    .filter((label) => !selectedSlugs.has(label.slug))
+    .sort((a, b) => {
+      const recency = getScore(organizationId, b.slug) - getScore(organizationId, a.slug);
+      if (recency !== 0) return recency;
+      const usageDiff = b.usedCount - a.usedCount;
+      if (usageDiff !== 0) return usageDiff;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, suggestedLabelCount);
+
+  const visibleLabels = searchValue ? searchResults : [...selectedLabels, ...suggestedLabels];
+
+  const renderLabelItem = (label: Label | TaskLabel, hotkeyIndex?: number) => {
+    const isSelected = selectedLabels.some((selected) => selected.slug === label.slug);
+    const LabelModeIcon = label.mode === 'epic' ? FlagIcon : TagIcon;
+    return (
+      <ComboboxItem key={label.id} value={label.slug} className={cn(comboboxRowClass, isSelected && 'font-medium')}>
+        <LabelModeIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
+        <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
+        <span className="pointer-events-none flex size-4 items-center justify-center">
+          {isSelected && <CheckIcon className="pointer-coarse:size-5 size-4 text-success" />}
+        </span>
+        <HotkeyIndexBadge index={searchValue ? undefined : hotkeyIndex} />
+      </ComboboxItem>
+    );
+  };
+
+  // For non-create rows `value` is the label slug, the cross-project group identity: a suggested representative resolves to this project's row.
   const handleSelectClick = async (value?: string | null): Promise<void> => {
     if (!value) return;
 
-    // Create row selected (via click or Enter): strip sentinel and create.
     if (value.startsWith(createSentinelPrefix)) {
       return handleCreateClick(value.slice(createSentinelPrefix.length));
     }
 
     setSearchValue('');
-
-    if (inputRef.current && !isTouchInteraction()) inputRef.current.focus();
+    focusInput();
 
     const existingLabel = selectedLabels.find((label) => label.slug === value);
     if (existingLabel) {
       const updatedLabels = selectedLabels.filter((label) => label.id !== existingLabel.id);
       setSelectedLabels(updatedLabels);
-      updateTaskLabels(updatedLabels);
+      onChange(updatedLabels);
       return;
     }
 
@@ -203,7 +175,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     if (newLabel) {
       const updatedLabels = getItemsSortedByName([...selectedLabels, newLabel]);
       setSelectedLabels(updatedLabels);
-      updateTaskLabels(updatedLabels);
+      onChange(updatedLabels);
       trackUsage(organizationId, [newLabel.slug]);
       return;
     }
@@ -214,12 +186,12 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
   const handleCreateClick = async (value: string): Promise<void> => {
     setSearchValue('');
 
-    // Resolve the typed name through its slug to reuse an existing label identity.
+    // Resolving the typed name through its slug reuses an existing label identity.
     const slug = labelSlug(value);
     const existingLabel = projectLabels.find((label) => label.slug === slug);
     if (existingLabel) return handleSelectClick(existingLabel.slug);
 
-    if (inputRef.current && !isTouchInteraction()) inputRef.current.focus();
+    focusInput();
 
     const matchedLabelColor = labels.find((label) => label.slug === slug)?.color;
     const fallbackColor = labelColors[Math.floor(Math.random() * labelColors.length)];
@@ -234,14 +206,12 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
       color: matchedLabelColor ?? fallbackColor,
       keywords: '',
       projectId,
-      organizationId: organizationId,
+      organizationId,
       tenantId,
     };
 
-    // Build full label from schema defaults + creation data (avoids manual field repetition)
     const newLabel = createOptimisticEntity(zLabel, newLabelData);
 
-    // Sort updated labels by name
     const updatedLabels = getItemsSortedByName([...selectedLabels, newLabel]);
     setSelectedLabels(updatedLabels);
 
@@ -251,7 +221,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     if (createdLabels === coalescedResult) return;
     const finalLabels = updatedLabels.map((label) => (label.id === newLabel.id ? createdLabels[0] : label));
     setSelectedLabels(finalLabels);
-    updateTaskLabels(finalLabels);
+    onChange(finalLabels);
     trackUsage(organizationId, [newLabelData.slug]);
   };
 
@@ -272,13 +242,11 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
       onValueChange={(value) => handleSelectClick(value)}
       inputValue={searchValue}
       onInputValueChange={(value) => {
-        // Digit hotkey: pick suggested label by 1-based index
         const hotkeyLabel = matchDigitHotkey(suggestedLabels, value, { max: suggestedLabelCount });
         if (hotkeyLabel) {
           handleSelectClick(hotkeyLabel.slug);
           return;
         }
-        // Replace spaces with dashes only when there's content
         const updated = value.trim() ? value.replaceAll(' ', '-') : value;
         setSearchValue(updated.toLowerCase());
       }}
@@ -307,7 +275,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             aria-expanded={!selectedCollapsed}
             aria-controls="select-labels-selected-group"
             className="mx-1 mt-1 flex w-[calc(100%-0.5rem)] shrink-0 items-center gap-2 pointer-coarse:px-3 px-2 pointer-coarse:py-2 py-1.5 pointer-coarse:text-sm text-muted-foreground text-xs outline-hidden hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
-            onClick={() => setSelectedCollapsed(!selectedCollapsed)}
+            onClick={() => setSelectedCollapsed((collapsed) => !collapsed)}
           >
             {t('c:selected')}
             {selectedCollapsed && <span className="ml-1 text-xs opacity-70">{selectedLabels.length}</span>}
@@ -317,13 +285,13 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
         )}
         <ScrollArea className={comboboxScrollClass}>
           <ComboboxList className="p-1!">
-            {/* The keyboard covers the end of the list on phones, so create comes first there, which also makes it the auto-highlighted Enter target. */}
+            {/* The keyboard covers the end of the list on phones, so create comes first there and is the auto-highlighted Enter target. */}
             {isMobile && createItem}
             {searchValue ? (
               searchResults.length > 0 ? (
                 <ComboboxGroup>
                   <ComboboxGroupLabel>{t('c:results')}</ComboboxGroupLabel>
-                  {searchResults.map((label) => renderLabelItem(label, selectedLabels, projectId, searchValue))}
+                  {searchResults.map((label) => renderLabelItem(label))}
                 </ComboboxGroup>
               ) : (
                 <div className="flex items-center justify-center p-1.5 text-center text-muted-foreground/50 text-sm">
@@ -333,13 +301,11 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             ) : (
               <>
                 {selectedLabels.length > 0 && !selectedCollapsed && (
-                  <ComboboxGroup id="select-labels-selected-group">
-                    {selectedLabels.map((label) => renderLabelItem(label, selectedLabels, projectId, searchValue))}
-                  </ComboboxGroup>
+                  <ComboboxGroup id="select-labels-selected-group">{selectedLabels.map((label) => renderLabelItem(label))}</ComboboxGroup>
                 )}
                 <ComboboxGroup>
                   <ComboboxGroupLabel>{t('c:suggested')}</ComboboxGroupLabel>
-                  {suggestedLabels.map((label, index) => renderLabelItem(label, selectedLabels, projectId, searchValue, index))}
+                  {suggestedLabels.map((label, index) => renderLabelItem(label, index))}
                 </ComboboxGroup>
               </>
             )}

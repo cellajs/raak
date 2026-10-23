@@ -27,7 +27,7 @@ const sharedListHandler = <T extends Item>(lists: T[][], onTaskChange: ((next: T
   return { value, onChange };
 };
 
-/** Field handlers for several tasks at once, one update per task. Build one per dropdown session, as `buildFieldHandlers`. */
+/** Field handlers for several tasks at once, one update per task; build one per dropdown session, as `buildFieldHandlers`. */
 export const buildBulkFieldHandlers = (tasks: Task[], deps: Parameters<typeof buildFieldHandlers>[1]) => {
   const handlers = tasks.map((task) => buildFieldHandlers(task, deps));
 

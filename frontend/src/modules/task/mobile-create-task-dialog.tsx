@@ -22,12 +22,11 @@ function MobileCreateTaskDialog({ projectId, organizationId }: MobileCreateTaskD
   );
 }
 
-export const openCreateTaskDialog = (projectId: string, organizationId: string) => {
-  return dialoger.getState().create(<MobileCreateTaskDialog projectId={projectId} organizationId={organizationId} />, {
+export const openCreateTaskDialog = (projectId: string, organizationId: string) =>
+  dialoger.getState().create(<MobileCreateTaskDialog projectId={projectId} organizationId={organizationId} />, {
     id: 'create-task',
     drawerOnMobile: false,
     className: createTaskDialogClassName,
     triggerRef: { current: null },
     title: i18n.t('c:create_resource', { resource: i18n.t('c:task').toLowerCase() }),
   });
-};
