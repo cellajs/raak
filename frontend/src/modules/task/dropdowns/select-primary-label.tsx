@@ -5,7 +5,7 @@ import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
-import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-parts';
+import { ComboboxHotkeyHint, comboboxRowClass, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-parts';
 import type { SelectPrimaryLabelProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
@@ -54,7 +54,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
         setSearchValue(value);
       }}
     >
-      <div className="relative w-48 rounded-lg p-0 max-sm:w-full">
+      <div className="relative w-48 rounded-lg max-sm:w-full">
         <ComboboxSearchInput
           autoFocus={!isTouchInteraction()}
           value={searchValue}
@@ -68,7 +68,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
           {(label: Label) => {
             const index = primaryLabels.findIndex((primaryLabel) => primaryLabel.id === label.id);
             return (
-              <ComboboxItem key={label.id} value={label} className="h-9 pr-2">
+              <ComboboxItem key={label.id} value={label} className={comboboxRowClass}>
                 <PrimaryLabelIcon label={label} />
                 <div className="grow">{label.name}</div>
                 <HotkeyIndexBadge index={isSearching ? undefined : index} />

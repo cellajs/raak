@@ -258,7 +258,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
   const createItem = searchValue.trim() !== '' && !projectLabels.some((label) => label.slug === labelSlug(searchValue)) && (
     <ComboboxItem value={`${createSentinelPrefix}${searchValue}`} className={cn(comboboxActionButtonClass, isMobile ? 'mb-1' : 'mt-1')}>
       {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
-      <Badge className="ml-2 flex px-2 py-0" variant="plain">
+      <Badge className="ml-2 px-2 py-0" variant="plain">
         {searchValue}
       </Badge>
     </ComboboxItem>

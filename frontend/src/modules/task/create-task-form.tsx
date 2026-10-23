@@ -273,7 +273,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                   <div
                     className={cn(
                       buttonVariants({ variant: 'input', size: 'sm', press: false }),
-                      'relative flex h-auto min-h-9 w-full justify-start py-1 hover:bg-accent/20',
+                      'relative flex h-auto min-h-9 justify-start py-1 hover:bg-accent/20',
                     )}
                   >
                     <FormControl>
