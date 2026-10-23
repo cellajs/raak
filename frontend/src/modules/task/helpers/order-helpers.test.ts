@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
-import { getNewTaskOrder } from './order-helpers';
+import { getNewTaskOrder, getRelativeTaskOrder } from './order-helpers';
 
 // getNewTaskOrder is pure over its args; stub the cache accessor so importing order-helpers
 // doesn't pull the query-client chain (which touches `window`) into the node test env.
@@ -43,5 +43,12 @@ describe('getNewTaskOrder', () => {
       task('match', 40, TaskStatus.Unstarted, 'p1'),
     ];
     expect(getNewTaskOrder(TaskStatus.Unstarted, tasks, 'p1')).toBe(40 + orderGap);
+  });
+});
+
+describe('getRelativeTaskOrder', () => {
+  it('orders within the Accepted band against accepted rows only', () => {
+    const tasks = [task('a1', 30, TaskStatus.Accepted), task('a2', 10, TaskStatus.Accepted), task('other', 20, TaskStatus.Started)];
+    expect(getRelativeTaskOrder('bottom', tasks, 30, 'a2', TaskStatus.Accepted)).toBe(10);
   });
 });

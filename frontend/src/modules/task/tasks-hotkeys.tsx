@@ -7,8 +7,8 @@ import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { BoardNavHotkeys } from '~/modules/board-focus/board-nav-hotkeys';
 import { focusItem } from '~/modules/board-focus/focus-item';
 import { findItemPanelId, getPanelNav } from '~/modules/board-focus/panel-nav-registry';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { boardSearchInputId } from '~/modules/task/board-search';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
@@ -18,7 +18,8 @@ import { closeCreateTaskForm, toggleCreateTaskForm } from '~/modules/task/helper
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
+import { TASK_SHEET_PARAM } from '~/modules/task/search-params-schemas';
+import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
 
@@ -37,7 +38,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
 
   const currentDraft = () => {
     const { currentItemId } = useBoardFocusStore.getState();
-    return Object.values(useTaskInteractionStore.getState().draftTasks).find((draft) => draft.id === currentItemId);
+    return Object.values(taskInteractionStore.getState().draftTasks).find((draft) => draft.id === currentItemId);
   };
 
   const handleEscKeyPress = () => {
@@ -65,7 +66,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
       document.activeElement.blur();
     }
 
-    if (isSheetOpen) return useSheeter.getState().remove(`taskSheetId-${task.id}`);
+    if (isSheetOpen) return sheeter.getState().remove(`${TASK_SHEET_PARAM}-${task.id}`);
 
     const taskCard = document.getElementById(task.id);
     const state = taskCard?.dataset.state;
@@ -85,7 +86,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
 
   const handleNKeyDown = () => {
     if (!projects.length) return;
-    const { draftTasks } = useTaskInteractionStore.getState();
+    const { draftTasks } = taskInteractionStore.getState();
     const openDraftProjectId = Object.keys(draftTasks)[0];
 
     let targetProjectId: string | undefined = openDraftProjectId;
@@ -109,7 +110,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
 
     const triggerId = `${field}-${targetTask.id}${isSheetOpen ? '-sheet' : ''}`;
     const trigger = taskCard.querySelector(`#${triggerId}`);
-    if (!(trigger instanceof HTMLButtonElement)) return useDropdowner.getState().remove();
+    if (!(trigger instanceof HTMLButtonElement)) return dropdowner.getState().remove();
 
     const handlers = buildFieldHandlers(targetTask, { taskMutation, user });
     const base = { triggerId, triggerRef: { current: trigger }, taskId: targetTask.id };

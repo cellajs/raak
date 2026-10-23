@@ -40,6 +40,9 @@ import { isTouchInteraction } from '~/utils/input-modality';
 // collide with a real label name when selection flows through onValueChange.
 const CREATE_SENTINEL_PREFIX = '__create__';
 
+/** Suggested labels shown without a search; the digit hotkeys cover the same range. */
+const suggestedLabelCount = 8;
+
 // The task label picker offers secondary tags and epics; primary labels have dedicated task-card UI.
 // Module-scoped so its identity is stable: an inline combine rebuilds `labels` every render,
 // cascading through the projectLabels / initLabels memos that depend on it by reference.
@@ -71,26 +74,16 @@ const renderLabelItem = (
   );
 };
 
-export function SelectLabels({
-  value: currentLabels,
-  projectId,
-  workspaceId: workspaceIdProp,
-  onChange,
-  taskId,
-  triggerWidth = 320,
-  initialSelectedCollapsed,
-}: SelectLabelsProps) {
+export function SelectLabels({ value: currentLabels, projectId, onChange, taskId, triggerWidth = 320, initialSelectedCollapsed }: SelectLabelsProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const { organizationId, tenantId } = useOrganizationLayoutContext();
 
-  // Auto-detect workspace from route context if not passed as prop
-  const routeWorkspaceId = useMatch({
+  const workspaceId = useMatch({
     from: '/_app/$tenantId/$organizationSlug/workspace/$slug',
     shouldThrow: false,
     select: (match) => match.context.workspace?.id,
   });
-  const workspaceId = workspaceIdProp ?? routeWorkspaceId;
 
   // Reactively read the workspace's projects from cache (enabled → subscribes so labels re-scope
   // when the list updates; in a workspace route the board has already fetched it).
@@ -140,7 +133,7 @@ export function SelectLabels({
     return getItemsSortedByName(matchedLabels);
   }, [searchValue, initLabels]);
 
-  // Top 8 labels by recency → usedCount → name, excluding already-selected
+  // Top labels by recency → usedCount → name, excluding already-selected
   const suggestedLabels = useMemo(() => {
     const selectedSlugs = new Set(selectedLabels.map((l) => l.slug));
     return initLabels
@@ -152,7 +145,7 @@ export function SelectLabels({
         if (usageDiff !== 0) return usageDiff;
         return a.name.localeCompare(b.name);
       })
-      .slice(0, 8);
+      .slice(0, suggestedLabelCount);
   }, [initLabels, selectedLabels, getScore, organizationId]);
 
   // Combined list for rendering (selected first, then suggested)
@@ -261,7 +254,7 @@ export function SelectLabels({
       inputValue={searchValue}
       onInputValueChange={(value) => {
         // Digit hotkey: pick suggested label by 1-based index
-        const hotkeyLabel = matchDigitHotkey(suggestedLabels, value, { max: 8 });
+        const hotkeyLabel = matchDigitHotkey(suggestedLabels, value, { max: suggestedLabelCount });
         if (hotkeyLabel) {
           handleSelectClick(hotkeyLabel.slug);
           return;

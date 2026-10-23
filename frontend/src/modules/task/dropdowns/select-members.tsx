@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { UserMinimalBase } from 'sdk';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { Member } from '~/modules/memberships/types';
 import { useProjectMembers } from '~/modules/project/use-project-members';
@@ -22,6 +22,9 @@ import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxItemIndicator, ComboboxL
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { isTouchInteraction } from '~/utils/input-modality';
 
+/** Members listed before "Show all"; the digit hotkeys cover the same range. */
+const initialMembersCount = 6;
+
 export function SelectMembers({ value: currentAssigned, projectId, onChange, taskId, triggerWidth = 320 }: SelectMembersProps) {
   const { t } = useTranslation();
   const { organizationId, tenantId } = useOrganizationLayoutContext();
@@ -37,9 +40,9 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
   // Freeze the initial display list at mount so it stays static during the session
   const frozenMembersRef = useRef<Member[] | null>(null);
   if (frozenMembersRef.current === null && projectMembers.length) {
-    frozenMembersRef.current = projectMembers.slice(0, 6);
+    frozenMembersRef.current = projectMembers.slice(0, initialMembersCount);
   }
-  const frozenMembers = frozenMembersRef.current ?? projectMembers.slice(0, 6);
+  const frozenMembers = frozenMembersRef.current ?? projectMembers.slice(0, initialMembersCount);
 
   const showedMembers = (() => {
     if (searchValue.length) return projectMembers.filter((m) => m.name.toLowerCase().includes(searchValue.toLowerCase()));
@@ -48,7 +51,6 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
   })();
 
   const toggleMember = (id: string) => {
-    if (!id) return;
     setSearchValue('');
     if (inputRef.current && !isTouchInteraction()) inputRef.current.focus();
 
@@ -65,9 +67,9 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
     setSelectedMembers(updated);
 
     // Close dropdown once every visible member is selected (by identity, not just count:
-    // an assignee outside the frozen top-6 must not trip the close early).
+    // an assignee outside the frozen initial list must not trip the close early).
     if (showedMembers.length > 0 && showedMembers.every((m) => updated.some((u) => u.id === m.id))) {
-      useDropdowner.getState().remove();
+      dropdowner.getState().remove();
     }
 
     onChange(updated);
@@ -96,8 +98,8 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
       }}
       inputValue={searchValue}
       onInputValueChange={(value) => {
-        // Digit hotkey: select by 1-based index in the first 6 members
-        const target = matchDigitHotkey(projectMembers, value, { max: 6, enabled: !showAll });
+        // Digit hotkey: select by 1-based index in the initial members
+        const target = matchDigitHotkey(projectMembers, value, { max: initialMembersCount, enabled: !showAll });
         if (target) {
           toggleMember(target.id);
           return;
@@ -138,7 +140,7 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
             }}
           </ComboboxList>
           <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:member_other').toLowerCase() })}</ComboboxEmpty>
-          {projectMembers.length > 5 && !searchValue.length && (
+          {projectMembers.length > initialMembersCount && !searchValue.length && (
             <div className="p-1 pt-0">
               <button
                 type="button"

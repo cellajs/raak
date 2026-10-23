@@ -16,7 +16,6 @@ type DropdownLayoutProps = TaskSubscriptionProps & { triggerWidth?: number };
 export type SelectLabelsProps = DropdownLayoutProps & {
   value: TaskLabel[];
   projectId: string;
-  workspaceId?: string;
   onChange: (labels: TaskLabel[]) => void;
   /**
    * Initial collapsed state of the "Selected" section. Defaults to collapsed on
@@ -37,5 +36,4 @@ export type SelectPrimaryLabelProps = TaskSubscriptionProps & {
   value: string;
   projectId: string;
   onChange: (newValue: string) => void;
-  className?: string;
 };

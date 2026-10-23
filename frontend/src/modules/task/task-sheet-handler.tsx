@@ -1,5 +1,5 @@
 import { useSearch } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { focusItem } from '~/modules/board-focus/focus-item';
 import { useUrlSheet } from '~/modules/common/sheeter/use-url-sheet';
@@ -7,14 +7,16 @@ import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
-import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
+import { suppressGlowAttr, triggerTaskGlow } from '~/modules/task/helpers/task-glow';
+import { subscribeToTaskCache } from '~/modules/task/hooks/use-tasks-total';
 import { taskKeys } from '~/modules/task/query';
+import { TASK_SHEET_PARAM } from '~/modules/task/search-params-schemas';
 import { Badge } from '~/modules/ui/badge';
 import { queryClient } from '~/query/query-client';
 
 function TaskSheetTitle({ taskId }: { taskId: string }) {
   const { t } = useTranslation();
-  const projectId = cachedTasks().find((task) => task.id === taskId)?.projectId;
+  const projectId = useSyncExternalStore(subscribeToTaskCache, () => cachedTasks().find((task) => task.id === taskId)?.projectId);
   const isReadOnly = useIsProjectReadOnly(projectId);
 
   return (
@@ -45,12 +47,12 @@ function TaskSheetHandler() {
     // Demote any other editing task (single-editor rule)
     useTaskCardStore.getState().suppressAllEditing();
     const boardCard = document.getElementById(taskSheetId);
-    if (boardCard) boardCard.setAttribute('data-suppress-glow', '');
-    return () => boardCard?.removeAttribute('data-suppress-glow');
+    if (boardCard) boardCard.setAttribute(suppressGlowAttr, '');
+    return () => boardCard?.removeAttribute(suppressGlowAttr);
   }, [taskSheetId]);
 
   useUrlSheet({
-    searchParamKey: 'taskSheetId',
+    searchParamKey: TASK_SHEET_PARAM,
     renderContent: (id, organizationId) => <TaskSheet id={id} organizationId={organizationId} />,
     onAfterClose: (id) => {
       // Check for mutations that happened while the sheet was open

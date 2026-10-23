@@ -1,5 +1,5 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
-import { defaultOrder, getRelativeOrder, orderGap } from 'shared/utils/display-order';
+import { defaultOrder, getEdgeOrder, getRelativeOrder, orderGap } from 'shared/utils/display-order';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
@@ -11,24 +11,25 @@ export const getNewTaskOrder = (
   tasks: Pick<Task, 'id' | 'displayOrder' | 'status' | '_draft' | 'projectId'>[],
   projectId?: string,
 ) => {
-  // Filter out the create-task form, optionally scope to project, and keep the target status
-  const filteredTasks = tasks.filter((t) => !isDraftTask(t) && (!projectId || t.projectId === projectId) && t.status === status);
+  const orders = tasks
+    .filter((task) => !isDraftTask(task) && (!projectId || task.projectId === projectId) && task.status === status)
+    .map(({ displayOrder }) => displayOrder);
 
-  if (filteredTasks.length === 0) return defaultOrder;
-
-  // "iced" / "unstarted" (status >= Unstarted) place the new task at the top (max + gap);
-  // later statuses place it at the bottom (min − gap). Filter-then-min/max, no full sort.
-  const orders = filteredTasks.map((t) => t.displayOrder);
-  return status >= TaskStatus.Unstarted ? Math.max(...orders) + orderGap : Math.min(...orders) - orderGap;
+  return getEdgeOrder(orders, status >= TaskStatus.Unstarted ? 'top' : 'bottom', false);
 };
 
 /**
  * Calculate a new display order for a task being moved relative to another task (edge) in the same column.
  * Tasks use descending display order (higher = top).
  */
-export const getRelativeTaskOrder = (edge: Edge, tasks: Task[], order: number, id: string, status?: TaskStatus) => {
-  // Filter tasks by status if provided
-  const filteredTasks: Task[] = status ? tasks.filter((t) => t.status === status && !isDraftTask(t)) : tasks;
+export const getRelativeTaskOrder = (
+  edge: Edge,
+  tasks: Pick<Task, 'id' | 'displayOrder' | 'status' | '_draft'>[],
+  order: number,
+  id: string,
+  status?: TaskStatus,
+) => {
+  const filteredTasks = status === undefined ? tasks : tasks.filter((t) => t.status === status && !isDraftTask(t));
 
   return getRelativeOrder(filteredTasks, order, id, edge, false);
 };
@@ -52,6 +53,10 @@ export const getNewStatusTaskOrder = (task: Task, newStatus: number, placed: Tas
   return Math.floor(closestTask.displayOrder) + (direction > 0 ? -orderGap : orderGap);
 };
 
+// Far wider than `orderGap`, so the draft never sorts between two real rows
+const draftOrderGap = 1000;
+const draftEmptyOrder = 2000;
+
 /**
  * Return a display order for the draft create-task form card so it sorts
  * at the top (unstarted/iced) or bottom (started/etc.) of its status group.
@@ -62,15 +67,15 @@ export const getDraftDisplayOrder = (status: number, projectId: string) => {
 
   const atTop = status >= TaskStatus.Unstarted;
 
-  if (projectTasks.length === 0) return atTop ? 2000 : -2000;
+  if (projectTasks.length === 0) return atTop ? draftEmptyOrder : -draftEmptyOrder;
 
   if (atTop) {
     const highest = Math.max(...projectTasks.map((t) => t.displayOrder));
-    return highest + 1000;
+    return highest + draftOrderGap;
   }
 
   const lowest = Math.min(...projectTasks.map((t) => t.displayOrder));
-  return lowest - 1000;
+  return lowest - draftOrderGap;
 };
 
 /**

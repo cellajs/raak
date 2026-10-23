@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { panelMinWidth } from '~/modules/common/board/board-layout';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -6,7 +7,7 @@ import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
+import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import type { BoardSearchParams, ProjectResizablePanel, Task } from '~/modules/task/types';
 
@@ -95,7 +96,7 @@ export const sortTasksAsOnBoard = (tasks: Task[], projects: EnrichedProject[]) =
 };
 
 /** projectId → split sections of one board; unsplit projects are absent. */
-export type BoardViewSections = Record<string, SectionsValue[]>;
+type BoardViewSections = Record<string, SectionsValue[]>;
 
 /** Narrows a board's panel data to its split sections, the only part the panel layout depends on. */
 export const pickViewSections = (board: BoardPanelData | undefined): BoardViewSections => {
@@ -131,7 +132,7 @@ export const formatSectionLabel = (filters: SectionsValue): string => {
     .map(([key, values]) => {
       switch (key) {
         case 'status':
-          return `${values.map((status) => statusOptionsByValue[status].status).join(', ')}`;
+          return `${values.map((status) => i18n.t(`c:${statusOptionsByValue[status].status}`)).join(', ')}`;
         default:
           return `${key.charAt(0).toUpperCase() + key.slice(1)}: ${values.join(', ')}`;
       }
@@ -165,7 +166,7 @@ let lastInteractionBoardKey: string | null = null;
 export const resetTaskInteraction = (boardKey?: string) => {
   if (boardKey && boardKey === lastInteractionBoardKey) return;
   lastInteractionBoardKey = boardKey ?? null;
-  useTaskInteractionStore.getState().reset();
+  taskInteractionStore.getState().reset();
   useBoardFocusStore.getState().reset();
   useTaskCardStore.getState().reset();
 };

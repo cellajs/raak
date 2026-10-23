@@ -12,18 +12,6 @@ export const cachedTasks = (): Task[] => {
 
 /** Returns the active task from cached task lists. */
 export const currentActiveTask = (taskId?: string): Task | undefined => {
-  const tasks = cachedTasks();
-  if (!tasks.length) return;
-
-  // Explicit taskId
-  if (taskId) return tasks.find((t) => t.id === taskId);
-
-  const storeFocusedId = useBoardFocusStore.getState().currentItemId;
-  if (storeFocusedId) return tasks.find((t) => t.id === storeFocusedId);
-
-  // DOM-focused element
-  const activeId = document.activeElement?.id;
-  if (activeId) return tasks.find((t) => t.id === activeId);
-
-  return;
+  const id = taskId || useBoardFocusStore.getState().currentItemId || document.activeElement?.id;
+  return id ? cachedTasks().find((task) => task.id === id) : undefined;
 };

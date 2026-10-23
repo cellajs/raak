@@ -1,6 +1,7 @@
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { autoScrollForElements, autoScrollWindowForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useState } from 'react';
+import { useLatestRef } from '~/hooks/use-latest-ref';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { isCoarsePointerDevice } from '~/modules/task/helpers/mobile-drag-indicator';
 import { scrollStatusIntoView } from '~/modules/task/helpers/panel-scroll-registry';
@@ -22,8 +23,7 @@ interface UsePanelDropTargetOptions {
 export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropTargetOptions) {
   const [highlightProject, setHighlightProject] = useState(false);
   // Use ref so getData() always reads the latest tasks without re-registering listeners
-  const tasksRef = useRef(tasks);
-  tasksRef.current = tasks;
+  const tasksRef = useLatestRef(tasks);
 
   useEffect(() => {
     if (!panelRef.current) return;

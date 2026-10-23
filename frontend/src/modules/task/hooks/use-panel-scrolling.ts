@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { VirtualizerHandle } from 'virtua';
+import { useLatestRef } from '~/hooks/use-latest-ref';
 import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-nav-registry';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
@@ -30,8 +31,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
 
   // Keep the latest tasks in a ref so the registered scroller always resolves the current index.
-  const tasksRef = useRef(tasks);
-  tasksRef.current = tasks;
+  const tasksRef = useLatestRef(tasks);
 
   // Keyboard navigation reads the list in render order, statuses as groups, and brings virtualized-out cards into view
   useEffect(() => {
@@ -114,6 +114,12 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
     pendingScrollRef.current = { action: 'accepted-close', anchorTaskId: anchor && anchor.status !== TaskStatus.Accepted ? anchor.id : null };
   }, []);
 
+  const scrollToAndGlow = (index: number) => {
+    virtualizerRef.current?.scrollToIndex(index, { align: 'center', smooth: false });
+    const task = tasksRef.current[index];
+    if (task) requestAnimationFrame(() => triggerTaskGlow(task.id));
+  };
+
   // Execute pending scroll after the tasks list updates (new boundary indices are available)
   useLayoutEffect(() => {
     const pending = pendingScrollRef.current;
@@ -146,9 +152,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
         const lastAccepted = boundary === -1 ? tasksRef.current.length - 1 : boundary - 1;
         if (lastAccepted < 0) return;
         if (v.findItemIndex(v.scrollOffset) <= lastAccepted) return;
-        v.scrollToIndex(lastAccepted, { align: 'center', smooth: false });
-        const acceptedTask = tasksRef.current[lastAccepted];
-        if (acceptedTask) requestAnimationFrame(() => triggerTaskGlow(acceptedTask.id));
+        scrollToAndGlow(lastAccepted);
       });
       return;
     }
@@ -162,9 +166,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
         const v = virtualizerRef.current;
         if (!v) return;
         if (v.findItemIndex(v.scrollOffset + v.viewportSize) >= icedBoundaryIndex) return;
-        v.scrollToIndex(icedBoundaryIndex, { align: 'center', smooth: false });
-        const icedTask = tasksRef.current[icedBoundaryIndex];
-        if (icedTask) requestAnimationFrame(() => triggerTaskGlow(icedTask.id));
+        scrollToAndGlow(icedBoundaryIndex);
       });
     }
   }, [tasks, icedBoundaryIndex]);

@@ -9,6 +9,8 @@ import { TableFilterBarContext } from '~/modules/common/data-table/table-filter-
 import { useMatchSteps } from '~/modules/common/match-highlight';
 import { SearchClearButton } from '~/modules/common/search-clear-button';
 import { SearchSpinner } from '~/modules/common/search-spinner';
+import { boardSearchDefaults } from '~/modules/task/search-params-schemas';
+import type { BoardSearchParams } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/modules/ui/input-group';
 import { cn } from '~/utils/cn';
@@ -17,7 +19,7 @@ import { cn } from '~/utils/cn';
 export const boardSearchInputId = 'board-search-input';
 
 /** The matching tasks in view order. With `onStep`, Enter and the arrow buttons walk through them. */
-export type BoardSearchMatches = { ids: string[]; onStep?: (id: string) => void; currentId?: string | null };
+type BoardSearchMatches = { ids: string[]; onStep?: (id: string) => void; currentId?: string | null };
 
 interface BoardSearchProps {
   children?: React.ReactNode;
@@ -36,9 +38,9 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   const { isFilterActive } = useContext(TableFilterBarContext);
 
   const {
-    search: { q: searchQuery = '', matchMode = 'all' },
+    search: { q: searchQuery = boardSearchDefaults.q, matchMode = boardSearchDefaults.matchMode },
     setSearch,
-  } = useSearchParams<{ q?: string; matchMode?: 'all' | 'any' }>({});
+  } = useSearchParams<Pick<BoardSearchParams, 'q' | 'matchMode'>>();
 
   const [inputValue, setInputValue] = useState(searchQuery);
 

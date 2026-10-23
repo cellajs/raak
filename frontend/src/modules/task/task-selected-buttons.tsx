@@ -1,7 +1,7 @@
 import { CheckIcon, CircleDotDashedIcon, CopyIcon, TagIcon, TrashIcon, UserRoundPlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { NamedText } from '~/modules/common/named-text';
 import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { toaster } from '~/modules/common/toaster/toaster';
@@ -67,7 +67,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
     const tasks = resolveSelected();
     if (!tasks.length) return;
 
-    const { create, remove } = useDialoger.getState();
+    const { create, remove } = dialoger.getState();
     const removeDialog = () => remove('delete-tasks');
     const onDeleted = () => {
       removeDialog();

@@ -1,12 +1,9 @@
 import type { SVGProps } from 'react';
-import { useTranslation } from 'react-i18next';
-import { STATUS_ICON_STROKE_WIDTH } from '~/modules/task/dropdowns/status-icons/constants';
+import { StatusIconFrame, statusIconStrokeWidth } from '~/modules/task/dropdowns/status-icons/status-icon-frame';
 
-export function UnstartedIcon({ ...props }: SVGProps<SVGSVGElement>) {
-  const { t } = useTranslation();
+export function UnstartedIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg width="1em" height="1em" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-label={t('c:unstarted')} {...props}>
-      <title>{t('c:unstarted')}</title>
+    <StatusIconFrame status="unstarted" {...props}>
       <rect
         x="1.25"
         y="1.25"
@@ -15,7 +12,7 @@ export function UnstartedIcon({ ...props }: SVGProps<SVGSVGElement>) {
         rx="4.25"
         fill="none"
         stroke="currentColor"
-        strokeWidth={STATUS_ICON_STROKE_WIDTH}
+        strokeWidth={statusIconStrokeWidth}
         strokeLinecap="round"
         strokeDasharray="0.01 2.4"
       />
@@ -27,10 +24,10 @@ export function UnstartedIcon({ ...props }: SVGProps<SVGSVGElement>) {
         rx="2.6"
         fill="none"
         stroke="currentColor"
-        strokeWidth={STATUS_ICON_STROKE_WIDTH}
+        strokeWidth={statusIconStrokeWidth}
         strokeLinecap="round"
         strokeDasharray="0.01 1.8"
       />
-    </svg>
+    </StatusIconFrame>
   );
 }

@@ -72,3 +72,5 @@ export const useTaskInteractionStore = create<TaskInteractionState>()(
     })),
   ),
 );
+
+export { useTaskInteractionStore as taskInteractionStore };

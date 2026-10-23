@@ -2,6 +2,9 @@
 // reconciles the element's className on re-render; an attribute React does not manage survives.
 const GLOW_ATTR = 'data-highlight-flash';
 
+/** Set on a board card to skip its glow, as the open task sheet shows the same task. */
+export const suppressGlowAttr = 'data-suppress-glow';
+
 const triggerGlow = (el: HTMLElement) => {
   requestAnimationFrame(() => {
     const cleanup = () => el.removeAttribute(GLOW_ATTR);
@@ -30,7 +33,7 @@ export const triggerSectionGlow = (type: 'iced' | 'accepted', projectId: string)
 
 export const triggerTaskGlow = (taskId: string) => {
   const el = document.getElementById(taskId);
-  if (!el || el.hasAttribute('data-suppress-glow')) return;
+  if (!el || el.hasAttribute(suppressGlowAttr)) return;
 
   // Defer glow until card leaves editing state (description saves happen while editing)
   if (el.dataset.state === 'editing') {

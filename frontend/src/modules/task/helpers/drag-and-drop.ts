@@ -14,7 +14,7 @@ export const canDropTaskIntoProject = (sourceProjectId: string, targetProjectId:
 
 /** Checks whether drag data represents a board panel. */
 export const isPanelData = (data: Record<string | symbol, unknown>): data is PanelDraggableData => {
-  return data.dragItem === true && typeof data.type === 'string' && data.type === 'panel';
+  return data.dragItem === true && data.type === 'panel';
 };
 /** Checks whether drag data represents a task card. */
 export const isTaskData = (data: Record<string | symbol, unknown>): data is TaskDraggableData => {

@@ -2,18 +2,17 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
 import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-scaffold';
 import type { SelectPrimaryLabelProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
-import { cn } from '~/utils/cn';
 import { isTouchInteraction } from '~/utils/input-modality';
 
 /** Dropdown to pick a task's primary label (task type) from the project's primary set. */
-export function SelectPrimaryLabel({ value: currentId, projectId, onChange, taskId, className = '' }: SelectPrimaryLabelProps) {
+export function SelectPrimaryLabel({ value: currentId, projectId, onChange, taskId }: SelectPrimaryLabelProps) {
   const { t } = useTranslation();
   const primaryLabels = usePrimaryLabels(projectId);
 
@@ -30,7 +29,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
   const commit = (label: Label) => {
     if (liveId !== label.id) onChange(label.id);
     setSearchValue('');
-    useDropdowner.getState().remove();
+    dropdowner.getState().remove();
   };
 
   return (
@@ -55,7 +54,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
         setSearchValue(value);
       }}
     >
-      <div className={cn(className, 'relative w-48 rounded-lg p-0 max-sm:w-full')}>
+      <div className="relative w-48 rounded-lg p-0 max-sm:w-full">
         <ComboboxSearchInput
           autoFocus={!isTouchInteraction()}
           value={searchValue}

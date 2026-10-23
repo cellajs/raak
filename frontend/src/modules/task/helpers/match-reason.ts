@@ -2,7 +2,7 @@ import { foldText, trimAroundMatch } from 'shared/utils/text-match';
 import { descriptionText, summaryText } from '~/modules/task/helpers/search-filter';
 import type { Task } from '~/modules/task/types';
 
-export type MatchReason = { description?: string; people: string[] };
+type MatchReason = { description?: string; people: string[] };
 
 /**
  * Why a task matched when nothing it shows contains a term: a window of the description around the

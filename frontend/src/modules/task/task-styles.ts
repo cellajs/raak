@@ -37,17 +37,6 @@ export const statusButtonVariants = cva(
   },
 );
 
-/** Maps task statuses to their fill color classes. */
-export const statusFillColors = {
-  0: 'fill-green-500',
-  1: 'fill-orange-500',
-  2: 'fill-yellow-500',
-  3: 'fill-lime-500',
-  4: 'fill-gray-400',
-  5: 'fill-slate-500',
-  6: 'fill-sky-500',
-} as const;
-
 /**
  * Left gutter + bottom padding for a task description, shared by the expanded (read-only) view
  * and the editing form so toggling edit mode doesn't shift the text.

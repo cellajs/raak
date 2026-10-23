@@ -17,7 +17,6 @@ import { TaskSummaryHtml } from '~/modules/task/card/summary-html';
 import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
 import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
-import { statusFillColors } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Button } from '~/modules/ui/button';
@@ -173,7 +172,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
                 channelId={getSeenChannelId('task', row)}
                 productType="task"
               />
-              <status.icon className={`mr-2 size-4 shrink-0 fill-current ${statusFillColors[row.status]}`} aria-hidden="true" />
+              <status.icon className="mr-2 size-4 shrink-0" aria-hidden="true" />
               <span>{t(`c:${status.status}`)}</span>
             </>
           );

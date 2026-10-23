@@ -19,7 +19,7 @@ const task = (overrides: Partial<Task> = {}) =>
 describe('searchFilterFunction', () => {
   it('passes every task without a query, and the create form always', () => {
     expect(searchFilterFunction({ q: '' }, task())).toBe(true);
-    expect(searchFilterFunction({ q: 'missing' }, task({ id: 'create-task-p1' }))).toBe(true);
+    expect(searchFilterFunction({ q: 'missing' }, task({ _draft: true }))).toBe(true);
   });
 
   it('matches description, label and assignee text', () => {

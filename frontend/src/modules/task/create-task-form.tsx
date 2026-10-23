@@ -9,7 +9,7 @@ import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
@@ -110,7 +110,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   );
 
   const handleCloseForm = () => {
-    if (isDialog) useDialoger.getState().remove();
+    if (isDialog) dialoger.getState().remove();
     else closeCreateTaskForm(projectId);
   };
 
@@ -364,7 +364,6 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                             <AvatarOverflowIndicator className="h-6 w-6 text-xs" />
                           </AvatarGroup>
                           <span className="truncate">
-                            {value.length === 0 && t('c:assign_to')}
                             {value.length === 1 && value[0].name}
                             {value.length === 2 && value.map(({ name }) => name).join(', ')}
                             {value.length > 2 && t('c:count_assigned', { count: value.length })}
@@ -389,7 +388,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
               <Button type="submit" disabled={!isDirty} press={false} className="grow rounded-none rounded-l">
                 <span>
                   {t('c:create')}
-                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptionsByValue[watchedStatus].status}`}
+                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${t(`c:${statusOptionsByValue[watchedStatus].status}`)}`}
                 </span>
               </Button>
 

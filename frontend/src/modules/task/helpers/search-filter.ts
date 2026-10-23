@@ -2,6 +2,7 @@ import type { Block } from '@blocknote/core';
 import { getSearchableTextFromBlocks } from 'shared/blocknote';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { foldText, matchesTerms } from 'shared/utils/text-match';
+import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 
 type SearchableText = { text: string; folded: string };
@@ -31,8 +32,7 @@ export const searchFilterFunction = (searchParams: { q?: string; matchMode?: Boa
   const { q, matchMode = 'all' } = searchParams;
   const { terms } = parseSearchQuery(q);
 
-  // Always allow empty query or create-task
-  if (!terms.length || task.id.startsWith('create-task')) return true;
+  if (!terms.length || isDraftTask(task)) return true;
 
   const { keywords, labels, assignedTo } = task;
   const fields = [

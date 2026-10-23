@@ -37,7 +37,7 @@ import { prepareProductDelete } from '~/query/offline/prepare-delete';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
-import { mergeServerResponse } from '~/query/offline/update-success-utils';
+import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import type { QueryData } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
@@ -67,7 +67,7 @@ type OptimisticCacheFields = {
 
 type TaskCreateMutationFnVariables = CreateTaskDataInner & OptimisticCacheFields;
 
-export type TaskUpdateMutationFnVariables = BaseUpdateParams & Partial<OptimisticCacheFields>;
+type TaskUpdateMutationFnVariables = BaseUpdateParams & Partial<OptimisticCacheFields>;
 
 type TaskCreateFullVars = CreateVariables<TaskCreateMutationFnVariables>;
 type TaskUpdateFullVars = UpdateVariables<UpdateTaskOps> & Partial<OptimisticCacheFields>;
@@ -136,8 +136,11 @@ const TASK_DERIVED_DESCRIPTION_FIELDS = [
 registerDescriptionDerivation('task', deriveTaskDescription);
 registerYjsOwnedFields('task', ['description', ...TASK_DERIVED_DESCRIPTION_FIELDS]);
 
-const tasksMutationKeyBase = ['task'] as const;
 const handleError = createResourceError('task');
+
+/** Refetches the organization's lists once no other task mutation is pending. */
+const invalidateOrgLists = (queryClient: QueryClient, organizationId: string) =>
+  invalidateIfLastMutation(queryClient, taskKeys.all, taskKeys.list.org(organizationId));
 
 const findTaskInCache = createCacheFinder<Task>('task');
 
@@ -151,11 +154,15 @@ const createTaskMutationFn = async ({ tenantId, organizationId, data, stx }: Tas
   return result.data;
 };
 
+/** HLC timestamps cover scalar fields only: AWSet fields are commutative. */
+const scalarFieldNamesOf = (ops: UpdateTaskOps | undefined) =>
+  Object.entries(ops ?? {})
+    .filter(([, value]) => !isArrayDelta(value))
+    .map(([key]) => key);
+
 /** Sends one task update; exported for the replay test. */
 export const updateTaskMutationFn = async ({ tenantId, organizationId, id, ops, stx }: TaskUpdateFullVars) => {
-  // HLC timestamps only for scalar fields (AWSet fields are commutative).
-  const scalarFieldNames = ops ? Object.keys(ops).filter((k) => !isArrayDelta(ops[k as keyof typeof ops])) : [];
-  const effectiveStx = stx ?? createStxForUpdate(scalarFieldNames);
+  const effectiveStx = stx ?? createStxForUpdate(scalarFieldNamesOf(ops));
   return updateTask({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
 };
 
@@ -372,7 +379,7 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
   },
   // Error-only: onSuccess patches cache, SSE handles other users
   onSettled: (_data, error, variables) => {
-    if (error) invalidateIfLastMutation(queryClient, tasksMutationKeyBase, taskKeys.list.org(variables.organizationId));
+    if (error) invalidateOrgLists(queryClient, variables.organizationId);
   },
 });
 
@@ -430,12 +437,11 @@ const taskUpdateOptions = (
       const freshPrimary = findLabelInCache(variables.ops.primaryLabelId);
       if (freshPrimary) merged.primaryLabel = freshPrimary;
     }
-    cacheUpdate(orgKey, [merged]);
-    queryClient.setQueryData<Task>(detailKey, (old) => (old ? { ...old, ...merged } : old));
+    syncEntityToCache({ entity: merged, listKey: orgKey, detailKey, queryClient });
   },
   // Error-only: onSuccess patches cache, SSE handles other users
   onSettled: (_data, error, variables) => {
-    if (error) invalidateIfLastMutation(queryClient, tasksMutationKeyBase, taskKeys.list.org(variables.organizationId));
+    if (error) invalidateOrgLists(queryClient, variables.organizationId);
   },
 });
 
@@ -467,7 +473,7 @@ const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteD
   },
   onSettled: (data, error, variables) => {
     // A row put back is as the delete held it: remote changes were kept from the cache while it was pending.
-    if (error || data?.rejectedIds?.length) invalidateIfLastMutation(queryClient, tasksMutationKeyBase, taskKeys.list.org(variables.organizationId));
+    if (error || data?.rejectedIds?.length) invalidateOrgLists(queryClient, variables.organizationId);
   },
 });
 
@@ -501,8 +507,7 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
 
     // Coalesce queued offline edits; squashPendingMutation keeps each inherited field's original
     // timestamp so LWW arbitrates by intent time, and only the changed fields carry this edit's stamps.
-    const scalarFieldNames = ops ? Object.keys(ops).filter((k) => !isArrayDelta(ops[k as keyof typeof ops])) : [];
-    const newStx = createStxForUpdate(scalarFieldNames);
+    const newStx = createStxForUpdate(scalarFieldNamesOf(ops));
     const { ops: mergedOps, stx } = ops
       ? squashPendingMutation(queryClient, taskKeys.update, taskId, ops as Record<string, unknown>, newStx)
       : { ops: {} as Record<string, unknown>, stx: newStx };
