@@ -81,7 +81,7 @@ export function ProjectSuggestionCombobox({
       <ComboboxPrimitive.Trigger
         nativeButton={false}
         render={
-          <div className="relative flex min-h-12 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border border-input bg-background p-1.5 pr-10 active:translate-y-0!" />
+          <div className="relative flex min-h-12 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border border-input bg-background p-1.5 pr-10" />
         }
       >
         {value.length > 0 ? (
@@ -94,7 +94,7 @@ export function ProjectSuggestionCombobox({
           <span className="ml-1 text-sm">{t('c:select_resource', { resource: t('c:project_other').toLowerCase() })}</span>
         )}
 
-        <ChevronsUpDownIcon className="absolute right-0 mx-2 h-4 w-4 shrink-0 opacity-50" />
+        <ChevronsUpDownIcon className="absolute right-0 mx-2 shrink-0 opacity-50" />
       </ComboboxPrimitive.Trigger>
 
       <ComboboxContent className="p-0">
@@ -132,17 +132,21 @@ export function ProjectSuggestionCombobox({
                           value={project}
                           disabled={isAssigned && !isSelected}
                           data-assigned-workspace={isAssigned}
-                          className="group w-full justify-between"
+                          className="group/project-option justify-between"
                         >
-                          <div className="flex items-center space-x-2 outline-0 ring-0">
-                            <EntityAvatar type={entityType} className="h-8 w-8" id={id} name={name} url={thumbnailUrl} />
-                            <span className="truncate font-medium underline-offset-4 group-hover:underline group-data-[assigned-workspace=true]:no-underline">
+                          <div className="flex items-center gap-2">
+                            <EntityAvatar type={entityType} id={id} name={name} url={thumbnailUrl} />
+                            <span className="truncate font-medium underline-offset-4 group-hover/project-option:underline group-data-[assigned-workspace=true]/project-option:no-underline">
                               {name}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-0.5">
-                            <Badge size="sm" variant="plain" className="invisible gap-1 group-data-[assigned-workspace=true]:visible max-sm:hidden">
+                            <Badge
+                              size="sm"
+                              variant="plain"
+                              className="invisible gap-1 group-data-[assigned-workspace=true]/project-option:visible max-sm:hidden"
+                            >
                               <span className="max-w-32 truncate">
                                 {assignedWorkspaceId === workspaceId
                                   ? t('c:in_current_workspace')

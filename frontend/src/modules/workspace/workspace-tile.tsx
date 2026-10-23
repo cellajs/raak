@@ -30,7 +30,7 @@ export function WorkspaceTile({ entity }: WorkspaceTileProps) {
             {projects.map((project) => (
               <EntityAvatar
                 key={project.id}
-                className="-ml-2 h-10 w-10 border"
+                className="-ml-2 size-10 border"
                 type="project"
                 id={project.id}
                 name={project.name}
@@ -38,7 +38,7 @@ export function WorkspaceTile({ entity }: WorkspaceTileProps) {
               />
             ))}
           </AvatarGroupList>
-          <AvatarOverflowIndicator className="-ml-2 h-10 w-10 rounded-md border text-xs" />
+          <AvatarOverflowIndicator className="-ml-2 rounded-md border text-xs" />
         </AvatarGroup>
       )}
     </div>

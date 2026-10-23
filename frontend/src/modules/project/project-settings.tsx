@@ -91,7 +91,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
                 onClick={() => removeProjectFromWorkspace()}
                 disabled={isRemovingProjectFromWorkspace}
               >
-                <UnlinkIcon className="size-4" />
+                <UnlinkIcon />
                 <span>{isRemovingProjectFromWorkspace ? t('c:loading') : t('c:remove_project_from_workspace')}</span>
               </Button>
             )}
@@ -106,7 +106,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
         </CardHeader>
         <CardContent>
           <Button variant="destructive" className="w-full sm:w-auto" soft onClick={() => leaveProject()} disabled={isLeavingProject}>
-            <LogOutIcon className="size-4" />
+            <LogOutIcon />
             <span>{isLeavingProject ? t('c:loading') : t('c:leave_project')}</span>
           </Button>
         </CardContent>
@@ -122,7 +122,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
           </CardHeader>
           <CardContent>
             <Button ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>
-              <Trash2Icon className="h-4 w-4" />
+              <Trash2Icon />
               <span>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</span>
             </Button>
           </CardContent>

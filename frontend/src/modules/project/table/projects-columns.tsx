@@ -94,15 +94,16 @@ export const useColumns = (organization: EnrichedOrganization) => {
       minBreakpoint: 'md',
       minWidth: 100,
       maxWidth: 160,
+      cellClass: 'gap-2',
       renderCell: ({ row }) =>
         row.public ? (
           <>
-            <GlobeIcon className="mr-2 opacity-50" />
+            <GlobeIcon className="opacity-50" />
             {t('c:public')}
           </>
         ) : (
           <>
-            <LockIcon className="mr-2 opacity-50" />
+            <LockIcon className="opacity-50" />
             <span className="opacity-50">{t('c:private')}</span>
           </>
         ),

@@ -74,8 +74,8 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
               >
                 <ShrubIcon className="size-12" strokeWidth={1} />
                 <div className="flex flex-col truncate pl-3">
-                  <p className="">{t('c:create_project.text')}</p>
-                  <div className="mt-1 flex flex-row items-center truncate opacity-50 transition-opacity group-hover/toggle:opacity-100">
+                  <p>{t('c:create_project.text')}</p>
+                  <div className="mt-1 flex items-center truncate opacity-50 transition-opacity group-hover/toggle:opacity-100">
                     <strong>{t('c:continue')}</strong>
                     <ChevronRightIcon className="ml-1" />
                   </div>
@@ -90,8 +90,8 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
               >
                 <SquareMousePointerIcon className="size-12" strokeWidth={1} />
                 <div className="flex flex-col truncate pl-3">
-                  <div className="">{t('c:select_project')}</div>
-                  <div className="mt-1 flex flex-row items-center truncate opacity-50 transition-opacity group-hover/toggle:opacity-100">
+                  <div>{t('c:select_project')}</div>
+                  <div className="mt-1 flex items-center truncate opacity-50 transition-opacity group-hover/toggle:opacity-100">
                     <strong>{t('c:continue')}</strong>
                     <ChevronRightIcon className="ml-1" />
                   </div>

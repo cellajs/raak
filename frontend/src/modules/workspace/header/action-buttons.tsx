@@ -101,7 +101,7 @@ export function WorkspaceActionButtons() {
             <Icon />
             {key === 'add' && (
               <>
-                <span className="max-md:hidden xl:hidden">{t('c:add')}</span>
+                <span className="xl:hidden">{t('c:add')}</span>
                 <span className="max-xl:hidden">{label}</span>
               </>
             )}

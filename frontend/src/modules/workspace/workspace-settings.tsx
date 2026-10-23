@@ -92,12 +92,12 @@ function WorkspaceSettings({ workspace }: WorkspaceSettingsProps) {
         </CardHeader>
         <CardContent>
           <Button disabled={!canDelete} ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>
-            <Trash2Icon className="h-4 w-4" />
+            <Trash2Icon />
             <span>{t('c:delete_resource', { resource: t('c:workspace').toLowerCase() })}</span>
           </Button>
           {!canDelete && (
-            <p className="mt-4 flex items-center text-muted-foreground text-sm italic">
-              <CircleAlertIcon strokeWidth={1.5} className="mr-1 inline" />
+            <p className="mt-4 flex items-center gap-1 text-muted-foreground text-sm italic">
+              <CircleAlertIcon />
               {t('c:delete_workspace_restricted.text')}
             </p>
           )}
