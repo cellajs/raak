@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.1.20](https://github.com/cellajs/raak/compare/0.1.19...0.1.20) (2026-10-23)
+
+
+### 🎉 New features
+
+* **task:** bulk delete of selected tasks and labels asks for confirmation ([#204](https://github.com/cellajs/raak/issues/204)) ([ae298ea](https://github.com/cellajs/raak/commit/ae298ea367c27a67422dd766a8fc559bd9d22317))
+* **task:** mobile board polish: header menus open as drawers, a created task scrolls into view ([#201](https://github.com/cellajs/raak/issues/201)) ([8e3fd51](https://github.com/cellajs/raak/commit/8e3fd51e6aac29aa479ebd1e16c8417988d3d44c))
+
+
+### 🐞 Bug fixes
+
+* **notification:** a mention opens the task on its workspace board, not the organization page ([#202](https://github.com/cellajs/raak/issues/202)) ([98879c7](https://github.com/cellajs/raak/commit/98879c7ec358e9a0f98d3b1feac7a119e254cb2e))
+* **task:** status bars no longer cover the panel's side lines ([#205](https://github.com/cellajs/raak/issues/205)) ([f656d3f](https://github.com/cellajs/raak/commit/f656d3fac2bddf9773c7d8fc27de75142b3cfb92))
+
+
+### 🧹 Chores
+
+* sync upstream cella v0.20.0 (4f624faf2) ([#207](https://github.com/cellajs/raak/issues/207)) ([2407a74](https://github.com/cellajs/raak/commit/2407a741a49dbc86dab908094b4f24d61f63c599))
+* sync upstream cella v0.20.0 (6e886c91d), app modules swept for consistency ([#206](https://github.com/cellajs/raak/issues/206)) ([c621390](https://github.com/cellajs/raak/commit/c621390f7722e87f3f36974144d0ff93b1e476d8))
+
 ## [0.1.19](https://github.com/cellajs/raak/compare/0.1.18...0.1.19) (2026-10-20)
 
 
