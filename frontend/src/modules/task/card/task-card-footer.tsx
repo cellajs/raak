@@ -15,7 +15,7 @@ import { setTaskSelected } from '~/modules/task/helpers/task-selection';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import { statusButtonVariants } from '~/modules/task/task-styles';
+import { statusButtonVariants, taskCardDimClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
@@ -62,12 +62,12 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
       variant="ghost"
       size="xs"
-      className={cn('relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5', labelsHide)}
+      className={cn('h-auto min-h-8 min-w-8 p-0.5', labelsHide)}
       {...readOnlyInert}
     >
       {task.labels.length > 0 ? (
         isMobile && !isExpandedMobile ? (
-          <div className="flex flex-wrap items-center gap-0.5 truncate font-normal text-[.75rem] leading-4">
+          <div className="flex flex-wrap items-center gap-0.5 truncate font-normal text-xs leading-4">
             <span className="max-w-24 truncate px-1 lowercase">
               <HighlightText text={task.labels[0].name} />
             </span>
@@ -77,10 +77,10 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
           <div className="flex flex-wrap gap-0.5 truncate">
             {task.labels.map(({ name, id }) => {
               return (
-                <div key={id} className="flex max-w-full flex-wrap items-center justify-center rounded-full px-0">
+                <div key={id} className="flex max-w-full flex-wrap items-center justify-center">
                   <Badge
                     variant="outline"
-                    className="inline-block min-h-4 max-w-full shrink truncate border-0 bg-transparent px-1 py-0 font-normal text-[.75rem] text-muted-foreground leading-4 shadow-none last:mr-0"
+                    className="inline-block min-h-4 max-w-full shrink truncate border-0 px-1 py-0 font-normal text-muted-foreground leading-4 shadow-none"
                   >
                     <HighlightText text={name} />
                   </Badge>
@@ -103,11 +103,11 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       )}
     >
       {/* On mobile, show labels on their own line above the footer when expanded */}
-      {isExpandedMobile && <div className={cn('mb-1 flex flex-row items-center', labelsHide)}>{labelsButton}</div>}
-      <div className="group-[.is-expanded]/task:fade-in flex flex-row items-center group-[.is-expanded]/task:animate-in group-[.is-expanded]/task:duration-300 sm:gap-1">
+      {isExpandedMobile && <div className={cn('mb-1 flex items-center', labelsHide)}>{labelsButton}</div>}
+      <div className="group-[.is-expanded]/task:fade-in flex items-center group-[.is-expanded]/task:animate-in group-[.is-expanded]/task:duration-300 sm:gap-1">
         {!isSheet && (
           <Checkbox
-            className={cn('mx-1 data-[state=checked]:border-primary', !isExpandedMobile && 'max-sm:hidden', readOnlyHide)}
+            className={cn('mx-1', !isExpandedMobile && 'max-sm:hidden', readOnlyHide)}
             aria-label={t('c:select_resource', { resource: task.name })}
             checked={isSelected}
             disabled={hasSelectedLabels || isOtherProjectSelected}
@@ -123,20 +123,20 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             aria-label={t('c:assign_to')}
             variant="ghost"
             size="xs"
-            className="relative mr-1 flex min-w-8 justify-center px-1 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
+            className={cn(taskCardDimClass, 'mr-1 min-w-8 px-1')}
             {...readOnlyInert}
           >
             {task.assignedTo.length > 0 ? (
               <AvatarGroup limit={isMobile ? 2 : 3}>
                 <AvatarGroupList>
                   {task.assignedTo.map((user) => (
-                    <EntityAvatar type="user" key={user.id} id={user.id} name={user.name} url={user.thumbnailUrl} className="h-6 w-6 text-xs" />
+                    <EntityAvatar type="user" key={user.id} id={user.id} name={user.name} url={user.thumbnailUrl} className="size-6" />
                   ))}
                 </AvatarGroupList>
-                <AvatarOverflowIndicator className="h-6 w-6 text-xs" />
+                <AvatarOverflowIndicator className="size-6 text-xs" />
               </AvatarGroup>
             ) : (
-              <UserXIcon className="h-4 w-4 opacity-60" />
+              <UserXIcon className="size-4 opacity-60" />
             )}
           </Button>
 
@@ -151,7 +151,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               size="xs"
               press={false}
               className={cn(
-                'relative mr-1 font-normal disabled:opacity-100',
+                'mr-1 font-normal disabled:opacity-100',
                 !readOnlyHide && 'sm:rounded-r-none sm:border-r-0',
                 !readOnlyHide && isExpandedMobile && 'rounded-r-none border-r-0',
                 statusButtonVariants({ status: task.status }),
@@ -170,7 +170,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               size="xs"
               press={false}
               className={cn(
-                'relative -ml-1 rounded-none rounded-r px-2 [&>svg]:transition-transform data-dropdowner-active:[&>svg]:rotate-180',
+                '-ml-1 rounded-none rounded-r px-2 [&>svg]:transition-transform data-dropdowner-active:[&>svg]:rotate-180',
                 !isExpandedMobile && 'max-sm:hidden',
                 statusButtonVariants({ status: task.status }),
                 readOnlyHide,

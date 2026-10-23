@@ -195,26 +195,26 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         data-status={task.status}
         data-task-card-id={task.id}
         data-project-id={task.projectId}
-        data-read-only={isReadOnly ? 'true' : undefined}
+        data-read-only={isReadOnly || undefined}
         data-sheet={isSheet || undefined}
-        data-match-current={isCurrent ? '' : undefined}
+        data-match-current={isCurrent || undefined}
         draggable={!isSheet && !isReadOnly && effectiveState === 'collapsed'}
         tabIndex={isSheet || isFocused ? 0 : -1}
         ref={taskRef}
         className={cn(
-          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent to-100% py-0 sm:py-0',
-          task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30!' : 'bg-green-300/20 hover:bg-green-300/30!'),
+          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent py-0 sm:py-0',
           effectiveState !== 'collapsed' && 'is-expanded',
-          isDragging ? 'opacity-30' : 'opacity-100',
+          isDragging && 'opacity-30',
           !isSheet && 'focus-visible:outline-none focus-visible:ring-0',
           isCurrent && 'is-focused',
           isSheet ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]' : 'hover:bg-card/20',
           taskCardVariants({ status: task.status }),
+          task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30' : 'bg-green-300/20 hover:bg-green-300/30'),
         )}
       >
         <CardContent
           id={`${task.id}-content`}
-          className="relative flex flex-col p-1.5! px-2.5! before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-focus-visible/task:before:opacity-100 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
+          className="relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-focus-visible/task:before:opacity-100 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
         >
           <SeenMark
             productId={task.id}

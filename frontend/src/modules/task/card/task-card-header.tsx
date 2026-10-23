@@ -27,13 +27,13 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
   const relativeDate = useRelativeDate(task.createdAt, 'ago');
 
   return (
-    <div className="flex w-full flex-row items-start justify-between py-1">
+    <div className="flex w-full items-start justify-between py-1">
       {/* A phone has no description gutter, so the grip unfolds beside the type button; from sm up it pushes that button into the gutter */}
       <div className={cn('flex shrink-0 sm:flex-col', showDragHandle && 'sm:-mb-8')}>
         {showDragHandle && <TaskDragHandle task={task} />}
         <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
       </div>
-      <div className="ml-1 flex w-full flex-row items-center gap-1">
+      <div className="ml-1 flex w-full items-center gap-1">
         {task.createdBy && (
           <>
             <TooltipButton toolTipContent={task.createdBy.name} side="bottom" sideOffset={5} hideWhenDetached>
@@ -42,7 +42,7 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
                 id={task.createdBy.id}
                 name={task.createdBy.name}
                 url={task.createdBy.thumbnailUrl}
-                className="h-6 w-6 text-xs max-sm:hidden"
+                className="size-6 max-sm:hidden"
               />
             </TooltipButton>
             <TooltipButton toolTipContent={`${t('c:created_at')} ${dateShort(task.createdAt)}`} side="bottom" sideOffset={5} hideWhenDetached>
@@ -54,7 +54,7 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
         <div className="grow" />
 
         {/* The ellipsis comes last so it sits where a collapsed card shows it. A phone has no hover to reveal them. */}
-        <div className={cn('flex flex-row items-center gap-1', taskCardActionsRevealClass, 'max-sm:opacity-100')}>
+        <div className={cn(taskCardActionsRevealClass, 'flex items-center gap-1 max-sm:opacity-100')}>
           {!isSheet && <CardCloseButton animateIn={animateClose} onClick={() => taskCardStore.getState().setTaskState(task.id, 'collapsed')} />}
           <TaskOptionsButton task={task} isSheet={isSheet} />
         </div>

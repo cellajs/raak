@@ -92,7 +92,7 @@ export const BoardPanel = memo(function BoardPanel({
   return (
     <div data-search={!!q} className="group/panel h-full">
       {isMobile ? (
-        <div ref={panelRef} data-highlighted={highlightProject ? 'true' : undefined} className="group/paneldrop flex h-full flex-col">
+        <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex h-full flex-col">
           <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} />
           <FloatingNavButton
             id="create-task"
@@ -105,7 +105,7 @@ export const BoardPanel = memo(function BoardPanel({
       ) : (
         <div className="flex h-full flex-col">
           <TaskPanelHeader project={project} sectionFilters={sectionFilters} publicView={publicView} />
-          <div ref={panelRef} data-highlighted={highlightProject ? 'true' : undefined} className="group/paneldrop flex min-h-0 flex-1 flex-col">
+          <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex min-h-0 flex-1 flex-col">
             <BoardPanelContent isCollapsed={!!isCollapsed} collapsedContent={<TaskPanelCollapsed counts={counts} />}>
               <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} windowScroll={windowScroll} />
             </BoardPanelContent>

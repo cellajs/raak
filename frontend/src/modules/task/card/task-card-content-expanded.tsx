@@ -4,9 +4,10 @@ import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { Spinner } from '~/modules/common/spinner';
 import { taskDescriptionGutterClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
+import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
-const staticEditorClass = '[&>.bn-static-editor]:min-h-8 w-full bg-transparent border-none';
-const expandedClass = `${staticEditorClass} ${taskDescriptionGutterClass}`;
+const staticEditorClass = tw('w-full border-none bg-transparent [&>.bn-static-editor]:min-h-8');
 
 interface TaskCardContentExpandedProps {
   task: Task;
@@ -43,7 +44,7 @@ export function TaskCardContentExpanded({ task, noGutter, onReady, descriptionOv
       <BlockNoteFullHtml
         id={`blocknote-${task.id}`}
         defaultValue={description}
-        className={noGutter ? staticEditorClass : expandedClass}
+        className={cn(staticEditorClass, !noGutter && taskDescriptionGutterClass)}
         dense
         clickOpensPreview
         tenantId={tenantId}

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { useReadOnlyHide } from '~/modules/project/use-read-only';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
+import { cn } from '~/utils/cn';
 
 interface TaskPanelEmptyProps {
   projectId?: string;
@@ -26,9 +27,12 @@ export function TaskPanelEmpty({ projectId }: TaskPanelEmptyProps) {
           <>
             <UndoIcon
               strokeWidth={0.2}
-              className={`absolute top-4 right-4 size-50 translate-y-20 rotate-180 scale-x-0 scale-y-75 text-primary opacity-0 transition-all delay-500 duration-500 group-hover/empty:translate-y-0 group-hover/empty:rotate-[130deg] group-hover/empty:scale-x-100 group-hover/empty:opacity-100 max-md:hidden ${readOnlyHide}`}
+              className={cn(
+                'absolute top-4 right-4 size-50 translate-y-20 rotate-180 scale-x-0 scale-y-75 text-primary opacity-0 transition-[opacity,translate,rotate,scale] delay-500 duration-500 group-hover/empty:translate-y-0 group-hover/empty:rotate-130 group-hover/empty:scale-x-100 group-hover/empty:opacity-100 max-md:hidden',
+                readOnlyHide,
+              )}
             />
-            <p className={`inline-flex gap-1 transition-opacity duration-500 group-hover/empty:opacity-100 sm:opacity-0 ${readOnlyHide}`}>
+            <p className={cn('inline-flex gap-1 transition-opacity duration-500 group-hover/empty:opacity-100 sm:opacity-0', readOnlyHide)}>
               <span>{t('c:click')}</span>
               <span className="text-primary">+</span>
               <span className="text-primary max-sm:hidden">{t('c:task')}</span>

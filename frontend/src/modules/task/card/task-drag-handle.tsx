@@ -87,7 +87,7 @@ export function TaskDragHandle({ task }: TaskDragHandleProps) {
           onFocus={() => setHasFocus(true)}
           onBlur={handleBlur}
           // Only a collapsed card is draggable, so an open one shows no grab cursor
-          className="focus-inset h-8 w-8 group-data-[state=collapsed]/task:cursor-grab group-data-[state=collapsed]/task:active:cursor-grabbing"
+          className="focus-inset size-8 group-data-[state=collapsed]/task:cursor-grab group-data-[state=collapsed]/task:active:cursor-grabbing"
         >
           <GripVerticalIcon className="size-3.5" />
         </Button>

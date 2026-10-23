@@ -24,13 +24,13 @@ interface TaskCardContentCollapsedProps {
  */
 export function TaskCardContentCollapsed({ task, animateClose = false, showDragHandle = false, onEditRequest }: TaskCardContentCollapsedProps) {
   return (
-    <div className="relative flex w-full flex-row gap-1">
+    <div className="relative flex w-full gap-1">
       <div className="flex shrink-0 flex-col">
         {showDragHandle && <TaskDragHandle task={task} />}
         <TaskPrimaryLabelButton task={task} />
       </div>
       {/* Grows to the card edge so the fade under the options button sits at the edge, not at the end of a short title */}
-      <div className="task-summary-fade mt-1.5 mb-1 ml-1 inline min-w-0 grow leading-tight">
+      <div className="task-summary-fade mt-1.5 mb-1 ml-1 min-w-0 grow leading-tight">
         <TaskSummaryHtml className="inline leading-tight" task={task} />
         {env.VITE_DEBUG_MODE && <span className="ml-2 text-muted-foreground/50">#{task.displayOrder}</span>}
         <TaskCardSummaryButtons task={task} />
@@ -38,7 +38,7 @@ export function TaskCardContentCollapsed({ task, animateClose = false, showDragH
       </div>
       {/* Frames the summary from beside it: the summary's fade mask would clip a ring drawn inside it */}
       {onEditRequest && <DescriptionEditButton onClick={onEditRequest} className="top-0 -right-2 bottom-0 left-8" />}
-      <div className={cn('absolute top-0 right-0 flex items-center gap-1', taskCardActionsRevealClass)}>
+      <div className={cn(taskCardActionsRevealClass, 'absolute top-0 right-0 flex items-center gap-1')}>
         {animateClose && <CardCloseExit />}
         <TaskOptionsButton task={task} />
       </div>

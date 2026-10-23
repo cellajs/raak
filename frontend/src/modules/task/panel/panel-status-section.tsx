@@ -123,17 +123,15 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
           variant="ghost"
           size="sm"
           className={cn(
-            'relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs ring-inset transition-all duration-300 ease-in-out focus-visible:ring-offset-0 sm:px-2',
+            'relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs ring-inset transition-[translate,opacity,color,background-color,border-color,box-shadow] duration-300 ease-in-out focus-visible:ring-offset-0 sm:px-2',
             // Hidden state slides the button toward its sticky edge
-            isVisible ? 'pointer-events-auto translate-y-0 opacity-100' : ['opacity-0', isIced ? 'translate-y-full' : '-translate-y-full'],
+            isVisible ? 'pointer-events-auto translate-y-0 opacity-100' : isIced ? 'translate-y-full opacity-0' : '-translate-y-full opacity-0',
             colors.fill,
             colors.text,
             isIced
               ? 'border-b-sky-500/10 hover:bg-sky-100 hover:text-sky-800 max-sm:border-b dark:hover:bg-sky-900 dark:hover:text-sky-300'
-              : [
-                  'border-t border-t-transparent hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900 dark:hover:text-green-400',
-                  colors.border,
-                ],
+              : 'border-t border-t-transparent hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900 dark:hover:text-green-400',
+            !isIced && colors.border,
           )}
         >
           <span className="min-w-8 text-center">{count}</span>
@@ -144,7 +142,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
                 <span>{t('c:since')}</span>
                 <span>{dateMini(dayjs().subtract(boardAcceptedCutOffDays, 'day').toISOString())}</span>
                 {counts.accepted !== counts.acceptedCutOff && showTotal && (
-                  <div className="text-xs">
+                  <div>
                     <span className="mr-2 ml-1">•</span>
                     <span>
                       {counts.accepted + counts.acceptedCutOff} {t('c:in_total')}
@@ -159,7 +157,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
       </div>
       {hasOnlyOlderAccepted && isExpanded && (
         <div className={cn('flex gap-4 px-4 py-5 text-xs', colors.border, colors.fill, colors.text, hintFadeOut)}>
-          <InfoIcon className="inline-block" />
+          <InfoIcon />
           {t('c:older_accepted_table_only', { count: counts.acceptedCutOff })}
         </div>
       )}

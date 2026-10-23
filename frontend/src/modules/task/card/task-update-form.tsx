@@ -14,10 +14,11 @@ import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-
 import { taskDescriptionGutterClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 // Avoid bare `min-h-8`/`pb-4` here: BlockNoteView copies className to its portal element
 // (see @blocknote/react BlockNoteView), which would add empty trailing height below the editor.
-const expandedEditorClass = '[&>.bn-editor]:min-h-8 w-full bg-transparent border-none';
+const expandedEditorClass = tw('w-full border-none bg-transparent [&>.bn-editor]:min-h-8');
 const checkboxExtensions = [checkedExtension({ persisted: true })];
 
 interface TaskUpdateFormProps {

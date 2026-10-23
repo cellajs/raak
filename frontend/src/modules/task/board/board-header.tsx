@@ -91,7 +91,7 @@ export function BoardHeader({
 
       {!publicView && projects.length > 0 && <LabelsDrawerButton entity={workspace ? 'workspace' : 'project'} entityId={workspace?.id ?? boardId} />}
 
-      <DisplayOptions className="empty:hidden max-sm:hidden" />
+      <DisplayOptions className="max-sm:hidden" />
 
       <FocusView iconOnly />
     </div>

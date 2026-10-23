@@ -36,6 +36,9 @@ export const statusButtonVariants = cva(
 /** Shared by the expanded view and the editing form so toggling edit mode does not shift the text. */
 export const taskDescriptionGutterClass = tw('pb-4 pl-1 sm:pl-9');
 
+/** Dims a task card's own buttons until the card is hovered or current. */
+export const taskCardDimClass = tw('opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100');
+
 /** Reveals a task card's action buttons on hover or focus; keep in step with `.task-summary-fade` in card-glow.css. */
 export const taskCardActionsRevealClass = tw(
   'opacity-0 transition-opacity group-focus-within/task:opacity-100 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 has-data-dropdowner-done:opacity-100 group-data-[sheet]/task:opacity-100',

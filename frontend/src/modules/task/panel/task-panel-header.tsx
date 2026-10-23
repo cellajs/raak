@@ -18,8 +18,9 @@ import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
-const handleClass = 'flex h-auto items-center justify-start gap-2 p-0 hover:bg-transparent';
+const handleClass = tw('flex h-auto items-center justify-start gap-2 p-0 hover:bg-transparent');
 
 /**
  * Header component for task board panels in desktop view. Displays project name/avatar or section filters, along with actions like creating a new task or accessing project actions.
@@ -52,7 +53,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
 
   const toggleCreateForm = () => toggleCreateTaskForm(project);
 
-  const projectAvatar = <EntityAvatar className="h-8 w-8" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />;
+  const projectAvatar = <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />;
 
   const leadingSlot = (() => {
     if (isInWorkspace && isPrimary) {
@@ -82,8 +83,8 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
             icon={
               <div className="relative shrink-0">
                 {projectAvatar}
-                <div className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full border bg-background">
-                  <FunnelIcon className="h-2.5 w-2.5" />
+                <div className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full border bg-background">
+                  <FunnelIcon className="size-2.5" />
                 </div>
               </div>
             }
@@ -110,7 +111,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
           fallbackLabel={sectionName}
           icon={
             <div className="flex min-w-8 justify-center">
-              <FunnelIcon className="h-4 w-4 shrink-0" />
+              <FunnelIcon className="size-4 shrink-0" />
             </div>
           }
           className={cn(handleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
@@ -131,7 +132,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
         fallbackLabel={t('c:task_other')}
         icon={
           <div className="flex min-w-8 justify-center">
-            <SquareCheckBigIcon className="h-4 w-4 shrink-0" />
+            <SquareCheckBigIcon className="size-4 shrink-0" />
           </div>
         }
         className={cn(handleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
@@ -151,9 +152,9 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
       {!publicView && isInWorkspace && isPrimary && <ProjectActionsMenu project={project} className="h-8 px-2" />}
       {!isReadOnly && hostsCreateButton && (
         <Button data-form-dirty={hasDraft} variant="plain" size="xs" className="relative hidden rounded sm:inline-flex" onClick={toggleCreateForm}>
-          <Badge className="absolute -top-1 -right-1 z-100 flex in-data-[form-dirty=false]:hidden h-2 w-2 justify-center p-0" />
-          <PlusIcon className={cn('size-4.5', 'transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />
-          <span className="">{t('c:task')}</span>
+          <Badge className="absolute -top-1 -right-1 z-100 in-data-[form-dirty=false]:hidden size-2 p-0" />
+          <PlusIcon className={cn('size-4.5 transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />
+          <span>{t('c:task')}</span>
         </Button>
       )}
     </>

@@ -32,7 +32,7 @@ function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
       ref={cellRef}
       variant="cell"
       tabIndex={tabIndex}
-      className="group inline-flex h-auto w-full flex-wrap justify-start px-0 text-left opacity-100 outline-0 ring-0 focus-visible:ring-0"
+      className="inline-flex h-auto flex-wrap px-0 text-left opacity-100 outline-0"
       onKeyDown={(event) => {
         if (event.key === 'Enter') cellRef.current?.click();
       }}
@@ -69,7 +69,7 @@ function ProjectCell({ row, tabIndex, projects, organization, tenantId }: Projec
     >
       <EntityAvatar
         type="project"
-        className="group-active:press h-8 w-8 group-hover:font-semibold"
+        className="group-active:press group-hover:font-semibold"
         id={project.id}
         name={project.name}
         url={project.thumbnailUrl}
@@ -154,7 +154,7 @@ export const useColumns = (opts: {
         return (
           <div className="inline-flex items-center gap-1">
             <PaperclipIcon className="size-3 -rotate-45 opacity-50" />
-            <span className="">{count}</span>
+            <span>{count}</span>
           </div>
         );
       },
@@ -195,10 +195,10 @@ export const useColumns = (opts: {
             <AvatarGroup limit={3}>
               <AvatarGroupList>
                 {row.assignedTo.map((user) => (
-                  <EntityAvatar type="user" key={user.id} id={user.id} name={user.name} url={user.thumbnailUrl} className="h-8 w-8 text-xs" />
+                  <EntityAvatar type="user" key={user.id} id={user.id} name={user.name} url={user.thumbnailUrl} />
                 ))}
               </AvatarGroupList>
-              <AvatarOverflowIndicator className="h-8 w-8 text-xs" />
+              <AvatarOverflowIndicator className="size-8 text-xs" />
             </AvatarGroup>
           </span>
         );

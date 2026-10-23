@@ -132,7 +132,7 @@ export function BoardSkeleton({
           !projectPage && 'sm:h-[calc(100dvh-var(--board-offset-sm,4rem))] md:h-[calc(100dvh-var(--board-offset-md,4.88rem))]',
         )}
       >
-        <div className="flex h-full flex-row" style={{ gap: columnGap, minWidth: rowMinWidth }}>
+        <div className="flex h-full" style={{ gap: columnGap, minWidth: rowMinWidth }}>
           {panels.map((panel) => {
             const { panelId } = panel;
             if (panel.kind === 'mobile') {
@@ -203,7 +203,7 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
 
       <DisplayOptions className="max-sm:hidden" />
 
-      <Button variant={'outline'} className={cn('flex max-lg:hidden')}>
+      <Button variant="outline" className="max-lg:hidden">
         <ExpandIcon />
       </Button>
     </div>
@@ -229,17 +229,17 @@ interface PanelBodySkeletonProps {
 function PanelBodySkeleton({ rowHeight = desktopRowHeight }: PanelBodySkeletonProps) {
   const renderRowHeight = rowHeight - 8;
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden opacity-100 transition-opacity duration-300 sm:border">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden sm:border">
       <div
-        className={`flex h-9 w-full shrink-0 justify-start gap-1 rounded-none border-t border-t-transparent ${statusSectionColors.accepted.border} ${statusSectionColors.accepted.fill} ring-inset`}
+        className={cn('h-9 shrink-0 border-t border-t-transparent', statusSectionColors.accepted.border, statusSectionColors.accepted.fill)}
       />
       {Array.from({ length: rowCount }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations
-        <div key={index} className="border-b px-1 py-2 hover:bg-transparent">
-          <Skeleton className={'w-full rounded'} style={{ height: `${renderRowHeight}px` }} />
+        <div key={index} className="border-b px-1 py-2">
+          <Skeleton className="w-full rounded" style={{ height: `${renderRowHeight}px` }} />
         </div>
       ))}
-      <div className={`flex h-9 w-full justify-start gap-1 rounded-none ${statusSectionColors.iced.fill} ring-inset`} />
+      <div className={cn('h-9', statusSectionColors.iced.fill)} />
     </div>
   );
 }
@@ -280,22 +280,20 @@ function PanelHeaderSkeleton({ boardId, panelId, projectPage, project, sectionFi
           className={cn(
             buttonVariants({ variant: 'ghost' }),
             'flex h-auto items-center justify-start gap-2 truncate p-0 hover:bg-transparent',
-            isCollapsed ? 'w-full justify-center' : 'justify-start',
+            isCollapsed && 'w-full justify-center',
           )}
         >
-          {!projectPage && isPrimary && (
-            <EntityAvatar className="h-8 w-8" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
-          )}
+          {!projectPage && isPrimary && <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />}
           {(projectPage || !isPrimary) && sectionFilters && (
-            <div className={cn('flex justify-center', (projectPage || !isPrimary) && 'min-w-8')}>
-              <FunnelIcon className="h-4 w-4 shrink-0" />
+            <div className="flex min-w-8 justify-center">
+              <FunnelIcon className="size-4 shrink-0" />
             </div>
           )}
           {!isCollapsed && (
             <div className="truncate font-semibold leading-6">
               {isPrimary && !projectPage && project.name}
               {(!isPrimary || projectPage) && sectionFilters && (
-                <span className={!projectPage ? 'pr-1 italic' : ''}>{formatSectionLabel(sectionFilters)}</span>
+                <span className={!projectPage ? 'pr-1 italic' : undefined}>{formatSectionLabel(sectionFilters)}</span>
               )}
             </div>
           )}
@@ -311,9 +309,8 @@ function PanelHeaderSkeleton({ boardId, panelId, projectPage, project, sectionFi
             )}
             {hostsCreateButton && (
               <Button variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
-                <PlusIcon className="size-4.5 transition-transform duration-200" />
-
-                <span className="">{t('c:task')}</span>
+                <PlusIcon className="size-4.5" />
+                <span>{t('c:task')}</span>
               </Button>
             )}
           </>

@@ -22,11 +22,12 @@ import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskCounts, TaskProps } from '~/modules/task/types';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 // virtua keeps measured heights by index and never renders a row it measured at 0px, so that row is never measured again.
 // Opening or closing the create form hands the form's height to whichever row takes its index, and the form collapses to 0px on submit.
-const rowHeightGuardClass = '[&>ul>li]:min-h-px';
-const raisedRowClass = '[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10';
+const rowHeightGuardClass = tw('[&>ul>li]:min-h-px');
+const raisedRowClass = tw('[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10');
 
 interface TaskPanelContentProps {
   project: Project;
@@ -146,7 +147,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
             id={project.id}
             className="-ml-px min-h-0 flex-1"
             viewportRef={scrollViewportRef}
-            viewportClassName="[&>div]:!flex [&>div]:!flex-col [&>div]:!grow [&>div]:!h-auto [&>div]:!min-h-full [&>div]:pl-px"
+            viewportClassName="[&>div]:flex! [&>div]:flex-col! [&>div]:grow! [&>div]:h-auto! [&>div]:min-h-full! [&>div]:pl-px"
             disableTrackClick
           >
             {/* Accepted section: sticky top, shown when scrolling up or resting at the top */}
