@@ -12,7 +12,7 @@ export function PublicProjectPage({ project, children }: PublicProjectPageProps)
   return (
     <>
       <TaskSheetHandler />
-      <PageHeader entity={project} canUpdate={false} coverUpdateCallback={() => {}} />
+      <PageHeader entity={project} canUpdate={false} onCoverUpdate={() => {}} />
       <div className="flex flex-col sm:gap-2 sm:p-3 md:gap-3">{children}</div>
     </>
   );

@@ -1,7 +1,7 @@
 import { zCreateTasksBody, zLabel, zTask, zUserMinimalBase } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { focusWhenMounted, setCurrentItem } from '~/modules/board-focus/focus-item';
-import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
+import { blocknoteHasContent } from '~/modules/common/blocknote/helpers/blocknote-has-content';
 import { boardStore } from '~/modules/common/board/board-store';
 import { draftStore } from '~/modules/common/form-draft/draft-store';
 import { taskBoardStore } from '~/modules/task/board/task-board-store';
@@ -42,7 +42,7 @@ export type NewTaskFormValues = z.infer<typeof createTaskFormSchema>;
 export const newTaskFormDefaults: NewTaskFormValues = { ...getSchemaDefaults(createTaskFormSchema), status: TaskStatus.Unstarted };
 
 export const newTaskFormIsDirty = ({ assignedTo, labels, description }: Pick<NewTaskFormValues, 'assignedTo' | 'labels' | 'description'>) =>
-  assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
+  assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteHasContent(description));
 
 /** The create-task form's element id; card-glow.css styles ids starting with `create-task-`. */
 export const createTaskFormId = (projectId: string) => `create-task-${projectId}`;

@@ -1,5 +1,5 @@
 import type { Label } from 'sdk';
-import { useDescriptionUpdate } from '~/modules/common/blocknote/use-description-update';
+import { createDescriptionUpdater } from '~/modules/common/blocknote/description-updater';
 import { useLabelUpdateMutation } from '~/modules/label/query';
 
 /**
@@ -8,5 +8,5 @@ import { useLabelUpdateMutation } from '~/modules/label/query';
  */
 export const useLabelDescriptionUpdate = (label: Label) => {
   const { mutateAsync: updateLabel } = useLabelUpdateMutation(label.tenantId, label.organizationId);
-  return useDescriptionUpdate('label', label, (ops) => updateLabel({ id: label.id, ops }));
+  return createDescriptionUpdater('label', label, (ops) => updateLabel({ id: label.id, ops }));
 };

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { useLeaveChannel } from '~/modules/memberships/leave-channel-button';
+import { useLeaveChannel } from '~/modules/memberships/use-leave-channel';
 import { useProjectRemoveWorkspaceMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 

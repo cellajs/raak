@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 import { DescriptionLayers } from '~/modules/common/blocknote/description-layers';
 import { useDescriptionSlot } from '~/modules/common/blocknote/use-description-slot';
-import { useMatchHighlight } from '~/modules/common/match-highlight';
+import { useMatchHighlight } from '~/modules/common/match-highlight/use-match-highlight';
 import { DescriptionEditButton } from '~/modules/task/card/description-edit-button';
 import { TaskCardContentCollapsed } from '~/modules/task/card/task-card-content-collapsed';
 import { TaskCardContentExpanded } from '~/modules/task/card/task-card-content-expanded';

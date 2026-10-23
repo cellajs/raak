@@ -109,9 +109,9 @@ export function ProjectSuggestionCombobox({
                 <motion.div key="empty-state" initial="hidden" animate="visible" exit="exit" variants={dropdownVariants} className="h-full">
                   <ComboboxEmpty>
                     {debouncedSearchQuery.length ? (
-                      <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleProps={{ resource: t('c:project').toLowerCase() }} />
+                      <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleOptions={{ resource: t('c:project').toLowerCase() }} />
                     ) : (
-                      <ContentPlaceholder icon={BriefcaseIcon} title="c:select_project.text" titleProps={{ name: organizationName }} />
+                      <ContentPlaceholder icon={BriefcaseIcon} title="c:select_project.text" titleOptions={{ name: organizationName }} />
                     )}
                   </ComboboxEmpty>
                 </motion.div>

@@ -1,8 +1,8 @@
 import { useSearch } from '@tanstack/react-router';
 import type { Project } from 'sdk';
-import { useHotkeys } from '~/hooks/use-hot-keys';
-import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useHotkeys } from '~/hooks/use-hotkeys';
+import type { HotkeyItem } from '~/hooks/use-hotkeys-helpers';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { BoardNavHotkeys } from '~/modules/board-focus/board-nav-hotkeys';
 import { focusItem } from '~/modules/board-focus/focus-item';

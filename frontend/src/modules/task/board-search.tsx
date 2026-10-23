@@ -6,7 +6,7 @@ import { useDebounce } from '~/hooks/use-debounce';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { setCurrentItem } from '~/modules/board-focus/focus-item';
 import { TableFilterBarContext } from '~/modules/common/data-table/table-filter-bar';
-import { useMatchSteps } from '~/modules/common/match-highlight';
+import { useMatchSteps } from '~/modules/common/match-highlight/use-match-steps';
 import { SearchClearButton } from '~/modules/common/search-clear-button';
 import { SearchSpinner } from '~/modules/common/search-spinner';
 import { boardSearchDefaults } from '~/modules/task/search-params-schemas';

@@ -2,7 +2,7 @@ import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
 import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
-import { mockBatchWorkspacesResponse, mockPaginatedWorkspacesResponse, mockWorkspaceResponse } from '#/modules/workspace/workspace-mocks';
+import { mockBatchWorkspacesResponse, mockPaginatedWorkspacesResponse } from '#/modules/workspace/workspace-mocks';
 import {
   workspaceCreateBodySchema,
   workspaceCreateResponseSchema,
@@ -48,20 +48,22 @@ const workspaceRoutes = createXRoutes(['workspaces', 'app', 'channel'], {
     method: 'get',
     path: '/{tenantId}/{organizationId}/workspaces/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
+    xScope: 'workspace:read',
     summary: 'Get workspace',
     description: 'Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.',
     request: { params: idInTenantOrgParamSchema, query: slugIncludeQuerySchema },
-    responses: { 200: json('Workspace', workspaceSchema, mockWorkspaceResponse()) },
+    responses: { 200: json('Workspace', workspaceSchema) },
   }),
   updateWorkspace: xRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/workspaces/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
+    xScope: 'workspace:write',
     xRateLimiter: [singlePointsLimiter],
     summary: 'Update workspace',
     description: 'Updates a workspace by ID.',
     request: { params: idInTenantOrgParamSchema, body: jsonBody(workspaceUpdateBodySchema) },
-    responses: { 200: json('Workspace updated', workspaceSchema, mockWorkspaceResponse()) },
+    responses: { 200: json('Workspace updated', workspaceSchema) },
   }),
   deleteWorkspaces: xRoute({
     method: 'delete',

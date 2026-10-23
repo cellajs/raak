@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { isUnconditionalCan } from 'shared';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import type { BlockNoteContentApi } from '~/modules/common/blocknote/blocknote-editor';
 import { CollaborativeBlockNote } from '~/modules/common/blocknote/collaborative-blocknote';
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
@@ -69,8 +69,8 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
         members={projectMembers}
         className={expandedEditorClass}
         dense
-        onEnterClick={handleExitEditing}
-        onEscapeClick={handleExitEditing}
+        onCmdEnter={handleExitEditing}
+        onEscape={handleExitEditing}
         extensions={checkboxExtensions}
         baseFilePanelProps={baseFilePanel}
         trailingBlock={false}

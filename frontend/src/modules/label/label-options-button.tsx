@@ -1,7 +1,6 @@
 import { EllipsisVerticalIcon, LinkIcon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
-import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
@@ -24,7 +23,6 @@ interface LabelOptionsButtonProps {
 export function LabelOptionsButton({ row, canManage }: LabelOptionsButtonProps) {
   const { t } = useTranslation();
   const { copyToClipboard } = useCopyToClipboard(2000);
-  const isMobile = useBreakpointBelow('sm');
 
   // Epics keep per-row identity across projects; a secondary tag is one logical label over its slug group
   const deleteIds = row.mode === 'epic' ? [row.id] : row.siblingIds;
@@ -53,11 +51,11 @@ export function LabelOptionsButton({ row, canManage }: LabelOptionsButtonProps) 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     dropdowner.getState().create(
       <>
-        <DropdownActionItem isMobile={isMobile} icon={LinkIcon} closeOnSelect={false} onSelect={handleCopyLink}>
+        <DropdownActionItem icon={LinkIcon} closeOnSelect={false} onSelect={handleCopyLink}>
           {t('c:copy_as_link')}
         </DropdownActionItem>
         {canManage && (
-          <DropdownActionItem isMobile={isMobile} icon={TrashIcon} variant="destructive" onSelect={handleDeleteClick} closeOnSelect={false}>
+          <DropdownActionItem icon={TrashIcon} variant="destructive" onSelect={handleDeleteClick} closeOnSelect={false}>
             {t('c:delete')}
           </DropdownActionItem>
         )}

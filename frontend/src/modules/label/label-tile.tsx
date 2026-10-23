@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { boardFocusStore, useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
 import { useItemControlsTabOrder } from '~/modules/board-focus/use-item-controls-tab-order';
-import { HighlightText } from '~/modules/common/match-highlight';
+import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { searchHighlightRowClass } from '~/modules/common/search-highlight';
 import { LabelFilterButton } from '~/modules/label/label-filter-button';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';

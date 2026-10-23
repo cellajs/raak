@@ -31,7 +31,7 @@ export function PendingMembershipsTable({ channel }: PendingMembershipsTableProp
   const { tenantId } = channel;
   const organizationId = channelOrganizationId(channel);
 
-  const columns = useColumns({ tenantId, organizationId });
+  const columns = useColumns({ tenantId, organizationId }, channel);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
   const queryOptions = pendingMembershipsQueryOptions({ entityId: channel.id, entityType: channel.entityType, tenantId, organizationId, ...search });
@@ -55,7 +55,7 @@ export function PendingMembershipsTable({ channel }: PendingMembershipsTableProp
           fetchMore,
           sortColumns,
           onSortColumnsChange,
-          NoRowsComponent: <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:invites').toLowerCase() }} />,
+          NoRowsComponent: <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:invites').toLowerCase() }} />,
         }}
       />
     </div>

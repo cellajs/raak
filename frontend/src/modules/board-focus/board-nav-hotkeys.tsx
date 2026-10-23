@@ -1,5 +1,5 @@
-import { useHotkeys } from '~/hooks/use-hot-keys';
-import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
+import { useHotkeys } from '~/hooks/use-hotkeys';
+import type { HotkeyItem } from '~/hooks/use-hotkeys-helpers';
 import { boardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { focusItem } from '~/modules/board-focus/focus-item';
 import { findItemPanelId, getPanelNav } from '~/modules/board-focus/panel-nav-registry';

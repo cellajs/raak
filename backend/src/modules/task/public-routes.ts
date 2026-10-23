@@ -1,7 +1,7 @@
 import { z } from '@hono/zod-openapi';
 import { createXRoutes, json, xRoute } from '#/core/x-routes';
 import { publicGuard } from '#/middlewares/guard';
-import { mockTaskResponse, mockTasksResponse } from '#/modules/task/task-mocks';
+import { mockTasksResponse } from '#/modules/task/task-mocks';
 import { taskListQueryBaseSchema, taskSchema } from '#/modules/task/task-schema';
 import { maxLength, paginationSchema, validIdSchema } from '#/schemas';
 
@@ -13,7 +13,7 @@ const publicTaskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     summary: 'Get public task',
     description: 'Retrieves a task by its ID. For publicly shared.',
     request: { params: z.object({ id: validIdSchema }) },
-    responses: { 200: json('Task', taskSchema, mockTaskResponse()) },
+    responses: { 200: json('Task', taskSchema) },
   }),
   getPublicTasks: xRoute({
     method: 'get',

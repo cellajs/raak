@@ -14,10 +14,10 @@ interface TableSearchProps {
   name: string;
   value?: string;
   allowOfflineSearch?: boolean;
-  setQuery: (value: string) => void;
+  onSearch: (value: string) => void;
 }
 
-export function TableSearch({ name, value = '', allowOfflineSearch = false, setQuery }: TableSearchProps) {
+export function TableSearch({ name, value = '', allowOfflineSearch = false, onSearch }: TableSearchProps) {
   const { t } = useTranslation();
   const isOnline = useOnlineManager();
   const { isFilterActive } = useContext(TableFilterBarContext);
@@ -30,7 +30,7 @@ export function TableSearch({ name, value = '', allowOfflineSearch = false, setQ
   const debouncedQuery = useDebounce(inputValue, 250);
 
   useEffect(() => {
-    if (debouncedQuery !== value) setQuery(debouncedQuery);
+    if (debouncedQuery !== value) onSearch(debouncedQuery);
   }, [debouncedQuery]);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export function TableSearch({ name, value = '', allowOfflineSearch = false, setQ
 
   return (
     // The bar's own edge frames this field, so it draws none of its own; under increased contrast it needs one.
-    <InputGroup className="border-transparent more-contrast:border-input shadow-none">
+    <InputGroup className="border-transparent more-contrast:border-input">
       <InputGroupInput
         className="pl-0!"
         disabled={!isOnline && !allowOfflineSearch}
@@ -60,7 +60,7 @@ export function TableSearch({ name, value = '', allowOfflineSearch = false, setQ
           className={cn(!inputValue.length && 'invisible')}
           onClick={() => {
             setInputValue('');
-            setQuery('');
+            onSearch('');
             setFocus();
           }}
         />

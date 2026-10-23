@@ -1,6 +1,6 @@
 import { Suspense, useId, useRef } from 'react';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
-import { useMatchHighlight } from '~/modules/common/match-highlight';
+import { useMatchHighlight } from '~/modules/common/match-highlight/use-match-highlight';
 import type { Task } from '~/modules/task/types';
 
 interface TaskSummaryHtmlProps {

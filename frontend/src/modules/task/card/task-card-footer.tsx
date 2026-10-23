@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useRelativeDate } from '~/hooks/use-relative-date';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { HighlightText } from '~/modules/common/match-highlight';
+import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
@@ -137,7 +137,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
                 handlers.onStatusChange(task.status - 1);
               }}
               disabled={task.status === TaskStatus.Accepted}
-              variant="outlineGhost"
+              variant="outline-ghost"
               size="xs"
               press={false}
               className={cn(
@@ -156,7 +156,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               id={taskFieldTriggerId('status', task.id, isSheet)}
               onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'status', handlers, currentTarget)}
               aria-label={t('c:set_resource', { resource: t('c:status').toLowerCase() })}
-              variant="outlineGhost"
+              variant="outline-ghost"
               size="xs"
               press={false}
               className={cn(

@@ -3,7 +3,7 @@ import { labelsCanonicalOptions } from '~/modules/label/query';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { tasksCanonicalOptions } from '~/modules/task/query';
-import { findWorkspaceByIdOrSlug, workspaceQueryKeys, workspaceQueryOptions } from '~/modules/workspace/query';
+import { findWorkspaceByIdOrSlug, workspaceQueryOptions } from '~/modules/workspace/query';
 import { resolveChannelBySlug } from '~/query/basic/resolve-channel-by-slug';
 import { cacheRestored, queryClient } from '~/query/query-client';
 
@@ -27,7 +27,6 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
     findInCache: findWorkspaceByIdOrSlug,
     detailQueryOptions: (id) => workspaceQueryOptions(id, organizationId, tenantId),
     fetchBySlug: () => getWorkspace({ path: { id: slug, organizationId, tenantId }, query: { slug: true } }),
-    slugFetchCacheKey: workspaceQueryKeys.detail.byId,
     params,
     buildSlugOverrides: (entity) => ({ slug: entity.slug }),
   });

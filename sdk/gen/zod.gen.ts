@@ -811,6 +811,14 @@ export const zLabel = z.object({
   stx: zStxBase,
 });
 
+export const zInviteOutcome = z.object({
+  email: z.email(),
+  outcome: z.enum(['invite', 'remind', 'add', 'member']),
+  invitedAt: z.string().optional(),
+  declinedAt: z.string().optional(),
+  role: z.enum(['admin', 'member', 'guest']).optional(),
+});
+
 /**
  * An actor that is not a person, in one tenant: API keys run as it, and it holds role bindings like a member holds memberships. An organization admin creates one, for example with Create API key in organization settings.
  */
@@ -2009,6 +2017,7 @@ export const zCreateOrganizationsBody = z
         .min(2)
         .max(255)
         .regex(/^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$/),
+      draft: z.boolean().optional(),
     }),
   )
   .min(1)
@@ -2221,6 +2230,19 @@ export const zUpdateOrganizationPath = z.object({
  * Organization was updated
  */
 export const zUpdateOrganizationResponse = zOrganization;
+
+export const zPublishOrganizationPath = z.object({
+  tenantId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Organization was published
+ */
+export const zPublishOrganizationResponse = z.object({
+  organization: zOrganization,
+  invitationsSent: z.int().gte(0),
+});
 
 export const zDeleteProjectsBody = z.object({
   ids: z.array(z.string()).min(1).max(50),
@@ -3104,7 +3126,7 @@ export const zMembershipInviteQuery = z.object({
 });
 
 /**
- * Created memberships and invite count
+ * What happened to each address
  */
 export const zMembershipInviteResponse = z.object({
   data: z.array(
@@ -3123,9 +3145,29 @@ export const zMembershipInviteResponse = z.object({
       displayOrder: z.number().gte(-140737488355328).lte(140737488355327).optional(),
     }),
   ),
-  rejectedIds: z.array(z.string()),
-  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-  invitesSentCount: z.number(),
+  outcomes: z.array(zInviteOutcome),
+  held: z.boolean(),
+});
+
+export const zCheckMembershipInviteBody = z.object({
+  emails: z.array(z.email().min(4).max(255)).min(1).max(50),
+});
+
+export const zCheckMembershipInvitePath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+export const zCheckMembershipInviteQuery = z.object({
+  entityId: z.string().max(50),
+  entityType: z.enum(['organization', 'workspace', 'project']),
+});
+
+/**
+ * What an invite would do with each address
+ */
+export const zCheckMembershipInviteResponse = z.object({
+  outcomes: z.array(zInviteOutcome),
 });
 
 export const zUpdateMembershipBody = z.object({
@@ -3259,6 +3301,7 @@ export const zGetPendingMembershipsResponse = z.object({
       email: z.email(),
       role: z.enum(['admin', 'member', 'guest']).nullable(),
       createdAt: z.string(),
+      remindedAt: z.string().nullable(),
       createdBy: zActorRef.nullable(),
     }),
   ),
@@ -3275,6 +3318,17 @@ export const zResendPendingInvitationPath = z.object({
  * Invitation resent
  */
 export const zResendPendingInvitationResponse = z.void();
+
+export const zWithdrawPendingInvitationPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Invitation withdrawn
+ */
+export const zWithdrawPendingInvitationResponse = z.void();
 
 export const zMarkSeenBody = z.object({
   entityIds: z.array(z.string().max(50)).min(1).max(500),

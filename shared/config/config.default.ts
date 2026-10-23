@@ -191,7 +191,7 @@ export const config = {
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
   cookieVersion: 'v3',
-  clientCacheVersion: 'v20-audit-stamps',
+  clientCacheVersion: 'v21-invite-outcomes',
 
   // Authentication
 
@@ -283,10 +283,15 @@ export const config = {
   mapStyleUrls: { light: 'https://tiles.openfreemap.org/styles/positron', dark: 'https://tiles.openfreemap.org/styles/dark' },
   matrixURL: 'https://matrix-client.matrix.org',
   maplePublicIngestKey: 'maple_pk_LnUSK6-_5j3orVrlZ1Hv6I1pxzDh3SJ5',
+  /**
+   * Hosts a Web Push subscription endpoint may name: the push services of Chrome and most Chromium browsers (FCM),
+   * Firefox, Safari and Edge (WNS). `*.` matches any subdomain; entries compare lowercased, without one trailing dot.
+   * The server POSTs each push to the stored endpoint, so registration refuses every other host.
+   */
+  pushServiceHosts: ['fcm.googleapis.com', 'updates.push.services.mozilla.com', 'web.push.apple.com', '*.notify.windows.com'],
 
   // Theming & UI
 
-  themeColor: '#26262b',
   theme: {
     navigation: { hasSidebarTextLabels: false, sidebarWidthExpanded: '16rem', sidebarWidthCollapsed: '4rem', sheetPanelWidth: '20rem' },
     colors: {},

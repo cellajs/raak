@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { buttonVariants } from '~/modules/ui/button';
 import { Kbd } from '~/modules/ui/kbd';
 import { cn } from '~/utils/cn';
-import { inNumbersArray } from '~/utils/in-numbers-array';
+import { isInRange } from '~/utils/is-in-range';
 import { tw } from '~/utils/tw';
 
 /** Action row ("Show all", "Create label"): filled in the mobile drawer, ghost from `sm` up. Wrap it in `p-1` to inset it with the list rows. */
@@ -30,7 +30,7 @@ export function matchDigitHotkey<T>(items: readonly T[], value: string, options?
   if (!enabled) return undefined;
 
   const limit = Math.min(items.length, max);
-  if (!inNumbersArray(limit, value)) return undefined;
+  if (!isInRange(limit, value)) return undefined;
 
   return items[Number.parseInt(value, 10) - 1];
 }

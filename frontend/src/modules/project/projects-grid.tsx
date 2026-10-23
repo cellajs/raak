@@ -47,7 +47,7 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView }: Projec
         isFetching={isFetching}
         error={error}
         hasNextPage={hasNextPage}
-        fetchNextPage={fetchMore}
+        fetchMore={fetchMore}
         isFiltered={isFiltered}
       />
     </div>

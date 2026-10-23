@@ -6,7 +6,7 @@ import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
 import { dialoger } from '~/modules/common/dialoger/use-dialoger';
@@ -221,7 +221,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                 className: cn('min-h-16 [&>.bn-editor]:min-h-16', isDialog && 'grow [&>.bn-editor]:grow'),
                 baseFilePanelProps,
                 trailingBlock: false,
-                onEnterClick: form.handleSubmit(handleFormSubmit),
+                onCmdEnter: form.handleSubmit(handleFormSubmit),
               }}
             />
           </Suspense>

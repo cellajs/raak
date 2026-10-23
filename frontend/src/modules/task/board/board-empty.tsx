@@ -42,7 +42,7 @@ export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
         className="h-[calc(100vh-var(--board-mobile-offset))] md:h-[calc(100vh-var(--board-offset-md))]"
         icon={BirdIcon}
         title="c:no_resource_yet"
-        titleProps={{ resource: t('c:project_other').toLowerCase() }}
+        titleOptions={{ resource: t('c:project_other').toLowerCase() }}
       >
         <div className="max-md:mt-4">
           {workspace && !publicView ? <AvailableProjectsEmptyAction workspace={workspace} fallback={createProjectAction} /> : createProjectAction}

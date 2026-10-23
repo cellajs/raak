@@ -2,7 +2,7 @@ import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
-import { mockBatchTasksResponse, mockTaskResponse, mockTasksResponse } from '#/modules/task/task-mocks';
+import { mockBatchTasksResponse, mockTasksResponse } from '#/modules/task/task-mocks';
 import {
   taskCreateManyStxBodySchema,
   taskCreateResponseSchema,
@@ -63,7 +63,7 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     summary: 'Get task',
     description: 'Retrieves a task by its ID.',
     request: { params: idInTenantOrgParamSchema },
-    responses: { 200: json('Tasks', taskSchema, mockTaskResponse()) },
+    responses: { 200: json('Tasks', taskSchema) },
   }),
   updateTask: xRoute({
     method: 'put',
@@ -78,12 +78,13 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     summary: 'Update task',
     description: 'Updates a task by ID.',
     request: { params: idInTenantOrgParamSchema, query: fullResponseQuerySchema, body: jsonBody(taskUpdateStxBodySchema) },
-    responses: { 200: json('Task updated', taskSchema, mockTaskResponse()) },
+    responses: { 200: json('Task updated', taskSchema) },
   }),
   deleteTasks: xRoute({
     method: 'delete',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
+    xScope: 'task:write',
     xRateLimiter: [bulkPointsLimiter],
     summary: 'Delete tasks',
     description: 'Deletes one or more tasks by ID.',

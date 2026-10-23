@@ -1,6 +1,6 @@
 import { getProject } from 'sdk';
 import { labelsCanonicalOptions } from '~/modules/label/query';
-import { findProjectByIdOrSlug, projectQueryKeys, projectQueryOptions } from '~/modules/project/query';
+import { findProjectByIdOrSlug, projectQueryOptions } from '~/modules/project/query';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { resolveChannelBySlug } from '~/query/basic/resolve-channel-by-slug';
@@ -25,7 +25,6 @@ export const projectRouteBeforeLoad = async ({ params, context }: ProjectRouteBe
     findInCache: findProjectByIdOrSlug,
     detailQueryOptions: (id) => projectQueryOptions(id, organizationId, tenantId),
     fetchBySlug: () => getProject({ path: { id: slug, organizationId, tenantId }, query: { slug: true } }),
-    slugFetchCacheKey: projectQueryKeys.detail.byId,
     params,
     buildSlugOverrides: (entity) => ({ slug: entity.slug }),
   });

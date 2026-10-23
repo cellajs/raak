@@ -32,7 +32,7 @@ export function LabelDescriptionForm({ label }: { label: Label }) {
         className={editorClass}
         dense
         excludeBlockTypes={['checklistItem']}
-        excludeFileBlockTypes={['file', 'image', 'audio', 'video']}
+        excludeMediaBlockTypes={['file', 'image', 'audio', 'video']}
         trailingBlock={false}
         formattingToolbar={false}
         clickOpensPreview
