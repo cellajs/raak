@@ -1,6 +1,6 @@
 import { useInView } from '~/hooks/use-in-view';
 import { AttachmentsCarousel, type CarouselItemData } from '~/modules/attachment/attachments-carousel';
-import { DeviceFrame, type DeviceType } from '~/modules/marketing/device-mockup-frame';
+import { DeviceMockupFrame, type DeviceType } from '~/modules/marketing/device-mockup-frame';
 import { useUIStore } from '~/modules/ui/ui-store';
 import { cn } from '~/utils/cn';
 
@@ -35,7 +35,7 @@ export function DeviceMockup({ lightItems, darkItems, type, className }: DeviceM
           '--grain-fade': 'radial-gradient(ellipse 50% 50% at 50% 50%, black, rgb(0 0 0 / 0.4) 60%, transparent 78%)',
         }}
       />
-      <DeviceFrame
+      <DeviceMockupFrame
         type={type}
         inView={inView}
         renderCarousel={(containerClassName) => <AttachmentsCarousel items={items} isDialog={false} containerClassName={containerClassName} />}

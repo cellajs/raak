@@ -67,8 +67,8 @@ export const cards: InfoCard[] = [];
  ************************************************************************************************/
 
 export const pricingPlans: PricingPlan[] = [
-  { id: 'free', action: 'waitlist_request', priceId: null, featureCount: 4, borderColor: '', discount: 'Free' },
-  { id: 'pro', action: 'contact_us', priceId: null, featureCount: 6, borderColor: 'ring-4 ring-primary/5', popular: true },
+  { id: 'free', action: 'waitlist_request', featureCount: 4, discount: 'Free' },
+  { id: 'pro', action: 'contact_us', featureCount: 6, className: 'ring-4 ring-primary/5', popular: true },
 ];
 
 /*************************************************************************************************
