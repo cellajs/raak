@@ -44,7 +44,7 @@ export function LabelTileDetails({ row, indented, canManage }: LabelTileDetailsP
 
   return (
     <>
-      <div className={cn('flex flex-col gap-3 pr-3 pb-3', indented ? 'pl-9' : 'pl-3')}>
+      <div className={cn('flex flex-col gap-3 pr-4 pb-3', indented ? 'pl-11' : 'pl-4')}>
         {/* Promoting acts on this row only; same-slug siblings in other projects stay tags. Read-only viewers get the badge
             the collapsed tile shows. */}
         {canManage ? (

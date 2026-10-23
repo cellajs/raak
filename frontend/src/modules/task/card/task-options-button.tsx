@@ -10,7 +10,7 @@ import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon'
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { openPopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
-import { DeleteTask } from '~/modules/task/delete-task';
+import { DeleteTasks } from '~/modules/task/delete-tasks';
 import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
 import type { Task } from '~/modules/task/types';
@@ -41,7 +41,7 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
         ) : (
           <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
         ),
-        <DeleteTask task={task} callback={remove} onCancel={remove} />,
+        <DeleteTasks tasks={[task]} callback={remove} onCancel={remove} />,
       );
     };
 
