@@ -19,7 +19,7 @@ Use when a live-sync symptom needs runtime evidence ("create doesn't show up in 
 
 ## Auth: a minted session
 
-No UI login, and no cookie built by hand: the app signs every cookie. The driver runs `pnpm --filter backend session:mint <EMAIL>` (development and test mode only), which prints `<cookie name>=<signed value>` and a curl line with the API URL. Cookie name, cookie version and port all come from the checkout's config, so none of them is written down here.
+No UI login, and no cookie built by hand: the app signs every cookie. The driver runs `pnpm --filter backend session:mint <EMAIL>` (development and test mode only), which prints `<cookie name>=<signed value>` and a curl line with the API URL, and signs that session out when it ends. Cookie name, cookie version and port all come from the checkout's config, so none of them is written down here.
 
 - **Default, the bench user** (needs `pnpm --filter bench db:seed` once): `xbench-user-0000@xbench.local` is admin of `xbench/xbench-org`. The seed sets that tenant's attachment quota to unlimited, so every experiment runs there, creates included.
 - **Any other seeded org**: pick an admin and pass `EMAIL` and `ORG_PATH`.
@@ -58,6 +58,7 @@ A relay change in a worktree runs beside the main stack, with no stack of its ow
 | `Echo: patched stx, skipped data fetch` in tab A | acting tab suppressed its own event (correct; `sourceId` is per-tab, uuidv7 at page load) |
 | `[CacheOps] Range fetch: <type> after a until b patched N entities` + network `GET …?afterSeq=a&untilSeq=b` | prioritizer flushed and fetched |
 | range response `items` (id, name, `deletedAt`, seq) | payload truth; soft-delete tombstones DO ride the range read (backend drops the `deletedAt` filter for `afterSeq`/`untilSeq`) |
+| `[CatchupProcessor] Away longer than the activity window → cursors reset, synced data refetched` | the device's last catchup (`caughtUpAt` in `syncStore`) is older than `appConfig.retention.activityDays`: it starts over, as after a rebuild. To test it, move `caughtUpAt` in the persisted `sync` store back and reload |
 
 Decision rule: **no console notification line and the API's `cdc` component is not healthy** (its `reason` says why: `setup_problems`, `worker_stuck`, `reading_again`, `api_away`) → the worker (read its log), not the client; **no console notification line otherwise** → SSE/leader/broadcast layer; **notification but no fetch** → fetch prioritizer/cursor (check the org and view seqs in `syncStore`, `frontend/src/query/realtime/sync-store.ts`); **fetch contains the row but UI unchanged** → cache-patch layer (`fetchRangeAndPatch` in `frontend/src/query/realtime/cache-ops.ts`).
 

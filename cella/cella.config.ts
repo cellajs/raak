@@ -30,6 +30,8 @@ export default defineConfig({
       'frontend/public/static/common',
       'frontend/src/modules/common/morph-animation',
       'frontend/src/routes/routeTree.gen.ts',
+      'frontend/src/routes/_public/_marketing',
+      'frontend/src/routes/_public/_marketing.tsx',
       '.github/release-please-manifest.json',
       '.github/release-please-config.json',
       'CLAUDE.md',
@@ -37,6 +39,7 @@ export default defineConfig({
       'frontend/public/favicon.svg',
       'frontend/public/thumbnail.png',
       'frontend/src/modules/common/logo.tsx',
+      'frontend/src/styling/app.css',
       'frontend/src/modules/auth/legal/legal-config.ts',
       'locales/en/app.json',
       'locales/nl/app.json',
@@ -45,7 +48,6 @@ export default defineConfig({
       'locales/en/appError.json',
       'locales/nl/appError.json',
       'json/accessibility-conformance.json',
-      'frontend/src/routes/_public/_marketing/sync-engine.tsx',
     ],
     // Paths pinned to the app: the app copy always wins, upstream hunks never merge in. Adopt them by hand
     // from the analyze list ("protected but behind upstream").
@@ -62,7 +64,6 @@ export default defineConfig({
       'cella/skills/screenshots/shots-config.mjs',
       'frontend/src/entity-sync-queries.ts',
       'frontend/src/styling/gradients.css',
-      'frontend/src/styling/tailwind.css',
       'a11y/scope-config.ts',
       'bench/src/seeds/attachment-home.ts',
       'backend/src/mocks/app-product-mocks.ts',

@@ -93,8 +93,8 @@ export function Button({ className, variant, soft, size, press, render, loading,
     defaultTagName: 'button',
     render,
     props: {
-      // A `render` element such as a Link keeps its own semantics, so only the native button gets a type.
-      ...(render ? {} : { type: 'button' }),
+      // A `render` element such as a Link keeps its own semantics, so only the native button gets a type; a link styled as a button never drags.
+      ...(render ? { draggable: false } : { type: 'button' }),
       'data-slot': 'button',
       className: cn(buttonVariants({ variant, soft, size, press: press ?? (variant !== 'input' && variant !== 'row'), className })),
       disabled: disabled || loading,

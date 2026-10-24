@@ -2,6 +2,7 @@ import type { ActorContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { updateStamps } from '#/db/utils/stamps';
 import { withActorRef } from '#/modules/actors/actor-refs';
+import { releaseReplacedImages } from '#/modules/attachment/operations/release-replaced-images';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { checkSlugAvailable } from '#/modules/entities/operations/check-slug';
 import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
@@ -26,6 +27,7 @@ export async function updateProjectOp(ctx: ActorContext, id: string, rawInput: R
 
   const values = { ...input, ...updateStamps(ctx.var.actor.id) };
   const updatedProjectRecord = await updateProject(ctx, { id: project.id, values });
+  await releaseReplacedImages({ owner: { organizationId: project.organizationId, tenantId: project.tenantId }, before: project, after: input });
 
   log.info('Project updated', { projectId: updatedProjectRecord.id });
 

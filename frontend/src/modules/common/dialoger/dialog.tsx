@@ -8,11 +8,11 @@ import { cn } from '~/utils/cn';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
 import { tw } from '~/utils/tw';
 
-// A phone's search dialog: at the top below the safe area, inset 0.5rem on every side, its height capped at the space
-// above the keyboard (--visual-viewport-height, which SearchDialogBar writes). A flex column, so the results shrink and
-// scroll while the field stays.
+// A phone's search dialog: at the top below the safe area, inset 0.5rem on every side, its height filling the space
+// above the keyboard (--visual-viewport-height, which SearchDialogBar writes), or above the bottom safe area while the
+// keyboard is closed. A flex column, so the results fill and scroll while the field stays.
 const searchLayoutClass = tw(
-  'max-sm:data-closed:slide-out-to-top-2 max-sm:data-open:slide-in-from-top-2 max-sm:mt-[max(0.5rem,env(safe-area-inset-top))] max-sm:mb-0 max-sm:flex max-sm:max-h-[calc(var(--visual-viewport-height,100dvh)-max(0.5rem,env(safe-area-inset-top))-0.5rem)] max-sm:w-[calc(100%-1rem)] max-sm:flex-col max-sm:self-start max-sm:overflow-hidden max-sm:rounded-xl max-sm:ring-0',
+  'max-sm:data-closed:slide-out-to-top-2 max-sm:data-open:slide-in-from-top-2 max-sm:mt-[max(0.5rem,env(safe-area-inset-top))] max-sm:mb-0 max-sm:flex max-sm:h-[calc(min(var(--visual-viewport-height,100dvh)-0.5rem,100dvh-max(0.5rem,env(safe-area-inset-bottom)))-max(0.5rem,env(safe-area-inset-top)))] max-sm:max-h-none max-sm:w-[calc(100%-1rem)] max-sm:flex-col max-sm:self-start max-sm:overflow-hidden max-sm:rounded-xl max-sm:ring-0',
 );
 
 interface DialogerDialogProps {

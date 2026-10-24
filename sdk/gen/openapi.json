@@ -84,6 +84,10 @@
             "name": "presignedUrl",
             "description": "File link requests per user: 2000 per hour"
           },
+          "uploadTokenLimiter": {
+            "name": "uploadToken",
+            "description": "Upload tokens per user: 300 per hour"
+          },
           "totpVerificationLimiter": {
             "name": "totpVerification",
             "description": "Failed TOTP codes per IP: 5 per hour, then blocked for 30 minutes"
@@ -94,7 +98,7 @@
           },
           "magicLinkLimiter": {
             "name": "magicLink",
-            "description": "Magic link emails per address: 2 per 30 minutes"
+            "description": "Magic link emails per address from browsers that never signed in to it: 3 per 30 minutes"
           },
           "passkeyChallengeLimiter": {
             "name": "passkeyChallenge",
@@ -259,7 +263,7 @@
     },
     {
       "name": "oauth-server",
-      "description": "The authorization server: node-oidc-provider on the app origin under /oauth, issuing the access\n    tokens the API and the MCP endpoint accept. Runs as its own process (MODE=oauth) or folded into the API under\n    singleVM; the store it writes is swept hourly by the jobs worker.",
+      "description": "The authorization server: node-oidc-provider on the app origin under /oauth, issuing the access\n    tokens the API and the MCP endpoint accept. Runs as its own process (MODE=oauth) or folded into the API under\n    singleVM; the store it writes is swept nightly by the database's retention procedure.",
       "x-parent": "cella",
       "x-kind": "module"
     },
@@ -774,6 +778,7 @@
             "additionalProperties": {
               "type": "string"
             },
+            "maxProperties": 100,
             "description": "Per-field HLC timestamps for scalar fields being changed"
           },
           "replayed": {
@@ -988,6 +993,9 @@
             "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
           },
           "requestId": {
+            "type": "string"
+          },
+          "version": {
             "type": "string"
           },
           "path": {
@@ -1556,11 +1564,40 @@
       "MeAuthData": {
         "type": "object",
         "properties": {
-          "enabledOAuth": {
+          "oauthIdentities": {
             "type": "array",
             "items": {
-              "type": "string",
-              "enum": ["github"]
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": ["github"]
+                },
+                "email": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "lastUsedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": ["provider", "email", "createdAt", "lastUsedAt"]
             }
           },
           "institutions": {
@@ -1586,16 +1623,73 @@
                   },
                   "required": ["key", "label"]
                 },
-                "connected": {
-                  "type": "boolean",
-                  "description": "Whether the account already holds an identity through this connection"
+                "identity": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "lastUsedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": ["email", "createdAt", "lastUsedAt"]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The identity the account holds through this connection; null when not connected"
                 }
               },
-              "required": ["connectionId", "displayName", "federation", "connected"]
+              "required": ["connectionId", "displayName", "federation", "identity"]
             }
           },
-          "hasTotp": {
-            "type": "boolean"
+          "totp": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "createdAt": {
+                    "type": "string"
+                  },
+                  "lastUsedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": ["createdAt", "lastUsedAt"]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null without TOTP. Its last use is the start of the time step of the newest code it accepted."
           },
           "sessions": {
             "type": "array",
@@ -1764,22 +1858,29 @@
             }
           }
         },
-        "required": ["enabledOAuth", "institutions", "hasTotp", "sessions", "passkeys"],
-        "description": "How the signed-in user signs in: connected OAuth providers, the institutions of their organizations (connected or not), passkeys, whether TOTP is set up, and their live sessions. The account page lists it, where sessions can be ended and sign-in methods changed.",
+        "required": ["oauthIdentities", "institutions", "totp", "sessions", "passkeys"],
+        "description": "How the signed-in user signs in: connected OAuth identities, the institutions of their organizations (connected or not), passkeys, TOTP, and their live sessions, with when each method was added and last used. The account page lists it, where sessions can be ended and sign-in methods changed.",
         "example": {
-          "enabledOAuth": ["github"],
+          "oauthIdentities": [
+            {
+              "provider": "github",
+              "email": "Lonie.Littel11@gmail.com",
+              "createdAt": "2024-05-28T17:45:48.607Z",
+              "lastUsedAt": "2024-05-28T17:45:48.607Z"
+            }
+          ],
           "institutions": [],
-          "hasTotp": false,
+          "totp": null,
           "sessions": [
             {
-              "id": "0ff9d780-10bf-4531-b073-c93c225553bc",
-              "userId": "3fdbee2a-ceb3-401e-b7af-e58710cdd4a5",
+              "id": "bf531073-c93c-4225-b553-bcd3fdbee2ac",
+              "userId": "b301e7af-e587-410c-8dd4-a5c678f6be37",
               "type": "regular",
               "createdAt": "2024-05-28T17:45:48.607Z",
               "expiresAt": "2024-06-27T17:45:48.607Z",
               "deviceName": "Firefox on Windows",
               "deviceType": "desktop",
-              "deviceOs": "iOS",
+              "deviceOs": "macOS",
               "browser": "Edge",
               "authStrategy": "passkey",
               "connectionId": null,
@@ -1787,7 +1888,7 @@
               "ipSubnetHash": null,
               "ipCountry": null,
               "ipAsn": null,
-              "deviceIdHash": "9ad4a3a84be73e1e9b96a7acab442bcb",
+              "deviceIdHash": "e73e1e9b96a7acab442bcbafafbc1c5f",
               "revokedAt": null,
               "revokedBy": null,
               "revocationReason": null,
@@ -2657,6 +2758,9 @@
             "type": "string",
             "enum": ["active", "suspended", "archived"]
           },
+          "statusChangedAt": {
+            "type": "string"
+          },
           "restrictions": {
             "type": "object",
             "properties": {
@@ -2759,6 +2863,7 @@
           "id",
           "name",
           "status",
+          "statusChangedAt",
           "restrictions",
           "authStrategies",
           "subscriptionId",
@@ -2772,9 +2877,10 @@
         ],
         "description": "The top-level isolation and billing boundary. Tenant and organization are 1:1: a tenant holds one organization, or none until that organization is created. System admins list and update tenants; a signed-in user can create one of their own.",
         "example": {
-          "id": "l6ddop",
+          "id": "ddoplg",
           "name": "Lubowitz, Waters and Haley",
           "status": "active",
+          "statusChangedAt": "2024-08-10T00:42:04.704Z",
           "restrictions": {
             "quotas": {
               "user": 1000,
@@ -2804,10 +2910,10 @@
           "subscriptionId": null,
           "subscriptionStatus": "none",
           "subscriptionPlan": null,
-          "createdAt": "2024-07-03T19:59:03.397Z",
-          "updatedAt": "2024-12-23T11:29:26.053Z",
+          "createdAt": "2024-08-10T00:42:04.704Z",
+          "updatedAt": "2024-09-06T23:31:09.985Z",
           "organization": {
-            "id": "d0d46951-4963-4135-84f8-adf6f9f37990",
+            "id": "8fd0d469-5149-4631-a354-f8adf6f9f379",
             "name": "Lubowitz, Waters and Haley",
             "slug": "lubowitz-waters-and-haley",
             "thumbnailUrl": null,
@@ -2941,13 +3047,15 @@
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   }
                 }
               },
@@ -2958,13 +3066,15 @@
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   }
                 }
               },
@@ -2975,13 +3085,15 @@
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   }
                 }
               },
@@ -2992,13 +3104,15 @@
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   }
                 }
               },
@@ -3009,13 +3123,15 @@
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   }
                 }
               },
@@ -3026,13 +3142,15 @@
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "maxItems": 100
                   }
                 }
               }
@@ -4344,6 +4462,54 @@
         }
       }
     },
+    "/auth/mfa/pending": {
+      "get": {
+        "security": [],
+        "operationId": "getPendingMfa",
+        "tags": ["auth", "cella"],
+        "summary": "Get pending MFA challenge",
+        "description": "For the MFA challenge a sign-in left in this browser: the address of the account it completes, so the MFA page can name it in any browser.",
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": [],
+        "x-cache": [],
+        "responses": {
+          "200": {
+            "description": "The address of the account the held challenge signs in to",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["email"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
     "/auth/invoke-token/{type}/{token}": {
       "get": {
         "security": [],
@@ -5173,7 +5339,8 @@
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 10
                           },
                           "publicKeyAlgorithm": {
                             "type": "number"
@@ -7212,7 +7379,8 @@
                             "type": "string",
                             "enum": ["task", "label", "attachment"]
                           },
-                          "minItems": 1
+                          "minItems": 1,
+                          "maxItems": 64
                         },
                         "depth": {
                           "type": "string",
@@ -8087,7 +8255,7 @@
         "summary": "Get upload token",
         "description": "Generates and returns an upload token for uploading files or images, scoped to the current user and organization. The upload template decides the bucket: avatars, covers and newsletter images are public, attachments private. Only a system admin gets a newsletter image token.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["uploadTokenLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -10534,9 +10702,10 @@
                 "example": {
                   "items": [
                     {
-                      "id": "svjbtq",
+                      "id": "jbtqtl",
                       "name": "Predovic, Bahringer and Morar",
                       "status": "active",
+                      "statusChangedAt": "2024-10-17T20:38:21.060Z",
                       "restrictions": {
                         "quotas": {
                           "user": 1000,
@@ -10566,10 +10735,10 @@
                       "subscriptionId": null,
                       "subscriptionStatus": "none",
                       "subscriptionPlan": null,
-                      "createdAt": "2024-01-02T04:11:19.941Z",
-                      "updatedAt": "2024-10-23T14:05:26.336Z",
+                      "createdAt": "2024-10-17T20:38:21.060Z",
+                      "updatedAt": "2024-12-22T17:47:41.093Z",
                       "organization": {
-                        "id": "f4ea76c7-bca4-4245-8890-5cb92a293ce2",
+                        "id": "0cf4ea76-c7bc-4a42-b458-905cb92a293c",
                         "name": "Predovic, Bahringer and Morar",
                         "slug": "predovic-bahringer-and-morar",
                         "thumbnailUrl": null,
@@ -10577,9 +10746,10 @@
                       }
                     },
                     {
-                      "id": "b2dbwf",
+                      "id": "dbwf7b",
                       "name": "Crooks, Kuphal and Roob-Blick",
                       "status": "active",
+                      "statusChangedAt": "2024-04-30T09:09:16.797Z",
                       "restrictions": {
                         "quotas": {
                           "user": 1000,
@@ -10609,10 +10779,10 @@
                       "subscriptionId": null,
                       "subscriptionStatus": "none",
                       "subscriptionPlan": null,
-                      "createdAt": "2024-07-14T22:41:52.358Z",
-                      "updatedAt": "2024-09-24T07:05:03.480Z",
+                      "createdAt": "2024-04-30T09:09:16.797Z",
+                      "updatedAt": "2024-05-14T23:22:54.193Z",
                       "organization": {
-                        "id": "63960525-a558-42dd-a277-6db10db417ae",
+                        "id": "86639605-25a5-4582-add2-776db10db417",
                         "name": "Crooks, Kuphal and Roob-Blick",
                         "slug": "crooks-kuphal-and-roob-blick",
                         "thumbnailUrl": null,
@@ -10785,16 +10955,51 @@
                     "items": {
                       "type": "string",
                       "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
-                    }
+                    },
+                    "maxItems": 7
                   },
                   "restrictions": {
                     "type": "object",
                     "properties": {
                       "quotas": {
                         "type": "object",
-                        "additionalProperties": {
-                          "type": "integer",
-                          "minimum": 0
+                        "properties": {
+                          "user": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "organization": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "workspace": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "project": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "task": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "label": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "attachment": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "serviceAccount": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "apiKey": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
                         },
                         "description": "Entity quotas (0 = unlimited)"
                       },
@@ -12493,7 +12698,8 @@
                       "type": "string",
                       "enum": ["en", "nl"]
                     },
-                    "minItems": 1
+                    "minItems": 1,
+                    "maxItems": 64
                   },
                   "notificationEmail": {
                     "type": ["string", "null"],
@@ -12588,13 +12794,15 @@
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           }
                         }
                       },
@@ -12605,13 +12813,15 @@
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           }
                         }
                       },
@@ -12622,13 +12832,15 @@
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           }
                         }
                       },
@@ -12639,13 +12851,15 @@
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           }
                         }
                       },
@@ -12656,13 +12870,15 @@
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           }
                         }
                       },
@@ -12673,13 +12889,15 @@
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "maxItems": 100
                           }
                         }
                       }
@@ -15855,21 +16073,16 @@
             "cookieAuth": []
           },
           {
-            "apiKey": ["attachment:write"]
+            "apiKey": []
           },
           {
-            "oauth2": ["attachment:write"]
+            "oauth2": []
           }
         ],
         "operationId": "createAttachments",
         "tags": ["attachments", "cella", "product"],
         "summary": "Create attachments",
-        "description": "Registers one or more new attachments after client side upload. Includes metadata like name, type, and linked entity.",
-        "x-tool": {
-          "description": "Register already uploaded files as attachments. Give each a name, filename, MIME type, size and the storage key of the upload.",
-          "approvalRequired": true,
-          "entity": "attachment"
-        },
+        "description": "Registers one or more new attachments after client side upload. Includes metadata like name, type, and linked entity. Every storage key must lie under the caller's own upload prefix and name a stored object; the size comes from storage.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -19597,7 +19810,8 @@
                             "attachment:write"
                           ]
                         },
-                        "minItems": 1
+                        "minItems": 1,
+                        "maxItems": 12
                       },
                       "expiresAt": {
                         "type": "string",
@@ -20162,7 +20376,8 @@
                         "attachment:write"
                       ]
                     },
-                    "minItems": 1
+                    "minItems": 1,
+                    "maxItems": 12
                   },
                   "expiresAt": {
                     "type": "string",

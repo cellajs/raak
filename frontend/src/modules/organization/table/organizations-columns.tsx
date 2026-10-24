@@ -50,7 +50,6 @@ export const useColumns = () => {
           render={
             <Link
               to="/$tenantId/$organizationSlug/organization/members"
-              draggable={false}
               tabIndex={tabIndex}
               params={{ tenantId: row.tenantId, organizationSlug: row.slug }}
             />

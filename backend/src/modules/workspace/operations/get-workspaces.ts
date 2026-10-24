@@ -26,7 +26,12 @@ export async function getWorkspacesOp(ctx: UserContext, input: GetWorkspacesInpu
   const includeMembership = include.includes('membership');
   const includeMembers = include.includes('members');
 
-  const { items: workspaceResults, total } = await findWorkspacesPaginated(ctx, { userId: user.id, ...queryOpts, includeCounts });
+  const { items: workspaceResults, total } = await findWorkspacesPaginated(ctx, {
+    userId: user.id,
+    isSystemAdmin: ctx.var.isSystemAdmin,
+    ...queryOpts,
+    includeCounts,
+  });
 
   const memberPreviews = includeMembers
     ? await findMemberPreviewsByChannels(ctx, {

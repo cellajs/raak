@@ -118,7 +118,6 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
           wrapClassName="shrink-0 max-sm:hidden"
           className="min-h-10 rounded-none leading-normal focus-visible:ring-transparent"
           placeholder={t('c:assign_to')}
-          showClear={false}
         />
         <ComboboxHotkeyHint searching={!!searchValue.length}>U</ComboboxHotkeyHint>
         <ScrollArea className={comboboxScrollClass}>

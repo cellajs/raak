@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "./gradients.css" layer(base); /* Custom gradients that are not easy to build using tailwind */
 @import "./plus-grain.css" layer(base); /* Dithered + texture echoing the morph animation */
+@import "./app.css" layer(app); /* App-owned styles, ranked last */
 
 /* Breakpoints, the container cap and typography: the parts that need JS. */
 @plugin "./tailwind-plugin.ts";
@@ -94,6 +95,8 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-primary: var(--primary);
@@ -272,14 +275,6 @@
 /* Fixed bottom chrome steps aside: the body carries these classes while the selection action bar or the on-screen keyboard is up. */
 @custom-variant chrome-hidden (&:is(.selection-active *, .keyboard-open *));
 
-/* fork: raak's task board: the create-task button hides while the board is empty (no projects). In utilities, because the
-   button's inline-flex utility outranks a base-layer selector. */
-@layer utilities {
-  body:has([data-board-empty]) #create-task {
-    display: none;
-  }
-}
-
 /* Press feedback through a state variant (`active:press`, `group-active/name:press`). A mouse nudges the element down:
    `transform` stacks on the `translate` of translate utilities, so a centered `-translate-y-1/2` stays centered; an
    inline transform wins. Under a touch it dims, as native controls do. */
@@ -423,19 +418,6 @@
 }
 
 @layer base {
-  /* Viewport offsets for full-height board surfaces (consumed via calc(100vh - var(...))).
-     One place to update when app chrome heights change; breakpoint switching stays in the
-     Tailwind classes that consume these. */
-  :root {
-    --board-offset-sm: 4rem; /* app chrome above the board row (sm and up) */
-    --board-offset-md: 4.88rem; /* taller app chrome from md up */
-    --board-mobile-offset: 8rem; /* app chrome + floating bottom nav on mobile */
-    --board-panel-offset: 146px; /* chrome above a project panel body: md board offset (78px) + 68px panel header row */
-    --local-panel-offset: 78px; /* chrome above a local panel frame (its header renders inside the frame) */
-    --task-sheet-offset: 3rem; /* sheet chrome above a task card rendered in a sheet */
-    --task-sheet-offset-sm: 3.25rem;
-  }
-
   /* Theme tokens */
   :root {
     --background: oklch(1 0 0);
@@ -469,6 +451,8 @@
     --success-foreground: oklch(0.9851 0 0);
     --warning: oklch(0.5 0.125 70);
     --warning-foreground: oklch(0.9851 0 0);
+    --info: oklch(0.5 0.16 255);
+    --info-foreground: oklch(0.9851 0 0);
     --brand: oklch(0.2061 0.006 285.56);
     --brand-foreground: oklch(0.9627 0 0);
     /* Modal backdrop scrim, the same in both modes. */
@@ -513,6 +497,8 @@
     --success-foreground: oklch(0.1963 0.0092 285.53);
     --warning: oklch(0.75 0.16 70);
     --warning-foreground: oklch(0.1963 0.0092 285.53);
+    --info: oklch(0.72 0.14 250);
+    --info-foreground: oklch(0.1963 0.0092 285.53);
     --brand: oklch(0.9851 0 0);
     --brand-foreground: oklch(0.3138 0.0102 285.63);
 
@@ -552,10 +538,11 @@
     --bottom-inset: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Small screens enlarge everything through the rem root: 118.75% is 19px at the default size and follows the user's setting. */
-  /* fork: no overflow-x-clip on html and body (cella #1139) until the board is checked against it on phones. */
+  /* Small screens enlarge everything through the rem root: 118.75% is 19px at the default size and follows the user's setting.
+     overflow-x-clip (on html and body, iOS needs both) keeps stray wide content from widening the layout
+     viewport, which on phones reads as the page zooming out and flipping to desktop breakpoints. */
   html {
-    @apply font-sans overscroll-none max-sm:text-[118.75%];
+    @apply font-sans overscroll-none overflow-x-clip max-sm:text-[118.75%];
 
     /* Native scrollbars and form controls follow the theme. A macOS overlay scrollbar takes its thumb color from the
        scroller's color-scheme, so a transparent scroller such as the PDF viewer needs it to show a light thumb in dark mode. */
@@ -589,7 +576,7 @@
   }
 
   body {
-    @apply bg-background text-foreground min-h-full overscroll-none antialiased font-normal;
+    @apply bg-background text-foreground min-h-full overscroll-none overflow-x-clip antialiased font-normal;
   }
 
   .container {
@@ -635,20 +622,4 @@
     animation: none;
     opacity: 0;
   }
-}
-
-/* Pinned section bars animate this registered offset. Consumers follow it through calc()
-   while their own top property switches immediately. */
-@property --sticky-stack-top {
-  syntax: "<length>";
-  inherits: true;
-  initial-value: 0px;
-}
-
-/* Page-level sticky nav height (published by PageTabNav), the level above section bars.
-   Section publishers fold it into --sticky-stack-top; the accepted bar consumes it directly. */
-@property --sticky-stack-nav {
-  syntax: "<length>";
-  inherits: true;
-  initial-value: 0px;
 }

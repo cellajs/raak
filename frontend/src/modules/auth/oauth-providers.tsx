@@ -26,7 +26,9 @@ interface OAuthProviderIconProps {
 
 /** A provider's logo, beside text that names the provider. */
 export function OAuthProviderIcon({ id }: OAuthProviderIconProps) {
-  return <img src={`/static/auth/${id}-icon.svg`} alt="" className={cn('size-4', id === 'github' && 'dark:invert')} loading="lazy" />;
+  return (
+    <img src={`/static/auth/${id}-icon.svg`} alt="" className={cn('size-4', id === 'github' && 'dark:invert')} loading="lazy" draggable={false} />
+  );
 }
 
 interface OAuthProvidersProps {
@@ -69,7 +71,7 @@ export function OAuthProviders({ authStep }: OAuthProvidersProps) {
   return (
     <div className="flex flex-col gap-2">
       {enabledOAuthProviders.map(({ id, name }) => (
-        <Button loading={loadingProvider === id} key={id} variant="plain" onClick={() => authenticateWithProvider(id)}>
+        <Button loading={loadingProvider === id} key={id} variant="outline" onClick={() => authenticateWithProvider(id)}>
           <OAuthProviderIcon id={id} />
           <span>{t(labelKey, { provider: name })}</span>
         </Button>

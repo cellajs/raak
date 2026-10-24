@@ -58,7 +58,6 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
           wrapClassName="max-sm:hidden"
           className="leading-normal"
           placeholder={t('c:select_resource', { resource: t('c:type').toLowerCase() })}
-          showClear={false}
         />
         <ComboboxHotkeyHint searching={isSearching}>T</ComboboxHotkeyHint>
         <ComboboxList>

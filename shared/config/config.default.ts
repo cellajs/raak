@@ -98,6 +98,22 @@ export const config = {
     rateLimits: { apiPointsPerHour: 1000 },
   } as const,
 
+  /** How long data lives, in days: `apply_retention()` and the jobs apply it, the privacy page states it. */
+  retention: {
+    activityDays: 90,
+    deletedItemsDays: 120,
+    archivedTenantDays: 120,
+    sessionDaysAfterExpiry: 30,
+    tokenDaysAfterExpiry: 30,
+    deviceDaysUnseen: 400,
+    devicesPerUser: 50,
+    oidcPayloadDaysAfterUse: 30,
+    requestDays: 365,
+    invitationDays: 120,
+    rateLimitDaysAfterWindow: 1,
+    pushSubscriptionDaysUnseen: 400,
+  },
+
   // System roles
 
   systemRoles: ['admin'] as const,
@@ -191,7 +207,7 @@ export const config = {
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
   cookieVersion: 'v3',
-  clientCacheVersion: 'v21-invite-outcomes',
+  clientCacheVersion: 'v22-auth-method-dates',
 
   // Authentication
 
@@ -267,7 +283,7 @@ export const config = {
   localBlobStorage: {
     enabled: true,
     maxFileSize: 10 * 1024 * 1024,
-    maxTotalSize: 100 * 1024 * 1024,
+    maxTotalSize: 1024 * 1024 * 1024,
     allowedContentTypes: [] as string[],
     excludedContentTypes: ['video/*'] as string[],
     downloadConcurrency: 2,
