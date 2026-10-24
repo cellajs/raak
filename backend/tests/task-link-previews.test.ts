@@ -105,7 +105,7 @@ describe('Task link previews of a private task', async () => {
   });
 
   it('names a service account as the author of a task it wrote', async () => {
-    const { clientId } = await serviceAccountWithKey({ tenantId: tenant.tenantId, id: tenant.organization.id } as never, tenant.sessionCookie);
+    const { clientId } = await serviceAccountWithKey({ tenantId: tenant.tenantId, id: tenant.organization.id }, tenant.sessionCookie);
     const botTaskId = generateId();
     const [original] = await db.select().from(tasksTable).where(eq(tasksTable.id, taskId));
     await db.insert(tasksTable).values({ ...original, id: botTaskId, createdBy: clientId });
