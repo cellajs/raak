@@ -9,6 +9,7 @@ import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
+import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { buildChannelListReadWhere, type ChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 import { getOrderColumns } from '#/utils/order-column';
 import { textSearchFilter } from '#/utils/sql';
@@ -170,6 +171,8 @@ export const resolveProjectNarrowing = async (
 
 interface FindProjectsPaginatedOpts {
   userId: string;
+  /** Lists the projects of archived tenants too. */
+  isSystemAdmin: boolean;
   q?: string;
   sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
   order?: 'asc' | 'desc';
@@ -189,8 +192,22 @@ interface FindProjectsPaginatedOpts {
 /** Get paginated list of projects with total count, membership, optional entity counts. */
 export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPaginatedOpts) => {
   const { db } = ctx.var;
-  const { userId, q, sort, order, offset, limit, organizationId, organizationIds, workspaceId, excludeArchived, role, readScope, includeCounts } =
-    opts;
+  const {
+    userId,
+    isSystemAdmin,
+    q,
+    sort,
+    order,
+    offset,
+    limit,
+    organizationId,
+    organizationIds,
+    workspaceId,
+    excludeArchived,
+    role,
+    readScope,
+    includeCounts,
+  } = opts;
 
   const entityType = 'project';
 
@@ -209,7 +226,13 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
 
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 
+  // An archived tenant's projects list for system admins only, as its organization does
   const projectWhere: SQL[] = [
+    ...(isSystemAdmin
+      ? []
+      : [
+          sql`NOT EXISTS (SELECT 1 FROM ${tenantsTable} WHERE ${tenantsTable.id} = ${projectsTable.tenantId} AND ${tenantsTable.status} = 'archived')`,
+        ]),
     ...(q ? [textSearchFilter(projectsTable.name, q)] : []),
     ...(organizationId ? [eq(projectsTable.organizationId, organizationId)] : []),
     ...(organizationIds ? [inArray(projectsTable.organizationId, organizationIds)] : []),

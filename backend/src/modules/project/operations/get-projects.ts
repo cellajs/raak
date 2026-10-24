@@ -58,7 +58,8 @@ export async function getProjectsOp(ctx: UserContext, input: GetProjectsInput) {
   const includeMembership = include.includes('membership');
   const includeMembers = include.includes('members');
 
-  const opts = { userId: targetUserId, ...queryParams, sort, organizationIds: sharedWithCaller, readScope, includeCounts };
+  const isSystemAdmin = ctx.var.isSystemAdmin && !relatableUserId;
+  const opts = { userId: targetUserId, isSystemAdmin, ...queryParams, sort, organizationIds: sharedWithCaller, readScope, includeCounts };
   const { items: projectResults, total } = await findProjectsPaginated(ctx, opts);
 
   const memberPreviews = includeMembers

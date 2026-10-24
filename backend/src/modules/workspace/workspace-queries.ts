@@ -7,6 +7,7 @@ import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
+import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { workspacesTable } from '#/modules/workspace/workspace-db';
 import { getOrderColumns } from '#/utils/order-column';
 import { textSearchFilter } from '#/utils/sql';
@@ -48,6 +49,8 @@ export const deleteWorkspacesByIds = async (ctx: ActorContext, { ids }: DeleteWo
 
 interface FindWorkspacesPaginatedOpts {
   userId: string;
+  /** Lists the workspaces of archived tenants too. */
+  isSystemAdmin: boolean;
   q?: string;
   sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
   order?: 'asc' | 'desc';
@@ -62,7 +65,7 @@ interface FindWorkspacesPaginatedOpts {
 /** Get paginated list of workspaces with total count, membership, optional entity counts. */
 export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspacesPaginatedOpts) => {
   const { db } = ctx.var;
-  const { userId, q, sort, order, offset, limit, organizationId, excludeArchived, role, includeCounts } = opts;
+  const { userId, isSystemAdmin, q, sort, order, offset, limit, organizationId, excludeArchived, role, includeCounts } = opts;
 
   const entityType = 'workspace';
 
@@ -81,7 +84,13 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
 
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 
+  // An archived tenant's workspaces list for system admins only, as its organization does
   const workspaceWhere: SQL[] = [
+    ...(isSystemAdmin
+      ? []
+      : [
+          sql`NOT EXISTS (SELECT 1 FROM ${tenantsTable} WHERE ${tenantsTable.id} = ${workspacesTable.tenantId} AND ${tenantsTable.status} = 'archived')`,
+        ]),
     ...(q ? [textSearchFilter(workspacesTable.name, q)] : []),
     ...(organizationId ? [eq(workspacesTable.organizationId, organizationId)] : []),
   ];
