@@ -1,13 +1,14 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { BriefcaseIcon, ChevronsUpDownIcon, SearchIcon } from 'lucide-react';
+import { BriefcaseIcon, SearchIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ChannelBase } from 'sdk';
 import { useDebounce } from '~/hooks/use-debounce';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { InputTriggerChevron } from '~/modules/common/form-fields/input-trigger-button';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Badge } from '~/modules/ui/badge';
@@ -51,6 +52,7 @@ export function ProjectSuggestionCombobox({
   const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -60,6 +62,14 @@ export function ProjectSuggestionCombobox({
   // Compared by id: the list and the selection hold different object identities.
   const selectedIds = new Set(value.map((item) => item.id));
   const selected = projects.filter((project) => selectedIds.has(project.id));
+
+  // The removed chip takes its focused button along, so focus moves to the trigger
+  const handleRemove = (id: string) => {
+    onChange(value.filter((item) => item.id !== id));
+    triggerRef.current?.focus();
+  };
+
+  const placeholder = t('c:select_resource', { resource: t('c:project_other').toLowerCase() });
 
   return (
     <Combobox<EnrichedProject, true>
@@ -77,24 +87,29 @@ export function ProjectSuggestionCombobox({
       onInputValueChange={setSearchQuery}
       filter={() => true}
     >
-      <ComboboxPrimitive.Trigger
-        nativeButton={false}
-        render={
-          <div className="relative flex min-h-12 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border border-input bg-background p-1.5 pr-10" />
-        }
-      >
-        {value.length > 0 ? (
-          <div className="flex min-w-0 flex-wrap gap-1">
-            {value.map((item) => (
-              <Chip key={item.id}>{item.name}</Chip>
-            ))}
-          </div>
-        ) : (
-          <span className="ml-1 text-sm">{t('c:select_resource', { resource: t('c:project_other').toLowerCase() })}</span>
-        )}
-
-        <ChevronsUpDownIcon className="absolute right-0 mx-2 shrink-0 opacity-50" />
-      </ComboboxPrimitive.Trigger>
+      <div className="relative flex min-h-10 w-full items-center rounded-md border border-input bg-background p-1.5 pr-10">
+        {/* The chips sit outside the trigger, since their remove buttons cannot nest in it; it still announces the selection */}
+        <ComboboxPrimitive.Trigger
+          ref={triggerRef}
+          render={<button type="button" className="focus-effect absolute inset-0 cursor-pointer rounded-md" />}
+        >
+          <span className="sr-only">{value.length > 0 ? value.map((item) => item.name).join(', ') : placeholder}</span>
+        </ComboboxPrimitive.Trigger>
+        <div className="pointer-events-none relative flex min-w-0 flex-wrap items-center gap-1">
+          {value.length > 0 ? (
+            value.map((item) => (
+              <Chip key={item.id} onRemove={() => handleRemove(item.id)} removeLabel={t('c:remove_resource', { resource: item.name })}>
+                {item.name}
+              </Chip>
+            ))
+          ) : (
+            <span aria-hidden="true" className="ml-1 text-sm">
+              {placeholder}
+            </span>
+          )}
+        </div>
+        <InputTriggerChevron className="pointer-events-none absolute right-0 mx-2" />
+      </div>
 
       <ComboboxContent className="p-0">
         <ComboboxSearchInput
