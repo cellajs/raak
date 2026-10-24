@@ -32,7 +32,6 @@ function MarketingNavLinks({ onNavigate }: MarketingNavLinksProps) {
         <Link
           to={url}
           hash={hash}
-          draggable={false}
           onClick={(event) => {
             if (hash && isAboutPage) {
               event.preventDefault();
@@ -75,6 +74,7 @@ export function MarketingNav() {
               to="/about"
               hash=""
               replace={isAboutPage}
+              draggable={false}
               className="focus-effect active:press relative rounded-md p-0.5 transition-transform sm:hover:scale-105 md:pr-4"
               aria-label={t('c:go_to_about')}
             >

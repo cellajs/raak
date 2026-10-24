@@ -8,6 +8,7 @@ import type { TKey } from '~/lib/i18n-locales';
 import { arrangePlacements } from '~/lib/placements';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import { reorderColumn } from '~/modules/common/data-table/reorder-column';
+import { RowDragPreview } from '~/modules/common/data-table/row-drag-preview';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { HelpText } from '~/modules/common/help-text';
 import { getNavTabCandidates } from '~/modules/common/page/tab-nav';
@@ -43,7 +44,7 @@ const helpLabelCellClass = tw('max-sm:justify-start max-sm:pt-[calc((var(--rdg-r
 const firstLineCellClass = tw('justify-center max-sm:h-(--rdg-row-height) max-sm:self-start');
 
 function renderRowDragPreview(row: TabRow) {
-  return <div className="rounded border bg-background px-2 py-1 text-sm shadow-md">{row.name}</div>;
+  return <RowDragPreview name={row.name} />;
 }
 
 interface TabsArrangementCardProps {
@@ -99,21 +100,25 @@ export function TabsArrangementCard({ entity, parentRouteId, onPersist }: TabsAr
     reorder(ids);
   };
 
-  // The same reorder one step at a time, from the grip's menu, for the keyboard and for a pointer that cannot drag
-  const [moveStatus, setMoveStatus] = useState('');
+  // The same reorder one place at a time, from the grip's arrow keys or its menu
   const moveRow = (fromIdx: number, step: -1 | 1) => {
-    const toIdx = fromIdx + step;
-    if (toIdx < 0 || toIdx >= rows.length) return;
     const ids = rows.map((row) => row.id);
-    [ids[fromIdx], ids[toIdx]] = [ids[toIdx], ids[fromIdx]];
+    [ids[fromIdx], ids[fromIdx + step]] = [ids[fromIdx + step], ids[fromIdx]];
     reorder(ids);
-    setMoveStatus(t('c:success.move_position', { name: rows[fromIdx].name, position: toIdx + 1, total: rows.length }));
   };
 
   const columns: ColumnOrColumnGroup<TabRow>[] = [
-    // A single tab has no order to change, so its grip would open a menu of two dead items
+    // A single tab has no order to change
     ...(rows.length > 1
-      ? [reorderColumn<TabRow>({ getName: (row) => row.name, onMove: moveRow, rowCount: rows.length, cellClass: firstLineCellClass })]
+      ? [
+          reorderColumn<TabRow>({
+            getId: rowKeyGetter,
+            getName: (row) => row.name,
+            onMove: moveRow,
+            rowCount: rows.length,
+            cellClass: firstLineCellClass,
+          }),
+        ]
       : []),
     {
       key: 'label',
@@ -123,7 +128,7 @@ export function TabsArrangementCard({ entity, parentRouteId, onPersist }: TabsAr
       wrapText: true,
       cellClass: (row) => cn(labelCellClass, row.description && helpLabelCellClass),
       renderCell: ({ row }) => {
-        const name = <span className="text-sm leading-tight">{row.name}</span>;
+        const name = <span className="font-medium text-sm leading-tight">{row.name}</span>;
         if (!row.description) return name;
 
         // A narrow column wraps a description over many lines, so there it unfolds from a help toggle
@@ -171,9 +176,6 @@ export function TabsArrangementCard({ entity, parentRouteId, onPersist }: TabsAr
         onRowReorder={onRowReorder}
         renderRowDragPreview={renderRowDragPreview}
       />
-      <span className="sr-only" role="status">
-        {moveStatus}
-      </span>
     </ToolCard>
   );
 }

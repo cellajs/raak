@@ -139,6 +139,7 @@ export const zApiError = z.object({
   severity: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']),
   entityType: z.enum(['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment']).optional(),
   requestId: z.string().optional(),
+  version: z.string().optional(),
   path: z.string().optional(),
   method: z.string().optional(),
   timestamp: z.string().optional(),
@@ -284,10 +285,17 @@ export const zMe = z.object({
 });
 
 /**
- * How the signed-in user signs in: connected OAuth providers, the institutions of their organizations (connected or not), passkeys, whether TOTP is set up, and their live sessions. The account page lists it, where sessions can be ended and sign-in methods changed.
+ * How the signed-in user signs in: connected OAuth identities, the institutions of their organizations (connected or not), passkeys, TOTP, and their live sessions, with when each method was added and last used. The account page lists it, where sessions can be ended and sign-in methods changed.
  */
 export const zMeAuthData = z.object({
-  enabledOAuth: z.array(z.enum(['github'])),
+  oauthIdentities: z.array(
+    z.object({
+      provider: z.enum(['github']),
+      email: z.string().nullable(),
+      createdAt: z.string(),
+      lastUsedAt: z.string().nullable(),
+    }),
+  ),
   institutions: z.array(
     z.object({
       connectionId: z.string(),
@@ -296,10 +304,21 @@ export const zMeAuthData = z.object({
         key: z.string(),
         label: z.string(),
       }),
-      connected: z.boolean(),
+      identity: z
+        .object({
+          email: z.string().nullable(),
+          createdAt: z.string(),
+          lastUsedAt: z.string().nullable(),
+        })
+        .nullable(),
     }),
   ),
-  hasTotp: z.boolean(),
+  totp: z
+    .object({
+      createdAt: z.string(),
+      lastUsedAt: z.string().nullable(),
+    })
+    .nullable(),
   sessions: z.array(
     z.object({
       id: z.uuid(),
@@ -540,6 +559,7 @@ export const zTenant = z.object({
   id: z.string().max(24),
   name: z.string().max(255),
   status: z.enum(['active', 'suspended', 'archived']),
+  statusChangedAt: z.string(),
   restrictions: z.object({
     quotas: z.record(z.string(), z.int().gte(0)),
     rateLimits: z.object({
@@ -597,38 +617,38 @@ export const zOrganization = z.object({
   toolsConfig: z.object({
     'organization.settings': z
       .object({
-        order: z.array(z.string()).optional(),
-        hidden: z.array(z.string()).optional(),
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
       })
       .optional(),
     'organization.tabs': z
       .object({
-        order: z.array(z.string()).optional(),
-        hidden: z.array(z.string()).optional(),
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
       })
       .optional(),
     'workspace.settings': z
       .object({
-        order: z.array(z.string()).optional(),
-        hidden: z.array(z.string()).optional(),
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
       })
       .optional(),
     'workspace.tabs': z
       .object({
-        order: z.array(z.string()).optional(),
-        hidden: z.array(z.string()).optional(),
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
       })
       .optional(),
     'project.settings': z
       .object({
-        order: z.array(z.string()).optional(),
-        hidden: z.array(z.string()).optional(),
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
       })
       .optional(),
     'project.tabs': z
       .object({
-        order: z.array(z.string()).optional(),
-        hidden: z.array(z.string()).optional(),
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
       })
       .optional(),
   }),
@@ -903,6 +923,13 @@ export const zCheckEmailResponse = z.object({
   recognized: z.boolean(),
 });
 
+/**
+ * The address of the account the held challenge signs in to
+ */
+export const zGetPendingMfaResponse = z.object({
+  email: z.string(),
+});
+
 export const zInvokeTokenPath = z.object({
   type: z.enum(['oauth-verification', 'invitation', 'magic', 'step-up']),
   token: z.string(),
@@ -1015,7 +1042,7 @@ export const zCreatePasskeyBody = z.object({
       clientDataJSON: z.string(),
       attestationObject: z.string(),
       authenticatorData: z.string().optional(),
-      transports: z.array(z.string()).optional(),
+      transports: z.array(z.string()).max(10).optional(),
       publicKeyAlgorithm: z.number().optional(),
       publicKey: z.string().optional(),
     }),
@@ -1332,7 +1359,10 @@ export const zPostAppCatchupBody = z.object({
         key: z.string().max(512),
         organizationId: z.string(),
         prefixes: z.array(z.string().max(512)).min(1).max(64),
-        entityTypes: z.array(z.enum(['task', 'label', 'attachment'])).min(1),
+        entityTypes: z
+          .array(z.enum(['task', 'label', 'attachment']))
+          .min(1)
+          .max(64),
         depth: z.enum(['self', 'subtree']).optional(),
         cursor: z.int().gte(0),
       }),
@@ -1905,10 +1935,25 @@ export const zUpdateTenantBody = z.object({
   subscriptionId: z.string().max(255).nullish(),
   subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']).optional(),
   subscriptionPlan: z.string().max(255).nullish(),
-  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])).optional(),
+  authStrategies: z
+    .array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']))
+    .max(7)
+    .optional(),
   restrictions: z
     .object({
-      quotas: z.record(z.string(), z.int().gte(0)).optional(),
+      quotas: z
+        .object({
+          user: z.int().gte(0).optional(),
+          organization: z.int().gte(0).optional(),
+          workspace: z.int().gte(0).optional(),
+          project: z.int().gte(0).optional(),
+          task: z.int().gte(0).optional(),
+          label: z.int().gte(0).optional(),
+          attachment: z.int().gte(0).optional(),
+          serviceAccount: z.int().gte(0).optional(),
+          apiKey: z.int().gte(0).optional(),
+        })
+        .optional(),
       allowUnregisteredClients: z.boolean().optional(),
       rateLimits: z
         .object({
@@ -2149,6 +2194,7 @@ export const zUpdateOrganizationBody = z.object({
   languages: z
     .array(z.enum(['en', 'nl']))
     .min(1)
+    .max(64)
     .optional(),
   notificationEmail: z.string().max(255).nullish(),
   color: z.string().max(255).nullish(),
@@ -2183,38 +2229,38 @@ export const zUpdateOrganizationBody = z.object({
     .object({
       'organization.settings': z
         .object({
-          order: z.array(z.string()).optional(),
-          hidden: z.array(z.string()).optional(),
+          order: z.array(z.string()).max(100).optional(),
+          hidden: z.array(z.string()).max(100).optional(),
         })
         .optional(),
       'organization.tabs': z
         .object({
-          order: z.array(z.string()).optional(),
-          hidden: z.array(z.string()).optional(),
+          order: z.array(z.string()).max(100).optional(),
+          hidden: z.array(z.string()).max(100).optional(),
         })
         .optional(),
       'workspace.settings': z
         .object({
-          order: z.array(z.string()).optional(),
-          hidden: z.array(z.string()).optional(),
+          order: z.array(z.string()).max(100).optional(),
+          hidden: z.array(z.string()).max(100).optional(),
         })
         .optional(),
       'workspace.tabs': z
         .object({
-          order: z.array(z.string()).optional(),
-          hidden: z.array(z.string()).optional(),
+          order: z.array(z.string()).max(100).optional(),
+          hidden: z.array(z.string()).max(100).optional(),
         })
         .optional(),
       'project.settings': z
         .object({
-          order: z.array(z.string()).optional(),
-          hidden: z.array(z.string()).optional(),
+          order: z.array(z.string()).max(100).optional(),
+          hidden: z.array(z.string()).max(100).optional(),
         })
         .optional(),
       'project.tabs': z
         .object({
-          order: z.array(z.string()).optional(),
-          hidden: z.array(z.string()).optional(),
+          order: z.array(z.string()).max(100).optional(),
+          hidden: z.array(z.string()).max(100).optional(),
         })
         .optional(),
     })
@@ -3398,6 +3444,7 @@ export const zCreateServiceAccountBody = z.object({
           ]),
         )
         .min(1)
+        .max(12)
         .nullish(),
       expiresAt: z.iso.datetime().optional(),
     })
@@ -3481,6 +3528,7 @@ export const zCreateApiKeyBody = z.object({
       ]),
     )
     .min(1)
+    .max(12)
     .nullish(),
   expiresAt: z.iso.datetime().optional(),
   rollFrom: z.string().max(50).optional(),

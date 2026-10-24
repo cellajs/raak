@@ -18,7 +18,9 @@ export const roles = createRoleRegistry(['admin', 'member', 'guest'] as const);
  */
 export const hierarchy = createEntityHierarchy(roles)
   .user()
-  .organization({ roles: ['admin', 'member'], elevated: ['admin', 'member'], drafts: { prepareRoles: ['admin'] } })
+  // Only org admins are elevated: a project or workspace invite escalates to org member, so an elevated
+  // member would hold the org member's product grants in every sibling channel.
+  .organization({ roles: ['admin', 'member'], elevated: ['admin'], drafts: { prepareRoles: ['admin'] } })
   // Invites to a workspace or project auto-create the organization membership as a plain member.
   .channel('workspace', { parent: 'organization', roles: roles.all, organizationRoles: { admin: 'member', member: 'member', guest: 'member' } })
   .channel('project', { parent: 'organization', roles: roles.all, organizationRoles: { admin: 'member', member: 'member', guest: 'member' } })

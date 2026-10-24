@@ -347,7 +347,6 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
                   ? t('c:create_label.text')
                   : t('c:create_first_label.text')
           }
-          showClear={false}
         />
         <ComboboxHotkeyHint searching={!!searchValue}>L</ComboboxHotkeyHint>
         {!searchValue && selectedLabels.length > 0 && (

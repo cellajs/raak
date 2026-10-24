@@ -64,7 +64,6 @@ export default defineConfig({
       'cella/skills/screenshots/shots-config.mjs',
       'frontend/src/entity-sync-queries.ts',
       'frontend/src/styling/gradients.css',
-      'frontend/src/styling/tailwind.css',
       'a11y/scope-config.ts',
       'bench/src/seeds/attachment-home.ts',
       'backend/src/mocks/app-product-mocks.ts',

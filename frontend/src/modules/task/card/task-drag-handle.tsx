@@ -1,14 +1,15 @@
 import { GripVerticalIcon } from 'lucide-react';
 import { MotionConfig, motion } from 'motion/react';
-import { type FocusEvent, type KeyboardEvent, useLayoutEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { type FocusEvent, useLayoutEffect, useRef, useState } from 'react';
+import { ReorderHandle } from '~/modules/common/reorder-handle/reorder-handle';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getRelativeTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { usePanelTasks } from '~/modules/task/panel/panel-tasks-context';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
-import { Button } from '~/modules/ui/button';
+import { buttonVariants } from '~/modules/ui/button';
+import { cn } from '~/utils/cn';
 
 // Both sizes, so it slides in above the type button or beside it
 const folded = { width: 0, height: 0, opacity: 0 };
@@ -20,12 +21,10 @@ interface TaskDragHandleProps {
 
 /** Grip before the type button, folded away until focused so only a keyboard reaches it; its arrow keys step the card within its status. */
 export function TaskDragHandle({ task }: TaskDragHandleProps) {
-  const { t } = useTranslation();
   const panelTasks = usePanelTasks();
   const { mutate: updateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const refocusAtOrderRef = useRef<number | null>(null);
+  const pendingOrderRef = useRef<number | null>(null);
   const [hasFocus, setHasFocus] = useState(false);
 
   const statusTasks = (panelTasks ?? []).filter((panelTask) => panelTask.status === task.status && !isDraftTask(panelTask));
@@ -40,26 +39,18 @@ export function TaskDragHandle({ task }: TaskDragHandleProps) {
     );
     const displayOrder = getRelativeTaskOrder(step < 0 ? 'top' : 'bottom', allStatusTasks, target.displayOrder, task.id);
     if (displayOrder === task.displayOrder) return;
-    refocusAtOrderRef.current = displayOrder;
+    pendingOrderRef.current = displayOrder;
     updateTask({ id: task.id, ops: { displayOrder } });
   };
 
-  // React re-inserts a row it moves down, and a removed node drops focus
+  // Runs after the handle's own effect has focused it again in its new place
   useLayoutEffect(() => {
-    if (refocusAtOrderRef.current === null || refocusAtOrderRef.current !== task.displayOrder) return;
-    refocusAtOrderRef.current = null;
-    buttonRef.current?.focus();
+    if (pendingOrderRef.current === task.displayOrder) pendingOrderRef.current = null;
   });
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
-    event.preventDefault();
-    move(event.key === 'ArrowUp' ? -1 : 1);
-  };
-
   // The blur of a re-inserted row has no next target: the grip stays unfolded through the move
-  const handleBlur = (event: FocusEvent<HTMLButtonElement>) => {
-    if (!event.relatedTarget && refocusAtOrderRef.current !== null) return;
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.relatedTarget && pendingOrderRef.current !== null) return;
     setHasFocus(false);
   };
 
@@ -73,21 +64,23 @@ export function TaskDragHandle({ task }: TaskDragHandleProps) {
         initial={false}
         animate={hasFocus ? unfolded : folded}
         transition={{ duration: 0.2, ease: 'easeOut' }}
+        onFocus={() => setHasFocus(true)}
+        onBlur={handleBlur}
       >
-        <Button
-          ref={buttonRef}
-          variant="ghost"
-          size="xs"
-          aria-roledescription={t('c:sortable')}
-          aria-label={t('c:sortable_position', { name: task.name, position: index + 1, total: statusTasks.length })}
-          onKeyDown={handleKeyDown}
-          onFocus={() => setHasFocus(true)}
-          onBlur={handleBlur}
+        <ReorderHandle
+          id={task.id}
+          name={task.name}
+          index={index}
+          total={statusTasks.length}
+          onMove={move}
           // Only a collapsed card is draggable, so an open one shows no grab cursor
-          className="focus-inset size-8 group-data-[state=collapsed]/task:cursor-grab group-data-[state=collapsed]/task:active:cursor-grabbing"
+          className={cn(
+            buttonVariants({ variant: 'ghost', size: 'xs' }),
+            'focus-inset size-8 group-data-[state=collapsed]/task:cursor-grab group-data-[state=collapsed]/task:active:cursor-grabbing',
+          )}
         >
           <GripVerticalIcon className="size-3.5" />
-        </Button>
+        </ReorderHandle>
       </motion.div>
     </MotionConfig>
   );

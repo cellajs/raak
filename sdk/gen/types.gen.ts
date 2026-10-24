@@ -206,6 +206,7 @@ export type ApiError = {
   severity: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
   entityType?: 'user' | 'organization' | 'workspace' | 'project' | 'task' | 'label' | 'attachment';
   requestId?: string;
+  version?: string;
   path?: string;
   method?: string;
   timestamp?: string;
@@ -347,10 +348,15 @@ export type User = {
 };
 
 /**
- * How the signed-in user signs in: connected OAuth providers, the institutions of their organizations (connected or not), passkeys, whether TOTP is set up, and their live sessions. The account page lists it, where sessions can be ended and sign-in methods changed.
+ * How the signed-in user signs in: connected OAuth identities, the institutions of their organizations (connected or not), passkeys, TOTP, and their live sessions, with when each method was added and last used. The account page lists it, where sessions can be ended and sign-in methods changed.
  */
 export type MeAuthData = {
-  enabledOAuth: Array<'github'>;
+  oauthIdentities: Array<{
+    provider: 'github';
+    email: string | null;
+    createdAt: string;
+    lastUsedAt: string | null;
+  }>;
   institutions: Array<{
     connectionId: string;
     displayName: string;
@@ -359,11 +365,21 @@ export type MeAuthData = {
       label: string;
     };
     /**
-     * Whether the account already holds an identity through this connection
+     * The identity the account holds through this connection; null when not connected
      */
-    connected: boolean;
+    identity: {
+      email: string | null;
+      createdAt: string;
+      lastUsedAt: string | null;
+    } | null;
   }>;
-  hasTotp: boolean;
+  /**
+   * Null without TOTP. Its last use is the start of the time step of the newest code it accepted.
+   */
+  totp: {
+    createdAt: string;
+    lastUsedAt: string | null;
+  } | null;
   sessions: Array<{
     id: string;
     type: 'regular' | 'impersonation' | 'mfa';
@@ -605,6 +621,7 @@ export type Tenant = {
   id: string;
   name: string;
   status: 'active' | 'suspended' | 'archived';
+  statusChangedAt: string;
   restrictions: {
     /**
      * Entity quotas (0 = unlimited)
@@ -1061,6 +1078,53 @@ export type CheckEmailResponses = {
 };
 
 export type CheckEmailResponse = CheckEmailResponses[keyof CheckEmailResponses];
+
+export type GetPendingMfaData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/auth/mfa/pending';
+};
+
+export type GetPendingMfaErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetPendingMfaError = GetPendingMfaErrors[keyof GetPendingMfaErrors];
+
+export type GetPendingMfaResponses = {
+  /**
+   * The address of the account the held challenge signs in to
+   */
+  200: {
+    email: string;
+  };
+};
+
+export type GetPendingMfaResponse = GetPendingMfaResponses[keyof GetPendingMfaResponses];
 
 export type InvokeTokenData = {
   body?: never;
@@ -5058,7 +5122,15 @@ export type UpdateTenantData = {
        * Entity quotas (0 = unlimited)
        */
       quotas?: {
-        [key: string]: number;
+        user?: number;
+        organization?: number;
+        workspace?: number;
+        project?: number;
+        task?: number;
+        label?: number;
+        attachment?: number;
+        serviceAccount?: number;
+        apiKey?: number;
       };
       allowUnregisteredClients?: boolean;
       rateLimits?: {

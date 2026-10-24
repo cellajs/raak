@@ -1,4 +1,4 @@
-import { GripVerticalIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { PlusIcon, Trash2Icon } from 'lucide-react';
 import { type FormEvent, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization } from 'sdk';
@@ -6,6 +6,7 @@ import { labelColorTokens, labelSlug, type PrimaryLabelDefinition, primaryLabelL
 import type { RowsChangeData } from '~/modules/common/data-grid';
 import { EditCellInput } from '~/modules/common/data-grid/cell-renderers';
 import { DataTable } from '~/modules/common/data-table/data-table';
+import { reorderColumn } from '~/modules/common/data-table/reorder-column';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { NamedText } from '~/modules/common/named-text';
 import { openConfirm } from '~/modules/common/open-confirm';
@@ -156,15 +157,12 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
     });
 
   const columns: ColumnOrColumnGroup<PrimaryLabelDefinition>[] = [
-    {
-      key: 'drag-handle',
-      name: '',
-      width: 32,
-      maxWidth: 32,
-      cellClass: cn(centeredCellClass, 'cursor-grab'),
-      rowDragHandle: true,
-      renderCell: () => <GripVerticalIcon className="size-3.5 text-muted-foreground/50" />,
-    },
+    reorderColumn<PrimaryLabelDefinition>({
+      getId: rowKeyGetter,
+      getName: (row) => row.name,
+      rowCount: rows.length,
+      onMove: (rowIdx, step) => persist(rows.with(rowIdx, rows[rowIdx + step]).with(rowIdx + step, rows[rowIdx])),
+    }),
     {
       key: 'icon',
       name: t('c:icon'),

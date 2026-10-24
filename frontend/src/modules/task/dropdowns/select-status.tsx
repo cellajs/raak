@@ -56,7 +56,6 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
           wrapClassName="max-sm:hidden"
           className="rounded-none leading-normal focus-visible:ring-transparent"
           placeholder={t('c:select_resource', { resource: t('c:status').toLowerCase() })}
-          showClear={false}
         />
         <ComboboxHotkeyHint searching={!!searchValue.length}>S</ComboboxHotkeyHint>
         <ComboboxList>
