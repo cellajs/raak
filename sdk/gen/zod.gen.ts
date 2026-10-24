@@ -429,7 +429,44 @@ export const zProject = z.object({
   bannerUrl: z.string().max(2048).nullable(),
   publishedAt: z.string().nullable(),
   public: z.boolean(),
-  toolsConfig: z.union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown()), z.array(z.unknown())]).nullable(),
+  toolsConfig: z.object({
+    'organization.settings': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'organization.tabs': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'workspace.settings': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'workspace.tabs': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'project.settings': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'project.tabs': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+  }),
   path: z.string().nullable(),
   organizationId: z.uuid(),
   included: z.object({
@@ -744,7 +781,44 @@ export const zWorkspace = z.object({
   bannerUrl: z.string().max(2048).nullable(),
   publishedAt: z.string().nullable(),
   public: z.boolean(),
-  toolsConfig: z.union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown()), z.array(z.unknown())]).nullable(),
+  toolsConfig: z.object({
+    'organization.settings': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'organization.tabs': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'workspace.settings': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'workspace.tabs': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'project.settings': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+    'project.tabs': z
+      .object({
+        order: z.array(z.string()).max(100).optional(),
+        hidden: z.array(z.string()).max(100).optional(),
+      })
+      .optional(),
+  }),
   path: z.string().nullable(),
   organizationId: z.uuid(),
   included: z.object({
