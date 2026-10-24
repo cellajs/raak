@@ -1,9 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { boardFocusStore, useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
-import { markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
-import { useItemControlsTabOrder } from '~/modules/board-focus/use-item-controls-tab-order';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { searchHighlightRowClass } from '~/modules/common/search-highlight';
 import { LabelFilterButton } from '~/modules/label/label-filter-button';
@@ -13,7 +10,10 @@ import { labelTileStore, useLabelTileStore } from '~/modules/label/label-tile-st
 import { useLabelUpdateMutation } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps } from '~/modules/label/types';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
+import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
+import { markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
+import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { Badge } from '~/modules/ui/badge';
 import { Checkbox } from '~/modules/ui/checkbox';

@@ -7,11 +7,9 @@ import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { useRelativeDate } from '~/hooks/use-relative-date';
 import { CopiedIcon } from '~/modules/common/copied-icon';
 import { DateTooltip } from '~/modules/common/date-tooltip';
-import { DeleteForm } from '~/modules/common/delete-form';
-import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { NamedText } from '~/modules/common/named-text';
-import { PopConfirm } from '~/modules/common/popconfirm';
+import { openConfirm } from '~/modules/common/open-confirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { apiKeysQueryOptions, useRevokeApiKeyMutation } from '~/modules/service-accounts/query';
 import { Badge } from '~/modules/ui/badge';
@@ -37,24 +35,14 @@ export function ServiceAccountTile({ account, path, secrets }: ServiceAccountTil
   const role = account.bindings[0]?.role;
 
   // A revoked key cannot be restored and whatever uses it stops working, so the click asks first.
-  const openRevokeConfirm = (apiKey: ApiKey, event: MouseEvent<HTMLButtonElement>) => {
-    const { create, remove } = dropdowner.getState();
-    create(
-      <PopConfirm title={<NamedText i18nKey="c:confirm.revoke_api_key" name={apiKey.name} />}>
-        <DeleteForm
-          label="c:revoke"
-          icon={UnplugIcon}
-          onDelete={() => {
-            remove();
-            revoke({ path: { ...path, id: account.id, keyId: apiKey.id } });
-          }}
-          onCancel={remove}
-          pending={false}
-        />
-      </PopConfirm>,
-      { id: 'revoke-api-key', triggerId: `revoke-api-key-${apiKey.id}`, triggerRef: { current: event.currentTarget }, align: 'end' },
-    );
-  };
+  const openRevokeConfirm = (apiKey: ApiKey, event: MouseEvent<HTMLButtonElement>) =>
+    openConfirm(event.currentTarget, {
+      id: `revoke-api-key-${apiKey.id}`,
+      title: <NamedText i18nKey="c:confirm.revoke_api_key" name={apiKey.name} />,
+      label: 'c:revoke',
+      icon: UnplugIcon,
+      onConfirm: () => revoke({ path: { ...path, id: account.id, keyId: apiKey.id } }),
+    });
 
   const badges = (
     <>

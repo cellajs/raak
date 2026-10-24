@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { memo } from 'react';
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { TaskCard } from '~/modules/task/card/task-card';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';

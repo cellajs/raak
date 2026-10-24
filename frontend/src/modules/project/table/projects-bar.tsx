@@ -1,11 +1,9 @@
 import { TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { TableBarButton } from '~/modules/common/data-table/table-bar-button';
 import { TableBarShell, useTableBarFilters } from '~/modules/common/data-table/table-bar-shell';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { NamedText } from '~/modules/common/named-text';
+import { openDeleteDialog } from '~/modules/common/open-confirm';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import type { EnrichedProject, ProjectsRouteSearchParams } from '~/modules/project/types';
@@ -20,8 +18,6 @@ export function ProjectsTableBar({
   setColumns,
   clearSelection,
 }: BaseTableBarProps<EnrichedProject, ProjectsRouteSearchParams>) {
-  const { t } = useTranslation();
-  const createDialog = useDialoger((state) => state.create);
   const resolveCan = useResolveCan();
 
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
@@ -32,16 +28,14 @@ export function ProjectsTableBar({
   // Bulk delete acts only on rows this user may delete; the badge shows that count when it differs from the selection.
   const deletable = selected.filter((row) => resolveCan(row.can?.project?.delete, row.createdBy));
 
-  const openDeleteDialog = () => {
-    const resource = t('c:project', { count: deletable.length }).toLowerCase();
-    createDialog(<DeleteProjects dialog projects={deletable} callback={clearSelection} />, {
+  const confirmDelete = () =>
+    openDeleteDialog({
       id: 'delete-projects',
       triggerRef: deleteButtonRef,
-      className: 'max-w-xl',
-      title: t('c:delete_resource', { resource }),
-      description: <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: deletable.length, resource }} />,
+      resource: 'c:project',
+      count: deletable.length,
+      content: <DeleteProjects projects={deletable} callback={clearSelection} />,
     });
-  };
 
   return (
     <TableBarShell
@@ -56,7 +50,7 @@ export function ProjectsTableBar({
           <TableBarButton
             ref={deleteButtonRef}
             variant="destructive"
-            onClick={openDeleteDialog}
+            onClick={confirmDelete}
             badge={deletable.length < selected.length ? deletable.length : undefined}
             icon={TrashIcon}
             label="c:delete"

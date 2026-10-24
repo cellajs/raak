@@ -1,8 +1,8 @@
 import { useHotkeys } from '~/hooks/use-hotkeys';
 import type { HotkeyItem } from '~/hooks/use-hotkeys-helpers';
-import { boardFocusStore } from '~/modules/board-focus/board-focus-store';
-import { focusItem } from '~/modules/board-focus/focus-item';
-import { findItemPanelId, getPanelNav } from '~/modules/board-focus/panel-nav-registry';
+import { boardFocusStore } from '~/modules/task/board/board-focus-store';
+import { focusItem } from '~/modules/task/helpers/focus-item';
+import { findItemPanelId, getPanelNav } from '~/modules/task/helpers/panel-nav-registry';
 
 const ignoreTags = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', '[role="grid"]'];
 

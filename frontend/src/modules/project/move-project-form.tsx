@@ -2,7 +2,7 @@ import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
 import { zMoveProjectToWorkspaceQuery } from 'sdk/zod.gen';
-import type { z } from 'zod';
+import { z } from 'zod';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
@@ -13,7 +13,7 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { Form } from '~/modules/ui/field';
 import { formResolver } from '~/utils/form-resolver';
 
-const formSchema = zMoveProjectToWorkspaceQuery;
+const formSchema = z.object({ workspaceId: zMoveProjectToWorkspaceQuery.shape.workspaceId.min(1) });
 type FormValues = z.infer<typeof formSchema>;
 
 interface MoveProjectFormProps {

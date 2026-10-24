@@ -1,8 +1,7 @@
 import { TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
-import { dialoger } from '~/modules/common/dialoger/use-dialoger';
-import { NamedText } from '~/modules/common/named-text';
+import { openDeleteDialog } from '~/modules/common/open-confirm';
 import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteLabels } from '~/modules/label/delete-labels';
@@ -30,7 +29,7 @@ export function LabelSelectedButtons({ selectedLabelIds, clearSelection }: Label
   const count = selectedLabelIds.length;
   const resource = t('c:label', { count }).toLowerCase();
 
-  const openDeleteDialog = (currentTarget: HTMLButtonElement) => {
+  const confirmDelete = (currentTarget: HTMLButtonElement) => {
     // A secondary row deletes its whole slug group, an epic only its own row. Groups are re-derived from the
     // cache at action time, so a stale selection cannot leak in.
     const byId = cachedLabels();
@@ -46,20 +45,19 @@ export function LabelSelectedButtons({ selectedLabelIds, clearSelection }: Label
     });
     if (!toDelete.length) return;
 
-    const { create, remove } = dialoger.getState();
-    create(<DeleteLabels dialog labels={toDelete} callback={clearSelection} onCancel={() => remove('delete-labels')} />, {
+    openDeleteDialog({
       id: 'delete-labels',
       triggerRef: { current: currentTarget },
-      className: 'max-w-xl',
-      title: t('c:delete_resource', { resource }),
-      description: <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count, resource }} />,
+      resource: 'c:label',
+      count,
+      content: <DeleteLabels labels={toDelete} callback={clearSelection} />,
     });
   };
 
   return (
     <SelectionActionBar count={count} onClear={clearSelection}>
       <TooltipButton toolTipContent={t('c:delete_resource', { resource })} side="top">
-        <Button variant="destructive" onClick={({ currentTarget }) => openDeleteDialog(currentTarget)}>
+        <Button variant="destructive" onClick={({ currentTarget }) => confirmDelete(currentTarget)}>
           <TrashIcon />
           <span>{t('c:delete')}</span>
         </Button>

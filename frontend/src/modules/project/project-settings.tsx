@@ -1,12 +1,11 @@
 import { useSearch } from '@tanstack/react-router';
-import { LogOutIcon, Trash2Icon, UnlinkIcon } from 'lucide-react';
-import { useRef } from 'react';
+import { LogOutIcon, UnlinkIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import type { CallbackArgs } from '~/modules/common/data-table/types';
-import { dialoger } from '~/modules/common/dialoger/use-dialoger';
-import { NamedText } from '~/modules/common/named-text';
 import { sheeter } from '~/modules/common/sheeter/use-sheeter';
+import { ToolCard } from '~/modules/common/tool-card';
+import { DeleteToolCard } from '~/modules/entities/channel-settings-tools';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import { MoveProjectForm } from '~/modules/project/move-project-form';
@@ -15,7 +14,6 @@ import { UpdateProjectForm } from '~/modules/project/update-project-form';
 import { useProjectMembershipActions } from '~/modules/project/use-project-membership-actions';
 import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
 import { Button } from '~/modules/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
 import { useOrganizationWorkspaces } from '~/modules/workspace/query';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 
@@ -28,7 +26,6 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
   const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
   const isInWorkspace = useIsWorkspaceRoute();
 
-  const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
   const resolveCan = useResolveCan();
   const canUpdate = resolveCan(project.can?.project?.update, project.createdBy);
   const canDelete = resolveCan(project.can?.project?.delete, project.createdBy);
@@ -51,36 +48,17 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
     if (projectSlug === project.slug) selectBoardProject();
   };
 
-  const openDeleteDialog = () => {
-    dialoger.getState().create(<DeleteProjects dialog projects={[project]} callback={handleDeleted} />, {
-      id: 'delete-project',
-      triggerRef: deleteButtonRef,
-      className: 'md:max-w-xl',
-      title: t('c:delete_resource', { resource: t('c:project').toLowerCase() }),
-      description: <NamedText i18nKey="c:confirm.delete_resource" name={project.name} values={{ resource: t('c:project').toLowerCase() }} />,
-    });
-  };
-
   return (
     <div className="mb-12 flex flex-col gap-8">
       {canUpdate && (
-        <Card>
-          <CardHeader>
-            <CardTitle level={2}>{t('c:general')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UpdateProjectForm project={project} />
-          </CardContent>
-        </Card>
+        <ToolCard label="c:general">
+          <UpdateProjectForm project={project} />
+        </ToolCard>
       )}
 
       {(canMoveProjects || projectHasWorkspace) && (
-        <Card>
-          <CardHeader>
-            <CardTitle level={2}>{t('c:workspace')}</CardTitle>
-            <CardDescription>{t('c:project_workspace_settings.text')}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-6">
+        <ToolCard label="c:workspace" description={t('c:project_workspace_settings.text')}>
+          <div className="flex flex-col gap-6">
             {canMoveProjects && <MoveProjectForm project={project} workspaces={workspaces} onSuccess={closeSettingsSheet} />}
             {projectHasWorkspace && (
               <Button
@@ -94,38 +72,24 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
                 <span>{isRemovingProjectFromWorkspace ? t('c:loading') : t('c:remove_project_from_workspace')}</span>
               </Button>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </ToolCard>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle level={2}>{t('c:project_membership')}</CardTitle>
-          <CardDescription>{t('c:project_membership_settings.text')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="destructive" className="w-full sm:w-auto" soft onClick={leaveProject} disabled={isLeavingProject}>
-            <LogOutIcon />
-            <span>{isLeavingProject ? t('c:loading') : t('c:leave_project')}</span>
-          </Button>
-        </CardContent>
-      </Card>
+      <ToolCard label="c:project_membership" description={t('c:project_membership_settings.text')}>
+        <Button variant="destructive" className="w-full sm:w-auto" soft onClick={leaveProject} disabled={isLeavingProject}>
+          <LogOutIcon />
+          <span>{isLeavingProject ? t('c:loading') : t('c:leave_project')}</span>
+        </Button>
+      </ToolCard>
 
       {canDelete && (
-        <Card>
-          <CardHeader>
-            <CardTitle level={2}>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</CardTitle>
-            <CardDescription>
-              <NamedText i18nKey="c:delete_resource_notice.text" name={project.name} values={{ resource: t('c:project').toLowerCase() }} />
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>
-              <Trash2Icon />
-              <span>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</span>
-            </Button>
-          </CardContent>
-        </Card>
+        <DeleteToolCard
+          name={project.name}
+          resource="c:project"
+          dialogId="delete-project"
+          renderDialog={() => <DeleteProjects projects={[project]} callback={handleDeleted} />}
+        />
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import type { RefObject } from 'react';
 import type { Project } from 'sdk';
 import { dialoger } from '~/modules/common/dialoger/use-dialoger';
+import { NamedText } from '~/modules/common/named-text';
 import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { MembersTable } from '~/modules/memberships/members-table/members-table';
@@ -22,7 +23,7 @@ export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject
       headerClassName: 'static',
       className: 'max-w-full lg:max-w-4xl',
       title: i18n.t('c:project_members'),
-      description: i18n.t('c:project_members.text'),
+      description: <NamedText i18nKey="c:project_members.text" name={project.name} />,
     },
   );
 };
@@ -39,7 +40,7 @@ export const openProjectSettingsSheet = (project: EnrichedProject, triggerRef?: 
       className: 'max-w-full lg:max-w-4xl',
       title: i18n.t('c:resource_settings', { resource: i18n.t('c:project') }),
       titleContent: <UnsavedBadge title={i18n.t('c:resource_settings', { resource: i18n.t('c:project') })} />,
-      description: i18n.t('c:project_settings.text', { name: project.name }),
+      description: <NamedText i18nKey="c:project_settings.text" name={project.name} />,
     },
   );
 };

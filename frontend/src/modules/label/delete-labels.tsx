@@ -2,7 +2,7 @@ import type { Label } from 'sdk';
 import { DeleteItems, type DeleteItemsProps } from '~/modules/common/delete-items';
 import { useLabelDeleteMutation } from '~/modules/label/query';
 
-interface DeleteLabelsProps extends Pick<DeleteItemsProps<Label, Label[]>, 'dialog' | 'callback' | 'onCancel'> {
+interface DeleteLabelsProps extends Pick<DeleteItemsProps<Label, Label[]>, 'callback'> {
   labels: Label[];
 }
 

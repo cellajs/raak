@@ -3,7 +3,7 @@ import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, UsersIcon } from 'lucide-
 import { type RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
-import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
+import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
@@ -67,6 +67,7 @@ export function WorkspaceActionButtons() {
         ))}
         {project && projectMembership && (
           <>
+            <DropdownActionSeparator />
             <DropdownActionItem icon={UsersIcon} onSelect={select(() => openProjectMembersSheet(project, triggerRef))}>
               {t('c:project_members')}
             </DropdownActionItem>

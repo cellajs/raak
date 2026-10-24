@@ -1,5 +1,5 @@
-import { boardFocusStore } from '~/modules/board-focus/board-focus-store';
-import { scrollItemIntoView } from '~/modules/board-focus/panel-nav-registry';
+import { boardFocusStore } from '~/modules/task/board/board-focus-store';
+import { scrollItemIntoView } from '~/modules/task/helpers/panel-nav-registry';
 
 /** Makes an item the board's current one, or clears it, without moving DOM focus. */
 export const setCurrentItem = (id: string | null) => boardFocusStore.getState().setCurrentItemId(id);

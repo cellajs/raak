@@ -1,4 +1,4 @@
-import { TrashIcon } from 'lucide-react';
+import { CircleAlertIcon, TrashIcon } from 'lucide-react';
 import { type ReactNode, Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ChannelEntityType } from 'shared';
@@ -47,9 +47,22 @@ interface DeleteToolCardProps {
   /** Dialog id, also the aside anchor's danger id (e.g. 'delete-organization'). */
   dialogId: string;
   renderDialog: () => ReactNode;
+  /** The card's notice; defaults to the permanent-delete notice, interpolated with `name`, `resource` and `values`. */
+  notice?: TKey;
+  values?: Record<string, string | number>;
+  /** Why the entity cannot be deleted now: the button is disabled and this note shows below it. */
+  disabledReason?: TKey;
 }
 
-export function DeleteToolCard({ name, resource, dialogId, renderDialog }: DeleteToolCardProps) {
+export function DeleteToolCard({
+  name,
+  resource,
+  dialogId,
+  renderDialog,
+  notice = 'c:delete_resource_notice.text',
+  values,
+  disabledReason,
+}: DeleteToolCardProps) {
   const { t } = useTranslation();
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -70,12 +83,18 @@ export function DeleteToolCard({ name, resource, dialogId, renderDialog }: Delet
     <ToolCard
       label="c:delete_resource"
       resource={resource}
-      description={<NamedText i18nKey="c:delete_resource_notice.text" name={name} values={{ resource: resourceName }} />}
+      description={<NamedText i18nKey={notice} name={name} values={{ resource: resourceName, ...values }} />}
     >
-      <Button ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>
+      <Button ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" disabled={!!disabledReason} onClick={openDeleteDialog}>
         <TrashIcon />
         <span>{t('c:delete_resource', { resource: resourceName })}</span>
       </Button>
+      {disabledReason && (
+        <p className="mt-4 flex items-center gap-1 text-muted-foreground text-sm italic">
+          <CircleAlertIcon />
+          {t(disabledReason)}
+        </p>
+      )}
     </ToolCard>
   );
 }

@@ -2,7 +2,7 @@ import { DeleteItems, type DeleteItemsProps } from '~/modules/common/delete-item
 import { useTaskDeleteMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 
-interface DeleteTasksProps extends Pick<DeleteItemsProps<Task, Task[]>, 'callback' | 'onCancel'> {
+interface DeleteTasksProps extends Pick<DeleteItemsProps<Task, Task[]>, 'callback'> {
   tasks: Task[];
 }
 

@@ -1,4 +1,4 @@
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { taskKeys } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { getQueryItems, getSimilarQueries } from '~/query/basic/mutate-query';

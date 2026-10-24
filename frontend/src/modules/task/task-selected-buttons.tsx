@@ -1,8 +1,7 @@
 import { CheckIcon, CircleDotDashedIcon, CopyIcon, TagIcon, TrashIcon, UserRoundPlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { dialoger } from '~/modules/common/dialoger/use-dialoger';
-import { NamedText } from '~/modules/common/named-text';
+import { openDeleteDialog } from '~/modules/common/open-confirm';
 import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { TooltipButton } from '~/modules/common/tooltip-button';
@@ -63,23 +62,16 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
 
   const resourceOf = (count: number) => (count > 1 ? t('c:task_other') : t('c:task')).toLowerCase();
 
-  const openDeleteDialog = (currentTarget: HTMLButtonElement) => {
+  const confirmDelete = (currentTarget: HTMLButtonElement) => {
     const tasks = resolveSelected();
     if (!tasks.length) return;
 
-    const { create, remove } = dialoger.getState();
-    const removeDialog = () => remove('delete-tasks');
-    const handleDeleted = () => {
-      removeDialog();
-      clearSelection();
-    };
-
-    create(<DeleteTasks tasks={tasks} callback={handleDeleted} onCancel={removeDialog} />, {
+    openDeleteDialog({
       id: 'delete-tasks',
       triggerRef: { current: currentTarget },
-      className: 'max-w-xl',
-      title: t('c:delete_resource', { resource: resourceOf(tasks.length) }),
-      description: <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: tasks.length, resource: resourceOf(tasks.length) }} />,
+      resource: 'c:task',
+      count: tasks.length,
+      content: <DeleteTasks tasks={tasks} callback={clearSelection} />,
     });
   };
 
@@ -113,7 +105,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
         </TooltipButton>
       ))}
       <TooltipButton toolTipContent={deleteLabel} side="top">
-        <Button variant="destructive" size="icon" aria-label={deleteLabel} onClick={({ currentTarget }) => openDeleteDialog(currentTarget)}>
+        <Button variant="destructive" size="icon" aria-label={deleteLabel} onClick={({ currentTarget }) => confirmDelete(currentTarget)}>
           <TrashIcon />
         </Button>
       </TooltipButton>

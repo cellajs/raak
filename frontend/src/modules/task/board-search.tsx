@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useDebounce } from '~/hooks/use-debounce';
 import { useSearchParams } from '~/hooks/use-search-params';
-import { setCurrentItem } from '~/modules/board-focus/focus-item';
 import { TableFilterBarContext } from '~/modules/common/data-table/table-filter-bar';
 import { useMatchSteps } from '~/modules/common/match-highlight/use-match-steps';
 import { SearchClearButton } from '~/modules/common/search-clear-button';
 import { SearchSpinner } from '~/modules/common/search-spinner';
+import { setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { boardSearchDefaults } from '~/modules/task/search-params-schemas';
 import type { BoardSearchParams } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
@@ -46,6 +46,7 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   } = useSearchParams<Pick<BoardSearchParams, 'q' | 'matchMode'>>();
 
   const [inputValue, setInputValue] = useState(searchQuery);
+  const [isFocused, setIsFocused] = useState(false);
 
   const debouncedQuery = useDebounce(inputValue, 250);
 
@@ -108,8 +109,14 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
         ref={inputRef}
         id={boardSearchInputId}
         name="boardSearch"
-        onFocus={toggleFocus}
-        onBlur={toggleFocus}
+        onFocus={() => {
+          setIsFocused(true);
+          toggleFocus();
+        }}
+        onBlur={() => {
+          setIsFocused(false);
+          toggleFocus();
+        }}
         placeholder={isMobile ? t('c:placeholder.search') : searchLabel}
         aria-label={searchLabel}
         className="pl-0!"
@@ -117,6 +124,12 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
         onChange={(event) => setInputValue(event.target.value)}
       />
 
+      {/* On a phone the focused field fills the header, so an empty one shows an X that closes it */}
+      {!inputValue && isMobile && isFocused && (
+        <InputGroupAddon className="pr-2 has-[>button]:mr-0" align="inline-end">
+          <SearchClearButton aria-label={t('c:close')} onClick={() => inputRef.current?.blur()} />
+        </InputGroupAddon>
+      )}
       {inputValue && (
         <InputGroupAddon className="gap-1 pr-2 has-[>button]:mr-0" align="inline-end">
           {canStep && steps.index >= 0 ? (

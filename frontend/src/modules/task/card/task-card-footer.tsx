@@ -9,7 +9,6 @@ import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { copyStartedTask } from '~/modules/task/helpers/copy-tasks';
 import { openTaskFieldDropdown, taskFieldTriggerId } from '~/modules/task/helpers/open-task-dropdown';
 import { setTaskSelected } from '~/modules/task/helpers/task-selection';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
@@ -132,10 +131,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
 
           <TooltipButton toolTipContent={statusTooltip} side="top">
             <Button
-              onClick={() => {
-                if (task.status === TaskStatus.Unstarted) copyStartedTask(task);
-                handlers.onStatusChange(task.status - 1);
-              }}
+              onClick={() => handlers.onStatusChange(task.status - 1)}
               disabled={task.status === TaskStatus.Accepted}
               variant="outline-ghost"
               size="xs"
