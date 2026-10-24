@@ -3,11 +3,11 @@ import { useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zChannelBase } from 'sdk/zod.gen';
 import { z } from 'zod';
-import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
+import { useOverlayClose } from '~/modules/common/overlay-close';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { ProjectSuggestionCombobox } from '~/modules/project/project-suggestion-combobox';
 import { useProjectAssignMutation } from '~/modules/project/query';
@@ -22,6 +22,7 @@ type FormValues = z.infer<typeof formSchema>;
 /** Lets users assign existing projects to the current workspace. */
 export function SelectProjectForm() {
   const { t } = useTranslation();
+  const overlay = useOverlayClose();
   const { workspace, organization } = useWorkspaceContext();
 
   const organizationId = workspace.organizationId;
@@ -64,7 +65,7 @@ export function SelectProjectForm() {
     }
 
     form.reset();
-    dialoger.getState().remove();
+    overlay?.close();
   };
 
   const selectedCount = useWatch({ control: form.control, name: 'selectedProjects' })?.length ?? 0;

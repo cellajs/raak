@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { zCreateProjectsBody } from 'sdk/zod.gen';
 import { generateId } from 'shared/utils/entity-id';
 import type { z } from 'zod';
-import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
+import { useOverlayClose } from '~/modules/common/overlay-close';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectCreateMutation } from '~/modules/project/query';
 import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
@@ -21,6 +21,7 @@ const formSchema = zCreateProjectsBody.element.omit({ id: true });
 type FormValues = z.infer<typeof formSchema>;
 export function CreateProjectForm() {
   const { t } = useTranslation();
+  const overlay = useOverlayClose();
 
   const { workspace } = useWorkspaceContext();
 
@@ -43,7 +44,7 @@ export function CreateProjectForm() {
         onSuccess: (createdProject) => {
           toaster.success(t('c:success.create_resource', { resource: t('c:project') }));
           form.reset();
-          dialoger.getState().remove();
+          overlay?.close();
           selectBoardProject(createdProject.slug);
         },
       },
