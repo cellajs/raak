@@ -3,10 +3,10 @@ import { DotIcon, PaperclipIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project } from 'sdk';
-import { exportDate } from '~/lib/export';
 import type { RenderCellProps } from '~/modules/common/data-grid';
-import { SelectColumn } from '~/modules/common/data-grid';
 import { estimateWrappedLines } from '~/modules/common/data-grid/utils/wrap-text-utils';
+import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
+import { dateColumn } from '~/modules/common/data-table/columns';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
@@ -21,7 +21,6 @@ import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Button } from '~/modules/ui/button';
 import { ActorCell } from '~/modules/user/actor-cell';
-import { dateShort } from '~/utils/date-short';
 
 function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
   const cellRef = useRef<HTMLButtonElement>(null);
@@ -62,6 +61,7 @@ function ProjectCell({ row, tabIndex, projects, organization, tenantId }: Projec
     <Link
       to="/$tenantId/$organizationSlug/project/$slug"
       params={{ slug: project.slug, organizationSlug: organization.slug, tenantId }}
+      draggable={false}
       tabIndex={tabIndex}
       className="group flex items-center space-x-2 truncate outline-0"
       data-tooltip="compact"
@@ -90,7 +90,7 @@ export const useColumns = (opts: {
   const { t } = useTranslation();
 
   return [
-    { ...SelectColumn, key: 'checkbox-column', minBreakpoint: 'sm' },
+    CheckboxColumn,
     {
       key: 'primaryLabel',
       name: t('c:type'),
@@ -247,15 +247,7 @@ export const useColumns = (opts: {
       renderCell: ({ row, tabIndex }) => row.createdBy && <ActorCell compactable actor={row.createdBy} tabIndex={tabIndex} />,
       modes: { compact: { merge: { into: 'createdAt', side: 'left' } } },
     },
-    {
-      key: 'createdAt',
-      name: t('c:created_at'),
-      sortable: true,
-      minBreakpoint: 'sm',
-      width: 180,
-      renderCell: ({ row }) => dateShort(row.createdAt),
-      exportValue: (row) => exportDate(row.createdAt),
-    },
+    { ...dateColumn<Task>('createdAt', { name: t('c:created_at'), minBreakpoint: 'sm' }), width: 180 },
     {
       key: 'updatedBy',
       name: t('c:updated_by'),
@@ -265,14 +257,6 @@ export const useColumns = (opts: {
       renderCell: ({ row, tabIndex }) => row.updatedBy && <ActorCell compactable actor={row.updatedBy} tabIndex={tabIndex} />,
       modes: { compact: { merge: { into: 'updatedAt', side: 'left' } } },
     },
-    {
-      key: 'updatedAt',
-      name: t('c:updated_at'),
-      sortable: true,
-      hidden: true,
-      width: 180,
-      renderCell: ({ row }) => dateShort(row.updatedAt),
-      exportValue: (row) => exportDate(row.updatedAt),
-    },
+    { ...dateColumn<Task>('updatedAt', { name: t('c:updated_at'), hidden: true }), width: 180 },
   ];
 };

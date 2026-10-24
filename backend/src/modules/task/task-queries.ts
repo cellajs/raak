@@ -10,6 +10,8 @@ import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
+import { organizationsTable } from '#/modules/organization/organization-db';
+import { projectsTable } from '#/modules/project/project-db';
 import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
 import { userMinimalBaseSelect } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
@@ -228,3 +230,31 @@ export const findTaskNotificationPreview = async (tx: DbOrTx, id: string) => {
 /** Live tasks' title columns, for notification lists and digests. */
 export const findTaskNotificationTitles = (tx: DbOrTx, ids: string[]) =>
   tx.select({ id: tasksTable.id, name: tasksTable.name, summary: tasksTable.summary }).from(tasksTable).where(liveTasks(ids));
+
+/** A live task by id with no request scope, for link resolution outside a tenant; undefined when absent or deleted. */
+export const findLiveTaskById = async (ctx: DbContext, { id }: { id: string }) => {
+  const [task] = await ctx.var.db
+    .select()
+    .from(tasksTable)
+    .where(and(eq(tasksTable.id, id), isNull(tasksTable.deletedAt)))
+    .limit(1);
+  return task;
+};
+
+/** Where a task's project lives, with no request scope; `organizationSlug` is null when the organization row is gone. */
+export const findTaskLinkTarget = async (ctx: DbContext, { projectId }: { projectId: string }) => {
+  const [target] = await ctx.var.db
+    .select({
+      name: projectsTable.name,
+      slug: projectsTable.slug,
+      organizationId: projectsTable.organizationId,
+      tenantId: projectsTable.tenantId,
+      public: projectsTable.public,
+      organizationSlug: organizationsTable.slug,
+    })
+    .from(projectsTable)
+    .leftJoin(organizationsTable, eq(organizationsTable.id, projectsTable.organizationId))
+    .where(eq(projectsTable.id, projectId))
+    .limit(1);
+  return target;
+};

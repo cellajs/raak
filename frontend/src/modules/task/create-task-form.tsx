@@ -7,11 +7,12 @@ import { useTranslation } from 'react-i18next';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
-import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/form-fields/blocknote';
+import { InputTriggerButton, InputTriggerChevron } from '~/modules/common/form-fields/input-trigger-button';
+import { useOverlayClose } from '~/modules/common/overlay-close';
 import { Spinner } from '~/modules/common/spinner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
@@ -59,6 +60,7 @@ interface CreateTaskFormProps {
 
 export function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog, onSuccess, onStatusChange }: CreateTaskFormProps) {
   const { t } = useTranslation();
+  const overlay = useOverlayClose();
   const user = useCurrentUser();
 
   const { tenantId } = useOrganizationLayoutContext();
@@ -110,7 +112,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
   );
 
   const handleCloseForm = () => {
-    if (isDialog) dialoger.getState().remove();
+    if (isDialog) overlay?.close();
     else closeCreateTaskForm(projectId);
   };
 
@@ -306,7 +308,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                       </>
                     )}
                   </div>
-                  <ChevronDownIcon className="ml-auto size-4 shrink-0 opacity-50" />
+                  <InputTriggerChevron className="ml-auto size-4" />
                 </div>
                 <FormMessage />
               </FormItem>
@@ -319,11 +321,10 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
             render={({ field: { onChange, value } }) => (
               <FormItem>
                 <FormControl>
-                  <Button
+                  <InputTriggerButton
                     aria-label={t('c:assign_to')}
-                    variant="input"
                     size="sm"
-                    className="flex justify-start"
+                    className="flex"
                     id={`assignedTo-${formId}`}
                     type="button"
                     onClick={({ currentTarget }) =>
@@ -338,36 +339,37 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                       })
                     }
                   >
-                    {value.length ? (
-                      <>
-                        <AvatarGroup limit={3}>
-                          <AvatarGroupList>
-                            {value.map((assignee) => (
-                              <EntityAvatar
-                                type="user"
-                                key={assignee.id}
-                                id={assignee.id}
-                                name={assignee.name}
-                                url={assignee.thumbnailUrl}
-                                className="size-6"
-                              />
-                            ))}
-                          </AvatarGroupList>
-                          <AvatarOverflowIndicator className="size-6 text-xs" />
-                        </AvatarGroup>
-                        <span className="truncate">
-                          {value.length === 1 && value[0].name}
-                          {value.length === 2 && value.map(({ name }) => name).join(', ')}
-                          {value.length > 2 && t('c:count_assigned', { count: value.length })}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <UserXIcon className="size-4 opacity-75" /> <span className="ml-0.5 font-normal opacity-75">{t('c:assign_to')}</span>
-                      </>
-                    )}
-                    <ChevronDownIcon className="ml-auto size-4 shrink-0 opacity-50" />
-                  </Button>
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      {value.length ? (
+                        <>
+                          <AvatarGroup limit={3}>
+                            <AvatarGroupList>
+                              {value.map((assignee) => (
+                                <EntityAvatar
+                                  type="user"
+                                  key={assignee.id}
+                                  id={assignee.id}
+                                  name={assignee.name}
+                                  url={assignee.thumbnailUrl}
+                                  className="size-6"
+                                />
+                              ))}
+                            </AvatarGroupList>
+                            <AvatarOverflowIndicator className="size-6 text-xs" />
+                          </AvatarGroup>
+                          <span className="truncate">
+                            {value.length === 1 && value[0].name}
+                            {value.length === 2 && value.map(({ name }) => name).join(', ')}
+                            {value.length > 2 && t('c:count_assigned', { count: value.length })}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <UserXIcon className="size-4 opacity-75" /> <span className="ml-0.5 font-normal opacity-75">{t('c:assign_to')}</span>
+                        </>
+                      )}
+                    </span>
+                  </InputTriggerButton>
                 </FormControl>
                 <FormMessage />
               </FormItem>

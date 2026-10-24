@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
-import { searchHighlightRowClass } from '~/modules/common/search-highlight';
 import { LabelFilterButton } from '~/modules/label/label-filter-button';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
 import { LabelTileDetails, labelTileReveal } from '~/modules/label/label-tile-details';
@@ -14,6 +13,7 @@ import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
+import { searchHighlightRowClass } from '~/modules/task/search-highlight';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { Badge } from '~/modules/ui/badge';
 import { Checkbox } from '~/modules/ui/checkbox';

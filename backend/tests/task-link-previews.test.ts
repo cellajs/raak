@@ -8,6 +8,7 @@ import { TaskStatus } from '#/modules/task/task-properties';
 import { usersTable } from '#/modules/user/user-db';
 import { mockStxBase } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
+import { serviceAccountWithKey } from './oauth-helpers';
 import { clearSecurityTestData, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
 import { setTestConfig } from './test-utils';
@@ -101,6 +102,20 @@ describe('Task link previews of a private task', async () => {
       tenantId: tenant.tenantId,
       public: false,
     });
+  });
+
+  it('names a service account as the author of a task it wrote', async () => {
+    const { clientId } = await serviceAccountWithKey({ tenantId: tenant.tenantId, id: tenant.organization.id }, tenant.sessionCookie);
+    const botTaskId = generateId();
+    const [original] = await db.select().from(tasksTable).where(eq(tasksTable.id, taskId));
+    await db.insert(tasksTable).values({ ...original, id: botTaskId, createdBy: clientId });
+    cover.calls.length = 0;
+
+    const page = await (await anonymous(`/t/${botTaskId}`)).text();
+    await anonymous(`/t/${botTaskId}/cover`);
+
+    expect(page).toContain('by Sync bot</title>');
+    expect(cover.calls).toEqual([expect.objectContaining({ name: 'Sync bot' })]);
   });
 
   it('answers 404 for a task that does not exist', async () => {

@@ -17,6 +17,7 @@ import {
 } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
 import { auditShape } from '#/schemas/entity-base';
+import { toolsConfigSchema } from '#/schemas/tools-config';
 
 const workspaceIncludedSchema = channelIncludedSchema('workspace');
 
@@ -26,6 +27,7 @@ export const workspaceSchema = z
     ...auditShape,
     createdAt: z.string(),
     updatedAt: z.string().nullable(),
+    toolsConfig: toolsConfigSchema,
     included: workspaceIncludedSchema,
   })
   .openapi('Workspace', {

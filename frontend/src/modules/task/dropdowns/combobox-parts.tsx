@@ -5,8 +5,8 @@ import { cn } from '~/utils/cn';
 import { isInRange } from '~/utils/is-in-range';
 import { tw } from '~/utils/tw';
 
-/** Action row ("Show all", "Create label"), as tall as the list rows. Wrap it in `p-1` to inset it with them. */
-export const comboboxActionButtonClass = cn(buttonVariants({ variant: 'ghost' }), 'h-9 w-full justify-center gap-2 max-sm:h-11 max-sm:text-md');
+/** Action row ("Show all", "Create label") of the desktop popup, as tall as the list rows; the drawer shows a `Button variant="row"`. Wrap it in `p-1` to inset it with them. */
+export const comboboxActionButtonClass = cn(buttonVariants({ variant: 'ghost' }), 'h-9 w-full justify-center gap-2');
 
 /** Desktop: a height-capped flex column so only the list scrolls. Mobile: a plain block, since a nested scroll region fights the drawer's swipe. */
 export const comboboxShellClass = tw('relative rounded-lg sm:flex sm:max-h-[44vh] sm:w-(--trigger-width) sm:flex-col sm:overflow-hidden');

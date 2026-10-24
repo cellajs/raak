@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { UserMinimalBase } from 'sdk';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
+import { useInDropdownerDrawer } from '~/modules/common/dropdowner/drawer';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { Member } from '~/modules/memberships/types';
@@ -19,7 +20,9 @@ import {
 import type { SelectMembersProps } from '~/modules/task/dropdowns/types';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
+import { Button } from '~/modules/ui/button';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxItemIndicator, ComboboxList } from '~/modules/ui/combobox';
+import { DrawerRowGroup } from '~/modules/ui/drawer';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { isTouchInteraction } from '~/utils/input-modality';
 
@@ -29,6 +32,7 @@ const initialMembersCount = 6;
 export function SelectMembers({ value: currentAssigned, projectId, onChange, taskId, triggerWidth = 320 }: SelectMembersProps) {
   const { t } = useTranslation();
   const { organizationId, tenantId } = useOrganizationLayoutContext();
+  const inDrawer = useInDropdownerDrawer();
 
   const projectMembers = useProjectMembers(projectId, tenantId, organizationId);
 
@@ -47,6 +51,11 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
 
   const focusInput = () => {
     if (!isTouchInteraction()) inputRef.current?.focus();
+  };
+
+  const toggleShowAll = () => {
+    setShowAll((all) => !all);
+    focusInput();
   };
 
   const visibleMembers = searchValue.length
@@ -135,20 +144,21 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
             }}
           </ComboboxList>
           <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:member_other').toLowerCase() })}</ComboboxEmpty>
-          {projectMembers.length > initialMembersCount && !searchValue.length && (
-            <div className="p-1 pt-0">
-              <button
-                type="button"
-                className={comboboxActionButtonClass}
-                onClick={() => {
-                  setShowAll((all) => !all);
-                  focusInput();
-                }}
-              >
-                {showAll ? t('c:show_less') : t('c:show_all')}
-              </button>
-            </div>
-          )}
+          {projectMembers.length > initialMembersCount &&
+            !searchValue.length &&
+            (inDrawer ? (
+              <DrawerRowGroup>
+                <Button variant="row" onClick={toggleShowAll}>
+                  {showAll ? t('c:show_less') : t('c:show_all')}
+                </Button>
+              </DrawerRowGroup>
+            ) : (
+              <div className="p-1 pt-0">
+                <button type="button" className={comboboxActionButtonClass} onClick={toggleShowAll}>
+                  {showAll ? t('c:show_less') : t('c:show_all')}
+                </button>
+              </div>
+            ))}
         </ScrollArea>
       </div>
     </Combobox>

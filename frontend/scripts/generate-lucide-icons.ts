@@ -4,7 +4,7 @@ import path from 'node:path';
 /**
  * Regenerates the lucide icon assets from the installed lucide-static package:
  * - ../json/lucide-icon-nodes.json: name -> svg child elements, rendered inline by NamedIcon
- * - src/modules/common/icons/lucide-icons.gen.json: name -> tags search index for the picker
+ * - src/modules/label/lucide-icons.gen.json: name -> tags search index for the picker
  * - ../json/lucide-icon-names.json: valid icon names, used by backend schema validation
  * Run `pnpm --filter frontend gen:icons` after upgrading lucide-static (keep the version
  * aligned with lucide-react so picker, icons and validation share one icon set).
@@ -22,7 +22,7 @@ const tags: Record<string, string[]> = JSON.parse(readFileSync(path.join(lucideP
 const searchIndex = Object.fromEntries(names.map((n) => [n, tags[n] ?? []]));
 
 writeFileSync(path.join(root, '..', 'json', 'lucide-icon-nodes.json'), `${JSON.stringify(nodes)}\n`);
-writeFileSync(path.join(root, 'src', 'modules', 'common', 'icons', 'lucide-icons.gen.json'), JSON.stringify(searchIndex));
+writeFileSync(path.join(root, 'src', 'modules', 'label', 'lucide-icons.gen.json'), JSON.stringify(searchIndex));
 writeFileSync(path.join(root, '..', 'json', 'lucide-icon-names.json'), `${JSON.stringify(names, null, 2)}\n`);
 
 console.info(`[gen:icons] icon nodes + search index + names written for ${names.length} icons`);

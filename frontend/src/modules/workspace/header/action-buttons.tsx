@@ -6,6 +6,7 @@ import type { Project } from 'sdk';
 import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { useChannelSettingsSections } from '~/modules/entities/use-channel-settings-sections';
 import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -29,6 +30,8 @@ export function WorkspaceActionButtons() {
   const projectMembership = project?.membership;
 
   const refs = { add: useRef<HTMLButtonElement>(null), workspace: useRef<HTMLButtonElement>(null) };
+  // A plain workspace member holds no grant any settings tool requires, so the sheet would open empty
+  const hasSettings = useChannelSettingsSections(workspace).length > 0;
 
   const openWorkspaceSettings = (triggerRef: RefObject<HTMLButtonElement | null>) => openWorkspaceSettingsSheet(workspace, triggerRef);
 
@@ -41,14 +44,18 @@ export function WorkspaceActionButtons() {
       ref: refs.add,
       variant: 'plain' as const,
     },
-    {
-      key: 'workspace',
-      icon: SettingsIcon,
-      label: t('c:resource_settings', { resource: t('c:workspace') }),
-      onClick: openWorkspaceSettings,
-      ref: refs.workspace,
-      variant: 'outline' as const,
-    },
+    ...(hasSettings
+      ? [
+          {
+            key: 'workspace',
+            icon: SettingsIcon,
+            label: t('c:resource_settings', { resource: t('c:workspace') }),
+            onClick: openWorkspaceSettings,
+            ref: refs.workspace,
+            variant: 'outline' as const,
+          },
+        ]
+      : []),
   ];
 
   const openMobileMenu = (currentTarget: HTMLButtonElement) => {

@@ -10,5 +10,6 @@ export function DeleteTasks({ tasks, ...props }: DeleteTasksProps) {
   // All tasks belong to one organization, so the first one carries the ids.
   const mutation = useTaskDeleteMutation(tasks[0].tenantId, tasks[0].organizationId);
 
-  return <DeleteItems items={tasks} mutation={mutation} toVariables={(items) => items} {...props} />;
+  // The delete is optimistic and queues offline, so the form does not wait for the server.
+  return <DeleteItems items={tasks} mutation={mutation} toVariables={(items) => items} optimistic {...props} />;
 }

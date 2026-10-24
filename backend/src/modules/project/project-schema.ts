@@ -21,6 +21,7 @@ import {
 } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
 import { auditShape } from '#/schemas/entity-base';
+import { toolsConfigSchema } from '#/schemas/tools-config';
 
 /** Task status counts for accepted/iced cutoff display */
 const taskStatusCountsSchema = z.object({
@@ -44,6 +45,7 @@ export const projectSchema = z
     ...auditShape,
     createdAt: z.string(),
     updatedAt: z.string().nullable(),
+    toolsConfig: toolsConfigSchema,
     included: projectIncludedSchema,
   })
   .openapi('Project', {

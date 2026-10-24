@@ -24,7 +24,7 @@ import { tw } from '~/utils/tw';
 
 const centeredCellClass = tw('flex items-center justify-center');
 
-const IconPicker = lazyNamed(() => import('~/modules/common/icon-picker/icon-picker'), 'IconPicker');
+const IconPicker = lazyNamed(() => import('~/modules/label/icon-picker/icon-picker'), 'IconPicker');
 
 function rowKeyGetter(row: PrimaryLabelDefinition) {
   return row.slug;

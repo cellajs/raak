@@ -491,15 +491,32 @@ export type Project = {
   bannerUrl: string | null;
   publishedAt: string | null;
   public: boolean;
-  toolsConfig:
-    | string
-    | number
-    | boolean
-    | null
-    | {
-        [key: string]: unknown;
-      }
-    | Array<unknown>;
+  toolsConfig: {
+    'organization.settings'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'organization.tabs'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'workspace.settings'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'workspace.tabs'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'project.settings'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'project.tabs'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+  };
   path: string | null;
   organizationId: string;
   included: {
@@ -797,15 +814,32 @@ export type Workspace = {
   bannerUrl: string | null;
   publishedAt: string | null;
   public: boolean;
-  toolsConfig:
-    | string
-    | number
-    | boolean
-    | null
-    | {
-        [key: string]: unknown;
-      }
-    | Array<unknown>;
+  toolsConfig: {
+    'organization.settings'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'organization.tabs'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'workspace.settings'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'workspace.tabs'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'project.settings'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'project.tabs'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+  };
   path: string | null;
   organizationId: string;
   included: {

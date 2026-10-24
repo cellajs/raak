@@ -6,12 +6,12 @@ import type { ChannelBase, Organization, Workspace } from 'sdk';
 import { zCreateWorkspacesBody, zCreateWorkspacesPath } from 'sdk/zod.gen';
 import { generateId } from 'shared/utils/entity-id';
 import { z } from 'zod';
-import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
+import { useOverlayClose } from '~/modules/common/overlay-close';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { openCreateOrganizationDialog } from '~/modules/organization/create-organization-form';
 import { organizationsListQueryOptions } from '~/modules/organization/query';
@@ -40,6 +40,7 @@ interface CreateWorkspaceFormProps {
 
 export function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
   const { t } = useTranslation();
+  const overlay = useOverlayClose();
 
   const query = useInfiniteQuery(organizationsListQueryOptions({}));
   const items = flattenInfiniteData<Organization>(query.data);
@@ -66,7 +67,7 @@ export function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
         onSuccess: (createdWorkspace) => {
           toaster.success(t('c:success.create_resource', { resource: t('c:workspace') }));
           form.reset();
-          dialoger.getState().remove();
+          overlay?.close();
 
           callback?.(createdWorkspace);
         },

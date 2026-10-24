@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ActivityEvent } from '#/lib/activity-bus';
-import { buildStreamNotification } from './build-message';
+import { buildStreamNotification } from '#/modules/entities/stream/build-message';
 
 const labelRow = (deletedAt: string | null = null) => ({
   rowData: { id: 'label-1', organizationId: 'org-1', projectId: 'project-1', deletedAt },

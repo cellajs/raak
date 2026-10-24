@@ -5,6 +5,7 @@ import type { Workspace } from 'sdk';
 import { defineFrontendModule } from '~/lib/module';
 import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
+import { dangerToolBase, generalToolBase } from '~/modules/entities/channel-settings-tools';
 import type { ChannelEnrichment } from '~/modules/entities/types';
 import { CreateWorkspaceForm } from '~/modules/workspace/create-workspace-form';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
@@ -12,6 +13,8 @@ import { getRouter } from '~/routes/-router-instance';
 import { getCreatedChannelRoute } from '~/utils/channel-route';
 import { lazyNamed } from '~/utils/lazy-named';
 
+const WorkspaceGeneralCard = lazyNamed(() => import('~/modules/workspace/settings-tools'), 'WorkspaceGeneralCard');
+const WorkspaceDeleteCard = lazyNamed(() => import('~/modules/workspace/settings-tools'), 'WorkspaceDeleteCard');
 const WorkspacesGrid = lazyNamed(() => import('~/modules/workspace/workspaces-grid'), 'WorkspacesGrid');
 
 declare module '~/lib/placements' {
@@ -49,6 +52,16 @@ defineFrontendModule({
     listQuery: (params) => workspacesListQueryOptions(params),
   },
   tools: [
+    {
+      ...generalToolBase,
+      slot: 'workspace.settings',
+      render: (workspace) => <WorkspaceGeneralCard workspace={workspace} />,
+    },
+    {
+      ...dangerToolBase('workspace', 'c:workspace'),
+      slot: 'workspace.settings',
+      render: (workspace) => <WorkspaceDeleteCard workspace={workspace} />,
+    },
     // Shortcuts to the user's workspaces on the home page; the section stays out of the way until a tile exists.
     {
       id: 'workspaces',

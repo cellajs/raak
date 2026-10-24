@@ -10,6 +10,7 @@ import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
+import { useInDropdownerDrawer } from '~/modules/common/dropdowner/drawer';
 import { deduplicateLabels } from '~/modules/label/group-labels';
 import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
@@ -32,6 +33,7 @@ import type { TaskLabel } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Combobox, ComboboxGroup, ComboboxGroupLabel, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
+import { DrawerRowGroup } from '~/modules/ui/drawer';
 import { Input } from '~/modules/ui/input';
 import { Label as FieldLabel } from '~/modules/ui/label';
 import { ScrollArea } from '~/modules/ui/scroll-area';
@@ -80,6 +82,7 @@ const normalizeLabelInput = (value: string) => (value.trim() ? value.replaceAll(
 export function SelectLabels({ value: currentLabels, projectId, onChange, taskId, triggerWidth = 320, initialSelectedCollapsed }: SelectLabelsProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
+  const inDrawer = useInDropdownerDrawer();
   const { organizationId, tenantId } = useOrganizationLayoutContext();
 
   const workspaceId = useMatch({
@@ -372,18 +375,22 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
                   {searchResults.map((label) => renderLabelItem(label))}
                 </ComboboxGroup>
               ) : (
-                <div className="flex flex-col items-center gap-3 p-1.5 text-center text-sm">
-                  <span className="text-muted-foreground/50">{t('c:no_resource_found', { resource: t('c:label_other').toLowerCase() })}</span>
-                  {isMobile && (
-                    <Button type="button" variant="secondary" size="lg" className="w-full text-md" onClick={() => startCreate(searchValue)}>
-                      <PlusIcon />
-                      {newLabelText}
-                      <Badge className="px-2 py-0" variant="plain">
-                        {searchValue}
-                      </Badge>
-                    </Button>
+                <>
+                  <div className="p-1.5 text-center text-muted-foreground/50 text-sm">
+                    {t('c:no_resource_found', { resource: t('c:label_other').toLowerCase() })}
+                  </div>
+                  {inDrawer && (
+                    <DrawerRowGroup className="mt-1.5">
+                      <Button variant="row" onClick={() => startCreate(searchValue)}>
+                        <PlusIcon />
+                        {newLabelText}
+                        <Badge className="px-2 py-0" variant="plain">
+                          {searchValue}
+                        </Badge>
+                      </Button>
+                    </DrawerRowGroup>
                   )}
-                </div>
+                </>
               )
             ) : (
               <>

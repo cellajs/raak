@@ -10,7 +10,7 @@ export const vocabularyAllowlist: VocabularyAllowlist = {
   files: [
     // Generated lucide data: the flagged term appears only as an icon name, never as vocabulary.
     'json/lucide-icon-names.json',
-    'frontend/src/modules/common/icons/lucide-icons.gen.json',
+    'frontend/src/modules/label/lucide-icons.gen.json',
     'json/lucide-icon-nodes.json',
     // Carries a cella-sync marker comment, whose syntax is the flagged term by convention.
     'backend/tests/attachment-notifications.test.ts',

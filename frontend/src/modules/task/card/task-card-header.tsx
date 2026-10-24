@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useOnlineManager } from '~/hooks/use-online-manager';
-import { useRelativeDate } from '~/hooks/use-relative-date';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { RelativeDate } from '~/modules/common/relative-date';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
@@ -24,8 +24,6 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
   const { t } = useTranslation();
   const isOnline = useOnlineManager();
 
-  const relativeDate = useRelativeDate(task.createdAt, 'ago');
-
   return (
     <div className="flex w-full items-start justify-between py-1">
       {/* A phone has no description gutter, so the grip unfolds beside the type button; from sm up it pushes that button into the gutter */}
@@ -46,7 +44,9 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
               />
             </TooltipButton>
             <TooltipButton toolTipContent={`${t('c:created_at')} ${dateShort(task.createdAt)}`} side="bottom" sideOffset={5} hideWhenDetached>
-              <span className="ml-1 text-center text-xs opacity-50">{isOnline ? relativeDate : t('c:update_on_online')}</span>
+              <span className="ml-1 text-center text-xs opacity-50">
+                {isOnline ? <RelativeDate date={task.createdAt} /> : t('c:update_on_online')}
+              </span>
             </TooltipButton>
           </>
         )}

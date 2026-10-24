@@ -27,6 +27,9 @@ import { getDraggableItemData } from '~/utils/get-draggable-item-data';
 import { isTouchInteraction } from '~/utils/input-modality';
 import '~/modules/task/card/card-glow.css';
 
+// Only a pointer that can hover reaches the grip of a card that is not current, so a touch screen mounts it on the current card alone
+const canHover = !!window.matchMedia?.('(hover: hover)').matches;
+
 interface DragPreviewPortal {
   container: HTMLElement;
   rect: DOMRect;
@@ -224,7 +227,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
             state={effectiveState}
             isReadOnly={isReadOnly}
             animateClose={hasToggled}
-            showDragHandle={isCurrent && !isReadOnly}
+            showDragHandle={!isSheet && !isReadOnly && (isCurrent || canHover)}
             onEditRequest={isFocused && !isReadOnly ? startEditing : undefined}
           />
           <TaskCardFooter task={task} isSheet={isSheet} isSelected={isSelected} />

@@ -6,6 +6,7 @@
   "back": "Back",
   "bug": "Bug",
   "chore": "Chore",
+  "confirm.remove_project_from_workspace": "Remove <strong>{{name}}</strong> from your workspace? You stay a member of the project.",
   "continue_after_org.text": "Finished setting up your organization? Create your workspace and add projects to it.",
   "create_first_label.text": "Create your first label",
   "create_label.text": "Create new label",
