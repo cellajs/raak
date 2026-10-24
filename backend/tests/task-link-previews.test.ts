@@ -32,7 +32,7 @@ describe('Task link previews of a private task', async () => {
   const anonymous = (path: string) => baseApp.request(path, { headers: defaultHeaders });
 
   let tenant: TestTenant;
-  // An apostrophe, so the title assertion covers the page's HTML escaping instead of depending on a random name
+  // An apostrophe, so the title assertion covers the page's HTML escaping
   const authorName = "Ada O'Brien";
   const projectId = generateId();
   const taskId = generateId();
