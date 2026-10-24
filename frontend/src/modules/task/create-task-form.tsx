@@ -7,8 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
-import { setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
 import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
@@ -18,6 +16,7 @@ import { Spinner } from '~/modules/common/spinner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
 import { useProjectMembers } from '~/modules/project/use-project-members';
+import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
   closeCreateTaskForm,
@@ -28,6 +27,7 @@ import {
   newTaskFormIsDirty,
 } from '~/modules/task/helpers/create-task';
 import { createTaskUploadPersister } from '~/modules/task/helpers/create-task-upload-persister';
+import { setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { revealTask } from '~/modules/task/helpers/panel-scroll-registry';
@@ -92,8 +92,10 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
   const primaryLabels = usePrimaryLabels(projectId);
   const watchedPrimaryLabelId = useWatch({ control: form.control, name: 'primaryLabelId' });
   useEffect(() => {
-    if (!watchedPrimaryLabelId && primaryLabels[0]) form.setValue('primaryLabelId', primaryLabels[0].id);
-  }, [watchedPrimaryLabelId, primaryLabels, form.setValue]);
+    // Read live: the draft restore sets it after the render that watched it
+    const current = form.getValues('primaryLabelId');
+    if (primaryLabels[0] && !primaryLabels.some(({ id }) => id === current)) form.setValue('primaryLabelId', primaryLabels[0].id);
+  }, [watchedPrimaryLabelId, primaryLabels, form.setValue, form.getValues]);
 
   // Field watchers key the JSON-based dirty check to relevant changes.
   const [watchedAssignedTo, watchedLabels, watchedDescription] = useWatch({ control: form.control, name: ['assignedTo', 'labels', 'description'] });
@@ -300,7 +302,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                     ) : (
                       <>
                         <TagIcon className="opacity-75" />
-                        <span className="opacity-75">{t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}</span>
+                        <span className="ml-1 opacity-75">{t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}</span>
                       </>
                     )}
                   </div>
@@ -361,7 +363,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                       </>
                     ) : (
                       <>
-                        <UserXIcon className="size-4 opacity-75" /> <span className="font-normal opacity-75">{t('c:assign_to')}</span>
+                        <UserXIcon className="size-4 opacity-75" /> <span className="ml-0.5 font-normal opacity-75">{t('c:assign_to')}</span>
                       </>
                     )}
                     <ChevronDownIcon className="ml-auto size-4 shrink-0 opacity-50" />

@@ -1,4 +1,5 @@
 import type { UserMinimalBase } from 'sdk';
+import { copyStartedTasks } from '~/modules/task/helpers/copy-tasks';
 import { getNewStatusTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
@@ -11,6 +12,8 @@ import { type ArrayDelta, computeArrayDelta } from '~/query/offline/array-delta'
 interface FieldHandlerDeps {
   taskMutation: ReturnType<typeof useTaskUpdateMutation>;
   user: UserMinimalBase;
+  /** Copy the task when it moves to Started (default); a bulk change turns it off and copies its tasks together. */
+  copyOnStart?: boolean;
 }
 
 // Deltas run against the previous selection, not the dropdown-open snapshot; findInCache is stale after squashed mutations' onSuccess
@@ -28,7 +31,7 @@ const trackedListHandler = <T extends { id: string }>(initial: T[], onChange: (d
 
 /** Field-level onChange handlers for an existing task; callable from hooks and plain functions. */
 export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
-  const { taskMutation, user } = deps;
+  const { taskMutation, user, copyOnStart = true } = deps;
 
   const baseTaskInfo = { id: task.id };
 
@@ -44,6 +47,9 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
 
     // Read current task from cache to avoid stale closure when called from dropdowner
     const currentTask = findInCache<Task>('task', task.id) ?? task;
+
+    // Before any await: the browser allows the clipboard write only during the click or key press that started the task
+    if (copyOnStart && newStatus === TaskStatus.Started) copyStartedTasks([currentTask]);
 
     const sortedAssignedTo = getItemsSortedByName([...currentTask.assignedTo, user]);
     const shouldAssignToSelf = newStatus === TaskStatus.Started && !currentTask.assignedTo.some(({ id }) => id === user.id);

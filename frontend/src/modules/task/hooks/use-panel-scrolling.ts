@@ -2,10 +2,10 @@ import { autoScrollForElements, autoScrollWindowForElements } from '@atlaskit/pr
 import { type RefObject, useEffect, useLayoutEffect, useRef } from 'react';
 import type { VirtualizerHandle } from 'virtua';
 import { useLatestRef } from '~/hooks/use-latest-ref';
-import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-nav-registry';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getTargetIndexByStatus } from '~/modules/task/helpers/order-helpers';
+import { firstItemInView, registerPanelNav } from '~/modules/task/helpers/panel-nav-registry';
 import { registerPanelScroller } from '~/modules/task/helpers/panel-scroll-registry';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { TaskStatus } from '~/modules/task/task-properties';

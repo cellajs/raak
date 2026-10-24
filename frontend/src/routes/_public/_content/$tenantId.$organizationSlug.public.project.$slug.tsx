@@ -1,7 +1,7 @@
 import { createFileRoute, stripSearchParams } from '@tanstack/react-router';
-import { setCurrentItem } from '~/modules/board-focus/focus-item';
 import { PublicProjectRouteComponent } from '~/modules/project/public-route-components';
 import { publicProjectRouteBeforeLoad } from '~/modules/project/public-route-logic';
+import { setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { boardSearchDefaults, boardSearchSchema } from '~/modules/task/search-params-schemas';
 import { createErrorComponent } from '~/routes/-route-utils';
 import { appTitle } from '~/utils/app-title';

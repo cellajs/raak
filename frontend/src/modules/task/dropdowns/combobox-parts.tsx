@@ -5,12 +5,8 @@ import { cn } from '~/utils/cn';
 import { isInRange } from '~/utils/is-in-range';
 import { tw } from '~/utils/tw';
 
-/** Action row ("Show all", "Create label"): filled in the mobile drawer, ghost from `sm` up. Wrap it in `p-1` to inset it with the list rows. */
-export const comboboxActionButtonClass = cn(
-  buttonVariants({ variant: 'secondary' }),
-  'h-9 w-full justify-center gap-2',
-  'sm:bg-transparent sm:shadow-none sm:hover:bg-accent sm:hover:text-accent-foreground dark:sm:hover:bg-accent/50',
-);
+/** Action row ("Show all", "Create label"), as tall as the list rows. Wrap it in `p-1` to inset it with them. */
+export const comboboxActionButtonClass = cn(buttonVariants({ variant: 'ghost' }), 'h-9 w-full justify-center gap-2 max-sm:h-11 max-sm:text-md');
 
 /** Desktop: a height-capped flex column so only the list scrolls. Mobile: a plain block, since a nested scroll region fights the drawer's swipe. */
 export const comboboxShellClass = tw('relative rounded-lg sm:flex sm:max-h-[44vh] sm:w-(--trigger-width) sm:flex-col sm:overflow-hidden');
@@ -21,8 +17,8 @@ export const comboboxScrollClass = tw('sm:min-h-0 sm:flex-1');
 /** Pins the search input in the mobile drawer; `top-5` clears the drawer's ~20px sticky drag handle. A normal flex child from `sm` up. */
 export const comboboxInputPinClass = tw('sticky top-5 z-10 shrink-0 bg-background sm:static sm:top-auto sm:z-auto sm:bg-transparent');
 
-/** Row of a task combobox list, on top of `ComboboxItem`'s base. */
-export const comboboxRowClass = tw('h-9 rounded-md pr-2 leading-normal');
+/** Row of a task combobox list, on top of `ComboboxItem`'s base; in the mobile drawer as tall as an action row (`Button variant="row"`). */
+export const comboboxRowClass = tw('h-9 rounded-md pr-2 leading-normal max-sm:h-11 max-sm:gap-3 max-sm:text-md');
 
 /** The item at the 1-based position a single-digit `value` names; undefined outside `options.max` (default `items.length`) or when disabled. */
 export function matchDigitHotkey<T>(items: readonly T[], value: string, options?: { max?: number; enabled?: boolean }): T | undefined {

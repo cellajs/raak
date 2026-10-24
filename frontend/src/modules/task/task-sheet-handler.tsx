@@ -1,12 +1,12 @@
 import { useSearch } from '@tanstack/react-router';
 import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
-import { focusItem } from '~/modules/board-focus/focus-item';
 import { useUrlSheet } from '~/modules/common/sheeter/use-url-sheet';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { cachedTasks, subscribeToTaskCache } from '~/modules/task/helpers/active-task';
+import { focusItem } from '~/modules/task/helpers/focus-item';
 import { suppressGlowAttr, triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { taskKeys } from '~/modules/task/query';
 import { taskSheetParam } from '~/modules/task/search-params-schemas';

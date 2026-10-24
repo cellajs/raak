@@ -1,7 +1,8 @@
 import { useInfiniteQuery, useQueries } from '@tanstack/react-query';
 import { useMatch } from '@tanstack/react-router';
-import { CheckIcon, ChevronDownIcon, FlagIcon, TagIcon } from 'lucide-react';
-import { type CSSProperties, useRef, useState } from 'react';
+import { CheckIcon, ChevronDownIcon, ChevronLeftIcon, FlagIcon, PlusIcon, TagIcon } from 'lucide-react';
+import { type CSSProperties, type FormEvent, useId, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { zLabel } from 'sdk/zod.gen';
 import { labelSlug } from 'shared/config/labels-config';
@@ -29,7 +30,10 @@ import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
 import type { TaskLabel } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
+import { Button } from '~/modules/ui/button';
 import { Combobox, ComboboxGroup, ComboboxGroupLabel, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
+import { Input } from '~/modules/ui/input';
+import { Label as FieldLabel } from '~/modules/ui/label';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { coalescedResult } from '~/query/offline/prepared-mutation';
@@ -70,6 +74,9 @@ const labelColors = [
 const combineTaskLabels = (results: { data?: { items: Label[] } }[]): Label[] =>
   results.flatMap((result) => result.data?.items ?? []).filter((label) => label.mode !== 'primary');
 
+// Labels are lowercase slugs, so the input is normalized as it is typed
+const normalizeLabelInput = (value: string) => (value.trim() ? value.replaceAll(' ', '-') : value).toLowerCase();
+
 export function SelectLabels({ value: currentLabels, projectId, onChange, taskId, triggerWidth = 320, initialSelectedCollapsed }: SelectLabelsProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
@@ -104,6 +111,10 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
   const [selectedLabels, setSelectedLabels] = useLiveSelection(taskId, (task) => task.labels, currentLabels);
 
   const [searchValue, setSearchValue] = useState('');
+  // On a phone, searching and creating are apart: the name of the label being created, or null while picking
+  const [newLabelName, setNewLabelName] = useState<string | null>(null);
+  const newLabelInputRef = useRef<HTMLInputElement>(null);
+  const newLabelInputId = useId();
   const [selectedCollapsed, setSelectedCollapsed] = useState(initialSelectedCollapsed ?? !isMobile);
 
   const trackUsage = useLabelRecencyStore((state) => state.trackUsage);
@@ -225,14 +236,68 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     trackUsage(organizationId, [newLabelData.slug]);
   };
 
+  // flushSync: iOS raises the keyboard only for a field focused within the tap itself
+  const startCreate = (name: string) => {
+    flushSync(() => setNewLabelName(name));
+    newLabelInputRef.current?.focus();
+  };
+
+  const submitNewLabel = (event: FormEvent) => {
+    event.preventDefault();
+    const name = newLabelName?.trim();
+    if (!name) return;
+    setNewLabelName(null);
+    handleCreateClick(name);
+  };
+
+  const newLabelText = t('c:new_resource', { resource: t('c:label').toLowerCase() });
+
   const createItem = searchValue.trim() !== '' && !projectLabels.some((label) => label.slug === labelSlug(searchValue)) && (
-    <ComboboxItem value={`${createSentinelPrefix}${searchValue}`} className={cn(comboboxActionButtonClass, isMobile ? 'mb-1' : 'mt-1')}>
+    <ComboboxItem value={`${createSentinelPrefix}${searchValue}`} className={cn(comboboxActionButtonClass, 'mt-1')}>
       {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
       <Badge className="ml-2 px-2 py-0" variant="plain">
         {searchValue}
       </Badge>
     </ComboboxItem>
   );
+
+  if (isMobile && newLabelName !== null) {
+    return (
+      <form className="flex flex-col" onSubmit={submitNewLabel}>
+        <div className="flex h-11 items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="-ml-3 rounded-full"
+            aria-label={t('c:back')}
+            onClick={() => setNewLabelName(null)}
+          >
+            <ChevronLeftIcon />
+          </Button>
+          <h2 className="font-semibold text-md">{newLabelText}</h2>
+        </div>
+        <FieldLabel htmlFor={newLabelInputId} className="mt-2">
+          {t('c:name')}
+        </FieldLabel>
+        <Input
+          ref={newLabelInputRef}
+          id={newLabelInputId}
+          value={newLabelName}
+          onChange={(event) => setNewLabelName(normalizeLabelInput(event.target.value))}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="done"
+          className="mt-2"
+        />
+        <p className="mt-2 text-muted-foreground text-sm">{t('c:label_name.text')}</p>
+        <Button type="submit" size="lg" className="mt-4" disabled={!newLabelName.trim()}>
+          {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
+        </Button>
+      </form>
+    );
+  }
 
   return (
     <Combobox<string>
@@ -247,12 +312,26 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
           handleSelectClick(hotkeyLabel.slug);
           return;
         }
-        const updated = value.trim() ? value.replaceAll(' ', '-') : value;
-        setSearchValue(updated.toLowerCase());
+        setSearchValue(normalizeLabelInput(value));
       }}
       filter={() => true}
     >
       <div className={comboboxShellClass} style={{ '--trigger-width': `${triggerWidth}px` } as CSSProperties}>
+        {isMobile && (
+          <div className="flex h-11 shrink-0 items-center justify-between">
+            <h2 className="font-semibold text-md">{t('c:label_other')}</h2>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="-mr-3 rounded-full"
+              aria-label={newLabelText}
+              onClick={() => startCreate(searchValue)}
+            >
+              <PlusIcon />
+            </Button>
+          </div>
+        )}
         <ComboboxSearchInput
           ref={inputRef}
           autoFocus={!isTouchInteraction()}
@@ -260,11 +339,13 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
           wrapClassName={comboboxInputPinClass}
           className="min-h-10 leading-normal"
           placeholder={
-            visibleLabels.length
-              ? t('c:select_or_create_resource', { resource: t('c:label').toLowerCase() })
-              : projectLabels.length
-                ? t('c:create_label.text')
-                : t('c:create_first_label.text')
+            isMobile
+              ? t('c:search_resource', { resource: t('c:label_other').toLowerCase() })
+              : visibleLabels.length
+                ? t('c:select_or_create_resource', { resource: t('c:label').toLowerCase() })
+                : projectLabels.length
+                  ? t('c:create_label.text')
+                  : t('c:create_first_label.text')
           }
           showClear={false}
         />
@@ -285,8 +366,6 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
         )}
         <ScrollArea className={comboboxScrollClass}>
           <ComboboxList className="p-1!">
-            {/* The keyboard covers the end of the list on phones, so create comes first there and is the auto-highlighted Enter target. */}
-            {isMobile && createItem}
             {searchValue ? (
               searchResults.length > 0 ? (
                 <ComboboxGroup>
@@ -294,8 +373,17 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
                   {searchResults.map((label) => renderLabelItem(label))}
                 </ComboboxGroup>
               ) : (
-                <div className="flex items-center justify-center p-1.5 text-center text-muted-foreground/50 text-sm">
-                  {t('c:no_resource_found', { resource: t('c:label_other').toLowerCase() })}
+                <div className="flex flex-col items-center gap-3 p-1.5 text-center text-sm">
+                  <span className="text-muted-foreground/50">{t('c:no_resource_found', { resource: t('c:label_other').toLowerCase() })}</span>
+                  {isMobile && (
+                    <Button type="button" variant="secondary" size="lg" className="w-full text-md" onClick={() => startCreate(searchValue)}>
+                      <PlusIcon />
+                      {newLabelText}
+                      <Badge className="px-2 py-0" variant="plain">
+                        {searchValue}
+                      </Badge>
+                    </Button>
+                  )}
                 </div>
               )
             ) : (

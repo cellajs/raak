@@ -1,7 +1,7 @@
 import type { FocusEvent, ReactNode, RefObject } from 'react';
-import { boardFocusStore, useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
-import { focusItem } from '~/modules/board-focus/focus-item';
-import { firstItemInView } from '~/modules/board-focus/panel-nav-registry';
+import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-focus-store';
+import { focusItem } from '~/modules/task/helpers/focus-item';
+import { firstItemInView } from '~/modules/task/helpers/panel-nav-registry';
 import { cn } from '~/utils/cn';
 
 interface ListFocusScopeProps {

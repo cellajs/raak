@@ -2,11 +2,11 @@ import { EllipsisVerticalIcon, LinkIcon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
-import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
+import type { CallbackArgs } from '~/modules/common/data-table/types';
+import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
-import { NamedText } from '~/modules/common/named-text';
-import { openPopConfirm } from '~/modules/common/popconfirm';
+import { DeleteQuestion } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteLabels } from '~/modules/label/delete-labels';
 import { labelTileStore } from '~/modules/label/label-tile-store';
@@ -32,32 +32,31 @@ export function LabelOptionsButton({ row, canManage }: LabelOptionsButtonProps) 
     if (await copyToClipboard(link)) dropdowner.getState().complete(t('c:copied'));
   };
 
-  const handleDeleteClick = () => {
-    const { remove } = dropdowner.getState();
-    const labels = deleteIds.map((id) => findLabelInCache(id)).filter((label): label is Label => !!label);
-    openPopConfirm(
-      <NamedText i18nKey="c:delete_confirm.text" name={row.name} />,
-      <DeleteLabels
-        labels={labels.length ? labels : [row]}
-        callback={() => {
-          remove();
-          labelTileStore.getState().collapse(row.id);
-        }}
-        onCancel={remove}
-      />,
-    );
+  const collapseOnDelete = ({ status }: CallbackArgs<Label[]>) => {
+    if (status === 'success') labelTileStore.getState().collapse(row.id);
   };
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
+    const labels = deleteIds.map((id) => findLabelInCache(id)).filter((label): label is Label => !!label);
     dropdowner.getState().create(
       <>
         <DropdownActionItem icon={LinkIcon} closeOnSelect={false} onSelect={handleCopyLink}>
           {t('c:copy_as_link')}
         </DropdownActionItem>
         {canManage && (
-          <DropdownActionItem icon={TrashIcon} variant="destructive" onSelect={handleDeleteClick} closeOnSelect={false}>
-            {t('c:delete')}
-          </DropdownActionItem>
+          <>
+            <DropdownActionSeparator />
+            <DropdownActionItem
+              icon={TrashIcon}
+              variant="destructive"
+              confirm={{
+                title: <DeleteQuestion resource="c:label" name={row.name} />,
+                content: <DeleteLabels labels={labels.length ? labels : [row]} callback={collapseOnDelete} />,
+              }}
+            >
+              {t('c:delete')}
+            </DropdownActionItem>
+          </>
         )}
       </>,
       {

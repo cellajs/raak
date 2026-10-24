@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { dialoger, type InternalDialog } from '~/modules/common/dialoger/use-dialoger';
 import { isDropdownOpen } from '~/modules/common/dropdowner/use-dropdowner';
+import { OverlayCloseContext } from '~/modules/common/overlay-close';
 import { finalFocusFor, type OverlayCloseDetails, touchInitialFocus, useRemoveAfterExit } from '~/modules/common/overlay-store-helpers';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '~/modules/ui/dialog';
 import { cn } from '~/utils/cn';
@@ -43,13 +44,13 @@ export function DialogerDialog({ dialog }: DialogerDialogProps) {
   // The dialog animates out before its entry (and onClose) is removed.
   const { close: closeDialog, onOpenChangeComplete } = useRemoveAfterExit(() => dialoger.getState().update(dialog.id, { open: false }), removeDialog);
 
+  // URL-driven dialogs remove in the same tick, so the exit animation cannot reopen them
+  const dismiss = dialog.instantClose ? removeDialog : closeDialog;
+
   const handleOpenChange = (_nextOpen: boolean, eventDetails: OverlayCloseDetails) => {
     if (eventDetails.reason === 'escape-key' && isHoverContentOpen()) return;
     if (eventDetails.reason === 'outside-press' && (isDropdownOpen() || inline)) return;
-
-    // URL-driven dialogs remove in the same tick, so the exit animation cannot reopen them
-    if (dialog.instantClose) removeDialog();
-    else closeDialog();
+    dismiss();
   };
 
   const popupRef = useRef<HTMLDivElement>(null);
@@ -77,7 +78,7 @@ export function DialogerDialog({ dialog }: DialogerDialogProps) {
             {description && <DialogDescription>{description}</DialogDescription>}
           </DialogHeader>
         )}
-        {content}
+        <OverlayCloseContext.Provider value={{ close: dismiss, back: dismiss }}>{content}</OverlayCloseContext.Provider>
       </DialogContent>
     </Dialog>
   );

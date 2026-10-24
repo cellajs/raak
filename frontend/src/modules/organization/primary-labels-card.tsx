@@ -1,5 +1,5 @@
 import { GripVerticalIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import { Suspense, useState } from 'react';
+import { type FormEvent, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization } from 'sdk';
 import { labelColorTokens, labelSlug, type PrimaryLabelDefinition, primaryLabelLimits } from 'shared/config/labels-config';
@@ -7,12 +7,15 @@ import type { RowsChangeData } from '~/modules/common/data-grid';
 import { EditCellInput } from '~/modules/common/data-grid/cell-renderers';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
+import { NamedText } from '~/modules/common/named-text';
+import { openConfirm } from '~/modules/common/open-confirm';
 import { Spinner } from '~/modules/common/spinner';
 import { ToolCard } from '~/modules/common/tool-card';
 import { isLabelColorToken, labelPalette } from '~/modules/label/label-palette';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { useOrganizationUpdateMutation } from '~/modules/organization/query';
 import { Button } from '~/modules/ui/button';
+import { Input } from '~/modules/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '~/modules/ui/popover';
 import { cn } from '~/utils/cn';
 import { lazyNamed } from '~/utils/lazy-named';
@@ -102,6 +105,9 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
   const { mutate, isPending } = useOrganizationUpdateMutation();
 
   const rows = organization.setupConfig.primaryLabels;
+  const [newName, setNewName] = useState('');
+  const trimmedName = newName.trim();
+  const canAdd = rows.length < primaryLabelLimits.max && !!trimmedName && !isPending;
 
   const persist = (primaryLabels: PrimaryLabelDefinition[]) =>
     mutate({
@@ -113,8 +119,8 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
     const index = indexes[0];
     if (column.key === 'name') {
       const name = changed[index].name.trim();
-      // Backend validNameSchema requires 2+ chars; skipping persist reverts the edit on close
-      if (name.length < 2 || name === rows[index].name) return;
+      // Skipping persist reverts the edit on close
+      if (!name || name === rows[index].name) return;
       persist(changed.with(index, { ...changed[index], name }));
       return;
     }
@@ -130,13 +136,24 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
     persist(next);
   };
 
-  const addEntry = () => {
-    const name = t('c:label');
-    const slugBase = labelSlug(name) || 'label';
+  // The slug comes from the typed name: projects' copies keep a removed type's slug, so adding it again relinks them
+  const addEntry = (event: FormEvent) => {
+    event.preventDefault();
+    if (!canAdd) return;
+    const slugBase = labelSlug(trimmedName) || 'label';
     let slug = slugBase;
     for (let i = 2; rows.some((row) => row.slug === slug); i++) slug = `${slugBase}-${i}`;
-    persist([...rows, { slug, name, color: 'blue', icon: null }]);
+    persist([...rows, { slug, name: trimmedName, color: 'blue', icon: null }]);
+    setNewName('');
   };
+
+  const confirmRemove = (row: PrimaryLabelDefinition, trigger: HTMLButtonElement) =>
+    openConfirm(trigger, {
+      id: `remove-task-type-${row.slug}`,
+      title: <NamedText i18nKey="c:remove_task_type.text" name={row.name} />,
+      label: 'c:remove',
+      onConfirm: () => persist(rows.filter((entry) => entry.slug !== row.slug)),
+    });
 
   const columns: ColumnOrColumnGroup<PrimaryLabelDefinition>[] = [
     {
@@ -185,7 +202,7 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
           size="icon"
           aria-label={t('c:remove')}
           disabled={rows.length <= primaryLabelLimits.min}
-          onClick={() => persist(rows.filter((entry) => entry.slug !== row.slug))}
+          onClick={({ currentTarget }) => confirmRemove(row, currentTarget)}
         >
           <Trash2Icon className="size-3.5" />
         </Button>
@@ -197,10 +214,20 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
   // `task-types` element would native-anchor on hash load underneath the sticky header
   return (
     <ToolCard label="c:primary_labels" description={t('c:primary_labels.text')}>
-      <Button variant="outline" size="sm" className="mb-3" disabled={rows.length >= primaryLabelLimits.max || isPending} onClick={addEntry}>
-        <PlusIcon className="size-3.5" />
-        {t('c:add')}
-      </Button>
+      <form onSubmit={addEntry} className="mb-3 flex gap-2">
+        <Input
+          value={newName}
+          onChange={(event) => setNewName(event.target.value)}
+          placeholder={t('c:new_task_type')}
+          aria-label={t('c:new_task_type')}
+          disabled={rows.length >= primaryLabelLimits.max}
+          className="sm:max-w-64"
+        />
+        <Button type="submit" variant="outline" disabled={!canAdd}>
+          <PlusIcon className="size-3.5" />
+          {t('c:add')}
+        </Button>
+      </form>
       <DataTable
         rows={rows}
         rowKeyGetter={rowKeyGetter}

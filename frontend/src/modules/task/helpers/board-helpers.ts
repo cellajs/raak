@@ -1,7 +1,7 @@
 import i18n from 'i18next';
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { panelMinWidth } from '~/modules/common/board/board-layout';
 import type { EnrichedProject } from '~/modules/project/types';
+import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import type { TaskState } from '~/modules/task/types';
 
 interface TaskCardState {

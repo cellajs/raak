@@ -1,9 +1,9 @@
 import { memo, useEffect, useRef } from 'react';
 import type { Project } from 'sdk';
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
-import { markCurrentItemMounted } from '~/modules/board-focus/focus-item';
-import { useItemControlsTabOrder } from '~/modules/board-focus/use-item-controls-tab-order';
+import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { CreateTaskForm } from '~/modules/task/create-task-form';
+import { markCurrentItemMounted } from '~/modules/task/helpers/focus-item';
+import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
 import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskProps } from '~/modules/task/types';
 

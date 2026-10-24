@@ -10,8 +10,7 @@ import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { NamedText } from '~/modules/common/named-text';
-import { openPopConfirm } from '~/modules/common/popconfirm';
+import { DeleteQuestion } from '~/modules/common/popconfirm';
 import { openEditSheet } from '~/modules/common/sheeter/open-edit-sheet';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import type { EnrichedOrganization } from '~/modules/organization/types';
@@ -77,13 +76,11 @@ export const useColumns = (organization: EnrichedOrganization) => {
         options.push({
           label: t('c:delete'),
           icon: TrashIcon,
-          onSelect: (project) => {
-            const close = () => dropdowner.getState().remove();
-            openPopConfirm(
-              <NamedText i18nKey="c:delete_confirm.text" name={project.name} />,
-              <DeleteProjects projects={[project]} callback={close} />,
-            );
-          },
+          variant: 'destructive',
+          confirm: (project) => ({
+            title: <DeleteQuestion resource="c:project" name={project.name} />,
+            content: <DeleteProjects projects={[project]} />,
+          }),
         });
       }
       return options;

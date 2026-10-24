@@ -27,9 +27,10 @@ const taskToBlocks = (task: Task): (typeof customSchema.PartialBlock)[] => {
   ];
 };
 
-/** Start hands a task over, to an agent for one: copy it as started, and say so, since it replaces the clipboard. */
-export const copyStartedTask = async (task: Task) => {
-  if (await copyTasksToClipboard([{ ...task, status: TaskStatus.Started }])) toaster.success(i18n.t('c:started_and_copied'));
+/** Start hands tasks over, to an agent for one: copy them as started, and say so, since it replaces the clipboard. */
+export const copyStartedTasks = async (tasks: Task[]) => {
+  const started = tasks.map((task) => ({ ...task, status: TaskStatus.Started }));
+  if (await copyTasksToClipboard(started)) toaster.success(i18n.t('c:started_and_copied'));
 };
 
 /** Copies tasks as HTML and Markdown: per task its title as heading, a type · status · project · link line, then the rest of its description. */

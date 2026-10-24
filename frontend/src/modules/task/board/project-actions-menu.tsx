@@ -4,7 +4,7 @@ import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, SquareSplitHorizont
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
+import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { organizationQueryOptions } from '~/modules/organization/query';
@@ -39,6 +39,8 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
 
   const projectMembership = project.membership;
   const projectWorkspace = projectMembership?.workspaceId ? findWorkspaceByIdOrSlug(projectMembership.workspaceId, tenantId) : undefined;
+
+  const hasGoTo = isInWorkspace || !!projectWorkspace;
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const isMobile = window.innerWidth < 640;
@@ -79,6 +81,7 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
         )}
         {projectMembership && (
           <>
+            {hasGoTo && <DropdownActionSeparator />}
             <DropdownActionItem icon={UsersIcon} onSelect={closeThen(() => openProjectMembersSheet(project, triggerRef))}>
               {t('c:project_members')}
             </DropdownActionItem>
@@ -88,19 +91,22 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
           </>
         )}
         {!isMobile && (
-          <DropdownActionItem
-            icon={SquareSplitHorizontalIcon}
-            onSelect={closeThen(() =>
-              viewSections
-                ? dropPanelSections(boardId, project.id)
-                : setPanelSections(boardId, project.id, [
-                    { status: [TaskStatus.Accepted, TaskStatus.Reviewed, TaskStatus.Delivered, TaskStatus.Finished, TaskStatus.Started] },
-                    { status: [TaskStatus.Unstarted, TaskStatus.Iced] },
-                  ]),
-            )}
-          >
-            {viewSections ? t('c:merge') : t('c:split')}
-          </DropdownActionItem>
+          <>
+            {(hasGoTo || projectMembership) && <DropdownActionSeparator />}
+            <DropdownActionItem
+              icon={SquareSplitHorizontalIcon}
+              onSelect={closeThen(() =>
+                viewSections
+                  ? dropPanelSections(boardId, project.id)
+                  : setPanelSections(boardId, project.id, [
+                      { status: [TaskStatus.Accepted, TaskStatus.Reviewed, TaskStatus.Delivered, TaskStatus.Finished, TaskStatus.Started] },
+                      { status: [TaskStatus.Unstarted, TaskStatus.Iced] },
+                    ]),
+              )}
+            >
+              {viewSections ? t('c:merge') : t('c:split')}
+            </DropdownActionItem>
+          </>
         )}
       </>,
       {

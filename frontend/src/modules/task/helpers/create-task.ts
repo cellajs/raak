@@ -1,11 +1,12 @@
-import { zCreateTasksBody, zLabel, zTask, zUserMinimalBase } from 'sdk/zod.gen';
+import type { Label, UserMinimalBase } from 'sdk';
+import { zCreateTasksBody, zTask } from 'sdk/zod.gen';
 import { z } from 'zod';
-import { focusWhenMounted, setCurrentItem } from '~/modules/board-focus/focus-item';
 import { blocknoteHasContent } from '~/modules/common/blocknote/helpers/blocknote-has-content';
 import { boardStore } from '~/modules/common/board/board-store';
 import { draftStore } from '~/modules/common/form-draft/draft-store';
 import { taskBoardStore } from '~/modules/task/board/task-board-store';
 import { makePanelKey, resolveDraftHostSection } from '~/modules/task/helpers/board-helpers';
+import { focusWhenMounted, setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -28,13 +29,18 @@ export const revealDraftHostPanel = (projectId: string, draftStatus: TaskStatus)
   if (draftStatus === TaskStatus.Iced) setPanelSectionExpanded(boardId, projectId, 'iced', true);
 };
 
+const rowId = z.object({ id: z.string() });
+
+/** A picked row, checked only on the id a create sends: a draft restores rows saved before their schema changed. */
+const pickedRow = <T extends { id: string }>() => z.custom<T>((row) => rowId.safeParse(row).success);
+
 export const createTaskFormSchema = z.object({
   ...zCreateTasksBody.element.omit({ stx: true }).shape,
   status: z.enum(TaskStatus),
   // Empty until the form resolves the project's default primary label
   primaryLabelId: z.string(),
-  assignedTo: z.array(zUserMinimalBase),
-  labels: z.array(zLabel),
+  assignedTo: z.array(pickedRow<UserMinimalBase>()),
+  labels: z.array(pickedRow<Label>()),
 });
 
 export type NewTaskFormValues = z.infer<typeof createTaskFormSchema>;

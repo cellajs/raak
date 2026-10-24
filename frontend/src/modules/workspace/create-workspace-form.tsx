@@ -25,14 +25,13 @@ import { formResolver } from '~/utils/form-resolver';
 const formSchema = z.object({
   ...zCreateWorkspacesBody.element.omit({ id: true }).shape,
   ...zCreateWorkspacesPath.shape,
-  // The generated path schema only checks max length; min(1) makes an empty selection invalid.
+  // The generated path schema only checks max length. tenantId has no input: the organization sets it.
   organizationId: z.string().min(1),
-  tenantId: z.string().min(1),
 });
 type FormValues = z.infer<typeof formSchema>;
 
-// Programmatic field writes (org/tenant/name defaults) must not mark the form dirty or touched,
-// but still revalidate so `isValid` stays accurate.
+// Programmatic field writes (org/tenant/name defaults) must not mark the form dirty or touched; validating clears
+// the error a refused submit left on the field.
 const keepPristine = { shouldDirty: false, shouldTouch: false, shouldValidate: true } as const;
 
 interface CreateWorkspaceFormProps {
@@ -46,7 +45,6 @@ export function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
   const items = flattenInfiniteData<Organization>(query.data);
 
   const formOptions: UseFormProps<FormValues> = {
-    mode: 'onTouched',
     resolver: formResolver(formSchema),
     defaultValues: { name: '', organizationId: '', tenantId: '' },
   };
@@ -54,7 +52,7 @@ export function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
   const form = useFormWithDraft<FormValues>('create-workspace', { formOptions });
 
   const organizationId = useWatch({ control: form.control, name: 'organizationId' });
-  const { touchedFields, isValid } = useFormState({ control: form.control, name: ['name'] });
+  const { touchedFields } = useFormState({ control: form.control, name: ['name'] });
 
   const { mutate: create, isPending } = useWorkspaceCreateMutation();
 
@@ -90,14 +88,14 @@ export function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
     handleOrganizationSelect(organization);
   };
 
-  // Async queries mean single-org defaults are not available at first render.
+  // The hidden tenantId follows the organization once the list loads: the sole one, or one a draft restored
   useEffect(() => {
-    if (items.length !== 1 || organizationId) return;
+    const selectedOrg = organizationId ? items.find(({ id }) => id === organizationId) : items.length === 1 ? items[0] : undefined;
+    if (!selectedOrg || form.getValues('tenantId') === selectedOrg.tenantId) return;
 
-    const selectedOrg = items[0];
-    form.setValue('organizationId', selectedOrg.id, keepPristine);
+    if (!organizationId) form.setValue('organizationId', selectedOrg.id, keepPristine);
     handleOrganizationSelect(selectedOrg);
-  }, [items, organizationId, form.setValue, handleOrganizationSelect]);
+  }, [items, organizationId, form.setValue, form.getValues, handleOrganizationSelect]);
 
   if (!query.isLoading && !organizationId && !items.length)
     return (
@@ -130,9 +128,7 @@ export function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <SubmitButton disabled={!isValid} loading={isPending}>
-            {t('c:create')}
-          </SubmitButton>
+          <SubmitButton loading={isPending}>{t('c:create')}</SubmitButton>
           <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
         </div>
       </form>

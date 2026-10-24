@@ -33,9 +33,6 @@ export default defineConfig({
       '.github/release-please-manifest.json',
       '.github/release-please-config.json',
       'CLAUDE.md',
-      // App identity: brand assets and the app's own locale namespace. cella has no upstream fix
-      // to push into these, so they are never synced. Template-consumed copy lives in common.json,
-      // never in app.json.
       'frontend/public/favicon.ico',
       'frontend/public/favicon.svg',
       'frontend/public/thumbnail.png',
@@ -45,34 +42,28 @@ export default defineConfig({
       'locales/nl/app.json',
       'locales/en/about.json',
       'locales/nl/about.json',
-      // The app's own error types; the template ships both files empty
       'locales/en/appError.json',
       'locales/nl/appError.json',
-      // Accessibility results are about one product: each app's audit (`pnpm a11y`) writes its own ledger.
       'json/accessibility-conformance.json',
-      // raak's marketing has no sync-engine page; without this, each upstream edit of the route brings it back.
       'frontend/src/routes/_public/_marketing/sync-engine.tsx',
     ],
     // Paths pinned to the app: the app copy always wins, upstream hunks never merge in. Adopt them by hand
     // from the analyze list ("protected but behind upstream").
     pinned: [
       'backend/src/db/channel-tables.ts',
-      // Project-homed attachments: home column, public flag inheritance, list scope and seed batches.
       'backend/src/modules/attachment/attachment-placement.ts',
+      'backend/src/modules/notification/notification-seed-subjects.ts',
       'backend/src/modules.ts',
       'backend/src/bundle-config.ts',
       'backend/src/db/product-tables.ts',
       'backend/src/schemas/app-schemas.ts',
       'frontend/src/routes-config.tsx',
       'frontend/src/alert-config.tsx',
-      // The pages the screenshots skill shoots, and where it writes them: raak's routes, not cella's.
       'cella/skills/screenshots/shots-config.mjs',
       'frontend/src/entity-sync-queries.ts',
       'frontend/src/styling/gradients.css',
       'frontend/src/styling/tailwind.css',
-      // The pages and states the accessibility audit covers
       'a11y/scope-config.ts',
-      // Where bench attachments live below the organization
       'bench/src/seeds/attachment-home.ts',
       'backend/src/mocks/app-product-mocks.ts',
       'frontend/src/query/extra-local-user-stores.ts',

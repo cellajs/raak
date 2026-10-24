@@ -1,6 +1,8 @@
+import { copyStartedTasks } from '~/modules/task/helpers/copy-tasks';
 import { getNewStatusTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
+import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskStatusType } from '~/modules/task/types';
 
 type Item = { id: string; name: string };
@@ -29,9 +31,12 @@ const sharedListHandler = <T extends Item>(lists: T[][], onTaskChange: ((next: T
 
 /** Field handlers for several tasks at once, one update per task; build one per dropdown session, as `buildFieldHandlers`. */
 export const buildBulkFieldHandlers = (tasks: Task[], deps: Parameters<typeof buildFieldHandlers>[1]) => {
-  const handlers = tasks.map((task) => buildFieldHandlers(task, deps));
+  const handlers = tasks.map((task) => buildFieldHandlers(task, { ...deps, copyOnStart: false }));
 
   const onStatusChange = (newStatus: TaskStatusType) => {
+    const moved = tasks.filter((task) => task.status !== newStatus);
+    if (newStatus === TaskStatus.Started && moved.length) copyStartedTasks(moved);
+
     const placed: Task[] = [];
     tasks.forEach((task, index) => {
       if (task.status === newStatus) return;

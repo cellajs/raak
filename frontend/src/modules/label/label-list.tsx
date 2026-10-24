@@ -7,8 +7,6 @@ import type { Label } from 'sdk';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { matchesTerms } from 'shared/utils/text-match';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
-import { ListFocusScope } from '~/modules/board-focus/list-focus-scope';
-import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-nav-registry';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
@@ -18,6 +16,8 @@ import { labelsCanonicalOptions } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps, LabelsScopeProps } from '~/modules/label/types';
 import { type LabelUsage, useLabelUsage } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
+import { firstItemInView, registerPanelNav } from '~/modules/task/helpers/panel-nav-registry';
+import { ListFocusScope } from '~/modules/task/panel/list-focus-scope';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
 /** Highlight-mode match over the same columns the server search filters on (name + keywords). */
