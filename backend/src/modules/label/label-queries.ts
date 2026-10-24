@@ -96,6 +96,12 @@ export const findLabelSlugById = async (ctx: ActorContext, id: string): Promise<
   return row?.slug ?? null;
 };
 
+/** Name of a label row by id with no request scope, for callers that resolve it outside a tenant; null when unknown. */
+export const findLabelNameById = async (ctx: DbContext, id: string): Promise<string | null> => {
+  const [row] = await ctx.var.db.select({ name: labelsTable.name }).from(labelsTable).where(eq(labelsTable.id, id)).limit(1);
+  return row?.name ?? null;
+};
+
 /** Mode and project of the live labels among `ids`. */
 export const findLiveLabelModes = async (ctx: ActorContext, { ids }: { ids: string[] }) => {
   const { db } = ctx.var;
