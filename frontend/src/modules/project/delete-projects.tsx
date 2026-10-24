@@ -9,10 +9,9 @@ interface DeleteProjectsProps extends Pick<DeleteItemsProps<Project, unknown>, '
 export function DeleteProjects({ projects, ...props }: DeleteProjectsProps) {
   const mutation = useProjectDeleteMutation();
   const toVariables = (items: Project[]) => ({
-    path: { organizationId: items[0].organizationId, tenantId: items[0].tenantId },
+    path: { tenantId: items[0].tenantId, organizationId: items[0].organizationId },
     body: { ids: items.map(({ id }) => id) },
     projects: items,
   });
-
   return <DeleteItems items={projects} mutation={mutation} toVariables={toVariables} resource="c:project" {...props} />;
 }

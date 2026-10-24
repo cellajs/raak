@@ -5,18 +5,13 @@ import { splitByPermission } from '#/permissions/split-by-permission';
 import { log } from '#/utils/logger';
 
 export async function deleteProjectsOp(ctx: UserContext, ids: string[]) {
-  // Convert the ids to an array
   const toDeleteIds = Array.isArray(ids) ? ids : [ids];
-
   const { allowedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'project', toDeleteIds);
-
-  // Delete the projects
   await deleteProjectsByIds(ctx, { ids: allowedIds });
 
-  // Invalidate membership cache so deleted memberships are absent for the current user.
+  // The caller's cached memberships still hold the deleted projects' rows.
   invalidateCache.user(ctx.var.user.id);
 
   log.info('Projects deleted', { count: allowedIds.length, ids: allowedIds });
-
   return { data: [], rejectedIds };
 }
