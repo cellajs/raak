@@ -1,6 +1,6 @@
 import { TagIcon } from 'lucide-react';
-import { NamedIcon } from '~/modules/common/icons/named-icon';
 import { isLabelColorToken, labelPalette } from '~/modules/label/label-palette';
+import { NamedIcon } from '~/modules/label/named-icon';
 import { cn } from '~/utils/cn';
 
 interface PrimaryLabelIconProps {

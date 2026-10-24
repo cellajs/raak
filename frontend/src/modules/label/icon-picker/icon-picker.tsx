@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import lucideIcons from '~/modules/common/icons/lucide-icons.gen.json';
-import { NamedIcon } from '~/modules/common/icons/named-icon';
+import lucideIcons from '~/modules/label/lucide-icons.gen.json';
+import { NamedIcon } from '~/modules/label/named-icon';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
 import { isTouchInteraction } from '~/utils/input-modality';
