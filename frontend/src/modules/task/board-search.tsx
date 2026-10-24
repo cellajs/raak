@@ -1,12 +1,12 @@
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
-import { type KeyboardEventHandler, type MouseEventHandler, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { type FocusEvent, type KeyboardEventHandler, type MouseEventHandler, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useDebounce } from '~/hooks/use-debounce';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { TableFilterBarContext } from '~/modules/common/data-table/table-filter-bar';
 import { useMatchSteps } from '~/modules/common/match-highlight/use-match-steps';
-import { SearchClearButton } from '~/modules/common/search-clear-button';
+import { SearchClearButton, SearchCloseButton } from '~/modules/common/search-clear-button';
 import { SearchSpinner } from '~/modules/common/search-spinner';
 import { setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { boardSearchDefaults } from '~/modules/task/search-params-schemas';
@@ -83,6 +83,24 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
 
   const toggleSearchMode = () => setSearch({ matchMode: matchMode === 'all' ? 'any' : 'all' });
 
+  // Focus moving between the field and its own buttons keeps the search open, so Tab reaches the close X
+  const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+    setIsFocused(true);
+    toggleFocus();
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+    setIsFocused(false);
+    toggleFocus();
+  };
+
+  const closeSearch: MouseEventHandler<HTMLButtonElement> = (event) => {
+    inputRef.current?.blur();
+    event.currentTarget.blur();
+  };
+
   useEffect(() => {
     if (debouncedQuery !== searchQuery) setSearch({ q: debouncedQuery });
   }, [debouncedQuery]);
@@ -100,83 +118,83 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   });
 
   return (
-    <InputGroup className="border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
-      <InputGroupAddon className="pl-1.5">
-        <SearchSpinner value={inputValue} isSearching={false} />
-      </InputGroupAddon>
-
-      <InputGroupInput
-        ref={inputRef}
-        id={boardSearchInputId}
-        name="boardSearch"
-        onFocus={() => {
-          setIsFocused(true);
-          toggleFocus();
-        }}
-        onBlur={() => {
-          setIsFocused(false);
-          toggleFocus();
-        }}
-        placeholder={isMobile ? t('c:placeholder.search') : searchLabel}
-        aria-label={searchLabel}
-        className="pl-0!"
-        value={inputValue}
-        onChange={(event) => setInputValue(event.target.value)}
-      />
-
-      {/* On a phone the focused field fills the header, so an empty one shows an X that closes it */}
-      {!inputValue && isMobile && isFocused && (
-        <InputGroupAddon className="pr-2 has-[>button]:mr-0" align="inline-end">
-          <SearchClearButton aria-label={t('c:close')} onClick={() => inputRef.current?.blur()} />
+    <div className="contents" onFocus={handleFocus} onBlur={handleBlur}>
+      <InputGroup className="border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
+        <InputGroupAddon className="pl-1.5">
+          <SearchSpinner value={inputValue} isSearching={false} />
         </InputGroupAddon>
-      )}
-      {inputValue && (
-        <InputGroupAddon className="gap-1 pr-2 has-[>button]:mr-0" align="inline-end">
-          {canStep && steps.index >= 0 ? (
-            <span className="mr-1 text-muted-foreground text-sm tabular-nums">
-              {t('c:match_position', { current: steps.index + 1, total: steps.total })}
-            </span>
-          ) : (
-            children
-          )}
-          {/* Too cramped on phones, where stepping is left to Enter */}
-          {canStep && (
-            <div className="flex items-center max-sm:hidden">
-              <button type="button" aria-label={t('c:previous')} className={iconButtonClass} onMouseDown={preventInputBlur} onClick={steps.previous}>
-                <ChevronUpIcon className="size-4" />
+
+        <InputGroupInput
+          ref={inputRef}
+          id={boardSearchInputId}
+          name="boardSearch"
+          placeholder={isMobile ? t('c:placeholder.search') : searchLabel}
+          aria-label={searchLabel}
+          className="pl-0!"
+          value={inputValue}
+          onChange={(event) => setInputValue(event.target.value)}
+        />
+
+        {inputValue && (
+          <InputGroupAddon className="gap-1 pr-2 has-[>button]:mr-0" align="inline-end">
+            {canStep && steps.index >= 0 ? (
+              <span className="mr-1 text-muted-foreground text-sm tabular-nums">
+                {t('c:match_position', { current: steps.index + 1, total: steps.total })}
+              </span>
+            ) : (
+              children
+            )}
+            {/* Too cramped on phones, where stepping is left to Enter */}
+            {canStep && (
+              <div className="flex items-center max-sm:hidden">
+                <button
+                  type="button"
+                  aria-label={t('c:previous')}
+                  className={iconButtonClass}
+                  onMouseDown={preventInputBlur}
+                  onClick={steps.previous}
+                >
+                  <ChevronUpIcon className="size-4" />
+                </button>
+                <button type="button" aria-label={t('c:next')} className={iconButtonClass} onMouseDown={preventInputBlur} onClick={steps.next}>
+                  <ChevronDownIcon className="size-4" />
+                </button>
+              </div>
+            )}
+            {/* Phones show it only for 'any': otherwise a non-default mode from a shared link would be in effect unseen */}
+            {/\s/.test(inputValue) && (
+              <button
+                type="button"
+                className={cn('focus-effect rounded-full', matchMode === 'all' && 'max-sm:hidden')}
+                onMouseDown={preventInputBlur}
+                onClick={toggleSearchMode}
+              >
+                <Badge variant="plain" size="micro" className="cursor-pointer">
+                  {matchMode}
+                </Badge>
               </button>
-              <button type="button" aria-label={t('c:next')} className={iconButtonClass} onMouseDown={preventInputBlur} onClick={steps.next}>
-                <ChevronDownIcon className="size-4" />
-              </button>
-            </div>
-          )}
-          {/* Phones show it only for 'any': otherwise a non-default mode from a shared link would be in effect unseen */}
-          {/\s/.test(inputValue) && (
-            <button
-              type="button"
-              className={cn('focus-effect rounded-full', matchMode === 'all' && 'max-sm:hidden')}
+            )}
+            <SearchClearButton
+              id="search-close"
               onMouseDown={preventInputBlur}
-              onClick={toggleSearchMode}
-            >
-              <Badge variant="plain" size="micro" className="cursor-pointer">
-                {matchMode}
-              </Badge>
-            </button>
-          )}
-          <SearchClearButton
-            id="search-close"
-            onMouseDown={preventInputBlur}
-            onClick={() => {
-              setSearch({ q: '', matchMode: undefined });
-              setInputValue('');
-              inputRef.current?.focus();
-            }}
-          />
-        </InputGroupAddon>
+              onClick={() => {
+                setSearch({ q: '', matchMode: undefined });
+                setInputValue('');
+                inputRef.current?.focus();
+              }}
+            />
+          </InputGroupAddon>
+        )}
+        <span className="sr-only" aria-live="polite">
+          {steps.announcement}
+        </span>
+      </InputGroup>
+      {/* On a phone the focused field fills the header and the close X stands beside it, apart from the clear X inside */}
+      {isMobile && isFocused && (
+        <div className="flex h-10 shrink-0 items-center border-l pl-1.5">
+          <SearchCloseButton onMouseDown={preventInputBlur} onClick={closeSearch} />
+        </div>
       )}
-      <span className="sr-only" aria-live="polite">
-        {steps.announcement}
-      </span>
-    </InputGroup>
+    </div>
   );
 }
