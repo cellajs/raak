@@ -27,13 +27,22 @@ export const devices = {
  * `call` is a signed-in fetch of the app's own API, the same helper shape `a11y/scope-config.ts` resolvers get.
  */
 
-/** The organization the shot user administers, the first in their menu: the one their menu opens on. */
+/**
+ * The first published organization in the shot user's menu that they administer. The seed makes one a draft, whose
+ * page opens under a "Publish" banner.
+ */
 const administeredOrganization = async (call) => {
   const [{ items: organizations }, { items: memberships }] = await Promise.all([call('/organizations?limit=50'), call('/me/memberships')]);
-  const [administered] = memberships
-    .filter((membership) => membership.channelType === 'organization' && membership.role === 'admin' && !membership.archived)
-    .sort((a, b) => a.displayOrder - b.displayOrder);
-  return organizations.find(({ id }) => id === administered?.channelId) ?? organizations[0] ?? null;
+  const published = organizations.filter(({ publishedAt }) => publishedAt);
+  return (
+    memberships
+      .filter((membership) => membership.channelType === 'organization' && membership.role === 'admin' && !membership.archived)
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map((membership) => published.find(({ id }) => id === membership.channelId))
+      .find(Boolean) ??
+    published[0] ??
+    null
+  );
 };
 
 /** The workspace every board shot is taken in: the first of that organization, and the one with the most tasks to show. */

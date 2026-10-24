@@ -32,15 +32,15 @@ describe('Task link previews of a private task', async () => {
   const anonymous = (path: string) => baseApp.request(path, { headers: defaultHeaders });
 
   let tenant: TestTenant;
-  let authorName: string;
+  // An apostrophe, so the title assertion covers the page's HTML escaping
+  const authorName = "Ada O'Brien";
   const projectId = generateId();
   const taskId = generateId();
   const project = { name: 'Private roadmap', slug: `private-roadmap-${projectId.slice(0, 8)}` };
 
   beforeAll(async () => {
     tenant = await createTestTenant(call, 'task-link-previews');
-    const [author] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, tenant.user.id));
-    authorName = author.name;
+    await db.update(usersTable).set({ name: authorName }).where(eq(usersTable.id, tenant.user.id));
 
     await db.insert(projectsTable).values({
       id: projectId,
@@ -73,7 +73,7 @@ describe('Task link previews of a private task', async () => {
 
     expect(response.status).toBe(200);
     expect(page).toContain(`<title>Task in ${project.name}`);
-    expect(page).toContain(`by ${authorName}</title>`);
+    expect(page).toContain('by Ada O&#39;Brien</title>');
     expect(page).toContain('<meta property="og:description" content="Ship the private thing Only members should open this." />');
     expect(page).toContain(`/t/${taskId}`);
   });
