@@ -224,7 +224,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
             state={effectiveState}
             isReadOnly={isReadOnly}
             animateClose={hasToggled}
-            showDragHandle={isCurrent && !isReadOnly}
+            showDragHandle={!isSheet && !isReadOnly}
             onEditRequest={isFocused && !isReadOnly ? startEditing : undefined}
           />
           <TaskCardFooter task={task} isSheet={isSheet} isSelected={isSelected} />
