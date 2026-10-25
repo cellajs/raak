@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.1.21](https://github.com/cellajs/raak/compare/0.1.20...0.1.21) (2026-10-25)
+
+
+### 🎉 New features
+
+* delete confirms open inside their menu, phone review fixes, seeded mentions in member projects ([#208](https://github.com/cellajs/raak/issues/208)) ([7144e30](https://github.com/cellajs/raak/commit/7144e30ddc145d2392e8d7d01cc1a8c3f4093450))
+
+
+### 🔧 Small improvements
+
+* app modules follow the cella module patterns (sync ledger 2026-10-24) ([#212](https://github.com/cellajs/raak/issues/212)) ([e85adc3](https://github.com/cellajs/raak/commit/e85adc3ebc312a33b7e0f925b2cc2fc92409a1a8))
+
+
+### 🧹 Chores
+
+* sync upstream cella v0.21.0 (43e76bda1) ([#210](https://github.com/cellajs/raak/issues/210)) ([6d284ef](https://github.com/cellajs/raak/commit/6d284ef441e588f631417e8c3c7dde928a6cd528))
+* sync upstream cella v0.21.0 (f92fe8ada) ([#211](https://github.com/cellajs/raak/issues/211)) ([dcf668b](https://github.com/cellajs/raak/commit/dcf668be8c472688eca7e86a91da725aafed4a12))
+* sync upstream cella v0.22.0 (3d56ccac4) ([#213](https://github.com/cellajs/raak/issues/213)) ([ac6106a](https://github.com/cellajs/raak/commit/ac6106aca691375f1c160dad9881db274f9d66bb))
+* sync upstream cella v0.24.0 (a49fbb723) ([#214](https://github.com/cellajs/raak/issues/214)) ([b810dae](https://github.com/cellajs/raak/commit/b810daef96b87e83e5c58a652259e1f55782bc77))
+
 ## [0.1.20](https://github.com/cellajs/raak/compare/0.1.19...0.1.20) (2026-10-23)
 
 
