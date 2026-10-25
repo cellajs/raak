@@ -125,7 +125,13 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
   const list = (
     <ul aria-label={t('c:label_other')}>
       {rows.map((row) => (
-        <LabelTile key={row.id} row={row} highlighted={highlight && matchesSearch(row, terms)} onBoard={!!navPanelId} {...tileProps} />
+        <LabelTile
+          key={row.id}
+          row={row}
+          highlighted={highlight && (hasLabelName(terms, row.name) || matchesSearch(row, terms))}
+          onBoard={!!navPanelId}
+          {...tileProps}
+        />
       ))}
     </ul>
   );
