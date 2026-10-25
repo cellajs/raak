@@ -32,7 +32,7 @@ export async function createTasksOp(
   const taskRestrictions = ctx.var.tenant.restrictions.quotas.task;
 
   if (taskRestrictions !== 0 && input.length > taskRestrictions) {
-    throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'task' });
+    throw new AppError(403, 'restrict_by_org', 'warn', { entityType: 'task' });
   }
 
   const hydrate = async (tasks: TaskModel[]) => {
@@ -54,7 +54,7 @@ export async function createTasksOp(
   const currentTasksCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'task' });
 
   if (taskRestrictions !== 0 && currentTasksCount + fresh.length > taskRestrictions) {
-    throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'task' });
+    throw new AppError(403, 'restrict_by_org', 'warn', { entityType: 'task' });
   }
 
   const placements: ResolvedPlacement<'task'>[] = [];

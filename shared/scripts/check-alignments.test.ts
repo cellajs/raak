@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { migrationNoteFindings, owedNoteFindings, ownedPaths, parseMigrationNote } from './check-migration-notes.ts';
+import { alignmentFindings, owedAlignmentFindings, ownedPaths, parseAlignment } from './check-alignments.ts';
 
 const lines = (...rows: string[]) => rows.join('\n');
-const note = lines(
+const alignment = lines(
   '---',
   'syncBreaking: true',
   'clientCacheBump: false',
+  'caughtBy: compiler',
+  'grep: principalId, principal_id',
   'roots: backend/src, frontend/src',
   '---',
   '',
@@ -19,11 +21,14 @@ const note = lines(
   '## What & why',
 );
 
-describe('parseMigrationNote', () => {
+describe('parseAlignment', () => {
   it('reads the frontmatter, the title and the summary paragraph', () => {
-    expect(parseMigrationNote(note)).toEqual({
+    expect(parseAlignment(alignment)).toEqual({
       syncBreaking: true,
       clientCacheBump: false,
+      generate: false,
+      caughtBy: 'compiler',
+      grep: ['principalId', 'principal_id'],
       roots: ['backend/src', 'frontend/src'],
       title: 'Principal becomes actor',
       summary: 'The stored identity and the request-time value share one name.',
@@ -32,58 +37,62 @@ describe('parseMigrationNote', () => {
   });
 
   it('reports a missing frontmatter block, title and summary', () => {
-    expect(parseMigrationNote(lines('# Title', '', '## What & why')).errors).toEqual([
+    expect(parseAlignment(lines('# Title', '', '## What & why')).errors).toEqual([
       'must open with a `---` frontmatter block',
       'the title must be followed by a one-paragraph summary',
     ]);
-    expect(parseMigrationNote(lines('---', 'syncBreaking: false', 'clientCacheBump: false', '---', '', 'Text')).errors).toEqual([
+    expect(parseAlignment(lines('---', 'syncBreaking: false', 'clientCacheBump: false', '---', '', 'Text')).errors).toEqual([
       'the first line after the frontmatter must be the `# ` title',
       'the title must be followed by a one-paragraph summary',
     ]);
   });
 
-  it('reports unknown keys, missing flags and flags that are not booleans', () => {
+  it('reports unknown keys, missing flags, flags that are not booleans and a sync-breaking change without caughtBy', () => {
     const source = lines('---', 'syncBreaking: yes', 'version: next', '---', '', '# Title', '', 'Summary.');
-    expect(parseMigrationNote(source).errors).toEqual([
+    expect(parseAlignment(source).errors).toEqual([
       'syncBreaking must be true or false',
       'unknown frontmatter key: version',
       'frontmatter is missing clientCacheBump',
     ]);
+    const breaking = (...keys: string[]) =>
+      parseAlignment(lines('---', 'syncBreaking: true', 'clientCacheBump: false', ...keys, '---', '', '# Title', '', 'Summary.')).errors;
+    expect(breaking()).toEqual(['a sync-breaking alignment says how an app finds its leftovers: caughtBy']);
+    expect(breaking('caughtBy: typecheck')).toEqual(['caughtBy must be one of compiler, tests, nothing']);
   });
 });
 
-describe('migrationNoteFindings', () => {
+describe('alignmentFindings', () => {
   const read = (sources: Record<string, string>) => (file: string) => sources[file];
   const messages = (files: string[], sources: Record<string, string>) =>
-    migrationNoteFindings(files, read(sources)).map(({ file, message }) => `${file}: ${message}`);
+    alignmentFindings(files, read(sources)).map(({ file, message }) => `${file}: ${message}`);
 
-  it('passes a well-formed note and ignores the files beside the folders', () => {
+  it('passes a well-formed alignment and ignores the files beside the folders', () => {
     const files = [
-      'cella/migrations/README.md',
-      'cella/migrations/_TEMPLATE.md',
-      'cella/migrations/20261002T0614-config-switch/README.md',
-      'cella/migrations/20261002T0614-config-switch/rename.ts',
+      'cella/alignments/README.md',
+      'cella/alignments/_TEMPLATE.md',
+      'cella/alignments/20261002T0614-config-switch/README.md',
+      'cella/alignments/20261002T0614-config-switch/rename.ts',
     ];
-    expect(messages(files, { 'cella/migrations/20261002T0614-config-switch/README.md': note })).toEqual([]);
+    expect(messages(files, { 'cella/alignments/20261002T0614-config-switch/README.md': alignment })).toEqual([]);
   });
 
   it('flags a bad folder name, a folder without README and roots without a codemod', () => {
     const files = [
-      'cella/migrations/config-switch/README.md',
-      'cella/migrations/20261002T0614-no-readme/rename.ts',
-      'cella/migrations/20261002T0615-manual/README.md',
+      'cella/alignments/config-switch/README.md',
+      'cella/alignments/20261002T0614-no-readme/rename.ts',
+      'cella/alignments/20261002T0615-manual/README.md',
     ];
-    const sources = { 'cella/migrations/config-switch/README.md': note, 'cella/migrations/20261002T0615-manual/README.md': note };
+    const sources = { 'cella/alignments/config-switch/README.md': alignment, 'cella/alignments/20261002T0615-manual/README.md': alignment };
     expect(messages(files, sources)).toEqual([
-      'cella/migrations/config-switch: note folders are named <YYYYMMDDThhmm>-<slug>',
-      'cella/migrations/config-switch/README.md: roots is only for a note with a codemod',
-      'cella/migrations/20261002T0614-no-readme: note folder has no README.md',
-      'cella/migrations/20261002T0615-manual/README.md: roots is only for a note with a codemod',
+      'cella/alignments/config-switch: alignment folders are named <YYYYMMDDThhmm>-<slug>',
+      'cella/alignments/config-switch/README.md: roots is only for an alignment with a codemod',
+      'cella/alignments/20261002T0614-no-readme: alignment folder has no README.md',
+      'cella/alignments/20261002T0615-manual/README.md: roots is only for an alignment with a codemod',
     ]);
   });
 });
 
-describe('owedNoteFindings', () => {
+describe('owedAlignmentFindings', () => {
   const config = lines(
     'export default defineConfig({',
     '  overrides: {',
@@ -102,7 +111,7 @@ describe('owedNoteFindings', () => {
     '  },',
     '});',
   );
-  const rule = (files: string[], messages = '') => owedNoteFindings(files, messages, config).map((finding) => finding.file);
+  const rule = (files: string[], messages = '') => owedAlignmentFindings(files, messages, config).map((finding) => finding.file);
 
   it('reads the ignored and pinned entries of the sync config', () => {
     expect(ownedPaths(config)).toEqual([
@@ -116,7 +125,7 @@ describe('owedNoteFindings', () => {
     ]);
   });
 
-  it('asks for a note when a branch changes an app-owned path synced code reads from', () => {
+  it('asks for an alignment when a branch changes an app-owned path synced code reads from', () => {
     expect(rule(['frontend/src/modules/common/logo.tsx', 'frontend/src/modules/auth/auth-layout.tsx'])).toEqual([
       'frontend/src/modules/common/logo.tsx',
     ]);
@@ -139,11 +148,11 @@ describe('owedNoteFindings', () => {
     ).toEqual([]);
   });
 
-  it('is met by a note in the same branch or a reasoned waiver in a commit message', () => {
+  it('is met by an alignment in the same branch or a reasoned waiver in a commit message', () => {
     const logo = 'frontend/src/modules/common/logo.tsx';
-    expect(rule([logo, 'cella/migrations/20261004T1215-logo-title/README.md'])).toEqual([]);
-    expect(rule([logo, 'cella/migrations/README.md'])).toEqual([logo]);
-    expect(rule([logo], 'fix: logo\n\nMigration-Note: none, comment only')).toEqual([]);
-    expect(rule([logo], 'fix: logo\n\nMigration-Note: none')).toEqual([logo]);
+    expect(rule([logo, 'cella/alignments/20261004T1215-logo-title/README.md'])).toEqual([]);
+    expect(rule([logo, 'cella/alignments/README.md'])).toEqual([logo]);
+    expect(rule([logo], 'fix: logo\n\nAlignment: none, comment only')).toEqual([]);
+    expect(rule([logo], 'fix: logo\n\nAlignment: none')).toEqual([logo]);
   });
 });
