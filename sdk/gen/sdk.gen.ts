@@ -2313,6 +2313,7 @@ export const getPublicTask = <ThrowOnError extends boolean = true>(
  * @param {integer=} options.query.limit - `integer` (optional)
  * @param {enum=} options.query.matchMode - `enum` (optional)
  * @param {number=} options.query.acceptedCutOff - `number` (optional)
+ * @param {string=} options.query.excludeLabels - `string` (optional)
  * @param {string} options.query.projectId - `string`
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -3922,6 +3923,7 @@ export const deleteTasks = <ThrowOnError extends boolean = true>(
  * @param {integer=} options.query.untilSeq - `integer` (optional)
  * @param {enum=} options.query.matchMode - `enum` (optional)
  * @param {number=} options.query.acceptedCutOff - `number` (optional)
+ * @param {string=} options.query.excludeLabels - `string` (optional)
  * @param {string=} options.query.projectId - `string` (optional)
  * @param {string=} options.query.workspaceId - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429

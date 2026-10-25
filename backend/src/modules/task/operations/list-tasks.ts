@@ -1,4 +1,4 @@
-import { and, arrayOverlaps, asc, desc, eq, inArray, or, type SQL, sql } from 'drizzle-orm';
+import { and, arrayOverlaps, asc, desc, eq, inArray, not, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { foldText } from 'shared/utils/text-match';
 import type { z } from 'zod';
@@ -23,7 +23,7 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
  * Get list of tasks for a project, with filtering, sorting, and pagination.
  */
 export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean; range?: SeqRange }) => {
-  const { q, sort, order, acceptedCutOff, matchMode, limit, offset } = queryInfo;
+  const { q, sort, order, acceptedCutOff, matchMode, excludeLabels, limit, offset } = queryInfo;
   const rangeRead = seqRangeRead(tasksTable, opts?.range);
   // Highlight-mode clients ('=' prefix) fetch unfiltered; stripping here keeps stray marked
   // queries behaving like their plain form.
@@ -51,6 +51,9 @@ export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInf
     if (searchFilter) tasksSearchFilters.push(searchFilter);
   }
 
+  // A slug names the same label in every project, so it excludes each project's row of it
+  const excludedLabelIds = excludeLabels?.length ? tasksLabels.filter(({ slug }) => excludeLabels.includes(slug)).map(({ id }) => id) : [];
+
   const orderBy =
     rangeRead.orderBy ??
     getOrderColumns({
@@ -72,6 +75,7 @@ export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInf
     requestScopeWhere(ctx, tasksTable, 'task'),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,
+    excludedLabelIds.length ? not(arrayOverlaps(tasksTable.labels, excludedLabelIds)) : undefined,
     opts?.publicOnly ? and(eq(tasksTable.public, true), publishedRowsPredicate(tasksTable)) : undefined,
   );
 

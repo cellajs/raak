@@ -73,7 +73,7 @@ type TaskUpdateFullVars = UpdateVariables<UpdateTaskOps> & Partial<OptimisticCac
 type TaskDeleteFullVars = DeleteVariables<Task>;
 
 /** Retains API literal unions for task-list sorting and matching filters. */
-type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode'>;
+type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode' | 'excludeLabels'>;
 /** Separate key space for public (unauthenticated) task queries. */
 type PublicTaskListFilters = TaskListFilters & { public: true };
 
@@ -263,27 +263,29 @@ const tasksTableQueryKey = ({
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
   matchMode = tasksTableQueryDefaults.matchMode,
+  excludeLabels,
   projectId,
   workspaceId,
   organizationId,
 }: Omit<GetTasksParam, 'acceptedCutOff' | 'tenantId'>) =>
-  taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, matchMode, q });
+  taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, matchMode, q, excludeLabels });
 
 export const tasksTableQueryOptions = ({
   q,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
   matchMode = tasksTableQueryDefaults.matchMode,
+  excludeLabels,
   projectId,
   workspaceId,
   organizationId,
   tenantId,
   limit = appConfig.requestLimits.tasksTable,
 }: Omit<GetTasksParam, 'acceptedCutOff'> & { limit?: number }) => {
-  const filters = { q, sort, order, organizationId, projectId, workspaceId, matchMode };
+  const filters = { q, sort, order, organizationId, projectId, workspaceId, matchMode, excludeLabels };
 
   return infiniteQueryOptions({
-    queryKey: tasksTableQueryKey({ q, sort, order, matchMode, projectId, workspaceId, organizationId }),
+    queryKey: tasksTableQueryKey({ q, sort, order, matchMode, excludeLabels, projectId, workspaceId, organizationId }),
     ...offsetPaging(limit, (offset, signal) =>
       getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }),
     ),

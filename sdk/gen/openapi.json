@@ -10460,6 +10460,14 @@
           },
           {
             "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "excludeLabels",
+            "in": "query"
+          },
+          {
+            "schema": {
               "type": "string",
               "maxLength": 50
             },
@@ -21457,6 +21465,14 @@
             },
             "required": false,
             "name": "acceptedCutOff",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "excludeLabels",
             "in": "query"
           },
           {
