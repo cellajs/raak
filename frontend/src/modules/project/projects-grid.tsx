@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { BaseEntityGrid, ChannelTile, EntityGridBar } from '~/modules/entities/entity-grid';
@@ -10,9 +11,11 @@ interface ProjectsGridProps {
   fixedQuery?: Partial<ProjectSearch>;
   focusView?: boolean;
   saveDataInSearch?: boolean;
+  /** Keeps the bar up for a short list too, so the toggle stays reachable. */
+  viewToggle?: ReactNode;
 }
 
-export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView }: ProjectsGridProps) {
+export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, viewToggle }: ProjectsGridProps) {
   const { search: baseSearch, setSearch } = useSearchParams({ saveDataInSearch });
 
   const search: ProjectSearch = { ...baseSearch, ...fixedQuery };
@@ -25,18 +28,19 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView }: Projec
   const { rows: entities, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(queryOptions);
 
   return (
-    <div className="flex h-full flex-col gap-2 pt-4">
+    <div className="flex h-full flex-col gap-2">
       <EntityGridBar
         queryKey={queryOptions.queryKey}
         searchVars={baseSearch}
         label="c:project"
         entityType="project"
-        // The role is the listed user's own: the server refuses it as a filter on another user's list
-        roleFilter={!ofAnotherUser}
+        // The server refuses a role on another user's list (it is theirs) and on an organization-wide one (it narrows to the caller's)
+        roleFilter={!ofAnotherUser && search.scope !== 'organization'}
         // On a profile the bar is what names these tiles beside the organizations grid, so it stays for a short list
-        alwaysShow={!!search.relatableUserId}
+        alwaysShow={!!search.relatableUserId || !!viewToggle}
         setSearch={setSearch}
         focusView={focusView}
+        viewToggle={viewToggle}
       />
 
       <BaseEntityGrid

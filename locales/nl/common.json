@@ -73,6 +73,7 @@
   "federation": "Federatie",
   "github": "GitHub",
   "google": "Google",
+  "grid_view": "Rasterweergave",
   "help": "Hulp",
   "id": "ID",
   "idp_entity_ids": "IdP entity-id's",
@@ -151,5 +152,6 @@
   "title": "Titel",
   "update_tenant.text": "Tenant <strong>{{id}}</strong> bevat de organisatie <strong>{{name}}</strong>.",
   "update_tenant_no_organization.text": "Tenant <strong>{{id}}</strong> bevat nog geen organisatie.",
-  "video": "Video"
+  "video": "Video",
+  "view_mode": "Weergave"
 }

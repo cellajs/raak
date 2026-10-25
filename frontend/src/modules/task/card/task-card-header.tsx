@@ -8,6 +8,7 @@ import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskDragHandle } from '~/modules/task/card/task-drag-handle';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
+import { focusItem } from '~/modules/task/helpers/focus-item';
 import { taskCardActionsRevealClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
@@ -55,7 +56,16 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
         {/* Options come last, where a collapsed card shows them. A phone has no hover to reveal the actions. */}
         <div className={cn(taskCardActionsRevealClass, 'flex items-center gap-1 max-sm:opacity-100')}>
-          {!isSheet && <CardCloseButton animateIn={animateClose} onClick={() => taskCardStore.getState().setTaskState(task.id, 'collapsed')} />}
+          {!isSheet && (
+            <CardCloseButton
+              animateIn={animateClose}
+              onClick={() => {
+                // The button unmounts with the header, which would drop focus out of the card
+                focusItem(task.id);
+                taskCardStore.getState().setTaskState(task.id, 'collapsed');
+              }}
+            />
+          )}
           <TaskOptionsButton task={task} isSheet={isSheet} />
         </div>
       </div>

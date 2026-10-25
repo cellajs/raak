@@ -11,6 +11,7 @@ import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-task-drag-indicator-store';
+import { useTaskDropLandingStore } from '~/modules/task/board/task-drop-landing-store';
 import { CardDescriptionSlot } from '~/modules/task/card/card-description-slot';
 import { TaskCardDragPreview } from '~/modules/task/card/task-card-drag-preview';
 import { TaskCardFooter } from '~/modules/task/card/task-card-footer';
@@ -27,9 +28,6 @@ import { getDraggableItemData } from '~/utils/get-draggable-item-data';
 import { isTouchInteraction } from '~/utils/input-modality';
 import '~/modules/task/card/card-glow.css';
 
-// Only a pointer that can hover reaches the grip of a card that is not current, so a touch screen mounts it on the current card alone
-const canHover = !!window.matchMedia?.('(hover: hover)').matches;
-
 interface DragPreviewPortal {
   container: HTMLElement;
   rect: DOMRect;
@@ -39,6 +37,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
   const taskRef = useRef<HTMLDivElement>(null);
   const isReadOnly = useIsProjectReadOnly(task.projectId);
   const mobileClosestEdge = useMobileTaskDragIndicatorStore((state) => (state.indicator?.taskId === task.id ? state.indicator.edge : null));
+  const landingEdge = useTaskDropLandingStore((state) => (state.landing?.taskId === task.id ? state.landing.edge : null));
 
   const effectiveState = isReadOnly && state === 'editing' ? 'expanded' : state;
 
@@ -160,7 +159,8 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
   };
 
   const cardId = isSheet ? `sheet-${task.id}` : task.id;
-  useItemControlsTabOrder(taskRef, cardId, !!isFocused);
+  // A collapsed card is one Tab stop: Enter opens it, and only then does Tab reach its controls
+  useItemControlsTabOrder(taskRef, cardId, !!isFocused && effectiveState !== 'collapsed', { trap: !isSheet });
 
   // Mounting as the current card: take the focus a keypress left for it, and hold the panel list's Tab stop
   useEffect(() => {
@@ -170,7 +170,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
   }, [isSheet, isFocused, task.id]);
 
   const isCurrent = isFocused && !isSheet;
-  const dropIndicatorEdge = mobileClosestEdge ?? closestEdge;
+  const dropIndicatorEdge = mobileClosestEdge ?? closestEdge ?? landingEdge;
 
   return (
     <>
@@ -204,7 +204,11 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
       >
         <CardContent
           id={`${task.id}-content`}
-          className="relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-focus-visible/task:before:opacity-100 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
+          className={cn(
+            'relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-focus-visible/task:before:opacity-100 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px',
+            // The header's own py-1 makes up the rest, so opening a card leaves its buttons where the collapsed row had them
+            !isSheet && effectiveState !== 'collapsed' && 'pt-0.5',
+          )}
         >
           <SeenMark
             productId={task.id}
@@ -215,7 +219,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
           />
           {effectiveState !== 'collapsed' && (
             <StickyBox
-              className="z-10 backdrop-blur-sm data-[sticky=true]:-mx-2 data-[sticky=true]:bg-background/60 data-[sticky=true]:px-2"
+              className="z-10 data-[sticky=true]:-mx-2 data-[sticky=true]:bg-background/60 data-[sticky=true]:px-2 data-[sticky=true]:backdrop-blur-sm"
               enabled={!isSheet}
               offsetBottom={52}
             >
@@ -227,7 +231,6 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
             state={effectiveState}
             isReadOnly={isReadOnly}
             animateClose={hasToggled}
-            showDragHandle={!isSheet && !isReadOnly && (isCurrent || canHover)}
             onEditRequest={isFocused && !isReadOnly ? startEditing : undefined}
           />
           <TaskCardFooter task={task} isSheet={isSheet} isSelected={isSelected} />

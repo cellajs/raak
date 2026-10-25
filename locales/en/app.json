@@ -37,6 +37,7 @@
   "in_current_workspace": "In current workspace",
   "in_total": "in total",
   "label": "Label",
+  "label_name": "Label name",
   "label_name.text": "Lowercase, spaces become dashes. It is added to this task.",
   "label_other": "Labels",
   "last_used": "Last used",

@@ -31,20 +31,12 @@ interface CardDescriptionSlotProps {
   state: TaskState;
   isReadOnly: boolean;
   animateClose?: boolean;
-  showDragHandle?: boolean;
   /** Starts editing from the keyboard; set while editing may start. */
   onEditRequest?: () => void;
 }
 
 /** Collapsed summary, expanded static and live editor over one editor instance, warmed behind them on hover. */
-export function CardDescriptionSlot({
-  task,
-  state,
-  isReadOnly,
-  animateClose = false,
-  showDragHandle = false,
-  onEditRequest,
-}: CardDescriptionSlotProps) {
+export function CardDescriptionSlot({ task, state, isReadOnly, animateClose = false, onEditRequest }: CardDescriptionSlotProps) {
   // Only the expanded static matches the editor's layout: a click places the cursor at its point, and leaving editing holds the editor.
   const slot = useDescriptionSlot({
     editing: state === 'editing',
@@ -77,7 +69,7 @@ export function CardDescriptionSlot({
         onMouseLeave={handleMouseLeave}
         staticView={
           state === 'collapsed' ? (
-            <TaskCardContentCollapsed task={task} animateClose={animateClose} showDragHandle={showDragHandle} onEditRequest={onEditRequest} />
+            <TaskCardContentCollapsed task={task} animateClose={animateClose} onEditRequest={onEditRequest} />
           ) : (
             <PaintMatches>
               <TaskCardContentExpanded task={task} descriptionOverride={slot.staticOverride} onReady={slot.onStaticReady} />

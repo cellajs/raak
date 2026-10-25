@@ -1,7 +1,8 @@
 import { useInfiniteQuery, useQueries } from '@tanstack/react-query';
 import { useMatch } from '@tanstack/react-router';
-import { CheckIcon, ChevronDownIcon, ChevronLeftIcon, FlagIcon, PlusIcon, TagIcon } from 'lucide-react';
-import { type CSSProperties, type FormEvent, useId, useRef, useState } from 'react';
+import { CheckIcon, ChevronDownIcon, FlagIcon, PlusIcon, TagIcon } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { type CSSProperties, type FormEvent, type KeyboardEvent, useId, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { zLabel } from 'sdk/zod.gen';
@@ -11,6 +12,7 @@ import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { useInDropdownerDrawer } from '~/modules/common/dropdowner/drawer';
+import { getScrollParent } from '~/modules/common/sticky-box';
 import { deduplicateLabels } from '~/modules/label/group-labels';
 import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
@@ -119,6 +121,17 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
   const newLabelInputRef = useRef<HTMLInputElement>(null);
   const newLabelInputId = useId();
   const [selectedCollapsed, setSelectedCollapsed] = useState(initialSelectedCollapsed ?? !isMobile);
+  const [listScrolled, setListScrolled] = useState(false);
+
+  // The phone's search row has no border; the list gets an edge only once it scrolls under the row
+  const trackListScroll = (node: HTMLDivElement | null) => {
+    if (!node || !isMobile) return;
+    const scrollParent = getScrollParent(node);
+    if (scrollParent instanceof Window) return;
+    const onScroll = () => setListScrolled(scrollParent.scrollTop > 0);
+    scrollParent.addEventListener('scroll', onScroll, { passive: true });
+    return () => scrollParent.removeEventListener('scroll', onScroll);
+  };
 
   const trackUsage = useLabelRecencyStore((state) => state.trackUsage);
   const getScore = useLabelRecencyStore((state) => state.getScore);
@@ -131,9 +144,13 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
 
   const allLabels = deduplicateLabels(labels, projectId, organizationId, usage);
 
-  // Labels are meant to be lowercase, but older and seeded names carry capitals and spaces: normalize them as the input is
+  const searchSlug = labelSlug(searchValue);
+  // Labels are meant to be lowercase, but older and seeded names carry capitals and spaces: normalize them as the input is.
+  // The label named exactly goes first, as the combobox highlights the first row for return to pick.
   const searchResults = searchValue.length
-    ? getItemsSortedByName(allLabels.filter(({ name }) => name.toLowerCase().replaceAll(' ', '-').includes(searchValue)))
+    ? getItemsSortedByName(allLabels.filter(({ name }) => name.toLowerCase().replaceAll(' ', '-').includes(searchValue))).sort(
+        (a, b) => Number(b.slug === searchSlug) - Number(a.slug === searchSlug),
+      )
     : [];
 
   // Top labels by recency, then usedCount, then name, excluding the selected
@@ -240,9 +257,14 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
   };
 
   // flushSync: iOS raises the keyboard only for a field focused within the tap itself
-  const startCreate = (name: string) => {
-    flushSync(() => setNewLabelName(name));
+  const startCreate = () => {
+    flushSync(() => setNewLabelName(''));
     newLabelInputRef.current?.focus();
+  };
+
+  // The drawer's create row is a plain button, not a combobox item, so return would not reach it
+  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (inDrawer && event.key === 'Enter' && searchValue.trim() && !searchResults.length) handleCreateClick(searchValue);
   };
 
   const submitNewLabel = (event: FormEvent) => {
@@ -267,22 +289,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
   if (isMobile && newLabelName !== null) {
     return (
       <form className="flex flex-col" onSubmit={submitNewLabel}>
-        <div className="flex h-11 items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="-ml-3 rounded-full"
-            aria-label={t('c:back')}
-            onClick={() => setNewLabelName(null)}
-          >
-            <ChevronLeftIcon />
-          </Button>
-          <h2 className="font-semibold text-md">{newLabelText}</h2>
-        </div>
-        <FieldLabel htmlFor={newLabelInputId} className="mt-2">
-          {t('c:name')}
-        </FieldLabel>
+        <FieldLabel htmlFor={newLabelInputId}>{t('c:label_name')}</FieldLabel>
         <Input
           ref={newLabelInputRef}
           id={newLabelInputId}
@@ -297,6 +304,9 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
         <p className="mt-2 text-muted-foreground text-sm">{t('c:label_name.text')}</p>
         <Button type="submit" size="lg" className="mt-4" disabled={!newLabelName.trim()}>
           {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
+        </Button>
+        <Button type="button" variant="secondary" size="lg" className="mt-2" onClick={() => setNewLabelName(null)}>
+          {t('c:cancel')}
         </Button>
       </form>
     );
@@ -320,37 +330,50 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
       filter={() => true}
     >
       <div className={comboboxShellClass} style={{ '--trigger-width': `${triggerWidth}px` } as CSSProperties}>
-        {isMobile && (
-          <div className="flex h-11 shrink-0 items-center justify-between">
-            <h2 className="font-semibold text-md">{t('c:label_other')}</h2>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="-mr-3 rounded-full"
-              aria-label={newLabelText}
-              onClick={() => startCreate(searchValue)}
-            >
-              <PlusIcon />
-            </Button>
-          </div>
-        )}
-        <ComboboxSearchInput
-          ref={inputRef}
-          autoFocus={!isTouchInteraction()}
-          value={searchValue}
-          wrapClassName={comboboxInputPinClass}
-          className="min-h-10 leading-normal"
-          placeholder={
-            isMobile
-              ? t('c:search_resource', { resource: t('c:label_other').toLowerCase() })
-              : visibleLabels.length
-                ? t('c:select_or_create_resource', { resource: t('c:label').toLowerCase() })
-                : projectLabels.length
-                  ? t('c:create_label.text')
-                  : t('c:create_first_label.text')
-          }
-        />
+        <div
+          ref={trackListScroll}
+          className={cn(
+            comboboxInputPinClass,
+            'flex items-center max-sm:border-transparent max-sm:border-b max-sm:transition-colors',
+            listScrolled && 'max-sm:border-border',
+          )}
+        >
+          <ComboboxSearchInput
+            ref={inputRef}
+            autoFocus={!isTouchInteraction()}
+            value={searchValue}
+            onClear={() => setSearchValue('')}
+            onKeyDown={handleSearchKeyDown}
+            wrapClassName="min-w-0 flex-1 max-sm:border-b-0"
+            className="min-h-10 leading-normal"
+            placeholder={
+              isMobile
+                ? t('c:search_resource', { resource: t('c:label_other').toLowerCase() })
+                : visibleLabels.length
+                  ? t('c:select_or_create_resource', { resource: t('c:label').toLowerCase() })
+                  : projectLabels.length
+                    ? t('c:create_label.text')
+                    : t('c:create_first_label.text')
+            }
+          />
+          {isMobile && (
+            <AnimatePresence initial={false}>
+              {!searchValue && (
+                <motion.div
+                  initial={{ opacity: 0, width: 0, marginRight: 0 }}
+                  animate={{ opacity: 1, width: 'auto', marginRight: -12 }}
+                  exit={{ opacity: 0, width: 0, marginRight: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="shrink-0 overflow-hidden"
+                >
+                  <Button type="button" variant="ghost" size="icon" className="rounded-full" aria-label={newLabelText} onClick={startCreate}>
+                    <PlusIcon />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+        </div>
         <ComboboxHotkeyHint searching={!!searchValue}>L</ComboboxHotkeyHint>
         {!searchValue && selectedLabels.length > 0 && (
           <button
@@ -381,9 +404,9 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
                   </div>
                   {inDrawer && (
                     <DrawerRowGroup className="mt-1.5">
-                      <Button variant="row" onClick={() => startCreate(searchValue)}>
+                      <Button variant="row" onClick={() => handleCreateClick(searchValue)}>
                         <PlusIcon />
-                        {newLabelText}
+                        {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
                         <Badge className="px-2 py-0" variant="plain">
                           {searchValue}
                         </Badge>

@@ -5,7 +5,7 @@ import { appConfig } from 'shared';
 import { scrollToSectionById } from '~/hooks/scroll-spy-store';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollSpy } from '~/hooks/use-scroll-spy';
-import { FAQ } from '~/modules/marketing/about/faq';
+// import { FAQ } from '~/modules/marketing/about/faq';
 import { Hero } from '~/modules/marketing/about/hero';
 import { AboutSection } from '~/modules/marketing/about/section';
 import { Why } from '~/modules/marketing/about/why';
@@ -14,7 +14,7 @@ import { MarketingNav } from '~/modules/marketing/nav';
 import { WaitlistForm } from '~/modules/requests/waitlist-form';
 import { Button } from '~/modules/ui/button';
 
-const aboutSectionIds = ['welcome', 'product', 'faqs'] as const;
+const aboutSectionIds = ['welcome', 'product'] as const;
 
 export function AboutPage() {
   const { t } = useTranslation();
@@ -45,7 +45,7 @@ export function AboutPage() {
             />
           )}
 
-          <Button variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8">
+          <Button variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8 max-sm:hidden">
             <span>{t('about:why')}</span>
             <ArrowDownIcon className="repeat-5 animate-bounce motion-reduce:animate-none" />
           </Button>
@@ -56,9 +56,9 @@ export function AboutPage() {
             <Why />
           </AboutSection>
 
-          <AboutSection sectionId="faqs" title="about:title_7" alternate>
+          {/* <AboutSection sectionId="faqs" title="about:title_7" alternate>
             <FAQ />
-          </AboutSection>
+          </AboutSection> */}
         </div>
       </main>
       <MarketingFooter />

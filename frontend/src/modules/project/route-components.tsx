@@ -2,6 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { Suspense } from 'react';
 import { Spinner } from '~/modules/common/spinner';
+import { EntityViewToggle } from '~/modules/entities/entity-grid/entity-view-toggle';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { projectQueryOptions } from '~/modules/project/query';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
@@ -11,6 +12,7 @@ const ProjectPage = lazyNamed(() => import('~/modules/project/project-page'), 'P
 const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
 const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
 const ProjectsTable = lazyNamed(() => import('~/modules/project/table/projects-table'), 'ProjectsTable');
+const ProjectsGrid = lazyNamed(() => import('~/modules/project/projects-grid'), 'ProjectsGrid');
 
 const projectApi = getRouteApi('/_app/$tenantId/$organizationSlug/project/$slug');
 const orgProjectsApi = getRouteApi('/_app/$tenantId/$organizationSlug/organization/projects');
@@ -45,10 +47,21 @@ export function ProjectRouteComponent() {
 export function OrganizationProjectsComponent() {
   const organizationId = orgProjectsApi.useRouteContext({ select: (context) => context.organization.id });
   const tenantId = orgProjectsApi.useRouteContext({ select: (context) => context.tenantId });
+  const view = orgProjectsApi.useSearch({ select: (search) => search.view });
   const { data } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
   return (
     <Suspense>
-      <ProjectsTable key={data.id} organization={data} />
+      {view === 'table' ? (
+        <ProjectsTable key={data.id} organization={data} />
+      ) : (
+        <ProjectsGrid
+          key={data.id}
+          fixedQuery={{ organizationId: data.id, scope: 'organization' }}
+          saveDataInSearch
+          focusView
+          viewToggle={<EntityViewToggle />}
+        />
+      )}
     </Suspense>
   );
 }

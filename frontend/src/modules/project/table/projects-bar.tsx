@@ -4,6 +4,7 @@ import { TableBarButton } from '~/modules/common/data-table/table-bar-button';
 import { TableBarShell, useTableBarFilters } from '~/modules/common/data-table/table-bar-shell';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { openDeleteDialog } from '~/modules/common/open-confirm';
+import { EntityViewToggle } from '~/modules/entities/entity-grid/entity-view-toggle';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import type { EnrichedProject, ProjectsRouteSearchParams } from '~/modules/project/types';
@@ -43,6 +44,7 @@ export function ProjectsTableBar({
       {...{ searchVars, total, columns, setColumns }}
       label="c:project"
       searchName="projectSearch"
+      controls={<EntityViewToggle />}
       selection={{
         count: selected.length,
         onClear: clearSelection,

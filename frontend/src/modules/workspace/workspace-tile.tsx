@@ -27,7 +27,7 @@ export function WorkspaceTile({ entity }: WorkspaceTileProps) {
             {projects.map((project) => (
               <EntityAvatar
                 key={project.id}
-                className="-ml-2 size-10 border"
+                className="-ml-2 size-10 border-2 border-black/25 more-contrast:border-black/85"
                 type="project"
                 id={project.id}
                 name={project.name}
@@ -35,7 +35,7 @@ export function WorkspaceTile({ entity }: WorkspaceTileProps) {
               />
             ))}
           </AvatarGroupList>
-          <AvatarOverflowIndicator className="-ml-2 rounded-md border text-xs" />
+          <AvatarOverflowIndicator className="-ml-2 rounded-md border-2 border-black/25 more-contrast:border-black/85 bg-muted font-semibold more-contrast:text-foreground/85 text-foreground/50 text-xs tracking-tighter shadow-none" />
         </AvatarGroup>
       )}
     </div>

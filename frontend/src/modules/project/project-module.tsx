@@ -60,7 +60,7 @@ defineFrontendModule({
       slot: 'user.profile',
       order: 40,
       render: ({ user, organizationId, isSheet }) => (
-        <div className="container">
+        <div className="container pt-4">
           <ProjectsGrid
             fixedQuery={{ relatableUserId: user.id, organizationId, include: 'counts' }}
             saveDataInSearch={!isSheet}

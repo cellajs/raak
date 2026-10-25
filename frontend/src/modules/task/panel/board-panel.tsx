@@ -58,7 +58,7 @@ export const BoardPanel = memo(function BoardPanel({
 
   const tasks = prepareBoardTasks(filteredTasks, expandAccepted, expandIced);
 
-  // The drop target sits on the outer wrapper so it works expanded and collapsed; mobile uses a different layout
+  // The drop target wraps header and list, so its ring frames the whole panel, expanded or collapsed; mobile uses a different layout
   const panelRef = useRef<HTMLDivElement>(null);
   const { highlightProject } = usePanelDropTarget({ panelRef, projectId: project.id, tasks });
 
@@ -95,13 +95,15 @@ export const BoardPanel = memo(function BoardPanel({
           />
         </div>
       ) : (
-        <div className="flex h-full flex-col">
+        <div ref={panelRef} className="relative flex h-full flex-col">
           <TaskPanelHeader project={project} sectionFilters={sectionFilters} publicView={publicView} />
-          <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             <BoardPanelContent isCollapsed={!!isCollapsed} collapsedContent={<TaskPanelCollapsed counts={counts} />}>
               <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} windowScroll={windowScroll} />
             </BoardPanelContent>
           </div>
+          {/* Above the sticky status bars (z-85), which would cover a recoloured border */}
+          {highlightProject && <div aria-hidden className="pointer-events-none absolute inset-0 z-90 rounded-t-lg ring-4 ring-primary ring-inset" />}
         </div>
       )}
     </div>

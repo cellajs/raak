@@ -2,7 +2,6 @@ import { env } from '~/env';
 import { CardCloseExit } from '~/modules/task/card/card-close-button';
 import { DescriptionEditButton } from '~/modules/task/card/description-edit-button';
 import { TaskCardSummaryButtons } from '~/modules/task/card/task-card-summary-buttons';
-import { TaskDragHandle } from '~/modules/task/card/task-drag-handle';
 import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
@@ -15,15 +14,13 @@ interface TaskCardContentCollapsedProps {
   task: Task;
   /** The card just collapsed: the header's close button pops out beside the options button. */
   animateClose?: boolean;
-  showDragHandle?: boolean;
   onEditRequest?: () => void;
 }
 
-export function TaskCardContentCollapsed({ task, animateClose = false, showDragHandle = false, onEditRequest }: TaskCardContentCollapsedProps) {
+export function TaskCardContentCollapsed({ task, animateClose = false, onEditRequest }: TaskCardContentCollapsedProps) {
   return (
     <div className="relative flex w-full gap-1">
       <div className="flex shrink-0 flex-col">
-        {showDragHandle && <TaskDragHandle task={task} />}
         <TaskPrimaryLabelButton task={task} />
       </div>
       {/* Grows to the card edge so the fade under the options button sits at the edge */}

@@ -77,7 +77,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               <div key={id} className="flex max-w-full flex-wrap items-center justify-center">
                 <Badge
                   variant="outline"
-                  className="inline-block min-h-4 max-w-full shrink truncate border-0 px-1 py-0 font-normal text-muted-foreground leading-4 shadow-none"
+                  className="inline-block h-4 max-w-full shrink truncate border-0 px-1 py-0 font-normal text-muted-foreground leading-4 shadow-none"
                 >
                   <HighlightText text={name} />
                 </Badge>

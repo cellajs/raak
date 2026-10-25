@@ -61,10 +61,6 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     const task = currentActiveTask(taskSheetId);
     if (!task) return;
 
-    if (document.activeElement instanceof HTMLElement && task.id === document.activeElement.id) {
-      document.activeElement.blur();
-    }
-
     if (isSheetOpen) return sheeter.getState().remove(`${taskSheetParam}-${task.id}`);
 
     const taskCard = document.getElementById(task.id);
