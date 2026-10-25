@@ -372,7 +372,7 @@ const taskUpdateOptions = (
     const cached = findTaskInCache(updatedTask.id);
     const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
 
-    // Cross-project move: server response has authoritative labels/assignedTo
+    // Cross-project move: the server's labels/assignedTo win over the cached ones
     const isProjectMove = variables.ops && 'projectId' in variables.ops;
     const merged = mergeServerResponse({
       cached,

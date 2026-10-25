@@ -84,7 +84,7 @@ export async function updateLabelOp(
 
     if (before.mode === 'primary' && resolved.changed) {
       if (values.organizationTracked === true) {
-        // Relink: re-sync the row from its setupConfig entry (server-authoritative reset)
+        // Relink: re-sync the row from its setupConfig entry (the backend decides the reset values)
         const { setupConfig } = withSetupConfigDefaults(ctx.var.organization);
         const entry = setupConfig.primaryLabels.find((e) => e.slug === before.slug);
         if (!entry) {
