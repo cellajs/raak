@@ -30,7 +30,7 @@ export async function createLabelsOp(
   const labelRestrictions = tenant.restrictions.quotas.label;
 
   if (labelRestrictions !== 0 && input.length > labelRestrictions) {
-    throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'label' });
+    throw new AppError(403, 'restrict_by_org', 'warn', { entityType: 'label' });
   }
 
   // Rows an earlier attempt of this create wrote come back as they are; only the other items are created.
@@ -47,7 +47,7 @@ export async function createLabelsOp(
   const currentCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'label' });
 
   if (labelRestrictions !== 0 && currentCount + fresh.length > labelRestrictions) {
-    throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'label' });
+    throw new AppError(403, 'restrict_by_org', 'warn', { entityType: 'label' });
   }
 
   // Creating primary/epic labels requires project-admin authority (project update permission)
