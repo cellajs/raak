@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { LabelActions, labelActionIcons } from '~/modules/label/label-actions';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
-import { type LabelAction, labelSearchMode, parseHiddenLabels } from '~/modules/label/label-search';
+import { type LabelAction, labelSearchState } from '~/modules/label/label-search';
 import { LabelTileDetails, labelTileReveal } from '~/modules/label/label-tile-details';
 import { labelTileStore, useLabelTileStore } from '~/modules/label/label-tile-store';
 import { useLabelUpdateMutation } from '~/modules/label/query';
@@ -31,7 +31,7 @@ const actionsReveal = tw(
 const metaHide = tw(
   'transition-opacity group-hover/label-tile:opacity-0 group-focus-visible/label-tile:opacity-0 group-has-[:focus-visible]/label-tile:opacity-0 group-has-data-dropdowner-done/label-tile:opacity-0 motion-reduce:transition-none',
 );
-// Transparent under the floating filter, highlight, hide and options buttons (4 × 2rem + 3 × 0.25rem gaps), then a 1.5rem
+// Transparent under the floating filter, highlight, exclude and options buttons (4 × 2rem + 3 × 0.25rem gaps), then a 1.5rem
 // fade. A mask fades the text itself, so it works on every row tint (hover, search highlight) and on the transparent panel.
 const nameFade = tw(
   'group-hover/label-tile:[mask-image:linear-gradient(to_left,transparent_8.75rem,black_10.25rem)] group-focus-visible/label-tile:[mask-image:linear-gradient(to_left,transparent_8.75rem,black_10.25rem)] group-has-[:focus-visible]/label-tile:[mask-image:linear-gradient(to_left,transparent_8.75rem,black_10.25rem)]',
@@ -40,11 +40,11 @@ const nameFade = tw(
 const activeIconClass: Record<LabelAction, string> = {
   filter: tw('text-primary'),
   highlight: tw('text-green-700 dark:text-green-300'),
-  hide: tw('text-muted-foreground'),
+  exclude: tw('text-muted-foreground'),
 };
 
 // Single keys are safe here: they only act while the tile itself has focus
-const tileKeyActions: Partial<Record<string, LabelAction>> = { f: 'filter', h: 'highlight', x: 'hide' };
+const tileKeyActions: Partial<Record<string, LabelAction>> = { f: 'filter', h: 'highlight', x: 'exclude' };
 
 interface LabelTileProps extends Pick<LabelsHostProps, 'singleExpand' | 'onAction'> {
   row: LabelRow;
@@ -61,9 +61,7 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
   const { t } = useTranslation();
 
   const expanded = useLabelTileStore((state) => !!state.expandedIds[row.id]);
-  const searchMode = useSearch({ strict: false, select: (search) => labelSearchMode(search.q, row.name) });
-  const isHidden = useSearch({ strict: false, select: (search) => parseHiddenLabels(search.hide).includes(row.slug) });
-  const active: LabelAction | null = isHidden ? 'hide' : searchMode;
+  const active = useSearch({ strict: false, select: (search) => labelSearchState(search.q, row.name) });
   const ActiveIcon = active && labelActionIcons[active];
 
   // Read-only viewers (guest membership or public access) cannot rename, switch mode or delete
@@ -106,7 +104,7 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
     const keyAction = event.altKey || event.ctrlKey || event.metaKey ? undefined : tileKeyActions[event.key.toLowerCase()];
     if (keyAction) {
       event.preventDefault();
-      applyLabelAction(row, keyAction);
+      applyLabelAction(row.name, keyAction);
     } else if (event.key === 'Enter') {
       event.preventDefault();
       handleNameClick();
@@ -179,7 +177,7 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
                 expanded ? 'font-semibold hover:bg-accent/50 focus-visible:bg-accent/50' : 'after:absolute after:inset-0',
               )}
             >
-              <span className={cn('truncate', isHidden && 'text-muted-foreground')}>
+              <span className={cn('truncate', active === 'exclude' && 'text-muted-foreground')}>
                 <HighlightText text={row.name} />
               </span>
             </button>

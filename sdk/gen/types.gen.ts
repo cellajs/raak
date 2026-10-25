@@ -4844,7 +4844,6 @@ export type GetPublicTasksData = {
     limit?: number;
     matchMode?: 'all' | 'any';
     acceptedCutOff?: number;
-    excludeLabels?: string;
     projectId: string;
   };
   url: '/public/tasks';
@@ -8745,7 +8744,6 @@ export type GetTasksData = {
     untilSeq?: number;
     matchMode?: 'all' | 'any';
     acceptedCutOff?: number;
-    excludeLabels?: string;
     projectId?: string;
     workspaceId?: string;
   };

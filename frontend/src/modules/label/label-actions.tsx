@@ -9,31 +9,31 @@ import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 import { tw } from '~/utils/tw';
 
-const labelActions = ['filter', 'highlight', 'hide'] as const satisfies LabelAction[];
+const labelActions = ['filter', 'highlight', 'exclude'] as const satisfies LabelAction[];
 
-export const labelActionIcons: Record<LabelAction, IconComponent> = { filter: ListFilterIcon, highlight: HighlighterIcon, hide: EyeOffIcon };
+export const labelActionIcons: Record<LabelAction, IconComponent> = { filter: ListFilterIcon, highlight: HighlighterIcon, exclude: EyeOffIcon };
 
 // Highlight shares the green of highlighted rows and cards
 const pressedClass: Record<LabelAction, string> = {
   filter: tw('bg-accent text-primary'),
   highlight: tw('bg-green-300/30 text-green-700 hover:bg-green-300/40 dark:text-green-300'),
-  hide: tw('bg-accent text-primary'),
+  exclude: tw('bg-accent text-primary'),
 };
 
 interface LabelActionsProps {
-  row: Pick<LabelRow, 'name' | 'slug'>;
+  row: Pick<LabelRow, 'name'>;
   active: LabelAction | null;
   onAction?: () => void;
 }
 
-/** Filter, highlight and hide toggles of a label tile: one of them is pressed at most. */
+/** Filter, highlight and exclude toggles of a label tile: one of them is pressed at most. */
 export function LabelActions({ row, active, onAction }: LabelActionsProps) {
   const { t } = useTranslation();
 
   const tooltips: Record<LabelAction, string> = {
     filter: t('c:filter_by_resource', { resource: row.name }),
     highlight: t('c:highlight_resource', { resource: row.name }),
-    hide: t(active === 'hide' ? 'c:show_resource' : 'c:hide_resource', { resource: row.name }),
+    exclude: t('c:exclude_resource', { resource: row.name }),
   };
 
   return labelActions.map((action) => {
@@ -46,7 +46,7 @@ export function LabelActions({ row, active, onAction }: LabelActionsProps) {
           size="xs"
           aria-pressed={isPressed}
           onClick={() => {
-            applyLabelAction(row, action);
+            applyLabelAction(row.name, action);
             onAction?.();
           }}
           className={cn('size-8 opacity-60 hover:opacity-100', isPressed && ['opacity-100', pressedClass[action]])}

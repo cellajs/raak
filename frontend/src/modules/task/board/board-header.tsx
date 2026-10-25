@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
-import { HiddenLabelsButton } from '~/modules/label/hidden-labels-button';
 import { LabelsDrawerButton } from '~/modules/label/labels-drawer';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { DisplayOptions } from '~/modules/task/board/display-options';
@@ -77,8 +76,6 @@ export function BoardHeader({
           className={cn('max-sm:group-data-[search-focused=true]/boardHeader:hidden', searchQuery && 'max-sm:hidden')}
         />
       )}
-
-      <HiddenLabelsButton className="max-sm:group-data-[search-focused=true]/boardHeader:hidden" />
 
       {!publicView && projects.length > 0 && <LabelsDrawerButton entity={workspace ? 'workspace' : 'project'} entityId={workspace?.id ?? boardId} />}
 

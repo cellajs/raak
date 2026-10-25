@@ -1,12 +1,11 @@
 import i18n from 'i18next';
 import { panelMinWidth } from '~/modules/common/board/board-layout';
-import { parseHiddenLabels } from '~/modules/label/label-search';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { isHiddenByLabels, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
@@ -165,16 +164,12 @@ export const resetTaskInteraction = (boardKey?: string) => {
 export const renderedPanelTasks = (
   panel: ProjectResizablePanel,
   tasks: Task[],
-  search: { q?: string; matchMode?: BoardSearchParams['matchMode']; hide?: string },
+  search: { q?: string; matchMode?: BoardSearchParams['matchMode'] },
   prefs: { expandAccepted: boolean; expandIced: boolean },
 ) => {
-  const hiddenSlugs = parseHiddenLabels(search.hide);
   const inPanel = tasks.filter(
     (task) =>
-      task.projectId === panel.project.id &&
-      !isHiddenByLabels(hiddenSlugs, task) &&
-      matchesBoardSearch(search, task) &&
-      (!panel.sectionFilters || inSections(task, panel.sectionFilters)),
+      task.projectId === panel.project.id && matchesBoardSearch(search, task) && (!panel.sectionFilters || inSections(task, panel.sectionFilters)),
   );
   return prepareBoardTasks(inPanel, prefs.expandAccepted, prefs.expandIced);
 };

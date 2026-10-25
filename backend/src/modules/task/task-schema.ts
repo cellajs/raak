@@ -19,7 +19,6 @@ import {
   validUuidSchema,
 } from '#/schemas';
 import { auditShape, tombstoneShape } from '#/schemas/entity-base';
-import { labelSlugSchema } from '#/schemas/label-slug-schema';
 import { userMinimalBaseSchema } from '#/schemas/minimal-base';
 
 const taskRelationDeltaSchema = arrayDeltaSchema(validUuidSchema);
@@ -81,12 +80,6 @@ const taskListQueryShape = {
   sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('asc'),
   acceptedCutOff: z.coerce.number().positive().optional(),
-  // Comma-separated label slugs whose tasks the list leaves out, e.g. ?excludeLabels=later,needs-design
-  excludeLabels: z
-    .string()
-    .optional()
-    .transform((val) => (val ? val.split(',').map((s) => s.trim()) : undefined))
-    .pipe(z.array(labelSlugSchema).max(100).optional()),
   projectId: validIdSchema.optional(),
   workspaceId: validIdSchema.optional(),
 };

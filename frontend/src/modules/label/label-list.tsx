@@ -10,7 +10,7 @@ import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-co
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
-import { hasLabelName, termsBesideLabels } from '~/modules/label/label-search';
+import { labelSearchState, termsBesideLabels } from '~/modules/label/label-search';
 import { LabelTile, labelTileDomId } from '~/modules/label/label-tile';
 import { labelTileStore } from '~/modules/label/label-tile-store';
 import { labelsCanonicalOptions } from '~/modules/label/query';
@@ -86,14 +86,14 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const grouped = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
-  // A label in the search keeps its row and its words narrow nothing, so the other labels stay at hand to add
+  // A label in the search, an excluded one too, keeps its row and its words narrow nothing, so the others stay at hand to add
   const freeTerms = highlight
     ? []
     : termsBesideLabels(
         terms,
         grouped.map((row) => row.name),
       );
-  const rows = freeTerms.length ? grouped.filter((row) => hasLabelName(terms, row.name) || matchesSearch(row, freeTerms)) : grouped;
+  const rows = freeTerms.length ? grouped.filter((row) => !!labelSearchState(q, row.name) || matchesSearch(row, freeTerms)) : grouped;
   const itemIds = rows.map((row) => labelTileDomId(row.id));
 
   // Every tile is mounted, so bringing one into view is a plain scroll
@@ -128,7 +128,7 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
         <LabelTile
           key={row.id}
           row={row}
-          highlighted={highlight && (hasLabelName(terms, row.name) || matchesSearch(row, terms))}
+          highlighted={highlight && (labelSearchState(q, row.name) === 'highlight' || matchesSearch(row, terms))}
           onBoard={!!navPanelId}
           {...tileProps}
         />

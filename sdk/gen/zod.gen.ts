@@ -1932,7 +1932,6 @@ export const zGetPublicTasksQuery = z.object({
   limit: z.int().gte(1).lte(1000).optional().default(40),
   matchMode: z.enum(['all', 'any']).optional().default('all'),
   acceptedCutOff: z.number().gt(0).optional(),
-  excludeLabels: z.string().optional(),
   projectId: z.string().max(50),
 });
 
@@ -3676,7 +3675,6 @@ export const zGetTasksQuery = z.object({
   untilSeq: z.int().gte(0).optional(),
   matchMode: z.enum(['all', 'any']).optional().default('all'),
   acceptedCutOff: z.number().gt(0).optional(),
-  excludeLabels: z.string().optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
 });

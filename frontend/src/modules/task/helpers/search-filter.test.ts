@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Task } from '~/modules/task/types';
-import { matchesBoardSearch } from './search-filter';
+import { isExcludedBySearch, matchesBoardSearch } from './search-filter';
 
 const paragraph = (text: string) =>
   JSON.stringify([{ id: '1', type: 'paragraph', props: {}, content: [{ type: 'text', text, styles: {} }], children: [] }]);
@@ -44,5 +44,18 @@ describe('matchesBoardSearch', () => {
   it('strips the highlight marker', () => {
     expect(matchesBoardSearch({ q: '=drops' }, task())).toBe(true);
     expect(matchesBoardSearch({ q: '=' }, task({ description: null }))).toBe(true);
+  });
+
+  it('leaves a task out on an excluded whole word, in any mode', () => {
+    expect(matchesBoardSearch({ q: '-performance' }, task())).toBe(false);
+    expect(matchesBoardSearch({ q: 'drops -"joost kramer"' }, task())).toBe(false);
+    expect(matchesBoardSearch({ q: 'missing sync -cafe', matchMode: 'any' }, task())).toBe(false);
+    expect(isExcludedBySearch('=drops -kramer', task())).toBe(true);
+  });
+
+  it('spares a task where the excluded word is only part of a word', () => {
+    expect(matchesBoardSearch({ q: '-perform' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'drops -sync -pro' }, task({ description: null, keywords: 'drops' }))).toBe(true);
+    expect(isExcludedBySearch('-sync', task({ _draft: true }))).toBe(false);
   });
 });

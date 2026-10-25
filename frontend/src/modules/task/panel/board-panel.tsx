@@ -7,13 +7,12 @@ import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollVisibility } from '~/hooks/use-scroll-visibility';
 import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { parseHiddenLabels } from '~/modules/label/label-search';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
 import { makePanelKey, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { isHiddenByLabels, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { isExcludedBySearch, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
 import { openCreateTaskDialog } from '~/modules/task/mobile-create-task-dialog';
 import { TaskPanelCollapsed } from '~/modules/task/panel/task-panel-collapsed';
@@ -43,7 +42,6 @@ export const BoardPanel = memo(function BoardPanel({
   const isMobile = useBreakpointBelow('sm');
   const q = useSearch({ strict: false, select: (search) => search.q });
   const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
-  const hide = useSearch({ strict: false, select: (search) => search.hide });
 
   const { isVisible: showFab } = useScrollVisibility(isMobile);
 
@@ -51,13 +49,13 @@ export const BoardPanel = memo(function BoardPanel({
   const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
-  // Hidden labels apply before the search, so a highlight search keeps them out too; the open create-form draft always stays visible
-  const hiddenSlugs = parseHiddenLabels(hide);
-  const shownTasks = hiddenSlugs.length ? fetchedTasks.filter((task) => !isHiddenByLabels(hiddenSlugs, task)) : fetchedTasks;
-  const matchedTasks = shownTasks.filter((task) => isDraftTask(task) || matchesBoardSearch({ q, matchMode }, task));
+  // The open create-form draft always stays visible; a highlight search keeps every task but the excluded ones
+  const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || matchesBoardSearch({ q, matchMode }, task));
   const matchedIds = new Set(matchedTasks.map(({ id }) => id));
   const filteredTasks = parseSearchQuery(q).highlight
-    ? shownTasks.map((task) => (matchedIds.has(task.id) ? { ...task, isMatchingSearch: true } : task))
+    ? fetchedTasks
+        .filter((task) => !isExcludedBySearch(q, task))
+        .map((task) => (matchedIds.has(task.id) ? { ...task, isMatchingSearch: true } : task))
     : matchedTasks;
 
   const tasks = prepareBoardTasks(filteredTasks, expandAccepted, expandIced);

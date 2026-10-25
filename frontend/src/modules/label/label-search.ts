@@ -1,9 +1,10 @@
-import { parseSearchQuery } from 'shared/utils/parse-search-query';
+import { formatSearchParts, parseSearchQuery, type SearchPart } from 'shared/utils/parse-search-query';
 import { foldText, parseTerms } from 'shared/utils/text-match';
 
-export type LabelSearchMode = 'filter' | 'highlight';
-/** A label tile's toggles: in the board search (by mode) or hidden from the board, never both. */
-export type LabelAction = LabelSearchMode | 'hide';
+/** A label tile's toggles: how the board search holds the label, which is one way at most. */
+export type LabelAction = 'filter' | 'highlight' | 'exclude';
+
+const nameKey = (name: string) => parseTerms(name).join(' ');
 
 /** Start of `run` as consecutive entries of `terms`, or -1. */
 const findRun = (terms: string[], run: string[]) => {
@@ -14,12 +15,22 @@ const findRun = (terms: string[], run: string[]) => {
   return -1;
 };
 
-/** Whether the search terms hold a label's name as whole consecutive words. */
-export const hasLabelName = (terms: string[], name: string) => findRun(terms, parseTerms(name)) >= 0;
+/** Where a label's name stands among the search terms: one quoted phrase or word, or its words typed one by one. */
+const findName = (terms: string[], name: string) => {
+  const single = terms.indexOf(nameKey(name));
+  if (single >= 0) return { at: single, count: 1 };
+  const run = parseTerms(name);
+  const at = findRun(terms, run);
+  return at >= 0 ? { at, count: run.length } : null;
+};
+
+/** Whether the search terms (folded, from `parseSearchQuery`) hold a label's name as whole words. */
+export const hasLabelName = (terms: string[], name: string) => !!findName(terms, name);
 
 /** How the board search holds a label; null when its name is not in the search as whole words. */
-export const labelSearchMode = (q: string | undefined, name: string): LabelSearchMode | null => {
-  const { highlight, terms } = parseSearchQuery(q);
+export const labelSearchState = (q: string | undefined, name: string): LabelAction | null => {
+  const { highlight, terms, excludeTerms } = parseSearchQuery(q);
+  if (excludeTerms.includes(nameKey(name))) return 'exclude';
   if (!hasLabelName(terms, name)) return null;
   return highlight ? 'highlight' : 'filter';
 };
@@ -28,45 +39,44 @@ export const labelSearchMode = (q: string | undefined, name: string): LabelSearc
 export const termsBesideLabels = (terms: string[], names: string[]) => {
   const covered = new Set<number>();
   for (const name of names) {
-    const run = parseTerms(name);
-    const at = findRun(terms, run);
-    if (at < 0) continue;
-    for (let index = at; index < at + run.length; index++) covered.add(index);
+    const found = findName(terms, name);
+    if (!found) continue;
+    for (let index = found.at; index < found.at + found.count; index++) covered.add(index);
   }
   return terms.filter((_, index) => !covered.has(index));
 };
 
-// Words keep their typed form; only the comparison folds them
-const splitQuery = (q: string | undefined) => {
-  const { highlight, effectiveQ } = parseSearchQuery(q);
-  const words = effectiveQ.split(/\s+/).filter(Boolean);
-  return { highlight, words, at: (name: string) => findRun(words.map(foldText), parseTerms(name)) };
-};
-
-const joinQuery = (words: string[], highlight: boolean) => (words.length ? `${highlight ? '=' : ''}${words.join(' ')}` : '');
-
-/** The search without a label's name; other words and the mode stay as typed. */
-export const withoutLabelSearch = (q: string | undefined, name: string) => {
-  const { highlight, words, at } = splitQuery(q);
-  const start = at(name);
-  if (start < 0) return q ?? '';
-  return joinQuery([...words.slice(0, start), ...words.slice(start + parseTerms(name).length)], highlight);
-};
+const replaceAt = (parts: SearchPart[], at: number, count: number, ...insert: SearchPart[]) => [
+  ...parts.slice(0, at),
+  ...insert,
+  ...parts.slice(at + count),
+];
 
 /**
- * The search after a label's filter or highlight toggle. The search has one mode, so the other mode's toggle switches
- * the whole search and every label in it; the active one takes the label out.
+ * The search after a label's toggle. Filter and highlight put its name in as typed words; the search has one mode, so
+ * the other mode's toggle switches the whole search and every label in it. Exclude puts it in with a '-'. The pressed
+ * toggle takes the label out; another one moves it in place.
  */
-export const toggleLabelSearch = (q: string | undefined, name: string, mode: LabelSearchMode) => {
-  if (labelSearchMode(q, name) === mode) return withoutLabelSearch(q, name);
-  const { words, at } = splitQuery(q);
-  return joinQuery(at(name) < 0 ? [...words, ...name.trim().split(/\s+/)] : words, mode === 'highlight');
-};
+export const toggleLabelSearch = (q: string | undefined, name: string, action: LabelAction) => {
+  const { parts } = parseSearchQuery(q);
+  const wasMarked = !!q?.trim().startsWith('=');
+  const current = labelSearchState(q, name);
 
-/** Label slugs in the board's `hide` param, joined by '_' like other list params (a slug has none). */
-export const parseHiddenLabels = (hide: string | undefined) => (hide ? hide.split('_').filter(Boolean) : []);
+  const label: SearchPart = { text: name.trim().replace(/\s+/g, ' '), exclude: action === 'exclude' };
+  const included = findName(
+    parts.map((part) => (part.exclude ? '' : foldText(part.text))),
+    name,
+  );
+  const excludedAt = parts.findIndex((part) => part.exclude && foldText(part.text) === nameKey(name));
+  const found = current === 'exclude' ? { at: excludedAt, count: 1 } : included;
 
-export const toggleHiddenLabel = (hide: string | undefined, slug: string) => {
-  const slugs = parseHiddenLabels(hide);
-  return (slugs.includes(slug) ? slugs.filter((hidden) => hidden !== slug) : [...slugs, slug]).join('_');
+  let next: SearchPart[];
+  if (current === action) next = found ? replaceAt(parts, found.at, found.count) : parts;
+  else if (found && (current === 'exclude' || action === 'exclude')) next = replaceAt(parts, found.at, found.count, label);
+  else next = found ? parts : [...parts, label];
+
+  const highlight = action === 'exclude' ? wasMarked : action === 'highlight';
+  const text = formatSearchParts(next);
+  // A marker with no term left to highlight would only linger in the URL
+  return text ? `${highlight && next.some((part) => !part.exclude) ? '=' : ''}${text}` : '';
 };

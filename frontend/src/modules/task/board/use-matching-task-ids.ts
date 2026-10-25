@@ -10,15 +10,15 @@ import { pickViewSections, prepareBoardPanels, renderedPanelTasks } from '~/modu
 export function useMatchingTaskIds(boardId: string, projects: EnrichedProject[]): string[] {
   const q = useSearch({ strict: false, select: (search) => search.q });
   const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
-  const hide = useSearch({ strict: false, select: (search) => search.hide });
   const panelData = useTaskBoardStore((state) => state.panelData[boardId]);
 
   // Joined into one string: useSyncExternalStore compares snapshots by value.
   const joined = useSyncExternalStore(subscribeToTaskCache, () => {
-    if (!parseSearchQuery(q).terms.length) return '';
+    const { terms, excludeTerms } = parseSearchQuery(q);
+    if (!terms.length && !excludeTerms.length) return '';
     const tasks = cachedTasks();
     return prepareBoardPanels(projects, pickViewSections(panelData))
-      .flatMap((panel) => renderedPanelTasks(panel, tasks, { q, matchMode, hide }, panelData?.[panel.project.id]?.prefs ?? defaultPanelPrefs))
+      .flatMap((panel) => renderedPanelTasks(panel, tasks, { q, matchMode }, panelData?.[panel.project.id]?.prefs ?? defaultPanelPrefs))
       .map(({ id }) => id)
       .join('\n');
   });

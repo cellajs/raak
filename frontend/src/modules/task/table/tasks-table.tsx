@@ -4,17 +4,16 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project, Workspace } from 'sdk';
 import { appConfig } from 'shared';
-import { parseSearchQuery } from 'shared/utils/parse-search-query';
+import { formatSearchParts, parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
-import { parseHiddenLabels } from '~/modules/label/label-search';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
-import { isHiddenByLabels, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
 import { searchHighlightRowClass } from '~/modules/task/search-highlight';
@@ -59,19 +58,15 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const [isCompact, setIsCompact] = useState(true);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
-  // Highlight mode ('=' prefix): fetch unfiltered and tint matches client-side, like the board
-  const { highlight, effectiveQ } = parseSearchQuery(q);
-  const effectiveSearch = highlight ? { ...search, q: '' } : search;
-
-  // The board's hidden labels hold here too; the API takes their slugs comma-joined
-  const hiddenSlugs = parseHiddenLabels(search.hide);
-  const excludeLabels = hiddenSlugs.join(',') || undefined;
+  // Highlight mode ('=' prefix): fetch without the terms to match, so only exclusions filter, and tint matches client-side, like the board
+  const { highlight, effectiveQ, parts } = parseSearchQuery(q);
+  const effectiveSearch = highlight ? { ...search, q: formatSearchParts(parts.filter((part) => part.exclude)) } : search;
 
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const optionsFor = (tableSearch: BoardSearchParams) =>
     queryParams
-      ? tasksTableQueryOptions({ ...tableSearch, ...queryParams, excludeLabels })
-      : publicTasksTableQueryOptions({ ...tableSearch, projectId: projects[0]?.id, excludeLabels });
+      ? tasksTableQueryOptions({ ...tableSearch, ...queryParams })
+      : publicTasksTableQueryOptions({ ...tableSearch, projectId: projects[0]?.id });
   const queryOptions = optionsFor(effectiveSearch);
 
   // biome-ignore lint/suspicious/noExplicitAny: union of query options with different key shapes
@@ -94,8 +89,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const total = useListQueryTotal(highlight ? matchOptions.queryKey : queryOptions.queryKey);
 
   const isOnline = useOnlineManager();
-  const rows =
-    isOnline || highlight ? fetchedRows : fetchedRows?.filter((row) => !isHiddenByLabels(hiddenSlugs, row) && matchesBoardSearch(search, row));
+  const rows = isOnline || highlight ? fetchedRows : fetchedRows?.filter((row) => matchesBoardSearch(search, row));
 
   // Tint matches among the loaded rows in highlight mode (search-filter strips the marker)
   const rowClass = highlight ? (row: Task) => (matchesBoardSearch(search, row) ? searchHighlightRowClass : undefined) : undefined;
