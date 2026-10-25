@@ -13,11 +13,10 @@ export interface LabelsScopeProps {
 export interface LabelsHostProps {
   /** The panel grows with its content and the page scrolls; otherwise the list scrolls internally. */
   windowScroll?: boolean;
-  /** Off in the drawer: its modal overlay covers the floating selection bar. */
-  selectable?: boolean;
   /** One tile open at a time, for the narrow drawer. */
   singleExpand?: boolean;
-  onFilterToggle?: () => void;
+  /** After a tile's filter, highlight or hide toggle: the drawer closes on it to show the board. */
+  onAction?: () => void;
   /** The board panel hosting the list: its tiles become board items, one Tab stop with arrow-key navigation. */
   navPanelId?: string;
 }

@@ -26,6 +26,10 @@ export const descriptionText = (task: Task) => searchableText(descriptionCache, 
 /** The summary (the description's first block) as plain text, parsed once per task object. */
 export const summaryText = (task: Task) => searchableText(summaryCache, task, task.summary);
 
+/** Whether a task carries a label the board hides (slugs from `parseHiddenLabels`); the create form never hides. */
+export const isHiddenByLabels = (hiddenSlugs: string[], task: Task) =>
+  hiddenSlugs.length > 0 && !isDraftTask(task) && task.labels.some(({ slug }) => hiddenSlugs.includes(slug));
+
 /** Whether a task matches the board search; list-tasks.ts is the server leg of the same rule. */
 export const matchesBoardSearch = (searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] }, task: Task): boolean => {
   const { q, matchMode = 'all' } = searchParams;

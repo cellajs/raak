@@ -36,8 +36,6 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
   const labelsHide = task.labels.length ? '' : readOnlyHide;
 
   const taskState = useTaskCardStore((state) => state.states[task.id] ?? 'collapsed');
-  // Task and label selection are mutually exclusive so the board header's remove button targets one kind
-  const hasSelectedLabels = useTaskInteractionStore((state) => state.selectedLabelIds.length > 0);
   const isOtherProjectSelected = useTaskInteractionStore((state) => !!state.selectedProjectId && state.selectedProjectId !== task.projectId);
   // On mobile an open card moves labels onto their own line, freeing room for the select checkbox and status button
   const isExpandedMobile = isMobile && taskState !== 'collapsed';
@@ -100,7 +98,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             className={cn('mx-1', !isExpandedMobile && 'max-sm:hidden', readOnlyHide)}
             aria-label={t('c:select_resource', { resource: task.name })}
             checked={isSelected}
-            disabled={hasSelectedLabels || isOtherProjectSelected}
+            disabled={isOtherProjectSelected}
             onCheckedChange={(checked) => setTaskSelected(checked, task)}
           />
         )}

@@ -10,6 +10,7 @@ import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-co
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
+import { hasLabelName, termsBesideLabels } from '~/modules/label/label-search';
 import { LabelTile, labelTileDomId } from '~/modules/label/label-tile';
 import { labelTileStore } from '~/modules/label/label-tile-store';
 import { labelsCanonicalOptions } from '~/modules/label/query';
@@ -85,7 +86,14 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const grouped = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
-  const rows = highlight || !terms.length ? grouped : grouped.filter((row) => matchesSearch(row, terms));
+  // A label in the search keeps its row and its words narrow nothing, so the other labels stay at hand to add
+  const freeTerms = highlight
+    ? []
+    : termsBesideLabels(
+        terms,
+        grouped.map((row) => row.name),
+      );
+  const rows = freeTerms.length ? grouped.filter((row) => hasLabelName(terms, row.name) || matchesSearch(row, freeTerms)) : grouped;
   const itemIds = rows.map((row) => labelTileDomId(row.id));
 
   // Every tile is mounted, so bringing one into view is a plain scroll
