@@ -1,5 +1,5 @@
 import { boardFocusStore } from '~/modules/task/board/board-focus-store';
-import { scrollItemIntoView } from '~/modules/task/helpers/panel-nav-registry';
+import { getPanelNav, scrollItemIntoView } from '~/modules/task/helpers/panel-nav-registry';
 
 /** Makes an item the board's current one, or clears it, without moving DOM focus. */
 export const setCurrentItem = (id: string | null) => boardFocusStore.getState().setCurrentItemId(id);
@@ -55,4 +55,12 @@ export const focusItem = (id: string) => {
     scrollItemIntoView(id);
   }
   focusWhenMounted(id);
+};
+
+/** Focuses where arrowing into a panel lands, once its list has replaced `placeholderId`: after expanding it. */
+export const focusPanelOnceListed = (panelId: string, placeholderId: string, framesLeft = 60) => {
+  const nav = getPanelNav(panelId);
+  const targetId = nav?.firstInView() ?? nav?.items()[0]?.id;
+  if (targetId && targetId !== placeholderId) return focusItem(targetId);
+  if (framesLeft > 0) requestAnimationFrame(() => focusPanelOnceListed(panelId, placeholderId, framesLeft - 1));
 };

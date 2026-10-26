@@ -59,6 +59,7 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
           {!isSheet && (
             <CardCloseButton
               animateIn={animateClose}
+              className="focus-inset"
               onClick={() => {
                 // The button unmounts with the header, which would drop focus out of the card
                 focusItem(task.id);

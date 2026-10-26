@@ -35,6 +35,7 @@ import { revealTask } from '~/modules/task/helpers/panel-scroll-registry';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useTaskCreateMutation } from '~/modules/task/query';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
+import { itemFocusBarClass } from '~/modules/task/task-styles';
 import type { Task, TaskStatusType } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Button, buttonVariants } from '~/modules/ui/button';
@@ -204,8 +205,8 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
             'flex flex-col gap-2 sm:p-3 sm:pl-11',
             isDialog && 'grow',
             !isDialog &&
-              'relative border-b before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-[3px] before:rounded-full before:bg-primary before:opacity-0',
-            !isDialog && isFocused && 'before:opacity-100',
+              'relative border-b before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 sm:before:-left-px',
+            !isDialog && itemFocusBarClass,
             isFocused ? 'is-focused focus-visible:outline-none focus-visible:ring-0' : 'focus-visible:ring-1 focus-visible:ring-ring',
             className,
           )}

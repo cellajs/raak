@@ -63,8 +63,9 @@ export function CardDescriptionSlot({ task, state, isReadOnly, animateClose = fa
     <div className="relative">
       <DescriptionLayers
         slot={slot}
-        // The static's checkbox is disabled and lets the pointer through to its wrapper, so the wrapper carries the cursor.
-        className={isReadOnly ? '[&_.checklist-checkbox-wrapper]:cursor-not-allowed' : '[&_.checklist-checkbox-wrapper]:cursor-pointer'}
+        className={isReadOnly ? '[&_.checklist-checkbox-wrapper]:cursor-not-allowed' : undefined}
+        // Off while editing: this container also holds the editor, where only the box itself toggles.
+        data-checklist-toggle={(!isReadOnly && state !== 'editing') || undefined}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         staticView={

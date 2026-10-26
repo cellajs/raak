@@ -36,6 +36,16 @@ export const statusButtonVariants = cva(
 /** Shared by the expanded view and the editing form so toggling edit mode does not shift the text. */
 export const taskDescriptionGutterClass = tw('pb-4 pl-1 sm:pl-9');
 
+/** A board item's focus bar shows while focus is on or in it, or in a menu or dropdown opened from it, not merely while it is current. */
+export const itemFocusBarClass = tw(
+  'focus-within:before:opacity-100 has-[[aria-haspopup][aria-expanded=true]]:before:opacity-100 has-data-dropdowner-active:before:opacity-100',
+);
+
+/** `itemFocusBarClass` for the bar a task card draws on its content. */
+export const taskCardFocusBarClass = tw(
+  'group-focus-within/task:before:opacity-100 group-has-[[aria-haspopup][aria-expanded=true]]/task:before:opacity-100 group-has-data-dropdowner-active/task:before:opacity-100',
+);
+
 /** Dims a task card's own buttons until the card is hovered or current. */
 export const taskCardDimClass = tw('opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100');
 

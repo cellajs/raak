@@ -227,4 +227,7 @@ export const accessibilityReview: AccessibilityReview = {
   reviewedAt: null,
   limitations: [],
   report: null,
+  whatYouCanDo: [
+    'Move around a task board with the arrow keys: up and down through a list, left and right to the next or previous panel. Enter opens a task and Escape closes it again.',
+  ],
 };

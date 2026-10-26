@@ -1,5 +1,6 @@
 import { useSearch } from '@tanstack/react-router';
 import { type RefObject, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getOrderBetween } from 'shared/utils/display-order';
 import { useShallow } from 'zustand/react/shallow';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
@@ -9,7 +10,7 @@ import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
 import { LABELS_PANEL_ID } from '~/modules/label/types';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { normalizePanelWidths, pickViewSections, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
+import { normalizePanelWidths, pickViewSections, prepareBoardPanels, projectPanelName } from '~/modules/task/helpers/board-helpers';
 import type { BoardResizablePanel } from '~/modules/task/types';
 
 // Finite anchors keep the fractional reorder math working when a neighboring panel is dragged against them
@@ -129,6 +130,7 @@ export function usePanelLayout(boardId: string, projects: EnrichedProject[], ext
 }
 
 export function useBoardPanels(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[]) {
+  const { t } = useTranslation();
   const { panels, defaultLayout } = usePanelLayout(boardId, projects, extraPanels);
   const prunePanelOrders = useBoardStore((state) => state.prunePanelOrders);
   const updateBoardLayout = useBoardStore((state) => state.updateBoardLayout);
@@ -140,7 +142,13 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
     );
   }, [boardId, panels, prunePanelOrders]);
 
-  const layoutPanels: BoardLayoutPanel[] = panels.map(({ panelId }) => ({ panelId }));
+  const layoutPanels: BoardLayoutPanel[] = panels.map((panel) => ({
+    panelId: panel.panelId,
+    label:
+      panel.kind === 'project'
+        ? projectPanelName(panel.project, panel.sectionFilters)
+        : t(panel.kind === 'labels' ? 'c:label_other' : 'c:getting_started'),
+  }));
 
   const handleLayoutChanged = (layout: Record<string, number>) => {
     updateBoardLayout(boardId, layout);

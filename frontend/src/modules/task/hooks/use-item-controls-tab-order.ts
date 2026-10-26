@@ -19,7 +19,6 @@ export function useItemControlsTabOrder(
 ) {
   const removedRef = useRef(new Set<HTMLElement>());
 
-  // Every render: a control can mount while the item stays out, such as a card's edit button once it is current
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -30,12 +29,21 @@ export function useItemControlsTabOrder(
       return;
     }
 
-    for (const el of container.querySelectorAll<HTMLElement>(focusableSelector)) {
-      if (el.id === mainId || el.tabIndex < 0) continue;
-      el.setAttribute('tabindex', '-1');
-      removedRef.current.add(el);
-    }
-  });
+    const removeControls = () => {
+      for (const el of container.querySelectorAll<HTMLElement>(focusableSelector)) {
+        if (el.id === mainId || el.tabIndex < 0) continue;
+        el.setAttribute('tabindex', '-1');
+        removedRef.current.add(el);
+      }
+    };
+    removeControls();
+
+    // A control can mount or turn focusable while the item stays out, without the item rendering again: a card's edit
+    // button once it is current, an epic tile's description editor once its chunk and document load
+    const observer = new MutationObserver(removeControls);
+    observer.observe(container, { subtree: true, childList: true, attributeFilter: ['tabindex', 'contenteditable', 'href'] });
+    return () => observer.disconnect();
+  }, [containerRef, mainId, isEntered]);
 
   useEffect(() => {
     const container = containerRef.current;

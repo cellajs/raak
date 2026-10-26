@@ -5,18 +5,16 @@ import { zChannelBase } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
-import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useOverlayClose } from '~/modules/common/overlay-close';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { ProjectSuggestionCombobox } from '~/modules/project/project-suggestion-combobox';
 import { useProjectAssignMutation } from '~/modules/project/query';
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
-import { useOrganizationWorkspaces } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { formResolver } from '~/utils/form-resolver';
 
-const formSchema = z.object({ selectedProjects: z.array(zChannelBase).min(1), workspaceId: z.string() });
+const formSchema = z.object({ selectedProjects: z.array(zChannelBase).min(1) });
 type FormValues = z.infer<typeof formSchema>;
 
 /** Lets users assign existing projects to the current workspace. */
@@ -28,13 +26,9 @@ export function SelectProjectForm() {
   const organizationId = workspace.organizationId;
   const workspaceId = workspace.id;
 
-  const workspaces = useOrganizationWorkspaces(organizationId);
-
-  const options = workspaces.map(({ name: label, thumbnailUrl: url, id: value }) => ({ value, label, url }));
-
   const formOptions: UseFormProps<FormValues> = {
     resolver: formResolver(formSchema),
-    defaultValues: { selectedProjects: [], workspaceId },
+    defaultValues: { selectedProjects: [] },
   };
 
   const form = useFormWithDraft<FormValues>(`select-project-${workspaceId}`, { formOptions });
@@ -96,7 +90,6 @@ export function SelectProjectForm() {
             </FormItem>
           )}
         />
-        <SelectParentFormField parentType="workspace" control={form.control} label={t('c:workspace')} options={options} name="workspaceId" disabled />
         <div className="flex flex-col gap-2 sm:flex-row">
           <SubmitButton disabled={selectedCount === 0} loading={form.formState.isSubmitting}>
             {selectedCount > 0

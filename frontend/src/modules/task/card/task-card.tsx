@@ -20,7 +20,7 @@ import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
-import { taskCardVariants } from '~/modules/task/task-styles';
+import { taskCardFocusBarClass, taskCardVariants } from '~/modules/task/task-styles';
 import type { TaskProps } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
@@ -196,8 +196,13 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
           'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent py-0 sm:py-0',
           isDragging && 'opacity-30',
           !isSheet && 'focus-visible:outline-none',
-          isCurrent && 'is-focused',
-          isSheet ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]' : 'hover:bg-card/20',
+          // Hover and current spread the status gradient; the tint is for unstarted cards, which have no gradient
+          isCurrent && 'is-focused bg-accent/30 via-40%',
+          isSheet
+            ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]'
+            : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-accent/30 hover:via-40%',
+          // A search match or a selected card keeps full strength, so it stands out among the resting ones
+          !isSheet && effectiveState === 'collapsed' && !isCurrent && !task.isMatchingSearch && !isSelected && 'resting-text',
           taskCardVariants({ status: task.status }),
           task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30' : 'bg-green-300/20 hover:bg-green-300/30'),
         )}
@@ -205,7 +210,8 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         <CardContent
           id={`${task.id}-content`}
           className={cn(
-            'relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-focus-visible/task:before:opacity-100 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px',
+            'relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 sm:before:-left-px',
+            isSheet ? 'group-focus-visible/task:before:opacity-100' : taskCardFocusBarClass,
             // The header's own py-1 makes up the rest, so opening a card leaves its buttons where the collapsed row had them
             !isSheet && effectiveState !== 'collapsed' && 'pt-0.5',
           )}

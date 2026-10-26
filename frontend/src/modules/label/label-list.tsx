@@ -102,7 +102,7 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
     return registerPanelNav(navPanelId, {
       items: () => itemIds.map((id) => ({ id })),
       scrollTo: (id) => document.getElementById(id)?.scrollIntoView({ block: 'nearest' }),
-      firstInView: () => firstItemInView(itemIds, viewportRef.current),
+      firstInView: (preferredId) => firstItemInView(itemIds, viewportRef.current, preferredId),
     });
   }, [navPanelId, itemIds]);
 

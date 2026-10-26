@@ -46,13 +46,15 @@ export function BoardHeader({
 
   return (
     <div data-search-focused={isSearchFocused} className={cn('group/boardHeader', taskBarClass)}>
-      <TaskSelectedButtons
-        selectedTaskIds={selectedTaskIds}
-        clearSelection={clearSelection}
-        organizationId={queryParams?.organizationId ?? ''}
-        tenantId={queryParams?.tenantId ?? ''}
-        orderTasks={(tasks) => sortTasksAsOnBoard(tasks, projects)}
-      />
+      {!publicView && (
+        <TaskSelectedButtons
+          selectedTaskIds={selectedTaskIds}
+          clearSelection={clearSelection}
+          organizationId={queryParams?.organizationId ?? ''}
+          tenantId={queryParams?.tenantId ?? ''}
+          orderTasks={(tasks) => sortTasksAsOnBoard(tasks, projects)}
+        />
+      )}
 
       <BoardSearch
         isInWorkspace={isInWorkspace}

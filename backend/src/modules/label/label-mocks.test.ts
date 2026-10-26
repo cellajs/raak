@@ -13,8 +13,9 @@ describe('label mocks', () => {
     expect(new Set(slugs).size).toBe(names.length);
   });
 
-  it('gives a mock label the slug the slug schema derives from its name', () => {
-    const label = mockLabel('label:test');
-    expect(label.slug).toBe(labelSlugSchema.parse(label.name));
+  it('names a mock label by its slug', () => {
+    const label = mockLabel('label:test', 'Focus Group');
+    expect(label.name).toBe('focus-group');
+    expect(label.slug).toBe(label.name);
   });
 });

@@ -5,13 +5,13 @@ import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskStatusType } from '~/modules/task/types';
-import { useCurrentUser } from '~/modules/user/user-store';
+import { useUserStore } from '~/modules/user/user-store';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 import { type ArrayDelta, computeArrayDelta } from '~/query/offline/array-delta';
 
 interface FieldHandlerDeps {
   taskMutation: ReturnType<typeof useTaskUpdateMutation>;
-  user: UserMinimalBase;
+  user: UserMinimalBase | null;
   /** Copy the task when it moves to Started (default); a bulk change turns it off and copies its tasks together. */
   copyOnStart?: boolean;
 }
@@ -51,8 +51,8 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
     // Before any await: the browser allows the clipboard write only during the click or key press that started the task
     if (copyOnStart && newStatus === TaskStatus.Started) copyStartedTasks([currentTask]);
 
-    const sortedAssignedTo = getItemsSortedByName([...currentTask.assignedTo, user]);
-    const shouldAssignToSelf = newStatus === TaskStatus.Started && !currentTask.assignedTo.some(({ id }) => id === user.id);
+    const sortedAssignedTo = user ? getItemsSortedByName([...currentTask.assignedTo, user]) : currentTask.assignedTo;
+    const shouldAssignToSelf = !!user && newStatus === TaskStatus.Started && !currentTask.assignedTo.some(({ id }) => id === user.id);
 
     const statusOps: Record<string, unknown> = { status: newStatus, displayOrder: newOrder };
     if (shouldAssignToSelf) {
@@ -74,7 +74,8 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
 
 /** Field-level onChange handlers for an existing task, each wrapping the task update mutation. */
 export const useTaskFieldHandlers = (task: Task) => {
-  const user = useCurrentUser();
+  // Null on a public board viewed signed out, where the controls these handlers back are inert
+  const user = useUserStore((state) => state.user);
   const taskMutation = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
   // Not memoized: the baselines need one handler instance per dropdown session, which the dropdowner captures at open

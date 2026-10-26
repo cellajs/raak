@@ -8,8 +8,8 @@ interface PanelNav {
   items: () => PanelNavItem[];
   /** Brings an item into view, mounting it first when the list virtualizes. */
   scrollTo: (id: string) => void;
-  /** The first item at least partly in view, where arrowing into the panel lands. */
-  firstInView: () => string | undefined;
+  /** Where arrowing into the panel lands: `preferredId` while it is in view, else the first item at least partly in view. */
+  firstInView: (preferredId?: string) => string | undefined;
 }
 
 /** Panel lists by panel id. A panel registers while its list is mounted, so a collapsed one drops out of keyboard navigation. */
@@ -35,9 +35,11 @@ export const scrollItemIntoView = (itemId: string) => {
   if (panelId) panels.get(panelId)?.scrollTo(itemId);
 };
 
-/** The first of `ids` whose element reaches below `top`, else the first id. Unmounted ids are skipped. */
-export const firstItemInView = (ids: string[], viewport: HTMLElement | null) => {
-  const top = viewport?.getBoundingClientRect().top ?? 0;
+/** `preferredId` while it is in view, else the first of `ids` whose element reaches below `top`, else the first id. Unmounted ids are skipped. */
+export const firstItemInView = (ids: string[], viewport: HTMLElement | null, preferredId?: string) => {
+  const { top, bottom } = viewport?.getBoundingClientRect() ?? { top: 0, bottom: window.innerHeight };
+  const preferred = preferredId && ids.includes(preferredId) ? document.getElementById(preferredId)?.getBoundingClientRect() : undefined;
+  if (preferred && preferred.bottom > top + 1 && preferred.top < bottom - 1) return preferredId;
   for (const id of ids) {
     const item = document.getElementById(id);
     if (item && item.getBoundingClientRect().bottom > top + 1) return id;

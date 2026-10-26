@@ -13,14 +13,16 @@ import { labelTileStore } from '~/modules/label/label-tile-store';
 import { findLabelInCache } from '~/modules/label/query';
 import type { LabelRow } from '~/modules/label/types';
 import { Button } from '~/modules/ui/button';
+import { cn } from '~/utils/cn';
 
 interface LabelOptionsButtonProps {
   row: LabelRow;
   canManage: boolean;
+  className?: string;
 }
 
 /** Ellipsis button on an expanded label tile: copy its link and, for members, delete it. */
-export function LabelOptionsButton({ row, canManage }: LabelOptionsButtonProps) {
+export function LabelOptionsButton({ row, canManage, className }: LabelOptionsButtonProps) {
   const { t } = useTranslation();
   const { copyToClipboard } = useCopyToClipboard(2000);
 
@@ -77,7 +79,7 @@ export function LabelOptionsButton({ row, canManage }: LabelOptionsButtonProps) 
         aria-label={t('c:resource_options', { resource: t('c:label') })}
         variant="ghost"
         size="xs"
-        className="size-8 data-dropdowner-active:bg-accent/50"
+        className={cn('size-8 data-dropdowner-active:bg-accent/50', className)}
       >
         <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-3.5" />
       </Button>

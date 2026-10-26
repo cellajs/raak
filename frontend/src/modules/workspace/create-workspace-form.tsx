@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import { type UseFormProps, useFormState, useWatch } from 'react-hook-form';
+import { useState } from 'react';
+import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { ChannelBase, Organization, Workspace } from 'sdk';
 import { zCreateWorkspacesBody, zCreateWorkspacesPath } from 'sdk/zod.gen';
@@ -12,6 +12,7 @@ import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useOverlayClose } from '~/modules/common/overlay-close';
+import { Spinner } from '~/modules/common/spinner';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { openCreateOrganizationDialog } from '~/modules/organization/create-organization-form';
 import { organizationsListQueryOptions } from '~/modules/organization/query';
@@ -30,9 +31,8 @@ const formSchema = z.object({
 });
 type FormValues = z.infer<typeof formSchema>;
 
-// Programmatic field writes (org/tenant/name defaults) must not mark the form dirty or touched; validating clears
-// the error a refused submit left on the field.
-const keepPristine = { shouldDirty: false, shouldTouch: false, shouldValidate: true } as const;
+// shouldDirty recomputes dirty against the defaults, so picking the opening organization back leaves the form clean
+const followOrganization = { shouldDirty: true, shouldValidate: true } as const;
 
 interface CreateWorkspaceFormProps {
   /** Preselected organization; a restored draft keeps its own. */
@@ -40,22 +40,52 @@ interface CreateWorkspaceFormProps {
   callback?: (workspace: Workspace) => void;
 }
 
-export function CreateWorkspaceForm({ organizationId: initialOrganizationId, callback }: CreateWorkspaceFormProps) {
+/** Resolves the organization a new workspace starts in (preselected, sole, or just created) before the form mounts. */
+export function CreateWorkspaceForm({ organizationId, callback }: CreateWorkspaceFormProps) {
   const { t } = useTranslation();
-  const overlay = useOverlayClose();
+  const [createdOrganization, setCreatedOrganization] = useState<Organization>();
 
   const query = useInfiniteQuery(organizationsListQueryOptions({}));
   const items = flattenInfiniteData<Organization>(query.data);
 
+  if (query.isLoading) return <Spinner className="my-8" />;
+
+  const organization =
+    createdOrganization ?? (organizationId ? items.find(({ id }) => id === organizationId) : items.length === 1 ? items[0] : undefined);
+
+  if (!organization && !items.length)
+    return (
+      <Alert variant="plain" className="w-auto">
+        <AlertTitle>{t('c:resource_required', { resource: t('c:organization') })}</AlertTitle>
+        <AlertDescription className="pr-8">
+          <p className="mb-2">{t('c:organization_required.text')}</p>
+          <Button onClick={() => openCreateOrganizationDialog({ current: null }, setCreatedOrganization)}>
+            <span>{t('c:create_resource', { resource: t('c:organization').toLowerCase() })}</span>
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+
+  return <WorkspaceForm organization={organization} organizations={items} callback={callback} />;
+}
+
+interface WorkspaceFormProps {
+  organization?: Organization;
+  organizations: Organization[];
+  callback?: (workspace: Workspace) => void;
+}
+
+function WorkspaceForm({ organization, organizations, callback }: WorkspaceFormProps) {
+  const { t } = useTranslation();
+  const overlay = useOverlayClose();
+
+  // The starting organization and its name are the pristine state, so a reset returns to them
   const formOptions: UseFormProps<FormValues> = {
     resolver: formResolver(formSchema),
-    defaultValues: { name: '', organizationId: initialOrganizationId ?? '', tenantId: '' },
+    defaultValues: { name: organization?.name ?? '', organizationId: organization?.id ?? '', tenantId: organization?.tenantId ?? '' },
   };
 
   const form = useFormWithDraft<FormValues>('create-workspace', { formOptions });
-
-  const organizationId = useWatch({ control: form.control, name: 'organizationId' });
-  const { touchedFields } = useFormState({ control: form.control, name: ['name'] });
 
   const { mutate: create, isPending } = useWorkspaceCreateMutation();
 
@@ -77,43 +107,12 @@ export function CreateWorkspaceForm({ organizationId: initialOrganizationId, cal
     );
   };
 
+  // A name that still reads as an organization's (or is empty) follows the pick; a typed one stays
   const handleOrganizationSelect = (selectedOrg: ChannelBase) => {
-    form.setValue('tenantId', selectedOrg.tenantId, keepPristine);
-
-    const currentName = form.getValues('name');
-    if (!touchedFields.name && !currentName) {
-      form.setValue('name', selectedOrg.name, keepPristine);
-    }
+    const name = form.getValues('name');
+    form.setValue('tenantId', selectedOrg.tenantId, followOrganization);
+    if (!name || organizations.some((org) => org.name === name)) form.setValue('name', selectedOrg.name, followOrganization);
   };
-
-  const handleOrganizationCreated = (organization: Organization) => {
-    form.setValue('organizationId', organization.id, keepPristine);
-    handleOrganizationSelect(organization);
-  };
-
-  // The hidden tenantId follows the organization once the list loads: the sole one, or one a draft restored
-  useEffect(() => {
-    const selectedOrg = organizationId ? items.find(({ id }) => id === organizationId) : items.length === 1 ? items[0] : undefined;
-    if (!selectedOrg || form.getValues('tenantId') === selectedOrg.tenantId) return;
-
-    if (!organizationId) form.setValue('organizationId', selectedOrg.id, keepPristine);
-    handleOrganizationSelect(selectedOrg);
-  }, [items, organizationId, form.setValue, form.getValues, handleOrganizationSelect]);
-
-  if (!query.isLoading && !organizationId && !items.length)
-    return (
-      <Alert variant="plain" className="w-auto">
-        <AlertTitle>{t('c:resource_required', { resource: t('c:organization') })}</AlertTitle>
-        <AlertDescription className="pr-8">
-          <p className="mb-2">{t('c:organization_required.text')}</p>
-          <Button onClick={() => openCreateOrganizationDialog({ current: null }, handleOrganizationCreated)}>
-            <span>{t('c:create_resource', { resource: t('c:organization').toLowerCase() })}</span>
-          </Button>
-        </AlertDescription>
-      </Alert>
-    );
-
-  const isSingleOrg = items.length === 1;
 
   return (
     <Form {...form}>
@@ -125,7 +124,7 @@ export function CreateWorkspaceForm({ organizationId: initialOrganizationId, cal
           name="organizationId"
           onSelect={handleOrganizationSelect}
           required
-          disabled={isSingleOrg}
+          disabled={organizations.length === 1}
         />
 
         <InputFormField control={form.control} name="name" label={t('c:name')} required />

@@ -69,7 +69,11 @@ export async function updateLabelOp(
       // The yjs handler and CDC read the stx as the fields this write wrote: a write that changes none drops the earlier set.
       stx: resolved.changed ? resolved.stx : stripChangedFields(labelsTable.stx),
     };
-    if (typeof values.name === 'string') values.name = labelName(values.name, before.mode);
+    if (typeof values.name === 'string') {
+      values.name = labelName(values.name, before.mode);
+      if (!values.name)
+        throw new AppError(400, 'invalid_request', 'warn', { entityType: 'label', meta: { reason: 'Label name is empty as a slug' } });
+    }
 
     if (resolved.changed && 'description' in resolved.values) {
       const description = resolved.values.description as string | null;

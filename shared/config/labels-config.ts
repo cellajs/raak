@@ -47,8 +47,7 @@ export interface PrimaryLabelDefinition {
 
 /**
  * Normalize a label name into its slug identity: lowercase, spaces to dashes, stripped of
- * characters outside [a-z0-9-]. Slugs key organization tracking and cross-project matching;
- * the name keeps other characters for display (see `labelName`).
+ * characters outside [a-z0-9-]. Slugs key organization tracking and cross-project matching.
  */
 export const labelSlug = (name: string): string =>
   name
@@ -59,5 +58,5 @@ export const labelSlug = (name: string): string =>
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
 
-/** Label names are lowercase; primary labels are the organization's task types and keep their configured casing. */
-export const labelName = (name: string, mode: LabelMode | undefined): string => (mode === 'primary' ? name : name.toLowerCase());
+/** Label names are slugs; primary labels are the organization's task types and keep their configured casing. */
+export const labelName = (name: string, mode: LabelMode | undefined): string => (mode === 'primary' ? name : labelSlug(name));

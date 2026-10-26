@@ -10,7 +10,7 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
-import { makePanelKey, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
+import { makePanelKey, prepareBoardTasks, projectPanelName } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { isExcludedBySearch, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
@@ -100,7 +100,10 @@ export const BoardPanel = memo(function BoardPanel({
         <div ref={panelRef} className="relative flex h-full flex-col">
           <TaskPanelHeader project={project} sectionFilters={sectionFilters} publicView={publicView} />
           <div className="flex min-h-0 flex-1 flex-col">
-            <BoardPanelContent isCollapsed={!!isCollapsed} collapsedContent={<TaskPanelCollapsed counts={counts} />}>
+            <BoardPanelContent
+              isCollapsed={!!isCollapsed}
+              collapsedContent={<TaskPanelCollapsed panelId={panelId} name={projectPanelName(project, sectionFilters)} counts={counts} />}
+            >
               <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} windowScroll={windowScroll} />
             </BoardPanelContent>
           </div>
