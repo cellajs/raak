@@ -39,6 +39,22 @@ describe('Task link previews of a private task', async () => {
   const taskId = generateId();
   const project = { name: 'Private roadmap', slug: `private-roadmap-${projectId.slice(0, 8)}` };
 
+  // A row, not a read: under the runtime role RLS hides the task from a select with no tenant context
+  const taskRow = (id: string, createdBy: string) => ({
+    id,
+    tenantId: tenant.tenantId,
+    organizationId: tenant.organization.id,
+    projectId,
+    name: 'Ship the private thing',
+    summary: JSON.stringify([paragraph('Ship the private thing')]),
+    description: JSON.stringify([paragraph('Ship the private thing'), paragraph('Only members should open this.')]),
+    primaryLabelId: crypto.randomUUID(),
+    displayOrder: 1,
+    status: TaskStatus.Unstarted,
+    stx: mockStxBase(),
+    createdBy,
+  });
+
   beforeAll(async () => {
     tenant = await createTestTenant(call, 'task-link-previews');
     await db.update(usersTable).set({ name: authorName }).where(eq(usersTable.id, tenant.user.id));
@@ -50,20 +66,7 @@ describe('Task link previews of a private task', async () => {
       ...project,
       createdBy: tenant.user.id,
     });
-    await db.insert(tasksTable).values({
-      id: taskId,
-      tenantId: tenant.tenantId,
-      organizationId: tenant.organization.id,
-      projectId,
-      name: 'Ship the private thing',
-      summary: JSON.stringify([paragraph('Ship the private thing')]),
-      description: JSON.stringify([paragraph('Ship the private thing'), paragraph('Only members should open this.')]),
-      primaryLabelId: crypto.randomUUID(),
-      displayOrder: 1,
-      status: TaskStatus.Unstarted,
-      stx: mockStxBase(),
-      createdBy: tenant.user.id,
-    });
+    await db.insert(tasksTable).values(taskRow(taskId, tenant.user.id));
   });
 
   afterAll(async () => await clearSecurityTestData());
@@ -107,8 +110,7 @@ describe('Task link previews of a private task', async () => {
   it('names a service account as the author of a task it wrote', async () => {
     const { clientId } = await serviceAccountWithKey({ tenantId: tenant.tenantId, id: tenant.organization.id }, tenant.sessionCookie);
     const botTaskId = generateId();
-    const [original] = await db.select().from(tasksTable).where(eq(tasksTable.id, taskId));
-    await db.insert(tasksTable).values({ ...original, id: botTaskId, createdBy: clientId });
+    await db.insert(tasksTable).values(taskRow(botTaskId, clientId));
     cover.calls.length = 0;
 
     const page = await (await anonymous(`/t/${botTaskId}`)).text();
