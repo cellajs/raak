@@ -193,9 +193,8 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         tabIndex={isSheet || isFocused ? 0 : -1}
         ref={taskRef}
         className={cn(
-          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent py-0 sm:py-0',
+          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent py-0 focus-visible:outline-hidden sm:py-0',
           isDragging && 'opacity-30',
-          !isSheet && 'focus-visible:outline-none',
           // Hover and current spread the status gradient; the tint is for unstarted cards, which have no gradient
           isCurrent && 'is-focused bg-accent/30 via-40%',
           isSheet
