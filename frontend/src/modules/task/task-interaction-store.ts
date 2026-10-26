@@ -9,9 +9,6 @@ interface TaskInteractionState {
   /** Project of the selected tasks, kept when a later selection passes none; null once the selection is empty. */
   selectedProjectId: string | null;
   setSelectedTaskIds: (ids: string[], projectId?: string) => void;
-  /** Mutually exclusive with task selection (the other kind's checkboxes disable), so the header's remove button acts on one kind. */
-  selectedLabelIds: string[];
-  setSelectedLabelIds: (ids: string[]) => void;
   /** Keyed by projectId: a project's create form is open iff it has a draft here. */
   draftTasks: Record<string, Task>;
   setDraftTask: (projectId: string, task: Task | null) => void;
@@ -20,10 +17,9 @@ interface TaskInteractionState {
   reset: () => void;
 }
 
-const initialState: Pick<TaskInteractionState, 'selectedTaskIds' | 'selectedProjectId' | 'selectedLabelIds' | 'draftTasks'> = {
+const initialState: Pick<TaskInteractionState, 'selectedTaskIds' | 'selectedProjectId' | 'draftTasks'> = {
   selectedTaskIds: [],
   selectedProjectId: null,
-  selectedLabelIds: [],
   draftTasks: {},
 };
 
@@ -36,11 +32,6 @@ export const useTaskInteractionStore = create<TaskInteractionState>()(
         set((state) => {
           state.selectedTaskIds = ids;
           state.selectedProjectId = ids.length ? (projectId ?? state.selectedProjectId) : null;
-        });
-      },
-      setSelectedLabelIds: (ids) => {
-        set((state) => {
-          state.selectedLabelIds = ids;
         });
       },
       setDraftTask: (projectId, task) => {

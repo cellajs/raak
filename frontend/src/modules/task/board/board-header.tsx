@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
-import { LabelSelectedButtons } from '~/modules/label/label-selected-buttons';
 import { LabelsDrawerButton } from '~/modules/label/labels-drawer';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { DisplayOptions } from '~/modules/task/board/display-options';
@@ -39,16 +38,11 @@ export function BoardHeader({
   const currentItemId = useBoardFocusStore((state) => state.currentItemId);
   const selectedTaskIds = useTaskInteractionStore((state) => state.selectedTaskIds);
   const setSelectedTaskIds = useTaskInteractionStore((state) => state.setSelectedTaskIds);
-  const selectedLabelIds = useTaskInteractionStore((state) => state.selectedLabelIds);
-  const setSelectedLabelIds = useTaskInteractionStore((state) => state.setSelectedLabelIds);
 
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const toggleSearchFocus = () => setIsSearchFocused((prev) => !prev);
-  const clearSelection = () => {
-    setSelectedTaskIds([]);
-    setSelectedLabelIds([]);
-  };
+  const clearSelection = () => setSelectedTaskIds([]);
 
   return (
     <div data-search-focused={isSearchFocused} className={cn('group/boardHeader', taskBarClass)}>
@@ -59,7 +53,6 @@ export function BoardHeader({
         tenantId={queryParams?.tenantId ?? ''}
         orderTasks={(tasks) => sortTasksAsOnBoard(tasks, projects)}
       />
-      <LabelSelectedButtons selectedLabelIds={selectedLabelIds} clearSelection={clearSelection} />
 
       <BoardSearch
         isInWorkspace={isInWorkspace}

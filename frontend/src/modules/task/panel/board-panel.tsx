@@ -12,7 +12,7 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
 import { makePanelKey, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { isExcludedBySearch, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
 import { openCreateTaskDialog } from '~/modules/task/mobile-create-task-dialog';
 import { TaskPanelCollapsed } from '~/modules/task/panel/task-panel-collapsed';
@@ -49,11 +49,13 @@ export const BoardPanel = memo(function BoardPanel({
   const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
-  // The open create-form draft always stays visible
+  // The open create-form draft always stays visible; a highlight search keeps every task but the excluded ones
   const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || matchesBoardSearch({ q, matchMode }, task));
   const matchedIds = new Set(matchedTasks.map(({ id }) => id));
   const filteredTasks = parseSearchQuery(q).highlight
-    ? fetchedTasks.map((task) => (matchedIds.has(task.id) ? { ...task, isMatchingSearch: true } : task))
+    ? fetchedTasks
+        .filter((task) => !isExcludedBySearch(q, task))
+        .map((task) => (matchedIds.has(task.id) ? { ...task, isMatchingSearch: true } : task))
     : matchedTasks;
 
   const tasks = prepareBoardTasks(filteredTasks, expandAccepted, expandIced);

@@ -8,7 +8,6 @@ import type { LabelRow } from '~/modules/label/types';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { Badge } from '~/modules/ui/badge';
 import { Switch } from '~/modules/ui/switch';
-import { cn } from '~/utils/cn';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const LabelDescriptionForm = lazyNamed(() => import('~/modules/label/label-description-form'), 'LabelDescriptionForm');
@@ -24,13 +23,11 @@ export const labelTileReveal = {
 
 interface LabelTileDetailsProps {
   row: LabelRow;
-  /** Aligns the body with the name when a selection checkbox precedes it. */
-  indented: boolean;
   canManage: boolean;
 }
 
 /** Body of an expanded tile: the epic switch, open tasks per project and, for epics, the description. */
-export function LabelTileDetails({ row, indented, canManage }: LabelTileDetailsProps) {
+export function LabelTileDetails({ row, canManage }: LabelTileDetailsProps) {
   const { t } = useTranslation();
   const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
 
@@ -39,7 +36,7 @@ export function LabelTileDetails({ row, indented, canManage }: LabelTileDetailsP
 
   return (
     <>
-      <div className={cn('flex flex-col gap-3 pr-4 pb-3', indented ? 'pl-11' : 'pl-4')}>
+      <div className="flex flex-col gap-3 px-4 pb-3">
         {/* Promoting acts on this row only; same-slug siblings in other projects stay tags */}
         {canManage ? (
           <div className="flex items-center gap-2">

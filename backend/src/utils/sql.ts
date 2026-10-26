@@ -9,3 +9,7 @@ const escapeLikePattern = (value: string) => value.replace(/[\\%_]/g, '\\$&');
  */
 export const textSearchFilter = (column: Column, q: string): SQL =>
   sql`fold_search(${column}) like fold_search(${`%${escapeLikePattern(q.trim())}%`})`;
+
+/** Like `textSearchFilter`, but `word` must be whole words of a column holding a space-separated word list (`keywords`). */
+export const keywordSearchFilter = (column: Column, word: string): SQL =>
+  sql`fold_search(concat(' ', ${column}, ' ')) like fold_search(${`% ${escapeLikePattern(word.trim())} %`})`;

@@ -14,7 +14,8 @@ export function useMatchingTaskIds(boardId: string, projects: EnrichedProject[])
 
   // Joined into one string: useSyncExternalStore compares snapshots by value.
   const joined = useSyncExternalStore(subscribeToTaskCache, () => {
-    if (!parseSearchQuery(q).terms.length) return '';
+    const { terms, excludeTerms } = parseSearchQuery(q);
+    if (!terms.length && !excludeTerms.length) return '';
     const tasks = cachedTasks();
     return prepareBoardPanels(projects, pickViewSections(panelData))
       .flatMap((panel) => renderedPanelTasks(panel, tasks, { q, matchMode }, panelData?.[panel.project.id]?.prefs ?? defaultPanelPrefs))

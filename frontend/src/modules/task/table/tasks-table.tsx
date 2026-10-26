@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project, Workspace } from 'sdk';
 import { appConfig } from 'shared';
-import { parseSearchQuery } from 'shared/utils/parse-search-query';
+import { formatSearchParts, parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
@@ -58,9 +58,9 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const [isCompact, setIsCompact] = useState(true);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
-  // Highlight mode ('=' prefix): fetch unfiltered and tint matches client-side, like the board
-  const { highlight, effectiveQ } = parseSearchQuery(q);
-  const effectiveSearch = highlight ? { ...search, q: '' } : search;
+  // Highlight mode ('=' prefix): fetch without the terms to match, so only exclusions filter, and tint matches client-side, like the board
+  const { highlight, effectiveQ, parts } = parseSearchQuery(q);
+  const effectiveSearch = highlight ? { ...search, q: formatSearchParts(parts.filter((part) => part.exclude)) } : search;
 
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const optionsFor = (tableSearch: BoardSearchParams) =>
