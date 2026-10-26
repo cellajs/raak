@@ -85,7 +85,7 @@ export const config = {
   menuStructure: [{ entityType: 'organization', subentityType: null } as const, { entityType: 'workspace', subentityType: 'project' } as const],
 
   /** `menu` (one menu button) or `organizations` (a rail button per organization): `NavSidebarMode`. */
-  navSidebarMode: 'menu' as NavSidebarMode,
+  navSidebarMode: 'organizations' as NavSidebarMode,
 
   /**
    * Placement ids per surface, in display order: tabs on a channel's bar, sections on a settings or
