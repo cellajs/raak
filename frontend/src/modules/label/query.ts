@@ -59,7 +59,6 @@ const keys = {
 registerEntityQueryKeys('label', keys, ({ organizationId, tenantId, channelId, query }) => {
   return getLabels({ path: { tenantId: tenantId!, organizationId: organizationId! }, query: { ...query, projectId: channelId } });
 });
-export const labelQueryKeys = keys;
 
 /** The keys a create row takes. An edit of any other field cannot fold into a queued create. */
 const labelCreateKeys = Object.keys(zCreateLabelsBody.element.shape);
