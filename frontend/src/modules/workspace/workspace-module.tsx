@@ -24,14 +24,14 @@ declare module '~/lib/placements' {
 }
 
 /** Opens the create dialog from the menu section's plus button and navigates to the new workspace. */
-const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>) => {
+const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>, organizationId?: string) => {
   const handleCreated = (workspace: Workspace) => {
     getRouter().navigate(getCreatedChannelRoute('workspace', workspace));
   };
 
   const title = i18n.t('c:create_resource', { resource: i18n.t('c:workspace').toLowerCase() });
 
-  return dialoger.getState().create(<CreateWorkspaceForm callback={handleCreated} />, {
+  return dialoger.getState().create(<CreateWorkspaceForm organizationId={organizationId} callback={handleCreated} />, {
     className: 'md:max-w-2xl',
     id: 'create-workspace',
     description: i18n.t('c:create_workspace.text'),

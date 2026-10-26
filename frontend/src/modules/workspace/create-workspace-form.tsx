@@ -35,10 +35,12 @@ type FormValues = z.infer<typeof formSchema>;
 const keepPristine = { shouldDirty: false, shouldTouch: false, shouldValidate: true } as const;
 
 interface CreateWorkspaceFormProps {
+  /** Preselected organization; a restored draft keeps its own. */
+  organizationId?: string;
   callback?: (workspace: Workspace) => void;
 }
 
-export function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
+export function CreateWorkspaceForm({ organizationId: initialOrganizationId, callback }: CreateWorkspaceFormProps) {
   const { t } = useTranslation();
   const overlay = useOverlayClose();
 
@@ -47,7 +49,7 @@ export function CreateWorkspaceForm({ callback }: CreateWorkspaceFormProps) {
 
   const formOptions: UseFormProps<FormValues> = {
     resolver: formResolver(formSchema),
-    defaultValues: { name: '', organizationId: '', tenantId: '' },
+    defaultValues: { name: '', organizationId: initialOrganizationId ?? '', tenantId: '' },
   };
 
   const form = useFormWithDraft<FormValues>('create-workspace', { formOptions });

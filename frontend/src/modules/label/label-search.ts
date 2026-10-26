@@ -25,7 +25,7 @@ const findName = (terms: string[], name: string) => {
 };
 
 /** Whether the search terms (folded, from `parseSearchQuery`) hold a label's name as whole words. */
-export const hasLabelName = (terms: string[], name: string) => !!findName(terms, name);
+const hasLabelName = (terms: string[], name: string) => !!findName(terms, name);
 
 /** How the board search holds a label; null when its name is not in the search as whole words. */
 export const labelSearchState = (q: string | undefined, name: string): LabelAction | null => {

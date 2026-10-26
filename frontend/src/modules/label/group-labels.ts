@@ -40,9 +40,6 @@ export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: str
   return Array.from(rowMap.values(), (row) => ({ ...row, nameFolded: foldText(row.name), keywordsFolded: foldText(row.keywords) }));
 };
 
-export const findLabelGroup = (labels: Label[], labelId: string): LabelRow | undefined =>
-  groupLabelRows(labels).find((row) => row.siblingIds.includes(labelId));
-
 /** Picker view over the grouped rows, sorted by recency then name. */
 export const deduplicateLabels = (labels: Label[], preferredProjectId: string, organizationId?: string, usage?: LabelUsage): LabelRow[] => {
   const rows = groupLabelRows(labels, { preferredProjectId, usage });
