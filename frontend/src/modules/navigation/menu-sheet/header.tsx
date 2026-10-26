@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { BellIcon, UserIcon } from 'lucide-react';
 import { type ReactNode, type RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { appConfig } from 'shared';
 import { Logo } from '~/modules/common/logo';
 import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { AccountNavIcon } from '~/modules/navigation/account-nav-icon';
@@ -14,13 +15,19 @@ import { NotificationsSheet } from '~/modules/notification/notifications-sheet';
 import { UnreadCountBadge } from '~/modules/notification/unread-nav-badge';
 import { Button } from '~/modules/ui/button';
 import { useUserStore } from '~/modules/user/user-store';
+import { cn } from '~/utils/cn';
 
-/** Stacks a nav sheet over the menu sheet; floating-nav layouts have no bottom bar to open it from. */
+const { navBar, menu } = appConfig.navigation;
+// A desktop nav bar of organization buttons leads with the app icon going home, so the logo here would repeat it
+const hasHomeOnNavBar = navBar && menu === 'perOrganization';
+
+/** Stacks a nav sheet over the menu sheet, for layouts with no nav bar to open it from: no bar at all, or a floating-nav page. */
 function openStackedNavSheet(id: NavItemId, content: ReactNode, triggerRef: RefObject<HTMLButtonElement | null>) {
   navigationStore.getState().setNavSheetOpen(id);
   sheeter.getState().create(content, { ...navSheetOptions(id, triggerRef), id: `${id}-sheet`, side: 'left', disablePointerDismissal: true });
 }
 
+/** The logo home link, wherever no nav bar has a home button, and the notifications and account buttons where no nav bar holds them. */
 export function MenuSheetHeader() {
   const { t } = useTranslation();
   const user = useUserStore((state) => state.user);
@@ -28,7 +35,7 @@ export function MenuSheetHeader() {
   const accountButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="h-14 p-3 pb-1">
+    <div className={cn('h-14 p-3 pb-1', hasHomeOnNavBar && 'sm:hidden')}>
       <div className="flex h-10 items-center justify-between">
         <Link
           to="/home"
@@ -39,9 +46,8 @@ export function MenuSheetHeader() {
           <Logo className="mx-1 h-8" title={t('c:go_to_home')} />
         </Link>
 
-        {/* Only shown inside a floating-nav layout. */}
         {user && (
-          <div className="in-[.floating-nav]:flex hidden items-center gap-1">
+          <div className={cn('flex items-center gap-1', navBar && 'in-[.floating-nav]:flex hidden')}>
             <Button
               ref={notificationsButtonRef}
               size="icon"

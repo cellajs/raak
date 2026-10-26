@@ -23,6 +23,7 @@ export default defineConfig({
       'cella/cella.manifest.json',
       'infra/compose.gen.yml',
       'infra/Pulumi.production.yaml',
+      'infra/Pulumi.staging.yaml',
       'infra/environments',
       'infra/runner.json',
       'sdk/gen',
