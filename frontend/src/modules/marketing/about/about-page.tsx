@@ -5,11 +5,13 @@ import { appConfig } from 'shared';
 import { scrollToSectionById } from '~/hooks/scroll-spy-store';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollSpy } from '~/hooks/use-scroll-spy';
+import { AboutDemo } from '~/modules/marketing/about/about-demo';
 // import { FAQ } from '~/modules/marketing/about/faq';
 import { Hero } from '~/modules/marketing/about/hero';
+import { Highlights } from '~/modules/marketing/about/highlights';
 import { AboutSection } from '~/modules/marketing/about/section';
-import { Why } from '~/modules/marketing/about/why';
 import { MarketingFooter } from '~/modules/marketing/footer';
+import { aboutDemoProjectSlugs } from '~/modules/marketing/marketing-config';
 import { MarketingNav } from '~/modules/marketing/nav';
 import { WaitlistForm } from '~/modules/requests/waitlist-form';
 import { Button } from '~/modules/ui/button';
@@ -21,6 +23,7 @@ export function AboutPage() {
   const isMobile = useBreakpointBelow('sm', false);
 
   const [joinedToWaitlist, setJoinedToWaitlist] = useState(false);
+  const hasDemo = aboutDemoProjectSlugs.length > 0;
 
   useScrollSpy(aboutSectionIds);
 
@@ -29,7 +32,7 @@ export function AboutPage() {
       <MarketingNav />
 
       <main>
-        <Hero title="about:title_1" text={isMobile ? undefined : 'about:text_1'}>
+        <Hero title="about:title_1" text={isMobile ? undefined : 'about:text_1'} demo={hasDemo ? <AboutDemo /> : undefined}>
           {joinedToWaitlist ? (
             <span className="flex items-center justify-between gap-2 rounded-full border-2 border-success px-4 py-3.5 ring-4 ring-primary/5">
               <CheckIcon className="size-8 text-success" />
@@ -45,15 +48,17 @@ export function AboutPage() {
             />
           )}
 
-          <Button variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8 max-sm:hidden">
-            <span>{t('about:why')}</span>
-            <ArrowDownIcon className="repeat-5 animate-bounce motion-reduce:animate-none" />
-          </Button>
+          {!hasDemo && (
+            <Button variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8 max-sm:hidden">
+              <span>{t('about:why')}</span>
+              <ArrowDownIcon className="repeat-5 animate-bounce motion-reduce:animate-none" />
+            </Button>
+          )}
         </Hero>
 
         <div className="my-12">
           <AboutSection sectionId="product" title="about:title_2" text="about:text_2">
-            <Why />
+            <Highlights />
           </AboutSection>
 
           {/* <AboutSection sectionId="faqs" title="about:title_7" alternate>

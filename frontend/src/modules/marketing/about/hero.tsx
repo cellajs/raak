@@ -14,9 +14,11 @@ interface HeroProps {
   title: TKey;
   children: ReactNode;
   text?: AboutKey;
+  /** Shown below the call to action, its lower part over the page background past the curve. */
+  demo?: ReactNode;
 }
 
-export function Hero({ title, text, children }: HeroProps) {
+export function Hero({ title, text, children, demo }: HeroProps) {
   const { t } = useTranslation();
   const theme = useUIStore((state) => state.theme);
   const { ref, inView } = useInView({ once: true, threshold: 0.5 });
@@ -34,7 +36,13 @@ export function Hero({ title, text, children }: HeroProps) {
     : undefined;
 
   return (
-    <section id="spy-welcome" className="rich-gradient relative flex min-h-[90vh] items-center justify-center px-4 py-24 lg:py-32">
+    <section
+      id="spy-welcome"
+      className={cn(
+        'rich-gradient relative flex flex-col items-center px-4',
+        demo ? 'pt-24 pb-12 lg:pt-32' : 'min-h-[90vh] justify-center py-24 lg:py-32',
+      )}
+    >
       <header
         ref={ref}
         className={cn(
@@ -54,7 +62,18 @@ export function Hero({ title, text, children }: HeroProps) {
         )}
         <div>{children}</div>
       </header>
-      <BackgroundCurve />
+      {demo ? (
+        <>
+          <div className="mt-12 w-full lg:mt-16">{demo}</div>
+          <div aria-hidden className="absolute inset-x-0 bottom-0 h-80 bg-background sm:h-96">
+            <div className="absolute inset-x-0 bottom-full">
+              <BackgroundCurve />
+            </div>
+          </div>
+        </>
+      ) : (
+        <BackgroundCurve />
+      )}
     </section>
   );
 }

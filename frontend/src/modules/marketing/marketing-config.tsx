@@ -1,6 +1,5 @@
-import { Building2Icon, FolderIcon, StickyNoteIcon, UsersIcon } from 'lucide-react';
+import { ArrowRightIcon, Building2Icon, FolderIcon, SearchIcon, StickyNoteIcon, UsersIcon, ZapIcon } from 'lucide-react';
 import { appConfig } from 'shared';
-import { nanoid } from 'shared/utils/nanoid';
 import type { TKey } from '~/lib/i18n-locales';
 import type { InfoCard } from '~/modules/marketing/about/info-cards';
 import type { PricingPlan } from '~/modules/marketing/about/pricing';
@@ -78,20 +77,22 @@ export const counts = [
   { id: 'task', title: 'c:task_other', icon: StickyNoteIcon },
 ] as const;
 
-// About - Why
+// About - Demo board
 
-export const whyItems = [{ id: 'simple' }, { id: 'automation' }, { id: 'instant' }];
+const aboutDemoProjectSlugsByMode: Partial<Record<string, string[]>> = {
+  // Public projects of one local seed, which names projects at random: point these at public projects in your own database
+  development: ['fantastic-wooden-chair-rtinfi', 'modern-plastic-car-4p0cik'],
+};
 
-export const whyLightSlides = [
-  { id: nanoid(), url: '/static/marketing/screenshots/board.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/table.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/task.webp' },
-];
+/** Public projects the about hero shows as a live, read-only board; none leaves the board out. */
+export const aboutDemoProjectSlugs = aboutDemoProjectSlugsByMode[appConfig.mode] ?? [];
 
-export const whyDarkSlides = [
-  { id: nanoid(), url: '/static/marketing/screenshots/board-dark.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/table-dark.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/task-dark.webp' },
+// About - Highlights
+
+export const highlightItems = [
+  { id: 'search', icon: SearchIcon, className: 'bg-green-500/10 text-green-700 dark:text-green-400' },
+  { id: 'next-step', icon: ArrowRightIcon, className: 'bg-orange-500/10 text-orange-700 dark:text-orange-400' },
+  { id: 'instant', icon: ZapIcon, className: 'bg-sky-500/10 text-sky-700 dark:text-sky-400' },
 ];
 
 // Dedicated marketing pages
