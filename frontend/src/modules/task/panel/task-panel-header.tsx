@@ -21,17 +21,17 @@ import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 
 interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'sectionFilters'> {
-  isInWorkspace: boolean;
+  showProject: boolean;
   isPrimary: boolean;
   isCollapsed: boolean;
 }
 
-function PanelLeading({ project, sectionFilters, isInWorkspace, isPrimary, isCollapsed }: PanelLeadingProps) {
+function PanelLeading({ project, sectionFilters, showProject, isPrimary, isCollapsed }: PanelLeadingProps) {
   const { t } = useTranslation();
 
   const projectAvatar = <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />;
 
-  if (isInWorkspace && isPrimary) {
+  if (showProject && isPrimary) {
     return (
       <PanelDragHandleButton
         name={project.name}
@@ -48,7 +48,7 @@ function PanelLeading({ project, sectionFilters, isInWorkspace, isPrimary, isCol
   if (sectionFilters) {
     const sectionName = formatSectionLabel(sectionFilters);
 
-    if (isInWorkspace) {
+    if (showProject) {
       const splitName = `${project.name}: ${sectionName}`;
       return (
         <PanelDragHandleButton
@@ -110,7 +110,12 @@ function PanelLeading({ project, sectionFilters, isInWorkspace, isPrimary, isCol
   );
 }
 
-export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<BoardPanelProps, 'project' | 'sectionFilters' | 'publicView'>) {
+export function TaskPanelHeader({
+  project,
+  sectionFilters,
+  publicView,
+  showProject,
+}: Pick<BoardPanelProps, 'project' | 'sectionFilters' | 'publicView' | 'showProject'>) {
   const { t } = useTranslation();
 
   const isInWorkspace = useIsWorkspaceRoute();
@@ -139,7 +144,8 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
 
   const actionsSlot = !isCollapsed ? (
     <>
-      {isReadOnly && (
+      {/* A public board is read-only for every visitor, so the badge would tell nobody anything */}
+      {isReadOnly && !publicView && (
         <Badge variant="plain" className="font-normal text-xs opacity-75">
           {t('c:read_only')}
         </Badge>
@@ -162,7 +168,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
         <PanelLeading
           project={project}
           sectionFilters={sectionFilters}
-          isInWorkspace={isInWorkspace}
+          showProject={isInWorkspace || !!showProject}
           isPrimary={isPrimary}
           isCollapsed={!!isCollapsed}
         />

@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { Spinner } from '~/modules/common/spinner';
 import { taskDescriptionGutterClass } from '~/modules/task/task-styles';
@@ -21,8 +20,6 @@ interface TaskCardContentExpandedProps {
 
 /** The task description as static HTML. Never `inert`, which would block text selection for read-only users. */
 export function TaskCardContentExpanded({ task, noGutter, onReady, descriptionOverride }: TaskCardContentExpandedProps) {
-  const { tenantId } = useOrganizationLayoutContext();
-
   const description = descriptionOverride ?? task.description;
   if (!description) return null;
 
@@ -34,7 +31,7 @@ export function TaskCardContentExpanded({ task, noGutter, onReady, descriptionOv
         className={cn(staticEditorClass, !noGutter && taskDescriptionGutterClass)}
         dense
         clickOpensPreview
-        tenantId={tenantId}
+        tenantId={task.tenantId}
         organizationId={task.organizationId}
         onReady={onReady}
       />

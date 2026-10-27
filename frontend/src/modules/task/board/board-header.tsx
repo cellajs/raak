@@ -20,12 +20,12 @@ import { taskBarClass } from '~/modules/task/task-styles';
 import { WorkspaceActionButtons } from '~/modules/workspace/header/action-buttons';
 import { cn } from '~/utils/cn';
 
-export function BoardHeader({
-  boardId,
-  projects,
-  workspace,
-  publicView,
-}: Pick<ResolvedBoardProps, 'boardId' | 'projects' | 'workspace' | 'publicView'>) {
+interface BoardHeaderProps extends Pick<ResolvedBoardProps, 'boardId' | 'projects' | 'workspace' | 'publicView'> {
+  /** False where only the board can render, such as the about page demo. */
+  viewToggle?: boolean;
+}
+
+export function BoardHeader({ boardId, projects, workspace, publicView, viewToggle = true }: BoardHeaderProps) {
   const { t, i18n } = useTranslation();
   const isInWorkspace = !!workspace;
 
@@ -34,7 +34,7 @@ export function BoardHeader({
   // No scope to derive params from in a public view or while a non-workspace board has no projects yet
   const queryParams = publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const total = useTasksTotal(queryParams);
-  const matchIds = useMatchingTaskIds(boardId, projects);
+  const matchIds = useMatchingTaskIds(boardId, projects, publicView);
   const currentItemId = useBoardFocusStore((state) => state.currentItemId);
   const selectedTaskIds = useTaskInteractionStore((state) => state.selectedTaskIds);
   const setSelectedTaskIds = useTaskInteractionStore((state) => state.setSelectedTaskIds);
@@ -58,6 +58,7 @@ export function BoardHeader({
 
       <BoardSearch
         isInWorkspace={isInWorkspace}
+        projectCount={projects.length}
         toggleFocus={toggleSearchFocus}
         matches={{ ids: matchIds, onStep: revealItem, currentId: currentItemId }}
       >
@@ -81,9 +82,10 @@ export function BoardHeader({
 
       {!publicView && projects.length > 0 && <LabelsDrawerButton entity={workspace ? 'workspace' : 'project'} entityId={workspace?.id ?? boardId} />}
 
-      <DisplayOptions className="max-sm:hidden" />
+      {viewToggle && <DisplayOptions className="max-sm:hidden" />}
 
-      <FocusView iconOnly />
+      {/* Focus view hides app chrome, which public pages do not have */}
+      {!publicView && <FocusView iconOnly />}
     </div>
   );
 }

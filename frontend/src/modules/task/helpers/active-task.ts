@@ -18,6 +18,13 @@ export const cachedTasks = (): Task[] => {
   return queries.flatMap(([, data]) => (data ? getQueryItems(data) : []));
 };
 
+/** Tasks of the public lists, which `cachedTasks` leaves out; deduplicated, as a public board and table can both hold one. */
+export const cachedPublicTasks = (): Task[] => {
+  const queries = getSimilarQueries<Task>(taskKeys.publicList.base);
+  const tasks = queries.flatMap(([, data]) => (data ? getQueryItems(data) : []));
+  return [...new Map(tasks.map((task) => [task.id, task])).values()];
+};
+
 /** The task for `taskId`, else the focused board item, else the focused DOM element. */
 export const currentActiveTask = (taskId?: string): Task | undefined => {
   const id = taskId || useBoardFocusStore.getState().currentItemId || document.activeElement?.id;

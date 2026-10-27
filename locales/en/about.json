@@ -1,4 +1,11 @@
 {
+  "demo_caption": "This is raak itself, not a screenshot. Search both projects, or open a task.",
+  "highlights.text_1": "Matches show up in each project at the same time. Put a minus in front of a word to leave it out.",
+  "highlights.text_2": "Start, finish, deliver, review, accept. One click moves the work along, right where you see it.",
+  "highlights.text_3": "Tasks are stored locally for offline search and direct updates. Changes are synced as you get back online.",
+  "highlights.title_1": "One search, every project",
+  "highlights.title_2": "Every card shows its next step",
+  "highlights.title_3": "Instant, also offline",
   "prerelease": "Prerelease",
   "pricing.plan_1.1": "Unlimited members",
   "pricing.plan_1.2": "Unlimited tasks",
@@ -22,11 +29,5 @@
   "text_2": "Most issue trackers make you navigate between projects, boards, and issue pages. Raak keeps everything in a single page view.",
   "title_1": "Every issue. All projects.\nOne page.",
   "title_2": "An issue tracker that eliminates navigation",
-  "why": "Read why we built Raak",
-  "why.text_1": "Our goal: make managing tasks in a multi-project development team super efficient and fun.",
-  "why.text_2": "Every piece of interface is designed to give you a fast and fun experience.",
-  "why.text_3": "Tasks are stored locally for offline search and direct updates. Changes are synced as you get back online.",
-  "why.title_1": "Focus → simplicity",
-  "why.title_2": "Intuitive UI design",
-  "why.title_3": "Instant, also offline"
+  "why": "Read why we built Raak"
 }

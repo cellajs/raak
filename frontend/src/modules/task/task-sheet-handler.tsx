@@ -1,8 +1,8 @@
 import { useSearch } from '@tanstack/react-router';
-import { useEffect, useSyncExternalStore } from 'react';
+import { useContext, useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUrlSheet } from '~/modules/common/sheeter/use-url-sheet';
-import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
+import { ReadOnlyScope, useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { cachedTasks, subscribeToTaskCache } from '~/modules/task/helpers/active-task';
@@ -39,6 +39,8 @@ function TaskSheetTitle({ taskId }: TaskSheetTitleProps) {
 export function TaskSheetHandler() {
   const { t } = useTranslation();
   const taskSheetId = useSearch({ strict: false, select: (search) => search.taskSheetId });
+  // The sheet renders outside this tree, so a public view's scope is carried into it
+  const inReadOnlyScope = useContext(ReadOnlyScope);
 
   // The sheet edits locally, so the board card must not also render an update form, and its glow is suppressed while the sheet is open.
   useEffect(() => {
@@ -51,7 +53,11 @@ export function TaskSheetHandler() {
 
   useUrlSheet({
     searchParamKey: taskSheetParam,
-    renderContent: (id, organizationId) => <TaskSheet id={id} organizationId={organizationId} />,
+    renderContent: (id, organizationId) => (
+      <ReadOnlyScope.Provider value={inReadOnlyScope}>
+        <TaskSheet id={id} organizationId={organizationId} />
+      </ReadOnlyScope.Provider>
+    ),
     onAfterClose: (id) => {
       const updateMutations = queryClient.getMutationCache().findAll({
         mutationKey: taskKeys.update,
