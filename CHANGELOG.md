@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.22](https://github.com/cellajs/raak/compare/0.1.21...0.1.22) (2026-10-27)
+
+
+### 🎉 New features
+
+* **label,search:** filter, highlight and exclude toggles on labels, '-' exclusions in the board search ([#217](https://github.com/cellajs/raak/issues/217)) ([5f6e410](https://github.com/cellajs/raak/commit/5f6e4109e080ccb9931e771f624ff8965c48dfcc))
+* **navigation:** organization rail in the sidebar, workspace create takes the organization ([#218](https://github.com/cellajs/raak/issues/218)) ([07e3d44](https://github.com/cellajs/raak/commit/07e3d443bb8b4d5565cbaf6f0addbc1f03fa9f3d))
+* **ui:** menu and rail polish, overlays inside sheets, board panel regions, workspace tiles on home ([#220](https://github.com/cellajs/raak/issues/220)) ([a47a191](https://github.com/cellajs/raak/commit/a47a191c1e3f8165bf12d4ed1fdedbbf4c0cd2af))
+
+
+### 🧹 Chores
+
+* **cella:** ignore infra/environments like upstream ([5c563e7](https://github.com/cellajs/raak/commit/5c563e7e4f7aa8a3ce203b50a393264fb54a2e2e))
+* sync upstream cella v0.24.0 (2e5081425) ([#216](https://github.com/cellajs/raak/issues/216)) ([9166f25](https://github.com/cellajs/raak/commit/9166f253ad92f12acfd3bba38ec02f1b5157de62))
+* sync upstream cella v0.25.0 (8c34b2265) ([#219](https://github.com/cellajs/raak/issues/219)) ([6169897](https://github.com/cellajs/raak/commit/6169897d9b399dd04f234fafc5ea4eda71bfc749))
+* sync upstream cella v0.25.0 (a874d1872) ([#222](https://github.com/cellajs/raak/issues/222)) ([de57714](https://github.com/cellajs/raak/commit/de57714501973e4cdd74dfcb365de4e5881d2b73))
+* ui tuning ([3bba651](https://github.com/cellajs/raak/commit/3bba65129626b95e4f390eebdd2fdbf2404b86f3))
+
 ## [0.1.21](https://github.com/cellajs/raak/compare/0.1.20...0.1.21) (2026-10-25)
 
 
