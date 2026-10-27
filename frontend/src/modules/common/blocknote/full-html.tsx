@@ -3,10 +3,9 @@ import '~/modules/common/blocknote/styles.css';
 import '~/modules/common/blocknote/custom-elements/checklist/checklist-styles.css';
 
 import DOMPurify from 'dompurify';
-import { type MouseEventHandler, useEffect, useRef, useState } from 'react';
+import { type MouseEventHandler, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { MediaRefContext } from 'shared/utils/media-ref';
 import { childNodes, isDocumentNode, isRefusedMediaBlock } from 'shared/utils/validate-block-media-urls';
-import { useLatestRef } from '~/hooks/use-latest-ref';
 import type { CarouselItemData } from '~/modules/attachment/attachments-carousel';
 import { getBlockPendingUpload, subscribePendingUploads } from '~/modules/attachment/helpers/pending-uploads';
 import { resolveBlockNoteFileRef } from '~/modules/attachment/helpers/resolve-url';
@@ -14,6 +13,7 @@ import { customSchema } from '~/modules/common/blocknote/blocknote-schema';
 import { findClickedMediaBlockId, getHeadlessEditor, getParsedContent } from '~/modules/common/blocknote/helpers/blocknote-helpers';
 import { openMediaCarousel } from '~/modules/common/blocknote/helpers/open-attachment';
 import { type CommonBlockNoteProps, type CustomBlock, isMediaBlock } from '~/modules/common/blocknote/types';
+import { useMentionLinks } from '~/modules/user/use-mention-links';
 import { cn } from '~/utils/cn';
 
 // DOMPurify's default URI policy strips `blob:`, which this render needs for locally cached images; all other schemes keep the default.
@@ -151,18 +151,20 @@ export function BlockNoteFullHtml({
     return { html: cached ?? '', mediaItems: [], ready: cached !== undefined };
   });
 
+  useMentionLinks(containerRef, renderState.html);
+
   // Bumped when a pending upload's file arrives, so the resolved pass swaps its placeholder for the file.
   const [uploadsArrived, setUploadsArrived] = useState(0);
   useEffect(() => subscribePendingUploads(() => setUploadsArrived((count) => count + 1)), []);
 
-  const onReadyRef = useLatestRef(onReady);
+  const fireReady = useEffectEvent(() => onReady?.());
   const readyFiredRef = useRef(false);
   useEffect(() => {
     if (renderState.ready && !readyFiredRef.current) {
       readyFiredRef.current = true;
-      onReadyRef.current?.();
+      fireReady();
     }
-  }, [renderState.ready, onReadyRef]);
+  }, [renderState.ready]);
 
   // blocksToFullHTML calls flushSync, which cannot run during render or commit, so useEffect plus queueMicrotask keeps it outside both.
   useEffect(() => {

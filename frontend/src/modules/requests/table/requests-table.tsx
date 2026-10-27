@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Request } from 'sdk';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
-import { DataTable } from '~/modules/common/data-table/data-table';
+import { DataTable, rowKeyById } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { useRowSelection } from '~/modules/common/data-table/use-row-selection';
@@ -11,10 +11,6 @@ import { requestsListQueryOptions } from '~/modules/requests/query';
 import { RequestsTableBar } from '~/modules/requests/table/requests-bar';
 import { useColumns } from '~/modules/requests/table/requests-columns';
 import type { RequestsRouteSearchParams } from '~/modules/requests/types';
-
-function rowKeyGetter(row: Request) {
-  return row.id;
-}
 
 export function RequestsTable() {
   const { t } = useTranslation();
@@ -26,8 +22,8 @@ export function RequestsTable() {
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
   const queryOptions = requestsListQueryOptions(search);
-  const { rows, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(queryOptions);
-  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(rows);
+  const list = useInfiniteRows(queryOptions);
+  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(list.rows);
 
   return (
     <>
@@ -42,17 +38,11 @@ export function RequestsTable() {
       />
       <DataTable<Request>
         {...{
-          rows,
-          rowHeight: 52,
-          rowKeyGetter,
+          ...list,
+          rowKeyGetter: rowKeyById,
           columns,
           enableVirtualization: true,
-          error,
-          isLoading,
-          isFetching,
           isFiltered: !!q,
-          hasNextPage,
-          fetchMore,
           selectedRows: selectedRowIds,
           onSelectedRowsChange,
           sortColumns,

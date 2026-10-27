@@ -83,14 +83,14 @@ export function SheeterSheet({ sheet, onExited }: SheeterSheetProps) {
         side={side}
         overlay={modal === true}
         className={cn('items-start', className)}
-        initialFocus={touchInitialFocus(popupRef)}
-        finalFocus={finalFocusFor(triggerRef, String(id))}
+        initialFocus={() => touchInitialFocus(popupRef)}
+        finalFocus={() => finalFocusFor(triggerRef, String(id))}
         autoScrollOnDrag={autoScrollOnDrag}
         keepMounted={keepMounted}
       >
         {(title || description) && (
           <SheetHeader sticky className={headerClassName}>
-            {title && <SheetTitle className="h-6 leading-6">{titleContent}</SheetTitle>}
+            {title && <SheetTitle className="h-6 truncate leading-6">{titleContent}</SheetTitle>}
             {description && <SheetDescription>{description}</SheetDescription>}
           </SheetHeader>
         )}

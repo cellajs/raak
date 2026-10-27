@@ -1,5 +1,5 @@
 import { ServerCrashIcon } from 'lucide-react';
-import { type Key, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { type Key, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import {
@@ -9,7 +9,9 @@ import {
   DataGrid,
   type DataGridProps,
   type RenderRowProps,
+  type RowsChangeData,
 } from '~/modules/common/data-grid';
+import { EditStatusContext, useEditStatus } from '~/modules/common/data-grid/cell-renderers';
 import { DataTableSkeleton } from '~/modules/common/data-table/data-table-skeleton';
 import { InfiniteLoader } from '~/modules/common/data-table/infinite-loader';
 import { NoRows } from '~/modules/common/data-table/no-rows';
@@ -20,6 +22,7 @@ import { toaster } from '~/modules/common/toaster/toaster';
 import { cn } from '~/utils/cn';
 
 const maxSelectableRows = 1000;
+const noWidths: ColumnWidths = new Map();
 
 /** DataGrid props forwarded unchanged through `gridProps`, retaining their source types and docs. */
 type ForwardedGridProps<TData> = Pick<
@@ -38,13 +41,14 @@ type ForwardedGridProps<TData> = Pick<
   | 'rowClass'
   | 'enableStickyHeader'
   | 'enableDragAutoScroll'
-  | 'onRowsChange'
 >;
 
 interface DataTableProps<TData> extends ForwardedGridProps<TData> {
   columns: ColumnOrColumnGroup<TData>[];
   rows: TData[] | undefined;
   rowKeyGetter: (row: TData) => string;
+  /** Returning the save's promise shows the edited cells saving in a `RenderEditStatus` until it settles. */
+  onRowsChange?: (rows: TData[], data: RowsChangeData<TData>) => unknown;
 
   // Query state, from which DataTable renders the skeleton, the error, the empty state and the infinite scroll
   hasNextPage: boolean;
@@ -55,7 +59,7 @@ interface DataTableProps<TData> extends ForwardedGridProps<TData> {
   /** The empty state while nothing is filtered, usually a ContentPlaceholder. */
   NoRowsComponent?: ReactNode;
   fetchMore?: () => Promise<unknown>;
-  /** When this value changes, internal column widths are reset (re-measured from column defaults). */
+  /** The last column resize belongs to this value: while another value holds, columns take their default widths. */
   resetWidthsKey?: string | number | boolean;
   className?: string;
   /** When true, hides infinite loader (for static/non-paginated tables). Also forwarded to the grid. */
@@ -75,12 +79,18 @@ interface DataTableProps<TData> extends ForwardedGridProps<TData> {
   rowHeight?: number;
 }
 
+/** The row key of a table whose rows carry an `id`. */
+export function rowKeyById(row: { id: string }): string {
+  return row.id;
+}
+
 /** Bridges query presentation state and infinite scrolling to the DataGrid engine. */
 export function DataTable<TData>({
   // DataTable-owned / transformed props, destructured so they don't leak into `...gridProps`.
   columns,
   rows,
   rowKeyGetter,
+  onRowsChange,
   hasNextPage,
   error,
   isLoading,
@@ -104,12 +114,10 @@ export function DataTable<TData>({
 
   // The grid div remounts after an empty state; held in state, each new element gets the tooltip listeners
   const [gridElement, setGridElement] = useState<HTMLDivElement | null>(null);
-  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(() => new Map());
   useTableTooltip(gridElement);
 
-  useEffect(() => {
-    setColumnWidths(new Map());
-  }, [resetWidthsKey]);
+  const [widths, setWidths] = useState({ key: resetWidthsKey, map: noWidths });
+  const columnWidths = widths.key === resetWidthsKey ? widths.map : noWidths;
 
   // Virtualized tables use the grid's near-end state; fully rendered tables use InfiniteLoader observation.
   const [nearEnd, setNearEnd] = useState(false);
@@ -137,50 +145,69 @@ export function DataTable<TData>({
   // A fresh `{ renderRow, renderCell }` literal each render would invalidate Row's memo.
   const renderers = useMemo(() => ({ renderRow, renderCell }), [renderRow, renderCell]);
 
-  return (
-    <div className={cn('mb-4 size-full md:mb-8', className)}>
-      {/* A failed first load has no rows, so the skeleton shows only while no error is known. */}
-      {(isLoading || !rows) && !error ? (
+  const edits = useEditStatus(rows ?? [], rowKeyGetter, onRowsChange);
+
+  const frameClass = cn('mb-4 size-full md:mb-8', className);
+
+  // A failed first load has no rows, so the skeleton shows only while no error is known.
+  if ((isLoading || !rows) && !error) {
+    return (
+      <div className={frameClass}>
         <DataTableSkeleton
           cellWidths={['3rem', '10rem', '4rem']}
           cellHeight={rowHeight}
           // Count only visible columns so the skeleton matches what the grid renders.
           columnCount={columns.filter((column) => !column.hidden).length}
         />
-      ) : error && !rows?.length ? (
-        <ContentPlaceholder icon={ServerCrashIcon} title="error:request_failed">
-          <p className="text-destructive text-sm">{error.message}</p>
-        </ContentPlaceholder>
-      ) : !rows?.length ? (
-        <NoRows isFiltered={isFiltered} isFetching={isFetching} emptyContent={NoRowsComponent} />
-      ) : (
-        <div className="relative grid" ref={setGridElement}>
+      </div>
+    );
+  }
+
+  if (!rows?.length) {
+    return (
+      <div className={frameClass}>
+        {error ? (
+          <ContentPlaceholder icon={ServerCrashIcon} title="error:request_failed">
+            <p className="text-destructive text-sm">{error.message}</p>
+          </ContentPlaceholder>
+        ) : (
+          <NoRows isFiltered={isFiltered} isFetching={isFetching} emptyContent={NoRowsComponent} />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={frameClass}>
+      <div className="relative grid" ref={setGridElement}>
+        <EditStatusContext value={edits.statusOf}>
           <DataGrid
             {...gridProps}
             columns={columns}
-            rows={rows}
+            rows={edits.rows}
             rowKeyGetter={rowKeyGetter}
+            onRowsChange={edits.onRowsChange}
             rowHeight={rowHeight}
             enableVirtualization={enableVirtualization}
             readOnly={readOnly}
             columnWidths={columnWidths}
-            onColumnWidthsChange={setColumnWidths}
+            onColumnWidthsChange={(map) => setWidths({ key: resetWidthsKey, map })}
             selectedRows={selectedRows}
             onSelectedRowsChange={handleSelectedRowsChange}
             onNearEndChange={enableVirtualization ? setNearEnd : undefined}
             cellSelectionMode={cellSelectionMode ?? (readOnly ? 'none' : undefined)}
             renderers={renderers}
           />
-          {!readOnly && (
-            <InfiniteLoader
-              hasNextPage={hasNextPage}
-              isFetching={isFetching}
-              isFetchMoreError={!!error}
-              fetchMore={!enableVirtualization ? fetchMore : undefined}
-            />
-          )}
-        </div>
-      )}
+        </EditStatusContext>
+        {!readOnly && (
+          <InfiniteLoader
+            hasNextPage={hasNextPage}
+            isFetching={isFetching}
+            isFetchMoreError={!!error}
+            fetchMore={!enableVirtualization ? fetchMore : undefined}
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { formatSearchParts, parseSearchQuery } from 'shared/utils/parse-search-q
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
-import { DataTable } from '~/modules/common/data-table/data-table';
+import { DataTable, rowKeyById } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
 import { projectsListQueryOptions } from '~/modules/project/query';
@@ -25,9 +25,6 @@ import { flattenInfiniteData } from '~/query/basic/flatten';
 import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 const tableLimit = appConfig.requestLimits.tasksTable;
-
-// Stable identity so it never invalidates DataTable's memoized Row components.
-const rowKeyGetter = (row: Task) => row.id;
 
 export interface TasksTableProps {
   projects?: Project[];
@@ -139,7 +136,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
           {...{
             rows,
             rowHeight: 52,
-            rowKeyGetter,
+            rowKeyGetter: rowKeyById,
             columns,
             enableVirtualization: true,
             enableStickyHeader: true,

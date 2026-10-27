@@ -2,7 +2,7 @@ import { BirdIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
-import { DataTable } from '~/modules/common/data-table/data-table';
+import { DataTable, rowKeyById } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { useRowSelection } from '~/modules/common/data-table/use-row-selection';
@@ -11,10 +11,6 @@ import { projectsListQueryOptions } from '~/modules/project/query';
 import { ProjectsTableBar } from '~/modules/project/table/projects-bar';
 import { useColumns } from '~/modules/project/table/projects-columns';
 import type { EnrichedProject, ProjectsRouteSearchParams } from '~/modules/project/types';
-
-function rowKeyGetter(row: EnrichedProject) {
-  return row.id;
-}
 
 interface ProjectsTableProps {
   organization: EnrichedOrganization;
@@ -33,8 +29,8 @@ export function ProjectsTable({ organization }: ProjectsTableProps) {
 
   const queryOptions = projectsListQueryOptions({ ...search, organizationId: organization.id, scope: 'organization', include: 'counts' });
 
-  const { rows, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(queryOptions);
-  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(rows);
+  const list = useInfiniteRows(queryOptions);
+  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(list.rows);
 
   return (
     <>
@@ -49,17 +45,11 @@ export function ProjectsTable({ organization }: ProjectsTableProps) {
       />
       <DataTable<EnrichedProject>
         {...{
-          rows,
-          rowHeight: 52,
-          rowKeyGetter,
+          ...list,
+          rowKeyGetter: rowKeyById,
           columns,
           enableVirtualization: true,
-          error,
-          isLoading,
-          isFetching,
           isFiltered: !!q,
-          hasNextPage,
-          fetchMore,
           selectedRows: selectedRowIds,
           onSelectedRowsChange,
           sortColumns,

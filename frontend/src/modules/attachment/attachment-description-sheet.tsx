@@ -7,6 +7,7 @@ import { attachmentsCanonicalOptions, useAttachmentUpdateMutation } from '~/modu
 import { createDescriptionUpdater } from '~/modules/common/blocknote/description-updater';
 import { LazyCollaborativeBlockNote } from '~/modules/common/blocknote/lazy-collaborative-blocknote';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
+import { MiddleCut } from '~/modules/common/middle-cut';
 import { sheeter, type TriggerRef } from '~/modules/common/sheeter/use-sheeter';
 import type { EnrichedChannel } from '~/modules/entities/types';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
@@ -44,8 +45,8 @@ function AttachmentDescriptionForm({ attachment: openedRow }: AttachmentDescript
 
   const resolveCan = useResolveCan();
   const channel = findInCache<EnrichedChannel>(homeType, homeId);
-  // The map is the home channel's own, so the row is at home for a home-scoped grant.
-  const canEdit = resolveCan(channel?.can?.attachment?.update, attachment.createdBy, { row: homeId, channel: homeId });
+  // The map is the home channel's own, so the row is at home for a home-scoped grant; the relay grants a system admin no bypass.
+  const canEdit = resolveCan(channel?.memberCan?.attachment?.update, attachment.createdBy, { row: homeId, channel: homeId });
 
   const membersQuery = useInfiniteQuery(membersListQueryOptions({ entityId: homeId, entityType: homeType, tenantId, organizationId }));
   const members = flattenInfiniteData<Member>(membersQuery.data);
@@ -101,7 +102,7 @@ export function openAttachmentDescriptionSheet(attachment: Attachment, triggerRe
       triggerRef,
       side: 'right',
       className: tw('max-w-full lg:max-w-3xl'),
-      title: attachment.name,
+      title: <MiddleCut text={attachment.name} />,
       description: i18n.t('c:attachment_description.text'),
     },
   );

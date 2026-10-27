@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import type { RowsChangeData } from '~/modules/common/data-grid';
-import { DataTable } from '~/modules/common/data-table/data-table';
+import { DataTable, rowKeyById } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { useRowSelection } from '~/modules/common/data-table/use-row-selection';
@@ -12,10 +12,6 @@ import { organizationsListQueryOptions } from '~/modules/organization/query';
 import { OrganizationsTableBar } from '~/modules/organization/table/organizations-bar';
 import { useColumns } from '~/modules/organization/table/organizations-columns';
 import type { EnrichedOrganization, OrganizationsRouteSearchParams } from '~/modules/organization/types';
-
-function rowKeyGetter(row: EnrichedOrganization) {
-  return row.id;
-}
 
 export function OrganizationsTable() {
   const { t } = useTranslation();
@@ -30,17 +26,18 @@ export function OrganizationsTable() {
 
   const queryOptions = organizationsListQueryOptions({ ...search, include: 'counts' });
 
-  const { rows, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(queryOptions);
-  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(rows);
+  const list = useInfiniteRows(queryOptions);
+  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(list.rows);
 
   const onRowsChange = (changedRows: EnrichedOrganization[], { column, indexes }: RowsChangeData<EnrichedOrganization>) => {
     if (column.key !== 'role') return;
 
-    for (const index of indexes) {
-      const entity = changedRows[index];
-      if (!entity.membership?.role) continue;
-      changeRole.mutate({ entity, role: entity.membership.role });
-    }
+    return Promise.all(
+      indexes.map((index) => {
+        const entity = changedRows[index];
+        return entity.membership?.role && changeRole.mutateAsync({ entity, role: entity.membership.role });
+      }),
+    );
   };
 
   return (
@@ -56,18 +53,12 @@ export function OrganizationsTable() {
       />
       <DataTable<EnrichedOrganization>
         {...{
-          rows,
-          rowHeight: 52,
+          ...list,
           onRowsChange,
-          rowKeyGetter,
+          rowKeyGetter: rowKeyById,
           columns,
           enableVirtualization: true,
-          error,
-          isLoading,
-          isFetching,
           isFiltered: !!q,
-          hasNextPage,
-          fetchMore,
           selectedRows: selectedRowIds,
           onSelectedRowsChange,
           sortColumns,

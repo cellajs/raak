@@ -1,13 +1,13 @@
 import { ChevronDownIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { type KeyboardEvent, type ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
+import { Activity, type KeyboardEvent, type ReactNode, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TKey } from '~/lib/i18n-locales';
 import { collapseMotion } from '~/modules/common/collapse-motion';
 import { FocusTrap } from '~/modules/common/focus-trap';
 import { navigationStore, useNavigationStore } from '~/modules/navigation/navigation-store';
-import { InfoContent } from '~/modules/navigation/panels/info-content';
-import { PreferencesContent } from '~/modules/navigation/panels/preferences-content';
+import { InfoContent, InfoIndicator } from '~/modules/navigation/panels/info-content';
+import { PreferencesContent, PreferencesIndicators } from '~/modules/navigation/panels/preferences-content';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
@@ -15,31 +15,50 @@ import { isHoverContentOpen } from '~/utils/is-hover-content-open';
 interface NavSheetPanelProps {
   id: string;
   label: TKey;
+  /** Shown after the label while the panel is closed. */
+  indicator?: ReactNode;
   children: ReactNode;
 }
 
-function NavSheetPanel({ id, label, children }: NavSheetPanelProps) {
+/**
+ * A panel whose body renders hidden while it is closed, so what the body loads (a lazy tool, a suspense query) is in
+ * place before it opens and the collapse animates to the body's full height. A hidden body runs no effects, so it polls nothing.
+ */
+function NavSheetPanel({ id, label, indicator, children }: NavSheetPanelProps) {
   const { t } = useTranslation();
   const navSheetPanel = useNavigationStore((state) => state.navSheetPanel);
   const toggleNavSheetPanel = useNavigationStore((state) => state.toggleNavSheetPanel);
 
   const isOpen = navSheetPanel === id;
 
+  // Stays visible until the collapse ends, so the body shows while the panel closes
+  const [isBodyVisible, setIsBodyVisible] = useState(isOpen);
+  if (isOpen && !isBodyVisible) setIsBodyVisible(true);
+
   return (
     <div>
       {/* Borderless in both states: the open variant's border would shift the label by a pixel on toggle. */}
       <Button onClick={() => toggleNavSheetPanel(id)} className="w-full justify-between border-0" variant={isOpen ? 'secondary' : 'ghost'}>
-        <span>{t(label)}</span>
+        <span className="flex items-center gap-2">
+          {t(label)}
+          {!isOpen && indicator}
+        </span>
         <ChevronDownIcon className={cn('opacity-50 transition-transform duration-200', isOpen && 'rotate-180')} />
       </Button>
 
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div key={`panel-${id}`} {...collapseMotion} className="overflow-hidden">
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.div
+        initial={false}
+        animate={isOpen ? collapseMotion.animate : collapseMotion.exit}
+        transition={collapseMotion.transition}
+        onAnimationComplete={() => {
+          if (!isOpen) setIsBodyVisible(false);
+        }}
+        className="overflow-hidden"
+      >
+        <Activity mode={isBodyVisible ? 'visible' : 'hidden'}>
+          <Suspense fallback={null}>{children}</Suspense>
+        </Activity>
+      </motion.div>
     </div>
   );
 }
@@ -111,10 +130,10 @@ export function NavSheetPanels() {
             hasOpenPanel && 'max-h-dvh overflow-y-auto shadow-lg',
           )}
         >
-          <NavSheetPanel id="preferences" label="c:preferences">
+          <NavSheetPanel id="preferences" label="c:preferences" indicator={<PreferencesIndicators />}>
             <PreferencesContent />
           </NavSheetPanel>
-          <NavSheetPanel id="info" label="c:info">
+          <NavSheetPanel id="info" label="c:info" indicator={<InfoIndicator />}>
             <InfoContent />
           </NavSheetPanel>
         </div>

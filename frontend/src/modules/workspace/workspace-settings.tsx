@@ -15,7 +15,6 @@ export function openWorkspaceSettingsSheet(workspace: Workspace, triggerRef: Ref
       id: 'update-workspace',
       triggerRef,
       side: 'right',
-      className: 'max-w-full lg:max-w-4xl',
       title: i18n.t('c:resource_settings', { resource: i18n.t('c:workspace') }),
       titleContent: <UnsavedBadge title={i18n.t('c:resource_settings', { resource: i18n.t('c:workspace') })} />,
       description: <NamedText i18nKey="c:workspace_settings.text" name={workspace.name} />,

@@ -1,0 +1,9 @@
+{
+  "src/modules/common/logo.tsx:Logo": "Compiler gap: ??= on the color props.",
+  "src/modules/task/create-task-form.tsx:CreateTaskForm": "Reads refs during render: form.handleSubmit(handleFormSubmit) is built in render and the submit handler reads pendingCloseRef.",
+  "src/modules/task/dropdowns/select-members.tsx:SelectMembers": "Reads and writes a ref during render to freeze the first member list at mount.",
+  "src/modules/task/hooks/use-section-edge-visibility.ts:useSectionEdgeVisibility": "Compiler gap: pendingEvents++ on a variable the scroll handler captures.",
+  "src/modules/task/hooks/use-task-drop-monitor.ts:useTaskDropMonitor": "Compiler gap: a conditional and optional chains inside the drop handler's try/catch.",
+  "src/modules/task/panel/project-board-panel.tsx:ProjectBoardPanel": "Reads and writes refs during render: stableArray keeps the previous task arrays so a panel whose tasks did not change skips re-rendering.",
+  "src/modules/workspace/header/action-buttons.tsx:WorkspaceActionButtons": "Reads refs during render: the action list carries the trigger refs into the mobile menu."
+}

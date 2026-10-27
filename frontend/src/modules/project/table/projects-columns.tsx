@@ -49,7 +49,7 @@ export const useColumns = (organization: EnrichedOrganization) => {
             />
           }
         >
-          <EntityAvatar type="project" className="group-active/cell-button:press size-8" id={row.id} name={row.name} url={row.thumbnailUrl} />
+          <EntityAvatar type="project" className="size-8" id={row.id} name={row.name} url={row.thumbnailUrl} />
           <span className={cn(cellLinkTextClass, 'font-medium')}>{row.name || '-'}</span>
         </Button>
       ),
