@@ -9,6 +9,7 @@ import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import type { EnrichedProject } from '~/modules/project/types';
+import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { type SectionsValue, useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
 import { makePanelKey, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
@@ -27,6 +28,8 @@ export interface BoardPanelProps {
   projectFetchedCount: number;
   publicView?: boolean;
   sectionFilters?: SectionsValue;
+  /** Names the project in the panel header, for a board of several projects outside a workspace. */
+  showProject?: boolean;
   windowScroll?: boolean;
 }
 
@@ -36,10 +39,12 @@ export const BoardPanel = memo(function BoardPanel({
   projectFetchedCount,
   publicView,
   sectionFilters,
+  showProject,
   windowScroll,
 }: BoardPanelProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
+  const isReadOnly = useIsProjectReadOnly(project.id);
   const q = useSearch({ strict: false, select: (search) => search.q });
   const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
 
@@ -88,17 +93,19 @@ export const BoardPanel = memo(function BoardPanel({
       {isMobile ? (
         <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex h-full flex-col">
           <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} />
-          <FloatingNavButton
-            id="create-task"
-            icon={PlusIcon}
-            onClick={() => openCreateTaskDialog(project.id, project.organizationId)}
-            ariaLabel={t('c:create_resource', { resource: t('c:task').toLowerCase() })}
-            className={showFab ? 'opacity-100' : 'pointer-events-none translate-y-16 scale-50 opacity-0'}
-          />
+          {!isReadOnly && (
+            <FloatingNavButton
+              id="create-task"
+              icon={PlusIcon}
+              onClick={() => openCreateTaskDialog(project.id, project.organizationId)}
+              ariaLabel={t('c:create_resource', { resource: t('c:task').toLowerCase() })}
+              className={showFab ? 'opacity-100' : 'pointer-events-none translate-y-16 scale-50 opacity-0'}
+            />
+          )}
         </div>
       ) : (
         <div ref={panelRef} className="relative flex h-full flex-col">
-          <TaskPanelHeader project={project} sectionFilters={sectionFilters} publicView={publicView} />
+          <TaskPanelHeader project={project} sectionFilters={sectionFilters} publicView={publicView} showProject={showProject} />
           <div className="flex min-h-0 flex-1 flex-col">
             <BoardPanelContent isCollapsed={!!isCollapsed} collapsedContent={<TaskPanelCollapsed counts={counts} />}>
               <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} windowScroll={windowScroll} />

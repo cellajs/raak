@@ -56,12 +56,14 @@ export function TasksTableBar({
 
   return (
     <div className={taskBarClass}>
-      <TaskSelectedButtons
-        selectedTaskIds={selected.map(({ id }) => id)}
-        clearSelection={clearSelection}
-        organizationId={queryParams?.organizationId ?? ''}
-        tenantId={queryParams?.tenantId ?? ''}
-      />
+      {!publicView && (
+        <TaskSelectedButtons
+          selectedTaskIds={selected.map(({ id }) => id)}
+          clearSelection={clearSelection}
+          organizationId={queryParams?.organizationId ?? ''}
+          tenantId={queryParams?.tenantId ?? ''}
+        />
+      )}
 
       <BoardSearch isInWorkspace={!!workspace} toggleFocus={toggleSearchFocus}>
         {typeof total === 'number' && hasQuery && (

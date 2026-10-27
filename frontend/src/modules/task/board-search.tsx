@@ -25,6 +25,8 @@ type BoardSearchMatches = { ids: string[]; onStep?: (id: string) => void; curren
 interface BoardSearchProps {
   children?: ReactNode;
   isInWorkspace?: boolean;
+  /** Outside a workspace, how many projects the board holds; defaults to one. */
+  projectCount?: number;
   toggleFocus: () => void;
   matches?: BoardSearchMatches;
 }
@@ -33,7 +35,7 @@ const noStep = () => {};
 
 const iconButtonClass = tw('focus-effect flex size-6 cursor-pointer items-center justify-center rounded-md hover:bg-muted');
 
-export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: BoardSearchProps) {
+export function BoardSearch({ children, isInWorkspace, projectCount = 1, toggleFocus, matches }: BoardSearchProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
 
@@ -114,7 +116,9 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   }, [searchQuery]);
 
   const searchLabel = t('c:search_in_resource', {
-    resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() }) : t('c:project').toLowerCase(),
+    resource: isInWorkspace
+      ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() })
+      : (projectCount > 1 ? t('c:project_other') : t('c:project')).toLowerCase(),
   });
 
   return (

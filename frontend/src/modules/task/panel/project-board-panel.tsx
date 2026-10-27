@@ -1,26 +1,20 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
-import type { EnrichedProject } from '~/modules/project/types';
-import { type SectionsValue, useProjectViewSections } from '~/modules/task/board/task-board-store';
+import { useProjectViewSections } from '~/modules/task/board/task-board-store';
 import { inSections, makePanelKey, panelHostsDraft } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { BoardPanel } from '~/modules/task/panel/board-panel';
+import { BoardPanel, type BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { publicTasksBoardQueryOptions } from '~/modules/task/public-query';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { Task } from '~/modules/task/types';
 import { stableArray } from '~/utils/stable-array';
 
-interface ProjectBoardPanelProps {
-  project: EnrichedProject;
-  publicView?: boolean;
-  sectionFilters?: SectionsValue;
-  windowScroll?: boolean;
-}
+type ProjectBoardPanelProps = Pick<BoardPanelProps, 'project' | 'publicView' | 'sectionFilters' | 'showProject' | 'windowScroll'>;
 
 /** Fetches a project's canonical tasks and merges the open draft task. */
-export function ProjectBoardPanel({ project, publicView, sectionFilters, windowScroll }: ProjectBoardPanelProps) {
+export function ProjectBoardPanel({ project, publicView, sectionFilters, showProject, windowScroll }: ProjectBoardPanelProps) {
   const queryOptions = publicView
     ? publicTasksBoardQueryOptions(project.id)
     : tasksCanonicalOptions({ organizationId: project.organizationId, tenantId: project.tenantId, projectId: project.id });
@@ -58,6 +52,7 @@ export function ProjectBoardPanel({ project, publicView, sectionFilters, windowS
       projectFetchedCount={data.items.length}
       publicView={publicView}
       sectionFilters={sectionFilters}
+      showProject={showProject}
       windowScroll={windowScroll}
     />
   );

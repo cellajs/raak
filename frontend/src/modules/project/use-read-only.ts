@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { createContext, useContext, useSyncExternalStore } from 'react';
 import { projectQueryKeys } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { findInCache } from '~/query/basic/find-in-list-cache';
@@ -19,9 +19,16 @@ export const isProjectReadOnly = (projectId: string | undefined): boolean => {
 
 const subscribeToQueryCache = (onStoreChange: () => void) => queryClient.getQueryCache().subscribe(onStoreChange);
 
+/**
+ * True below a public view, which shows projects without editing them, also to their members: a member's cached
+ * project would otherwise make cards editable there, and editing needs the organization route a public page lacks.
+ */
+export const ReadOnlyScope = createContext(false);
+
 /** Re-renders only when this project's read-only answer flips. */
 export const useIsProjectReadOnly = (projectId: string | undefined): boolean => {
-  const getSnapshot = () => isProjectReadOnly(projectId);
+  const inReadOnlyScope = useContext(ReadOnlyScope);
+  const getSnapshot = () => inReadOnlyScope || isProjectReadOnly(projectId);
   return useSyncExternalStore(subscribeToQueryCache, getSnapshot, getSnapshot);
 };
 
