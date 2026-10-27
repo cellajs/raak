@@ -1,15 +1,16 @@
 import { autoScrollForElements, autoScrollWindowForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
-import { type RefObject, useEffect, useLayoutEffect, useRef } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { VirtualizerHandle } from 'virtua';
 import { useLatestRef } from '~/hooks/use-latest-ref';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
+import { hasSectionBar, sectionBarId } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getTargetIndexByStatus } from '~/modules/task/helpers/order-helpers';
 import { firstItemInView, registerPanelNav } from '~/modules/task/helpers/panel-nav-registry';
 import { registerPanelScroller } from '~/modules/task/helpers/panel-scroll-registry';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { TaskStatus } from '~/modules/task/task-properties';
-import type { TaskProps } from '~/modules/task/types';
+import type { TaskCounts, TaskProps } from '~/modules/task/types';
 
 /** Auto-scrolls the viewport during drags, or the window when the page itself scrolls. */
 function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>, windowScroll: boolean) {
@@ -21,37 +22,54 @@ function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>, windowScro
   }, [scrollRef, windowScroll]);
 }
 
+// A card scrolled to mounts a render or two later, and a glow needs its element
+const glowOnceMounted = (taskId: string, framesLeft = 10) => {
+  if (document.getElementById(taskId)) return triggerTaskGlow(taskId);
+  if (framesLeft > 0) requestAnimationFrame(() => glowOnceMounted(taskId, framesLeft - 1));
+};
+
 interface UsePanelScrollingOptions {
   projectId: string;
   /** The board panel showing these tasks: a project, or one split section of it. */
   panelId: string;
   tasks: TaskProps['task'][];
+  counts: TaskCounts;
   isMobile: boolean;
   windowScroll: boolean;
 }
 
 /** Owns a task panel's scroll machinery so the panel component stays layout-only. */
-export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowScroll }: UsePanelScrollingOptions) {
+export function usePanelScrolling({ projectId, panelId, tasks, counts, isMobile, windowScroll }: UsePanelScrollingOptions) {
   const virtualizerRef = useRef<VirtualizerHandle>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
 
   const tasksRef = useLatestRef(tasks);
+  const countsRef = useLatestRef(counts);
 
-  // Keyboard navigation reads the list in render order, statuses as groups, and brings virtualized-out cards into view
+  // Keyboard navigation reads the list in render order, statuses as groups, and brings virtualized-out cards into view.
+  // The accepted and iced bars are its first and last rows.
   useEffect(() => {
+    const sectionBar = (type: TogglableStatusType, group: TaskStatus) =>
+      hasSectionBar(type, countsRef.current) ? [{ id: sectionBarId(type, projectId), group }] : [];
+
     return registerPanelNav(panelId, {
-      items: () => tasksRef.current.map(({ id, status }) => ({ id, group: status })),
+      items: () => [
+        ...sectionBar('accepted', TaskStatus.Accepted),
+        ...tasksRef.current.map(({ id, status }) => ({ id, group: status })),
+        ...sectionBar('iced', TaskStatus.Iced),
+      ],
       scrollTo: (taskId) => {
         const index = tasksRef.current.findIndex((task) => task.id === taskId);
         if (index !== -1) virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
       },
-      firstInView: () =>
+      firstInView: (preferredId) =>
         firstItemInView(
           tasksRef.current.map(({ id }) => id),
           scrollViewportRef.current,
+          preferredId,
         ),
     });
-  }, [panelId]);
+  }, [panelId, projectId]);
 
   // Both scrolls are instant: a smooth traversal mounts and measures every card on the way (see the iced-open note below).
   useEffect(() => {
@@ -82,84 +100,50 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
         const startIndex = virtualizer.findItemIndex(virtualizer.scrollOffset);
         const endIndex = virtualizer.findItemIndex(virtualizer.scrollOffset + virtualizer.viewportSize);
         if (index <= startIndex || index >= endIndex) virtualizer.scrollToIndex(index, { align: 'center', smooth: false });
-        requestAnimationFrame(() => triggerTaskGlow(taskId));
+        requestAnimationFrame(() => glowOnceMounted(taskId));
       },
     });
   }, [projectId]);
 
   usePanelAutoScroll(scrollViewportRef, isMobile || windowScroll);
 
-  const icedBoundaryIndex = tasks.findIndex((task) => task.status === TaskStatus.Iced);
+  // Accepted rows come and go at the top, and virtua keeps measured heights by index: `shift` moves them with their rows
+  // and holds the rows in view in place, so a collapse needs no scroll of its own. On for that one render only.
+  const [shift, setShift] = useState(false);
+  useLayoutEffect(() => {
+    if (shift) setShift(false);
+  }, [shift]);
 
-  const pendingScrollRef = useRef<{ action: 'accepted-open' | 'iced-open' } | { action: 'accepted-close'; anchorTaskId: string | null } | null>(null);
+  const pendingRevealRef = useRef<TogglableStatusType | null>(null);
 
   const handleSectionToggle = (expanded: boolean, type: TogglableStatusType) => {
-    if (type === 'iced') {
-      if (expanded) pendingScrollRef.current = { action: 'iced-open' };
-      return;
-    }
-    if (expanded) {
-      pendingScrollRef.current = { action: 'accepted-open' };
-      return;
-    }
-    // Collapse: anchor the first visible task so the view keeps its place; no anchor means the viewer was inside the folding block, so go to the top
-    const virtualizer = virtualizerRef.current;
-    const startIndex = virtualizer ? virtualizer.findItemIndex(virtualizer.scrollOffset) : -1;
-    const anchor = tasksRef.current[startIndex];
-    pendingScrollRef.current = { action: 'accepted-close', anchorTaskId: anchor && anchor.status !== TaskStatus.Accepted ? anchor.id : null };
+    if (type === 'accepted') setShift(true);
+    pendingRevealRef.current = expanded ? type : null;
   };
 
-  const scrollToAndGlow = (index: number) => {
-    virtualizerRef.current?.scrollToIndex(index, { align: 'center', smooth: false });
-    const task = tasksRef.current[index];
-    if (task) requestAnimationFrame(() => triggerTaskGlow(task.id));
-  };
-
-  // Runs after the tasks list updates, once the new boundary indices are available
+  // Always, wherever the view was: an "already in view" test cannot see the sticky bars covering the panel's edges.
+  // Centred, so the card does not park behind one; instant, as a smooth traversal mounts and measures every card on the way.
   useLayoutEffect(() => {
-    const pending = pendingScrollRef.current;
-    if (!pending) return;
-    pendingScrollRef.current = null;
+    const type = pendingRevealRef.current;
+    if (!type) return;
+    pendingRevealRef.current = null;
 
-    const virtualizer = virtualizerRef.current;
-    if (!virtualizer) return;
-
-    if (pending.action === 'accepted-close') {
-      if (!pending.anchorTaskId) {
-        (scrollViewportRef.current ?? window).scrollTo({ top: 0 });
+    // A frame later, for the virtualizer to lay out the added rows
+    requestAnimationFrame(() => {
+      const tasks = tasksRef.current;
+      const index =
+        type === 'accepted'
+          ? tasks.findLastIndex((task) => task.status === TaskStatus.Accepted)
+          : tasks.findIndex((task) => task.status === TaskStatus.Iced);
+      if (index === -1) {
+        // Only older accepted tasks: their note opens under the bar, at the top of the list
+        if (type === 'accepted') (scrollViewportRef.current ?? window).scrollTo({ top: 0 });
         return;
       }
-      const anchorIndex = tasks.findIndex((task) => task.id === pending.anchorTaskId);
-      if (anchorIndex >= 0) virtualizer.scrollToIndex(anchorIndex, { align: 'start', smooth: false });
-      return;
-    }
-
-    if (pending.action === 'accepted-open') {
-      // Mirrors iced-open: centering keeps the top half on accepted rows ('nearest' would park it behind the sticky accepted bar).
-      // A frame later, for the virtualizer to lay out the added items; skipped when part of the block is in view.
-      requestAnimationFrame(() => {
-        const v = virtualizerRef.current;
-        if (!v) return;
-        const boundary = tasksRef.current.findIndex((task) => task.status !== TaskStatus.Accepted);
-        const lastAccepted = boundary === -1 ? tasksRef.current.length - 1 : boundary - 1;
-        if (lastAccepted < 0) return;
-        if (v.findItemIndex(v.scrollOffset) <= lastAccepted) return;
-        scrollToAndGlow(lastAccepted);
-      });
-      return;
-    }
-
-    // iced-open: jumps instantly so the virtualizer mounts only the destination window (a smooth traversal freezes the main thread on large lists).
-    // Glows the first iced task; skipped when the boundary is in view.
-    if (icedBoundaryIndex >= 0) {
-      requestAnimationFrame(() => {
-        const v = virtualizerRef.current;
-        if (!v) return;
-        if (v.findItemIndex(v.scrollOffset + v.viewportSize) >= icedBoundaryIndex) return;
-        scrollToAndGlow(icedBoundaryIndex);
-      });
-    }
-  }, [tasks, icedBoundaryIndex]);
+      virtualizerRef.current?.scrollToIndex(index, { align: 'center', smooth: false });
+      requestAnimationFrame(() => glowOnceMounted(tasks[index].id));
+    });
+  }, [tasks]);
 
   // Desktop: brings the create form into view when it opens or a status change moves it.
   // A frame later, because the virtualizer's offset can predate a scroll made just before (such as up to "+ Task").
@@ -174,5 +158,5 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
     return () => cancelAnimationFrame(frame);
   }, [draftPlacement]);
 
-  return { virtualizerRef, scrollViewportRef, handleSectionToggle };
+  return { virtualizerRef, scrollViewportRef, handleSectionToggle, shift };
 }

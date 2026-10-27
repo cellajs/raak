@@ -1,12 +1,14 @@
-import { useSearch } from '@tanstack/react-router';
+import { Link, useSearch } from '@tanstack/react-router';
 import dayjs from 'dayjs';
 import { ChevronDownIcon, InfoIcon } from 'lucide-react';
 import { type RefObject, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
 import { type TogglableStatusType, useProjectPanelPrefs, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { hasSectionBar, sectionBarId } from '~/modules/task/helpers/board-helpers';
+import { setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
 import { useSectionEdgeVisibility } from '~/modules/task/hooks/use-section-edge-visibility';
 import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
@@ -45,7 +47,8 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
 
   const isIced = type === 'iced';
   const hasOnlyOlderAccepted = !isIced && !counts.accepted && counts.acceptedCutOff > 0;
-  const isActive = isIced ? !!counts.iced : !!counts.accepted || hasOnlyOlderAccepted;
+  const isActive = hasSectionBar(type, counts);
+  const barId = sectionBarId(type, projectId);
   const count = isIced ? counts.iced : counts.accepted;
   const colors = statusSectionColors[type];
 
@@ -66,6 +69,11 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   const handleToggleClick = () => {
     onToggle?.(!isExpanded, type);
     setPanelSectionExpanded(boardId, projectId, type, !isExpanded);
+  };
+
+  const handleFocus = () => {
+    setHasFocus(true);
+    setCurrentItem(barId);
   };
 
   // Publishes the accepted bar's pinned height as --sticky-stack-top on the panel content, so card headers (StickyBox)
@@ -107,9 +115,11 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
       >
         <Button
           ref={buttonRef}
-          id={`section-${type}-${projectId}`}
+          id={barId}
+          // A row of the panel list, reached with ↑/↓, so not a Tab stop of its own
+          tabIndex={-1}
           onClick={handleToggleClick}
-          onFocus={() => setHasFocus(true)}
+          onFocus={handleFocus}
           onBlur={() => setHasFocus(false)}
           variant="ghost"
           size="sm"
@@ -147,8 +157,17 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
       </div>
       {hasOnlyOlderAccepted && isExpanded && (
         <div className={cn('flex gap-4 px-4 py-5 text-xs', colors.border, colors.fill, colors.text, hintFadeOut)}>
-          <InfoIcon />
-          {t('c:older_accepted_table_only', { count: counts.acceptedCutOff })}
+          <InfoIcon className="shrink-0" />
+          <p>
+            <Trans
+              t={t}
+              i18nKey="c:older_accepted_table_only"
+              count={counts.acceptedCutOff}
+              components={{
+                table_anchor: <Link to="." resetScroll={false} search={(prev) => ({ ...prev, view: 'table' })} className="link-inline" />,
+              }}
+            />
+          </p>
         </div>
       )}
     </>

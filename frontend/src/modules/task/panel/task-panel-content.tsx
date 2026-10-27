@@ -44,10 +44,11 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   const setActivePanel = useBoardStore((state) => state.setActivePanel);
   const hasSelectedTasks = useTaskInteractionStore((state) => state.selectedTaskIds.length > 0);
 
-  const { virtualizerRef, scrollViewportRef, handleSectionToggle } = usePanelScrolling({
+  const { virtualizerRef, scrollViewportRef, handleSectionToggle, shift } = usePanelScrolling({
     projectId: project.id,
     panelId,
     tasks,
+    counts,
     isMobile,
     windowScroll: !!windowScroll,
   });
@@ -119,7 +120,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
                   itemIds={itemIds}
                   viewportRef={scrollViewportRef}
                 >
-                  <WindowVirtualizer ref={virtualizerRef} as="ul" item="li">
+                  <WindowVirtualizer ref={virtualizerRef} as="ul" item="li" shift={shift}>
                     {tasks.map(renderTask)}
                   </WindowVirtualizer>
                 </ListFocusScope>
@@ -163,6 +164,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
                     item="li"
                     scrollRef={scrollViewportRef}
                     keepMounted={keepDraftMounted}
+                    shift={shift}
                     startMargin={counts.accepted || counts.acceptedCutOff ? 36 : 0}
                   >
                     {tasks.map(renderTask)}

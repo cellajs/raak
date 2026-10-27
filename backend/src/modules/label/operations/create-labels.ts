@@ -58,7 +58,11 @@ export async function createLabelsOp(
 
   const labelsToInsert: InsertLabelModel[] = [];
   for (const { stx, ...labelInfo } of fresh) {
-    if (labelInfo.name) labelInfo.name = labelName(labelInfo.name, labelInfo.mode);
+    if (labelInfo.name) {
+      labelInfo.name = labelName(labelInfo.name, labelInfo.mode);
+      if (!labelInfo.name)
+        throw new AppError(400, 'invalid_request', 'warn', { entityType: 'label', meta: { reason: 'Label name is empty as a slug' } });
+    }
 
     // Maintain same color for labels already in organization
     const sameLabelInOrg = existingLabels.find(({ name }) => name === labelInfo.name);

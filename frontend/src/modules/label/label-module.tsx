@@ -15,7 +15,7 @@ defineFrontendModule({
       slot: 'organization.settings',
       id: 'task-types',
       label: 'c:primary_labels',
-      visibleTo: ['organization.admin'],
+      requires: 'update',
       render: (organization) => <PrimaryLabelsCard organization={organization} />,
     },
   ],

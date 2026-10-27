@@ -2,14 +2,14 @@ import i18n from 'i18next';
 import { panelMinWidth } from '~/modules/common/board/board-layout';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
-import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
+import type { BoardPanelData, SectionsValue, TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import type { BoardSearchParams, ProjectResizablePanel, Task } from '~/modules/task/types';
+import type { BoardSearchParams, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
 
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
@@ -124,6 +124,16 @@ export const prepareBoardPanels = (projects: EnrichedProject[], viewSectionsByPr
     }));
   });
 };
+
+/** A project panel's name: the project, and for a split panel its section too. */
+export const projectPanelName = (project: { name: string }, sectionFilters?: SectionsValue) =>
+  sectionFilters ? `${project.name}: ${formatSectionLabel(sectionFilters)}` : project.name;
+
+export const sectionBarId = (type: TogglableStatusType, projectId: string) => `section-${type}-${projectId}`;
+
+/** Whether a panel shows the accepted or iced bar: accepted also for older accepted tasks beyond the cut-off alone. */
+export const hasSectionBar = (type: TogglableStatusType, counts: TaskCounts) =>
+  type === 'iced' ? counts.showIced && !!counts.iced : counts.showAccepted && (!!counts.accepted || counts.acceptedCutOff > 0);
 
 export const formatSectionLabel = (filters: SectionsValue): string => {
   return Object.entries(filters)

@@ -11,7 +11,7 @@ import { tw } from '~/utils/tw';
 
 const labelActions = ['filter', 'highlight', 'exclude'] as const satisfies LabelAction[];
 
-export const labelActionIcons: Record<LabelAction, IconComponent> = { filter: ListFilterIcon, highlight: HighlighterIcon, exclude: EyeOffIcon };
+const labelActionIcons: Record<LabelAction, IconComponent> = { filter: ListFilterIcon, highlight: HighlighterIcon, exclude: EyeOffIcon };
 
 // Highlight shares the green of highlighted rows and cards
 const pressedClass: Record<LabelAction, string> = {
@@ -24,10 +24,13 @@ interface LabelActionsProps {
   row: Pick<LabelRow, 'name'>;
   active: LabelAction | null;
   onAction?: () => void;
+  className?: string;
+  /** Goes last, so it can override `className` on the pressed toggle. */
+  pressedClassName?: string;
 }
 
 /** Filter, highlight and exclude toggles of a label tile: one of them is pressed at most. */
-export function LabelActions({ row, active, onAction }: LabelActionsProps) {
+export function LabelActions({ row, active, onAction, className, pressedClassName }: LabelActionsProps) {
   const { t } = useTranslation();
 
   const tooltips: Record<LabelAction, string> = {
@@ -49,7 +52,7 @@ export function LabelActions({ row, active, onAction }: LabelActionsProps) {
             applyLabelAction(row.name, action);
             onAction?.();
           }}
-          className={cn('size-8 opacity-60 hover:opacity-100', isPressed && ['opacity-100', pressedClass[action]])}
+          className={cn('size-8', className, isPressed && [pressedClass[action], pressedClassName])}
         >
           <Icon />
         </Button>

@@ -127,7 +127,7 @@ describe('Label description gates (epic documentation)', async () => {
     expect(response.status).toBe(200);
 
     const [row] = await db.select().from(labelsTable).where(eq(labelsTable.id, epicLabelId));
-    expect(row.name).toBe('checkout revamp v2');
+    expect(row.name).toBe('checkout-revamp-v2');
   });
 
   it('lets a project member promote a tag to an epic (and back)', async () => {

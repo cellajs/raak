@@ -420,10 +420,12 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
                 {selectedLabels.length > 0 && !selectedCollapsed && (
                   <ComboboxGroup id="select-labels-selected-group">{selectedLabels.map((label) => renderLabelItem(label))}</ComboboxGroup>
                 )}
-                <ComboboxGroup>
-                  <ComboboxGroupLabel>{t('c:suggested')}</ComboboxGroupLabel>
-                  {suggestedLabels.map((label, index) => renderLabelItem(label, index))}
-                </ComboboxGroup>
+                {suggestedLabels.length > 0 && (
+                  <ComboboxGroup>
+                    <ComboboxGroupLabel>{t('c:suggested')}</ComboboxGroupLabel>
+                    {suggestedLabels.map((label, index) => renderLabelItem(label, index))}
+                  </ComboboxGroup>
+                )}
               </>
             )}
             {!isMobile && createItem}

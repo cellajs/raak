@@ -17,6 +17,8 @@ interface LocalPanelShellProps {
   headerActions?: ReactNode;
   /** When true, panel fills the board row and grows with content (no fixed viewport height) */
   windowScroll?: boolean;
+  /** Fills the panel below its handle while collapsed. */
+  collapsedContent?: ReactNode;
   children: ReactNode;
 }
 
@@ -24,7 +26,7 @@ interface LocalPanelShellProps {
  * Frame for the local board panels (explainer, labels): a collapsed icon handle, or a pinned header with
  * drag handle, title and actions above the body. Collapse, size and order persist per `panelId`.
  */
-export function LocalPanelShell({ panelId, icon, title, headerActions, windowScroll, children }: LocalPanelShellProps) {
+export function LocalPanelShell({ panelId, icon, title, headerActions, windowScroll, collapsedContent, children }: LocalPanelShellProps) {
   const isCollapsed = !!useBoardStore((state) => state.panelCollapseState[panelId]);
 
   // One tree for both states, so the handle stays the same element and keeps focus through a collapse or expand
@@ -58,7 +60,7 @@ export function LocalPanelShell({ panelId, icon, title, headerActions, windowScr
         </PanelDragHandleButton>
         {!isCollapsed && headerActions && <div className={cn('ml-auto', hintFadeOut)}>{headerActions}</div>}
       </div>
-      {!isCollapsed && <div className={cn('flex min-h-0 flex-1 flex-col', hintFadeOut)}>{children}</div>}
+      {isCollapsed ? collapsedContent : <div className={cn('flex min-h-0 flex-1 flex-col', hintFadeOut)}>{children}</div>}
     </BoardPanelBody>
   );
 }

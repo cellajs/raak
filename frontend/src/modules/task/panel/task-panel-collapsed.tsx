@@ -1,4 +1,5 @@
-import { CollapsedPanelView, type CollapsedSection } from '~/modules/common/board/board-panel';
+import type { CollapsedSection } from '~/modules/common/board/board-panel';
+import { CollapsedPanelStrip } from '~/modules/task/panel/collapsed-panel-strip';
 import { statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
@@ -7,10 +8,12 @@ import { cn } from '~/utils/cn';
 export const collapsedMainCount = (counts: TaskCounts) => counts.total - counts.iced - counts.accepted;
 
 interface TaskPanelCollapsedProps {
+  panelId: string;
+  name: string;
   counts: TaskCounts;
 }
 
-export function TaskPanelCollapsed({ counts }: TaskPanelCollapsedProps) {
+export function TaskPanelCollapsed({ panelId, name, counts }: TaskPanelCollapsedProps) {
   const sections: CollapsedSection[] = [];
 
   if (counts.showAccepted) {
@@ -31,5 +34,5 @@ export function TaskPanelCollapsed({ counts }: TaskPanelCollapsedProps) {
     });
   }
 
-  return <CollapsedPanelView mainCount={collapsedMainCount(counts)} sections={sections} />;
+  return <CollapsedPanelStrip panelId={panelId} name={name} mainCount={collapsedMainCount(counts)} sections={sections} />;
 }

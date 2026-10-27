@@ -7,6 +7,7 @@ import type { RowsChangeData } from '~/modules/common/data-grid';
 import { EditCellInput } from '~/modules/common/data-grid/cell-renderers';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import { reorderColumn } from '~/modules/common/data-table/reorder-column';
+import { RowDragPreview } from '~/modules/common/data-table/row-drag-preview';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { NamedText } from '~/modules/common/named-text';
 import { openConfirm } from '~/modules/common/open-confirm';
@@ -28,6 +29,10 @@ const IconPicker = lazyNamed(() => import('~/modules/label/icon-picker/icon-pick
 
 function rowKeyGetter(row: PrimaryLabelDefinition) {
   return row.slug;
+}
+
+function renderRowDragPreview(row: PrimaryLabelDefinition) {
+  return <RowDragPreview name={row.name} />;
 }
 
 interface PickerCellProps {
@@ -237,6 +242,7 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
         className="mb-0"
         onRowsChange={handleRowsChange}
         onRowReorder={handleRowReorder}
+        renderRowDragPreview={renderRowDragPreview}
         onCellClick={({ column, selectCell }) => {
           if (column.key === 'name') selectCell(true);
         }}

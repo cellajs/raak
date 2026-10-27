@@ -15,6 +15,7 @@ import { lazyNamed } from '~/utils/lazy-named';
 
 const WorkspaceGeneralCard = lazyNamed(() => import('~/modules/workspace/settings-tools'), 'WorkspaceGeneralCard');
 const WorkspaceDeleteCard = lazyNamed(() => import('~/modules/workspace/settings-tools'), 'WorkspaceDeleteCard');
+const WorkspacesGrid = lazyNamed(() => import('~/modules/workspace/workspaces-grid'), 'WorkspacesGrid');
 
 declare module '~/lib/placements' {
   interface ChannelEntityByType {
@@ -60,6 +61,20 @@ defineFrontendModule({
       ...dangerToolBase('workspace', 'c:workspace'),
       slot: 'workspace.settings',
       render: (workspace) => <WorkspaceDeleteCard workspace={workspace} />,
+    },
+    // Shortcuts to the user's workspaces on the home page; the section stays out of the way until a tile exists.
+    {
+      id: 'workspaces',
+      label: 'c:workspace_other',
+      slot: 'home.sections',
+      render: () => (
+        <section aria-labelledby="home-workspaces" className="mt-6 hidden has-[.tile-link]:block">
+          <h2 id="home-workspaces" className="sr-only">
+            {i18n.t('c:workspace_other')}
+          </h2>
+          <WorkspacesGrid />
+        </section>
+      ),
     },
   ],
 });
