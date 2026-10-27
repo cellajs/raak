@@ -36,11 +36,12 @@ export function DialogerDialog({ dialog }: DialogerDialogProps) {
     container,
     searchLayout,
     dock,
+    containerElement,
+    layer,
   } = dialog;
 
   // A container renders the dialog inline: the page keeps scrolling, and takes pointer input unless `overlay` dims it; focus stays in the dialog
   const inline = !!container;
-  const containerElement = container?.ref?.current ?? undefined;
 
   const removeDialog = () => dialoger.getState().remove(dialog.id);
 
@@ -66,19 +67,19 @@ export function DialogerDialog({ dialog }: DialogerDialogProps) {
         ref={popupRef}
         id={String(id)}
         container={containerElement}
-        layer={dock ? sheetLayerOf(triggerRef.current) : null}
+        layer={layer}
         outsideScroll={outsideScroll}
         dock={dock}
         // A drag on the inset around a search dialog would scroll the page under it: iOS scroll lock fails once its toolbar has collapsed.
         viewportClassName={searchLayout ? 'max-sm:touch-none' : undefined}
         className={cn(className, searchLayout && searchLayoutClass, containerElement && (container?.overlay ? spotlightLift : 'z-40'))}
-        initialFocus={touchInitialFocus(popupRef)}
-        finalFocus={finalFocusFor(triggerRef, String(id))}
+        initialFocus={() => touchInitialFocus(popupRef)}
+        finalFocus={() => finalFocusFor(triggerRef, String(id))}
       >
         {/* An empty header would overlap the content, e.g. in the fullscreen attachment dialog */}
         {(title || description) && (
           <DialogHeader sticky className={dock ? 'text-center' : headerClassName}>
-            {title && <DialogTitle className="h-6 leading-6">{titleContent}</DialogTitle>}
+            {title && <DialogTitle className="h-6 truncate leading-6">{titleContent}</DialogTitle>}
             {description && <DialogDescription>{description}</DialogDescription>}
           </DialogHeader>
         )}

@@ -1,11 +1,18 @@
+import type { FetchInfiniteQueryOptions, FetchQueryOptions, QueryKey } from '@tanstack/react-query';
 import { buildEntitySyncQueries } from '~/entity-sync-queries';
+import type { ApiError } from '~/lib/api';
 import type { UserMenuItem } from '~/modules/me/types';
 import { queryClient } from '~/query/query-client';
 import { getRouteOrganizationId } from '~/query/realtime/sync-priority';
 import { waitFor } from '~/utils/wait-for';
 
-/** Seeds offline caches once the stream is live: the current organization first, then the rest when offline access is on. `signal` cancels on unmount or retrigger. */
-export async function runSyncService(offlineAccess: boolean, signal: AbortSignal): Promise<void> {
+type SyncInfiniteCall = FetchInfiniteQueryOptions<unknown, ApiError, unknown, QueryKey, unknown>;
+type SyncSingleCall = FetchQueryOptions<unknown, ApiError, unknown, QueryKey>;
+
+const isInfiniteCall = (options: SyncInfiniteCall | SyncSingleCall): options is SyncInfiniteCall => 'getNextPageParam' in options;
+
+/** Seeds offline caches once the stream is live: the current organization first, then the rest. `signal` cancels on unmount or retrigger. */
+export async function runSyncService(signal: AbortSignal): Promise<void> {
   // Starts a second after the stream went live, behind the requests of the page itself.
   await waitFor(1000);
   if (signal.aborted) return;
@@ -25,21 +32,17 @@ export async function runSyncService(offlineAccess: boolean, signal: AbortSignal
 
   for (const item of highPriority) {
     if (signal.aborted) return;
-    await syncMenuItem(item, offlineAccess);
+    await syncMenuItem(item);
   }
 
-  // Without offlineAccess, React Query hooks refetch other orgs on navigation.
-  if (offlineAccess) {
-    for (const item of lowPriority) {
-      if (signal.aborted) return;
-      // Staggered, so the background seeding does not burst the server.
-      await waitFor(500);
-      await syncMenuItem(item, offlineAccess);
-    }
+  for (const item of lowPriority) {
+    if (signal.aborted) return;
+    // Staggered, so the background seeding does not burst the server.
+    await waitFor(500);
+    await syncMenuItem(item);
   }
 
-  const lowPriorityCount = offlineAccess ? lowPriority.length : 0;
-  console.debug(`[SyncService] Complete: ${highPriority.length} high-priority, ${lowPriorityCount} low-priority`);
+  console.debug(`[SyncService] Complete: ${highPriority.length} high-priority, ${lowPriority.length} low-priority`);
 }
 
 /**
@@ -47,7 +50,7 @@ export async function runSyncService(offlineAccess: boolean, signal: AbortSignal
  * alone whatever its age or invalidation state, because freshness here is the sync engine's job: catchup patches
  * these lists from CDC deltas, and a full list GET would race that work.
  */
-async function syncMenuItem(item: UserMenuItem, offlineAccess: boolean): Promise<void> {
+async function syncMenuItem(item: UserMenuItem): Promise<void> {
   if (item.membership.archived) return;
 
   // For an organization the entity is the org itself; a channel below it gets organizationId from enrichment.
@@ -57,18 +60,13 @@ async function syncMenuItem(item: UserMenuItem, offlineAccess: boolean): Promise
     targetEntityType: item.entityType,
     tenantId: item.tenantId,
     currentOrganizationId: organizationId,
-    includeMemberQueries: offlineAccess,
   });
 
   await Promise.allSettled(
     queries.map(async (source) => {
-      const isInfinite = 'getNextPageParam' in source;
-      const cacheFirst = { ...source, staleTime: 'static' };
-      return isInfinite
-        ? // biome-ignore lint/suspicious/noExplicitAny: runtime check narrows type but TS can't infer it
-          await queryClient.infiniteQuery(cacheFirst as any)
-        : // biome-ignore lint/suspicious/noExplicitAny: runtime check narrows type but TS can't infer it
-          await queryClient.query(cacheFirst as any);
+      // The queries differ in key and data types, which no single options type holds: one cast to the call shapes, the `in` check picks the call.
+      const cacheFirst = { ...source, staleTime: 'static' } as SyncInfiniteCall | SyncSingleCall;
+      return isInfiniteCall(cacheFirst) ? await queryClient.infiniteQuery(cacheFirst) : await queryClient.query(cacheFirst);
     }),
   );
 }

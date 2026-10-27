@@ -1412,7 +1412,7 @@ export const zCheckSlugBody = z.object({
     .string()
     .min(2)
     .max(255)
-    .regex(/^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$/),
+    .regex(/^[a-zA-Z0-9]+(-{1,3}[a-zA-Z0-9]+)*$/),
   entityType: z.enum(['organization', 'workspace', 'project']),
 });
 
@@ -1517,7 +1517,7 @@ export const zUpdateMeBody = z.object({
     .string()
     .min(2)
     .max(255)
-    .regex(/^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$/)
+    .regex(/^[a-zA-Z0-9]+(-{1,3}[a-zA-Z0-9]+)*$/)
     .optional(),
   userFlags: z
     .object({
@@ -1657,9 +1657,12 @@ export const zGetPublicCountsResponse = z.object({
 });
 
 export const zGetNotificationsQuery = z.object({
-  unread: z.enum(['true', 'false']).optional(),
+  unread: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
   limit: z.int().gte(1).lte(100).optional().default(30),
-  before: z.string().optional(),
+  before: z.iso.datetime().optional(),
 });
 
 /**
@@ -1859,7 +1862,6 @@ export const zDeleteUsersResponse = z.object({
 
 export const zUpdateUserBody = z.object({
   bannerUrl: z.string().max(2048).nullish(),
-  contrast: z.enum(['system', 'more']).optional(),
   description: z.string().max(1000000).nullish(),
   firstName: z
     .string()
@@ -1880,7 +1882,7 @@ export const zUpdateUserBody = z.object({
     .string()
     .min(2)
     .max(255)
-    .regex(/^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$/)
+    .regex(/^[a-zA-Z0-9]+(-{1,3}[a-zA-Z0-9]+)*$/)
     .optional(),
 });
 
@@ -2135,7 +2137,7 @@ export const zCreateOrganizationsBody = z
         .string()
         .min(2)
         .max(255)
-        .regex(/^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$/),
+        .regex(/^[a-zA-Z0-9]+(-{1,3}[a-zA-Z0-9]+)*$/),
       draft: z.boolean().optional(),
     }),
   )
@@ -2248,7 +2250,7 @@ export const zUpdateOrganizationBody = z.object({
     .string()
     .min(2)
     .max(255)
-    .regex(/^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$/)
+    .regex(/^[a-zA-Z0-9]+(-{1,3}[a-zA-Z0-9]+)*$/)
     .optional(),
   name: z
     .string()
@@ -2398,7 +2400,7 @@ export const zCreateProjectsBody = z
         .string()
         .min(2)
         .max(255)
-        .regex(/^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$/),
+        .regex(/^[a-zA-Z0-9]+(-{1,3}[a-zA-Z0-9]+)*$/),
       public: z.boolean(),
     }),
   )
@@ -2527,7 +2529,7 @@ export const zUpdateProjectBody = z.object({
     .string()
     .min(2)
     .max(255)
-    .regex(/^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$/)
+    .regex(/^[a-zA-Z0-9]+(-{1,3}[a-zA-Z0-9]+)*$/)
     .optional(),
   name: z
     .string()

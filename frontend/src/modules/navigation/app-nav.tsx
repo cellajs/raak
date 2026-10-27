@@ -1,18 +1,19 @@
-import { type StaticDataRouteOption, useNavigate, useRouterState } from '@tanstack/react-router';
+import { type StaticDataRouteOption, useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
 import { type RefObject, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import { useBodyClass } from '~/hooks/use-body-class';
 import { useBreakpointAbove, useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useHotkeys } from '~/hooks/use-hotkeys';
-import { navSheetId, sheeter, useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { navSheetId, useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import type { UserMenuItem } from '~/modules/me/types';
 import { BottomBarNav } from '~/modules/navigation/bottom-bar-nav';
 import { FloatingNav, type FloatingNavItem } from '~/modules/navigation/floating-nav/floating-nav';
 import { buildMenuFromCache } from '~/modules/navigation/menu-sheet/helpers/build-menu-from-cache';
+import { menuOrganizations, pickMenuOrganization } from '~/modules/navigation/menu-sheet/helpers/menu-organizations';
 import { organizationLanding } from '~/modules/navigation/menu-sheet/helpers/organization-landing';
 import { navItems } from '~/modules/navigation/nav-items';
-import { closeNavSheet, navSheetOptions } from '~/modules/navigation/nav-sheet';
+import { closeNavSheet, openNavSheet } from '~/modules/navigation/nav-sheet';
 import { navigationStore, useNavigationStore } from '~/modules/navigation/navigation-store';
 import { SidebarNav } from '~/modules/navigation/sidebar-nav';
 import type { NavItem, NavItemId, TriggerNavItemFn, TriggerOrganizationFn } from '~/modules/navigation/types';
@@ -20,8 +21,15 @@ import { getCurrentUser } from '~/modules/user/user-store';
 import { getRouteOrganizationId } from '~/query/realtime/sync-priority';
 import { getChannelRoute } from '~/utils/channel-route';
 
-const { navBar } = appConfig.navigation;
+const { navBar, menu } = appConfig.navigation;
 const { sheetPanelWidth } = appConfig.theme.navigation;
+
+/** The organization a phone's menu per organization opens on, as its switcher would pick it. */
+function phoneMenuOrganization() {
+  if (menu !== 'perOrganization') return undefined;
+  const organizations = menuOrganizations(buildMenuFromCache(getCurrentUser().id));
+  return pickMenuOrganization(organizations, false, [getRouteOrganizationId(), navigationStore.getState().lastOrganizationId]);
+}
 
 type FloatingNavConfig = { left: NavItemId[]; right: NavItemId[]; ownerPathname?: string };
 
@@ -40,12 +48,12 @@ const serializeFloatingNavConfig = (matches: { pathname: string; staticData: Sta
 export function AppNav() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const router = useRouter();
   const isMobile = useBreakpointBelow('sm');
   const isDesktop = useBreakpointAbove('2xl');
 
   const navSheetOpen = useNavigationStore((state) => state.navSheetOpen);
   const keepOpenPreference = useNavigationStore((state) => state.keepOpenPreference);
-  const setNavSheetOpen = useNavigationStore((state) => state.setNavSheetOpen);
   const setKeepNavOpen = useNavigationStore((state) => state.setKeepNavOpen);
   const keepNavOpen = useNavigationStore((state) => state.keepNavOpen);
   const navSheetExists = useSheeter((state) => state.sheets.some((sheet) => sheet.id === navSheetId && sheet.open));
@@ -53,18 +61,9 @@ export function AppNav() {
   useBodyClass({ 'keep-nav-open': keepNavOpen });
   useBodyClass({ 'nav-sheet-open': navSheetExists });
 
-  const openNavSheet = (navItem: NavItem, triggerRef: RefObject<HTMLButtonElement | null>, organization?: UserMenuItem) => {
+  const openItemSheet = (navItem: NavItem, triggerRef: RefObject<HTMLButtonElement | null>, organization?: UserMenuItem) => {
     if (!navItem.sheet) return;
-    setNavSheetOpen(navItem.id, organization?.id);
-
-    sheeter.getState().replace(navItem.sheet(), {
-      ...navSheetOptions(navItem.id, triggerRef, organization),
-      id: navSheetId,
-      side: isMobile && navItem.mirrorOnMobile ? 'right' : 'left',
-      // Outside-press is gated by `keepNavOpen` in the sheeter's onOpenChange; disabling it here suppresses the event entirely.
-      disablePointerDismissal: false,
-      autoScrollOnDrag: 'vertical',
-    });
+    openNavSheet(navItem.id, navItem.sheet(), triggerRef, { organization, side: isMobile && navItem.mirrorOnMobile ? 'right' : 'left' });
   };
 
   const triggerNavItem: TriggerNavItemFn = (id, ref) => {
@@ -82,10 +81,13 @@ export function AppNav() {
 
     if (navItem.href) {
       if (!navigationStore.getState().keepNavOpen) closeNavSheet();
+      // On the page already, the press takes it back to the top
+      if (router.state.location.pathname === navItem.href) return window.scrollTo({ top: 0, behavior: 'smooth' });
       return navigate({ to: navItem.href });
     }
 
-    openNavSheet(navItem, triggerRef);
+    // A phone's menu holds its organization from the start, so a wider screen keeps it beside its rail button
+    openItemSheet(navItem, triggerRef, id === 'menu' && isMobile ? phoneMenuOrganization() : undefined);
   };
 
   // A second press on the same organization closes its sheet. Coming from elsewhere, it also lands on a channel of it.
@@ -95,7 +97,7 @@ export function AppNav() {
 
     const menuItem: NavItem | undefined = navItems.find((item) => item.id === 'menu');
     if (!menuItem) return;
-    const openSheet = () => openNavSheet(menuItem, triggerRef, organization);
+    const openSheet = () => openItemSheet(menuItem, triggerRef, organization);
 
     const landing =
       organization.id !== getRouteOrganizationId() &&
@@ -128,7 +130,7 @@ export function AppNav() {
   useEffect(() => {
     if (!isMenuAlwaysOpen || navSheetOpen) return;
     const menuItem: NavItem | undefined = navItems.find((item) => item.id === 'menu');
-    if (menuItem) openNavSheet(menuItem, { current: null });
+    if (menuItem) openItemSheet(menuItem, { current: null });
   }, [isMenuAlwaysOpen, navSheetOpen]);
 
   // A primitive select: matches are new objects on every router write, so selecting them would re-render on each URL change.

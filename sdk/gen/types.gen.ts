@@ -137,7 +137,7 @@ export type StreamNotification = {
    */
   channelType: 'organization' | 'workspace' | 'project' | null;
   /**
-   * Materialized id-path of the affected rows (root-first ancestor ids); moveOut carries the OLD path
+   * Id path of the affected rows (root-first ancestor ids); moveOut carries the OLD path
    */
   path: string | null;
   /**
@@ -3081,7 +3081,7 @@ export type PostAppCatchupData = {
       key: string;
       organizationId: string;
       /**
-       * Materialized id-path prefixes this view covers (root-first ids, slash-joined)
+       * Id path prefixes this view covers (root-first ids, slash-joined)
        */
       prefixes: Array<string>;
       entityTypes: Array<'task' | 'label' | 'attachment'>;
@@ -3883,7 +3883,7 @@ export type GetNotificationsData = {
     /**
      * Return only unread notifications
      */
-    unread?: 'true' | 'false';
+    unread?: 'true' | 'false' | boolean;
     limit?: number;
     /**
      * createdAt of the last row of the previous page
@@ -4680,7 +4680,6 @@ export type DeleteUsersResponse = DeleteUsersResponses[keyof DeleteUsersResponse
 export type UpdateUserData = {
   body: {
     bannerUrl?: string | null;
-    contrast?: 'system' | 'more';
     description?: string | null;
     firstName?: string | null;
     lastName?: string | null;

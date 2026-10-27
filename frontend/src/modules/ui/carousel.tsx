@@ -3,7 +3,7 @@ import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-reac
 import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLatestRef } from '~/hooks/use-latest-ref';
+import { useEventListener } from '~/hooks/use-event-listener';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
@@ -31,6 +31,11 @@ type CarouselContextProps = {
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null);
 
+/** Slide content marked `data-carousel-hold`, such as a zoomed image, keeps the drags and arrow keys that otherwise page the carousel. */
+const holdSelector = '[data-carousel-hold]';
+
+const dragOutsideHold = (_api: unknown, event: MouseEvent | TouchEvent) => !(event.target instanceof Element && event.target.closest(holdSelector));
+
 function useCarousel() {
   const context = React.useContext(CarouselContext);
 
@@ -52,7 +57,10 @@ function Carousel({
   ...props
 }: React.ComponentProps<'div'> & CarouselProps) {
   const { t } = useTranslation();
-  const [carouselRef, api] = useEmblaCarousel({ ...opts, axis: orientation === 'horizontal' ? 'x' : 'y' }, plugins);
+  const [carouselRef, api] = useEmblaCarousel(
+    { ...opts, axis: orientation === 'horizontal' ? 'x' : 'y', watchDrag: opts?.watchDrag === false ? false : dragOutsideHold },
+    plugins,
+  );
   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
   const [canScrollNext, setCanScrollNext] = React.useState(false);
 
@@ -70,11 +78,10 @@ function Carousel({
     api?.scrollNext();
   };
 
-  // setApi lives in a ref so an inline prop does not re-run this effect and re-register listeners.
-  const setApiRef = useLatestRef(setApi);
+  // Once per api: a setApi registers listeners on it, and an inline prop changes every render.
+  const notifyApi = React.useEffectEvent((api: CarouselApi) => setApi?.(api));
   React.useEffect(() => {
-    if (!api) return;
-    setApiRef.current?.(api);
+    if (api) notifyApi(api);
   }, [api]);
 
   React.useEffect(() => {
@@ -89,26 +96,26 @@ function Carousel({
     };
   }, [api, onSelect]);
 
-  // Arrow keys page the carousel in a dialog, or while the pointer or focus is inside it; text fields keep their arrows.
+  // Arrow keys page the carousel in a dialog, or while the pointer or focus is inside it; text fields and a held slide keep their arrows.
   const [pointerInside, setPointerInside] = React.useState(false);
   const [focusInside, setFocusInside] = React.useState(false);
   const arrowKeysActive = !!api && (isDialog || pointerInside || focusInside);
 
-  React.useEffect(() => {
-    if (!api || !arrowKeysActive) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
+  useEventListener(
+    'keydown',
+    (event) => {
       if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (api?.slideNodes()[api.selectedScrollSnap()]?.querySelector(holdSelector)) return;
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        api.scrollPrev();
+        scrollPrev();
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
-        api.scrollNext();
+        scrollNext();
       }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [api, arrowKeysActive]);
+    },
+    { enabled: arrowKeysActive, capture: true },
+  );
 
   return (
     <CarouselContext.Provider

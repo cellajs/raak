@@ -1,9 +1,7 @@
-import { CopyIcon, KeyRoundIcon, UnplugIcon } from 'lucide-react';
+import { KeyRoundIcon, UnplugIcon } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ApiKey, ServiceAccount } from 'sdk';
-import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
-import { CopiedIcon } from '~/modules/common/copied-icon';
 import { DateTooltip } from '~/modules/common/date-tooltip';
 import { DeleteForm } from '~/modules/common/delete-form';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -11,6 +9,7 @@ import { ExpandableTile, ExpandableTileDetail, type TileTone } from '~/modules/c
 import { NamedText } from '~/modules/common/named-text';
 import { RelativeDate } from '~/modules/common/relative-date';
 import { ScopeBadges } from '~/modules/common/scope-badges';
+import { SecretBox } from '~/modules/common/secret-box';
 import { useRevokeApiKeyMutation } from '~/modules/service-accounts/query';
 import { Button } from '~/modules/ui/button';
 import { useOpenUserSheet } from '~/modules/user/use-open-user-sheet';
@@ -44,12 +43,10 @@ interface ApiKeyTileProps {
   secret?: string;
   /** Shows the account's last use, which the account records: on its newest live key only. */
   showActivity?: boolean;
-  expanded: boolean;
-  onToggle: () => void;
 }
 
 /** One API key; a key created in this visit opens with its secret to copy. */
-export function ApiKeyTile({ apiKey, account, path, secret, showActivity, expanded, onToggle }: ApiKeyTileProps) {
+export function ApiKeyTile({ apiKey, account, path, secret, showActivity }: ApiKeyTileProps) {
   const { t } = useTranslation();
   const { mutate: revoke, isPending } = useRevokeApiKeyMutation();
   // A revoked key cannot be restored and whatever uses it stops working, so the panel asks first
@@ -75,12 +72,11 @@ export function ApiKeyTile({ apiKey, account, path, secret, showActivity, expand
 
   return (
     <ExpandableTile
+      value={apiKey.id}
       icon={<KeyRoundIcon />}
       title={apiKey.name}
       status={{ tone: statusTones[status], label: t(`c:${status}`) }}
       meta={meta}
-      expanded={expanded}
-      onToggle={onToggle}
       lead={secret && <NewKeySecret secret={secret} />}
       details={
         <>
@@ -140,23 +136,20 @@ export function ApiKeyTile({ apiKey, account, path, secret, showActivity, expand
 
 interface KeylessAccountTileProps {
   account: ServiceAccount;
-  expanded: boolean;
-  onToggle: () => void;
 }
 
 /** A service account without a live key: it stays listed, so an account nothing uses does not dangle unseen. */
-export function KeylessAccountTile({ account, expanded, onToggle }: KeylessAccountTileProps) {
+export function KeylessAccountTile({ account }: KeylessAccountTileProps) {
   const { t } = useTranslation();
   const role = account.bindings[0]?.role;
 
   return (
     <ExpandableTile
+      value={account.id}
       icon={<KeyRoundIcon />}
       title={account.name}
       status={account.status === 'active' ? undefined : { tone: 'muted', label: t('c:disabled') }}
       meta={t('c:no_resource_yet', { resource: t('c:api_key_other') })}
-      expanded={expanded}
-      onToggle={onToggle}
       details={
         <>
           {role && <ExpandableTileDetail label={t('c:role')}>{t(`c:${role}`)}</ExpandableTileDetail>}
@@ -181,24 +174,10 @@ export function KeylessAccountTile({ account, expanded, onToggle }: KeylessAccou
 
 function NewKeySecret({ secret }: { secret: string }) {
   const { t } = useTranslation();
-  const { copied, copyToClipboard } = useCopyToClipboard();
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2 rounded-lg border border-dashed bg-background py-1 pr-1 pl-3 font-mono text-sm">
-        <div className="min-w-0 grow select-all break-all">{secret}</div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0"
-          aria-label={t('c:copy')}
-          data-tooltip="true"
-          data-tooltip-content={copied ? t('c:copied') : t('c:copy')}
-          onClick={() => copyToClipboard(secret)}
-        >
-          <CopiedIcon copied={copied} icon={CopyIcon} />
-        </Button>
-      </div>
+      <SecretBox value={secret} />
       <p className="text-muted-foreground text-sm">{t('c:api_key.text')}</p>
     </div>
   );

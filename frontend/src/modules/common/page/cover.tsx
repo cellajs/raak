@@ -1,4 +1,4 @@
-import { UploadIcon } from 'lucide-react';
+import { ImageUpIcon } from 'lucide-react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
@@ -17,7 +17,9 @@ export interface PageCoverProps {
 
 function PageCoverBase({ id, canUpdate, organizationId, url, onCoverUpdate }: PageCoverProps) {
   const { t } = useTranslation();
-  const [coverUrl, setCoverUrl] = useState(url);
+  // A fresh upload shows at once and holds until `url` moves: to the saved cover, or to one written elsewhere
+  const [upload, setUpload] = useState<{ url: string; replaces: PageCoverProps['url'] } | null>(null);
+  const coverUrl = upload && upload.replaces === url ? upload.url : url;
 
   const uploadLabel = t('c:upload_item', { item: t('c:cover').toLowerCase() });
 
@@ -27,7 +29,7 @@ function PageCoverBase({ id, canUpdate, organizationId, url, onCoverUpdate }: Pa
       organizationId,
       title: uploadLabel,
       onUploaded: (bannerUrl) => {
-        setCoverUrl(bannerUrl);
+        setUpload({ url: bannerUrl, replaces: url });
         onCoverUpdate?.(bannerUrl);
       },
     });
@@ -35,14 +37,19 @@ function PageCoverBase({ id, canUpdate, organizationId, url, onCoverUpdate }: Pa
 
   return (
     <div
-      data-url={!!url}
+      data-url={!!coverUrl}
       className={cn('relative flex h-32 bg-center bg-cover', numberToColorClass(id), 'min-h-40 data-[url=true]:h-[20vw] sm:min-w-52')}
       style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : {}}
     >
       {canUpdate && appConfig.has.uploadEnabled && (
-        <Button variant="secondary" size="sm" className="relative top-3 mx-auto bg-secondary/80 hover:bg-secondary" onClick={openUploadDialog}>
-          <UploadIcon />
-          <span>{uploadLabel}</span>
+        <Button
+          variant="outline-ghost"
+          size="xs"
+          className="absolute top-2.5 right-2.5 bg-background/50 backdrop-blur-xs hover:bg-background/75 max-sm:size-10 dark:bg-background/75"
+          onClick={openUploadDialog}
+        >
+          <ImageUpIcon />
+          <span className="max-sm:sr-only">{uploadLabel}</span>
         </Button>
       )}
     </div>

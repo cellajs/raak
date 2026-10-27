@@ -1,5 +1,5 @@
 import { useSearchParams } from '~/hooks/use-search-params';
-import { DataTable } from '~/modules/common/data-table/data-table';
+import { DataTable, rowKeyById } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { useRowSelection } from '~/modules/common/data-table/use-row-selection';
@@ -7,10 +7,6 @@ import { usersListQueryOptions } from '~/modules/user/query';
 import { UsersTableBar } from '~/modules/user/table/users-bar';
 import { useColumns } from '~/modules/user/table/users-columns';
 import type { BaseUser, UsersRouteSearchParams } from '~/modules/user/types';
-
-function rowKeyGetter(row: BaseUser) {
-  return row.id;
-}
 
 export function UsersTable() {
   const { search, setSearch } = useSearchParams<UsersRouteSearchParams>({ from: '/_app/system/users' });
@@ -21,8 +17,8 @@ export function UsersTable() {
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
   const queryOptions = usersListQueryOptions(search);
-  const { rows, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(queryOptions);
-  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(rows);
+  const list = useInfiniteRows(queryOptions);
+  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(list.rows);
 
   return (
     <>
@@ -37,17 +33,11 @@ export function UsersTable() {
       />
       <DataTable<BaseUser>
         {...{
-          rows,
-          rowHeight: 52,
-          rowKeyGetter,
+          ...list,
+          rowKeyGetter: rowKeyById,
           columns,
           enableVirtualization: true,
-          error,
-          isLoading,
-          isFetching,
           isFiltered: role !== undefined || !!q,
-          hasNextPage,
-          fetchMore,
           selectedRows: selectedRowIds,
           onSelectedRowsChange,
           sortColumns,
