@@ -15,7 +15,6 @@ import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
 import { setCurrentItem } from '~/modules/task/helpers/focus-item';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
-import { truncateMiddle } from '~/utils/truncate-middle';
 
 interface TaskOptionsButtonProps {
   task: Task;
@@ -36,7 +35,7 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
     // `task.name` is empty for a task made in the app: its title is the text of its summary block
     const title = titleFromDocument(task.summary);
     const deleteQuestion = title ? (
-      <DeleteQuestion resource="c:task" name={truncateMiddle(title, 20)} />
+      <DeleteQuestion resource="c:task" name={title} />
     ) : (
       <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
     );
