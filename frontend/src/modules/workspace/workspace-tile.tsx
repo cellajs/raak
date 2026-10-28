@@ -43,9 +43,7 @@ export function WorkspaceTile({ entity }: WorkspaceTileProps) {
 
   const meta = (
     <div className="truncate text-muted-foreground text-sm">
-      {projects.length > 0
-        ? projects.map((project) => project.name).join(', ')
-        : t('c:no_resource_yet', { resource: t('c:project_other').toLowerCase() })}
+      {projects.length > 0 ? projects.map((project) => project.name).join(', ') : t('c:no_resource_yet', { resource: t('c:project_other') })}
     </div>
   );
 

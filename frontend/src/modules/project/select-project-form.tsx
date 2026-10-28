@@ -50,11 +50,7 @@ export function SelectProjectForm() {
       toaster.success(t('c:success.assign_resource', { resource: `${t('c:project')} ${assigned[0].name}`, secondResource: workspace.name }));
     } else if (assigned.length > 1) {
       toaster.success(
-        t('c:success.assign_counted_resources', {
-          count: assigned.length,
-          resources: t('c:project_other').toLowerCase(),
-          secondResource: workspace.name,
-        }),
+        t('c:success.assign_resource_counted', { count: assigned.length, resource: t('c:project_other'), secondResource: workspace.name }),
       );
     }
 
@@ -93,7 +89,7 @@ export function SelectProjectForm() {
         <div className="flex flex-col gap-2 sm:flex-row">
           <SubmitButton disabled={selectedCount === 0} loading={form.formState.isSubmitting}>
             {selectedCount > 0
-              ? t('c:add_resource', { resource: `${selectedCount} ${t('c:project', { count: selectedCount }).toLowerCase()}` })
+              ? t('c:add_resource', { resource: t('c:resource_count', { count: selectedCount, resource: t('c:project', { count: selectedCount }) }) })
               : t('c:select')}
           </SubmitButton>
           <CancelButton dirty={selectedCount > 0} onClick={() => form.reset()} />

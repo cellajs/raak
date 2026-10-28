@@ -39,7 +39,7 @@ export function TasksTableBar({
   isCompact,
   setIsCompact,
 }: TasksTableBarProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
 
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -67,9 +67,8 @@ export function TasksTableBar({
 
       <BoardSearch isInWorkspace={!!workspace} toggleFocus={toggleSearchFocus}>
         {typeof total === 'number' && hasQuery && (
-          <div className="flex items-center gap-1 text-muted-foreground text-sm">
-            <span>{new Intl.NumberFormat(i18n.language).format(total)}</span>
-            <span>{t('c:found')}</span>
+          <div className="flex items-center text-muted-foreground text-sm">
+            {t('c:resource_count_found', { count: total, resource: t('c:task', { count: total }) })}
           </div>
         )}
       </BoardSearch>

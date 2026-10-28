@@ -1,5 +1,5 @@
 import { onlineManager, useSuspenseQuery } from '@tanstack/react-query';
-import { UnplugIcon } from 'lucide-react';
+import { LogOutIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ExpandableList } from '~/modules/common/expandable-list';
 import { TileListHeading } from '~/modules/common/expandable-tile';
@@ -47,8 +47,8 @@ export function SessionsList() {
             loading={isPending && variables?.length === revocable.length}
             onClick={() => handleRevoke(revocable.map((session) => session.id))}
           >
-            <UnplugIcon />
-            {t('c:revoke_others')}
+            <LogOutIcon />
+            {t('c:sign_out_others')}
           </Button>
         )}
       </TileListHeading>

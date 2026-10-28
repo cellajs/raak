@@ -43,7 +43,7 @@ export function AccountSessionsCard() {
   const { t } = useTranslation();
 
   return (
-    <ToolCard label="c:sessions" description={t('c:sessions.text')}>
+    <ToolCard label="c:sessions" description={t('c:sessions.text', { days: appConfig.retention.sessionDaysAfterExpiry })}>
       <SessionsList />
     </ToolCard>
   );
@@ -192,12 +192,12 @@ export function AccountDeleteCard() {
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
       title: t('c:delete_account'),
-      description: <NamedText i18nKey="c:confirm.delete_account" values={{ email: user.email, appName: appConfig.name }} />,
+      description: <NamedText i18nKey="c:confirm.delete_account" values={{ email: user.email }} />,
     });
   };
 
   return (
-    <ToolCard label="c:delete_account" description={t('c:delete_account.text', { appName: appConfig.name })}>
+    <ToolCard label="c:delete_account" description={t('c:delete_account.text')}>
       <Button ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>
         <TrashIcon />
         {t('c:delete_account')}

@@ -92,7 +92,7 @@ export const BoardPanel = memo(function BoardPanel({
             id="create-task"
             icon={PlusIcon}
             onClick={() => openCreateTaskDialog(project.id, project.organizationId)}
-            ariaLabel={t('c:create_resource', { resource: t('c:task').toLowerCase() })}
+            ariaLabel={t('c:create_resource', { resource: t('c:task') })}
             className={showFab ? 'opacity-100' : 'pointer-events-none translate-y-16 scale-50 opacity-0'}
           />
         </div>

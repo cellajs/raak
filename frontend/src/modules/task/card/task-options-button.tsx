@@ -37,7 +37,7 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
     const deleteQuestion = title ? (
       <DeleteQuestion resource="c:task" name={title} />
     ) : (
-      <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
+      <NamedText i18nKey="c:confirm.delete_resource_counted" values={{ count: 1, resource: t('c:task') }} />
     );
 
     create(

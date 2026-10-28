@@ -69,7 +69,7 @@ export function ProjectSuggestionCombobox({
     triggerRef.current?.focus();
   };
 
-  const placeholder = t('c:select_resource', { resource: t('c:project_other').toLowerCase() });
+  const placeholder = t('c:select_resource', { resource: t('c:project_other') });
 
   return (
     <Combobox<EnrichedProject, true>
@@ -115,7 +115,7 @@ export function ProjectSuggestionCombobox({
         <ComboboxSearchInput
           value={searchQuery}
           isSearching={isFetching}
-          placeholder={t('c:placeholder.type_input', { inputLabel: t('c:project').toLowerCase() })}
+          placeholder={t('c:placeholder.type_input', { inputLabel: t('c:project') })}
         />
         <ScrollArea>
           <ComboboxList className="h-full px-1">
@@ -124,7 +124,7 @@ export function ProjectSuggestionCombobox({
                 <motion.div key="empty-state" initial="hidden" animate="visible" exit="exit" variants={dropdownVariants} className="h-full">
                   <ComboboxEmpty>
                     {debouncedSearchQuery.length ? (
-                      <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleOptions={{ resource: t('c:project').toLowerCase() }} />
+                      <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleOptions={{ resource: t('c:project') }} />
                     ) : (
                       <ContentPlaceholder icon={BriefcaseIcon} title="c:select_project.text" titleOptions={{ name: organizationName }} />
                     )}

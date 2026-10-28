@@ -44,7 +44,7 @@ export const openProjectSettingsSheet = (project: EnrichedProject, triggerRef?: 
 };
 
 const openAddProjectsDialog = (mode?: 'select') => {
-  const title = i18n.t('c:add_resource', { resource: i18n.t('c:project').toLowerCase() });
+  const title = i18n.t('c:add_resource', { resource: i18n.t('c:project') });
   dialoger.getState().create(<AddProjects mode={mode} />, {
     triggerRef: { current: null },
     className: 'md:max-w-4xl',

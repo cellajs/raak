@@ -143,7 +143,7 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
               );
             }}
           </ComboboxList>
-          <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:member_other').toLowerCase() })}</ComboboxEmpty>
+          <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:member_other') })}</ComboboxEmpty>
           {projectMembers.length > initialMembersCount &&
             !searchValue.length &&
             (inDrawer ? (

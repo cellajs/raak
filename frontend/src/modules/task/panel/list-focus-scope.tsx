@@ -1,6 +1,6 @@
 import { type FocusEvent, type ReactNode, type RefObject, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { announce, prepareAnnouncement } from '~/modules/common/reorder-handle/announce';
+import { announce, prepareAnnouncement } from '~/modules/common/announce';
 import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { focusItem } from '~/modules/task/helpers/focus-item';
 import { firstItemInView } from '~/modules/task/helpers/panel-nav-registry';

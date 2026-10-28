@@ -12,8 +12,6 @@ export const vocabularyAllowlist: VocabularyAllowlist = {
     'json/lucide-icon-names.json',
     'frontend/src/modules/label/lucide-icons.gen.json',
     'json/lucide-icon-nodes.json',
-    // Carries a cella-sync marker comment, whose syntax is the flagged term by convention.
-    'backend/tests/attachment-notifications.test.ts',
   ],
   prefixes: [],
   proseExclude: [],

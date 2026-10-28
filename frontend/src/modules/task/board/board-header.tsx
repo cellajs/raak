@@ -26,7 +26,7 @@ export function BoardHeader({
   workspace,
   publicView,
 }: Pick<ResolvedBoardProps, 'boardId' | 'projects' | 'workspace' | 'publicView'>) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const isInWorkspace = !!workspace;
 
   const searchQuery = useSearch({ strict: false, select: (search) => search.q }) ?? '';
@@ -62,9 +62,8 @@ export function BoardHeader({
         matches={{ ids: matchIds, onStep: revealItem, currentId: currentItemId }}
       >
         {typeof total === 'number' && searchQuery && (
-          <div className="mr-1 flex items-center gap-1 text-muted-foreground text-sm">
-            <span>{new Intl.NumberFormat(i18n.language).format(matchIds.length)}</span>
-            <span>{t('c:found')}</span>
+          <div className="mr-1 flex items-center text-muted-foreground text-sm">
+            {t('c:resource_count_found', { count: matchIds.length, resource: t('c:task', { count: matchIds.length }) })}
           </div>
         )}
       </BoardSearch>

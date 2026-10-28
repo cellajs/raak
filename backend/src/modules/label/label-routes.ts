@@ -1,4 +1,4 @@
-import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
+import { createXRoutes, errors, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
@@ -63,7 +63,7 @@ const labelsRoutes = createXRoutes(['labels', 'app', 'product'], {
     summary: 'Update label',
     description: 'Updates a label by ID.',
     request: { params: idInTenantOrgParamSchema, body: jsonBody(labelUpdateStxBodySchema) },
-    responses: { 200: json('Label updated', labelSchema) },
+    responses: { 200: json('Label updated', labelSchema), ...errors(409) },
   }),
   deleteLabels: xRoute({
     method: 'delete',

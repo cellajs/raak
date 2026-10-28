@@ -55,7 +55,7 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
           value={searchValue}
           wrapClassName="max-sm:hidden"
           className="rounded-none leading-normal focus-visible:ring-transparent"
-          placeholder={t('c:select_resource', { resource: t('c:status').toLowerCase() })}
+          placeholder={t('c:select_resource', { resource: t('c:status') })}
         />
         <ComboboxHotkeyHint searching={!!searchValue.length}>S</ComboboxHotkeyHint>
         <ComboboxList>
@@ -71,7 +71,7 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
             );
           }}
         </ComboboxList>
-        <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:status').toLowerCase() })}</ComboboxEmpty>
+        <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:status') })}</ComboboxEmpty>
       </div>
     </Combobox>
   );

@@ -44,7 +44,7 @@ interface AddProjectsTitleProps {
 
 function AddProjectsTitle({ mode, onBack }: AddProjectsTitleProps) {
   const { t } = useTranslation();
-  const baseTitle = t('c:add_resource', { resource: t('c:project').toLowerCase() });
+  const baseTitle = t('c:add_resource', { resource: t('c:project') });
 
   return (
     <div className="flex items-center gap-2 max-sm:justify-center">
@@ -100,13 +100,13 @@ export function AddProjects({ mode: baseMode }: AddProjectsProps) {
                 value="create"
                 icon={ShrubIcon}
                 label={t('c:create_project.text')}
-                ariaLabel={t('c:create_resource', { resource: t('c:project').toLowerCase() })}
+                ariaLabel={t('c:create_resource', { resource: t('c:project') })}
               />
               <AddProjectsOption
                 value="select"
                 icon={SquareMousePointerIcon}
                 label={t('c:select_project')}
-                ariaLabel={t('c:select_resource', { resource: t('c:project').toLowerCase() })}
+                ariaLabel={t('c:select_resource', { resource: t('c:project') })}
               />
             </ToggleGroup>
           </motion.div>

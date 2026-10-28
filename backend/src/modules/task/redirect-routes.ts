@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi';
-import { createXRoutes, json, xRoute } from '#/core/x-routes';
+import { createXRoutes, errors, json, xRoute } from '#/core/x-routes';
 import { publicGuard } from '#/middlewares/guard';
 import { mockTaskLinkResponse } from '#/modules/task/task-mocks';
 import { taskLinkSchema } from '#/modules/task/task-schema';
@@ -13,7 +13,7 @@ const taskRedirectRoutes = createXRoutes(['tasks', 'app', 'product'], {
     summary: 'Redirect to task',
     description: 'Redirects to the canonical route for a task by ID.',
     request: { params: z.object({ id: validIdSchema }) },
-    responses: { 200: { description: 'Success' } },
+    responses: { 200: { description: 'Success' }, ...errors(404) },
   }),
   resolveTaskLink: xRoute({
     method: 'get',
@@ -24,6 +24,7 @@ const taskRedirectRoutes = createXRoutes(['tasks', 'app', 'product'], {
     request: { params: z.object({ id: validIdSchema }) },
     responses: {
       200: json('Task link resolution data', taskLinkSchema, mockTaskLinkResponse()),
+      ...errors(404),
     },
   }),
   getTaskCover: xRoute({
@@ -33,7 +34,7 @@ const taskRedirectRoutes = createXRoutes(['tasks', 'app', 'product'], {
     summary: 'Get task cover',
     description: 'Retrieves the cover image for a task by ID.',
     request: { params: z.object({ id: validIdSchema }) },
-    responses: { 200: { description: 'Success' } },
+    responses: { 200: { description: 'Success' }, ...errors(404) },
   }),
 });
 

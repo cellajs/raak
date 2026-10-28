@@ -114,7 +114,7 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   }, [searchQuery]);
 
   const searchLabel = t('c:search_in_resource', {
-    resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() }) : t('c:project').toLowerCase(),
+    resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace') }) : t('c:project'),
   });
 
   return (

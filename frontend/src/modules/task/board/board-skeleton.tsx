@@ -169,7 +169,7 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
           <Button className="max-md:hidden" variant="secondary">
             <PlusIcon />
             <span className="max-md:hidden xl:hidden">{t('c:add')}</span>
-            <span className="max-xl:hidden">{t('c:add_resource', { resource: t('c:project').toLowerCase() })}</span>
+            <span className="max-xl:hidden">{t('c:add_resource', { resource: t('c:project') })}</span>
           </Button>
           <Button className="max-md:hidden" variant="outline">
             <SettingsIcon />
