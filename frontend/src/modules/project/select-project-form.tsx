@@ -10,7 +10,7 @@ import { useOverlayClose } from '~/modules/common/overlay-close';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { ProjectSuggestionCombobox } from '~/modules/project/project-suggestion-combobox';
 import { useProjectAssignMutation } from '~/modules/project/query';
-import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
+import { Form, FormField, FormItem, FormLabel, FormMessage, RequiredMark } from '~/modules/ui/field';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { formResolver } from '~/utils/form-resolver';
 
@@ -76,7 +76,7 @@ export function SelectProjectForm() {
             <FormItem name="selectedProjects">
               <FormLabel>
                 {t('c:project_other')}
-                <span className="ml-1 opacity-50">*</span>
+                <RequiredMark />
               </FormLabel>
               <ProjectSuggestionCombobox
                 value={value}

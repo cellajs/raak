@@ -1,10 +1,11 @@
 import { accessScopes, appConfig } from 'shared';
+import { escapeRegExp } from 'shared/utils/escape-regexp';
 
 /** The two audiences a token from this server can carry: the MCP server of an organization, or the REST API of a tenant. */
 export type ResourceRef = { face: 'mcp'; tenantId: string; organizationId: string } | { face: 'api'; tenantId: string };
 
 /**
- * RFC 8707 resource identifiers are tenant-qualified (D7), so a token never crosses tenants. The ids are percent-encoded:
+ * RFC 8707 resource identifiers are tenant-qualified, so a token never crosses tenants. The ids are percent-encoded:
  * a guard builds its challenge header from the ids of the request path, before anything checked them.
  */
 export function resourceUri(ref: ResourceRef): string {
@@ -14,7 +15,6 @@ export function resourceUri(ref: ResourceRef): string {
     : `${appConfig.backendUrl}/t/${tenantId}`;
 }
 
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const mcpResource = new RegExp(`^${escapeRegExp(appConfig.mcpUrl)}/([^/]+)/([^/]+)/mcp$`);
 const apiResource = new RegExp(`^${escapeRegExp(appConfig.backendUrl)}/t/([^/]+)$`);
 

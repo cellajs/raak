@@ -1,5 +1,5 @@
 import type { Project } from 'sdk';
-import type z from 'zod';
+import type { z } from 'zod';
 import type { ChannelEnrichment } from '~/modules/entities/types';
 import type { projectsRouteSearchParamsSchema } from '~/modules/project/search-params-schemas';
 

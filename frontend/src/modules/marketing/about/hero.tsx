@@ -48,7 +48,7 @@ export function Hero({ title, text, children }: HeroProps) {
           </span>
         </h1>
         {text && (
-          <h2 className="mb-8 text-foreground/90 text-xl leading-8 md:text-2xl md:leading-10">
+          <h2 className="mb-8 text-foreground text-xl leading-8 md:text-2xl md:leading-10">
             <Trans t={t} i18nKey={text} components={{ em: <em />, strong: <strong /> }} />
           </h2>
         )}

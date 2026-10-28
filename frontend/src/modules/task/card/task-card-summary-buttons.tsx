@@ -30,7 +30,7 @@ export function TaskCardSummaryButtons({ task }: TaskCardSummaryButtonsProps) {
           </div>
         )}
       </div>
-      {env.VITE_DEBUG_UI && <span className="ml-2 text-center text-muted-foreground/50 text-sm">#{task.displayOrder}</span>}
+      {env.VITE_DEBUG_UI && <span className="ml-2 text-center text-faint-foreground text-sm">#{task.displayOrder}</span>}
     </>
   );
 }

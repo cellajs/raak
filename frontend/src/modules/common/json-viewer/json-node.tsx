@@ -95,7 +95,7 @@ function JsonNodeBase({ value, path, keyName, depth, visualDepth }: JsonNodeProp
           // biome-ignore lint/suspicious/noArrayIndexKey: rendering an inline primitive array; items have no stable id.
           <span key={index}>
             <InlinePrimitiveValue value={item} />
-            {index < value.length - 1 && <span className="opacity-70">, </span>}
+            {index < value.length - 1 && <span className="text-faint-foreground">, </span>}
           </span>
         ))}
         <span className={jsonViewerTheme.bracket}>]</span>
@@ -113,7 +113,7 @@ function JsonNodeBase({ value, path, keyName, depth, visualDepth }: JsonNodeProp
           {...rowProps}
           className={cn(
             'group/node -mx-1 -my-px inline-flex items-center gap-0.5 rounded py-px pr-1',
-            isExpandable ? 'cursor-pointer hover:bg-accent/50' : 'pointer-events-none',
+            isExpandable ? 'cursor-pointer hover:bg-muted' : 'pointer-events-none',
           )}
           onClick={isExpandable ? () => setIsExpanded((prev) => !prev) : undefined}
         >

@@ -116,26 +116,17 @@ export type StxBase = {
 };
 
 /**
- * A live notification that a product entity or a membership changed, naming the entity, its path and sequence range rather than the row. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
+ * A live change of product rows, naming the rows, their path and sequence range but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
  */
-export type StreamNotification = {
-  /**
-   * Discriminant for the notification: product-entity sync vs membership change
-   */
-  kind: 'product' | 'membership';
+export type StreamChange = {
   /**
    * Change kind; moveOut = the row left this path (reparent) and is no longer readable there
    */
   action: 'create' | 'update' | 'delete' | 'moveOut';
-  productType: 'task' | 'label' | 'attachment' | null;
-  resourceType: 'request' | 'membership' | 'inactive_membership' | 'tenant' | 'system_role' | 'service_account' | 'api_key' | 'oauth_client' | null;
-  subjectId: string | null;
-  organizationId: string | null;
+  productType: 'task' | 'label' | 'attachment';
+  subjectId: string;
+  organizationId: string;
   tenantId: string | null;
-  /**
-   * Channel entity type for membership events (e.g. organization, project)
-   */
-  channelType: 'organization' | 'workspace' | 'project' | null;
   /**
    * Id path of the affected rows (root-first ancestor ids); moveOut carries the OLD path
    */
@@ -145,12 +136,12 @@ export type StreamNotification = {
    */
   seq: number | null;
   /**
-   * Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)
+   * Deepest channel entity ID above the rows, which groups unseen counts
    */
   channelId: string | null;
   stx: StxBase | null;
   /**
-   * Last sequence position for a batched notification: client should fetch range
+   * Last sequence position for a batched change: client should fetch range
    */
   batchUntilSeq: number | null;
   /**
@@ -166,26 +157,45 @@ export type StreamNotification = {
    */
   propagation: {
     /**
-     * Product type whose change triggered the propagation (e.g. label)
+     * Embedded product type whose change triggered the propagation
      */
     embeddedProduct: 'task' | 'label' | 'attachment';
     /**
-     * Host product type whose cache should be patched (e.g. task)
+     * Host product type whose cache should be patched
      */
     hostProduct: 'task' | 'label' | 'attachment';
     /**
-     * Column on the host product that embeds the changed product (e.g. labels)
+     * Column on the host product that embeds the changed product
      */
     hostColumn: string;
     /**
-     * Host product IDs that need cache refresh
+     * Embedded row IDs whose cached copies in host rows need a refresh
      */
     update: Array<string>;
     /**
-     * Host product IDs that need the embedded reference removed
+     * Embedded row IDs (deleted or soft deleted) that host rows drop
      */
     remove: Array<string>;
   } | null;
+};
+
+/**
+ * A live message that something which is not a product row changed, such as a membership or an inbox row. It arrives as a `signal` event on `/entities/app/stream`; the handler the type registers refetches what it shows.
+ */
+export type StreamSignal = {
+  /**
+   * Registered signal type, `<module>.<past tense>` (e.g. membership.changed, notification.created)
+   */
+  type: string;
+  organizationId: string | null;
+  /**
+   * The one row the signal is about; null when it is about the organization as a whole
+   */
+  subjectId: string | null;
+  /**
+   * Counter value of a versioned signal, when the sender knows it; catchup returns the stored one
+   */
+  version: number | null;
 };
 
 /**
@@ -402,7 +412,7 @@ export type MeAuthData = {
     revocationReason: 'sign_out' | 'other_session' | 'mfa_enabled' | 'session_cap' | 'replaced' | 'impersonation_stopped' | null;
     impersonatorSessionId: string | null;
     steppedUpAt: string | null;
-    steppedUpVia: 'passkey' | 'totp' | 'email' | null;
+    steppedUpVia: 'passkey' | 'totp' | 'email' | 'sso' | null;
     isCurrent: boolean;
     /**
      * The browser was first seen recently and is not the first one known.
@@ -641,14 +651,14 @@ export type Tenant = {
   statusChangedAt: string;
   restrictions: {
     /**
-     * Entity quotas (0 = unlimited)
+     * Caps per tenant on entities, service accounts and API keys (0 = unlimited)
      */
     quotas: {
       [key: string]: number;
     };
     rateLimits: {
       /**
-       * Max API points per hour per user within this tenant (0 = no tenant limit; the global safety ceiling still applies)
+       * Max API points per hour per actor within this tenant (0 = no tenant limit; the global safety ceiling still applies)
        */
       apiPointsPerHour: number;
     };
@@ -942,6 +952,9 @@ export type Label = {
   stx: StxBase;
 };
 
+/**
+ * What an invite does, or would do, with one address, told only from what the inviter already sees: the channel's invitations by address and its members by their listed address. An address an account holds reads as one no account holds.
+ */
 export type InviteOutcome = {
   /**
    * The primary email address, shown to every user who shares an organization with this one.
@@ -1163,7 +1176,7 @@ export type GetPendingMfaResponse = GetPendingMfaResponses[keyof GetPendingMfaRe
 export type InvokeTokenData = {
   body?: never;
   path: {
-    type: 'oauth-verification' | 'invitation' | 'magic' | 'step-up';
+    type: 'oauth-verification' | 'invitation' | 'magic';
     token: string;
   };
   query?: never;
@@ -1202,7 +1215,7 @@ export type InvokeTokenError = InvokeTokenErrors[keyof InvokeTokenErrors];
 export type GetTokenDataData = {
   body?: never;
   path: {
-    type: 'oauth-verification' | 'invitation' | 'magic' | 'step-up';
+    type: 'oauth-verification' | 'invitation' | 'magic';
     id: string;
   };
   query?: never;
@@ -1302,6 +1315,51 @@ export type AcceptInvitationTokenResponses = {
 };
 
 export type AcceptInvitationTokenResponse = AcceptInvitationTokenResponses[keyof AcceptInvitationTokenResponses];
+
+export type ConfirmInvitationAddressData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/auth/invitation-token/confirm-address';
+};
+
+export type ConfirmInvitationAddressErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type ConfirmInvitationAddressError = ConfirmInvitationAddressErrors[keyof ConfirmInvitationAddressErrors];
+
+export type ConfirmInvitationAddressResponses = {
+  /**
+   * Confirmation link sent to the invited address
+   */
+  204: void;
+};
+
+export type ConfirmInvitationAddressResponse = ConfirmInvitationAddressResponses[keyof ConfirmInvitationAddressResponses];
 
 export type StartImpersonationData = {
   body: {
@@ -1528,7 +1586,7 @@ export type SendMagicLinkError = SendMagicLinkErrors[keyof SendMagicLinkErrors];
 
 export type SendMagicLinkResponses = {
   /**
-   * Magic link email sent (or silently ignored if email not found)
+   * Accepted alike whether a link, a pointer to the institution or nothing was mailed
    */
   204: void;
 };
@@ -1656,7 +1714,7 @@ export type GenerateTotpKeyError = GenerateTotpKeyErrors[keyof GenerateTotpKeyEr
 
 export type GenerateTotpKeyResponses = {
   /**
-   * Challenge created
+   * TOTP key generated
    */
   200: {
     totpUri: string;
@@ -2540,7 +2598,12 @@ export type SendSsoRecoveryLinkResponse = SendSsoRecoveryLinkResponses[keyof Sen
 export type GetStepUpData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * The kind of action asked about: `factor` hands out lasting access, `account` changes or ends the account, `enroll` sets up a second factor.
+     */
+    tier?: 'factor' | 'account' | 'enroll';
+  };
   url: '/auth/step-up';
 };
 
@@ -2579,13 +2642,13 @@ export type GetStepUpResponses = {
    */
   200: {
     /**
-     * The session proved its user presence recently enough for account-security actions.
+     * The session proved its user present recently enough for the tier.
      */
     steppedUp: boolean;
     /**
-     * What the user can offer to step up; empty while impersonating.
+     * What the user can offer to step up for the tier; empty while impersonating.
      */
-    methods: Array<'passkey' | 'totp' | 'email' | 'sign_in'>;
+    methods: Array<'passkey' | 'totp' | 'email' | 'enroll'>;
   };
 };
 
@@ -2607,6 +2670,7 @@ export type StepUpData = {
       type: 'public-key';
     };
     totpCode?: string;
+    emailCode?: string;
   };
   path?: never;
   query?: never;
@@ -2699,16 +2763,14 @@ export type GetStepUpPasskeyChallengeResponses = {
 
 export type GetStepUpPasskeyChallengeResponse = GetStepUpPasskeyChallengeResponses[keyof GetStepUpPasskeyChallengeResponses];
 
-export type SendStepUpLinkData = {
-  body?: {
-    redirect?: string;
-  };
+export type SendStepUpCodeData = {
+  body?: never;
   path?: never;
   query?: never;
-  url: '/auth/step-up/link';
+  url: '/auth/step-up/code';
 };
 
-export type SendStepUpLinkErrors = {
+export type SendStepUpCodeErrors = {
   /**
    * Bad request: problem processing request.
    */
@@ -2735,16 +2797,16 @@ export type SendStepUpLinkErrors = {
   429: TooManyRequestsError;
 };
 
-export type SendStepUpLinkError = SendStepUpLinkErrors[keyof SendStepUpLinkErrors];
+export type SendStepUpCodeError = SendStepUpCodeErrors[keyof SendStepUpCodeErrors];
 
-export type SendStepUpLinkResponses = {
+export type SendStepUpCodeResponses = {
   /**
-   * Link sent
+   * Code sent
    */
   204: void;
 };
 
-export type SendStepUpLinkResponse = SendStepUpLinkResponses[keyof SendStepUpLinkResponses];
+export type SendStepUpCodeResponse = SendStepUpCodeResponses[keyof SendStepUpCodeResponses];
 
 export type GetConnectionsData = {
   body?: never;
@@ -3135,32 +3197,35 @@ export type PostAppCatchupResponses = {
    */
   200: {
     /**
-     * Per-org change summary: { [organizationId]: { signals?, propagation? } }
+     * Per organization: signal versions and propagation hints, { [organizationId]: { signals?, propagation? } }
      */
-    changes: {
+    organizations: {
       [key: string]: {
+        /**
+         * Versions by signal type: bump-only counters a client compares with the ones it stored
+         */
         signals?: {
-          membership?: number;
+          [key: string]: number;
         };
         propagation?: Array<{
           /**
-           * Product type whose change triggered the propagation (e.g. label)
+           * Embedded product type whose change triggered the propagation
            */
           embeddedProduct: 'task' | 'label' | 'attachment';
           /**
-           * Host product type whose cache should be patched (e.g. task)
+           * Host product type whose cache should be patched
            */
           hostProduct: 'task' | 'label' | 'attachment';
           /**
-           * Column on the host product that embeds the changed product (e.g. labels)
+           * Column on the host product that embeds the changed product
            */
           hostColumn: string;
           /**
-           * Host product IDs that need cache refresh
+           * Embedded row IDs whose cached copies in host rows need a refresh
            */
           update: Array<string>;
           /**
-           * Host product IDs that need the embedded reference removed
+           * Embedded row IDs (deleted or soft deleted) that host rows drop
            */
           remove: Array<string>;
         }>;
@@ -3434,7 +3499,7 @@ export type GetMyAuthError = GetMyAuthErrors[keyof GetMyAuthErrors];
 
 export type GetMyAuthResponses = {
   /**
-   * User sign-up info
+   * Sign-in methods and sessions
    */
   200: MeAuthData;
 };
@@ -3557,7 +3622,7 @@ export type RevokeMySessionsResponses = {
       revocationReason: 'sign_out' | 'other_session' | 'mfa_enabled' | 'session_cap' | 'replaced' | 'impersonation_stopped' | null;
       impersonatorSessionId: string | null;
       steppedUpAt: string | null;
-      steppedUpVia: 'passkey' | 'totp' | 'email' | null;
+      steppedUpVia: 'passkey' | 'totp' | 'email' | 'sso' | null;
     }>;
     /**
      * Identifiers of items that could not be processed
@@ -3868,9 +3933,6 @@ export type GetPublicCountsResponses = {
     organization: number;
     workspace: number;
     project: number;
-    task: number;
-    label: number;
-    attachment: number;
   };
 };
 
@@ -4105,6 +4167,46 @@ export type UpdateNotificationPreferencesResponses = {
 
 export type UpdateNotificationPreferencesResponse = UpdateNotificationPreferencesResponses[keyof UpdateNotificationPreferencesResponses];
 
+export type OpenUnsubscribeLinkData = {
+  body?: never;
+  path?: never;
+  query: {
+    user: string;
+    category: 'digest' | 'mention' | 'comment' | 'newsletter';
+    token: string;
+  };
+  url: '/notifications/unsubscribe';
+};
+
+export type OpenUnsubscribeLinkErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type OpenUnsubscribeLinkError = OpenUnsubscribeLinkErrors[keyof OpenUnsubscribeLinkErrors];
+
 export type UnsubscribeNotificationsData = {
   body?: never;
   path?: never;
@@ -4144,6 +4246,64 @@ export type UnsubscribeNotificationsErrors = {
 };
 
 export type UnsubscribeNotificationsError = UnsubscribeNotificationsErrors[keyof UnsubscribeNotificationsErrors];
+
+export type UnsubscribeNotificationsResponses = {
+  /**
+   * Category turned off
+   */
+  204: void;
+};
+
+export type UnsubscribeNotificationsResponse = UnsubscribeNotificationsResponses[keyof UnsubscribeNotificationsResponses];
+
+export type ResubscribeNotificationsData = {
+  body?: never;
+  path?: never;
+  query: {
+    user: string;
+    category: 'digest' | 'mention' | 'comment' | 'newsletter';
+    token: string;
+  };
+  url: '/notifications/resubscribe';
+};
+
+export type ResubscribeNotificationsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type ResubscribeNotificationsError = ResubscribeNotificationsErrors[keyof ResubscribeNotificationsErrors];
+
+export type ResubscribeNotificationsResponses = {
+  /**
+   * Category turned on
+   */
+  204: void;
+};
+
+export type ResubscribeNotificationsResponse = ResubscribeNotificationsResponses[keyof ResubscribeNotificationsResponses];
 
 export type GetPublicProjectData = {
   body?: never;
@@ -5152,7 +5312,7 @@ export type UpdateTenantData = {
      */
     restrictions?: {
       /**
-       * Entity quotas (0 = unlimited)
+       * Caps per tenant on entities, service accounts and API keys (0 = unlimited)
        */
       quotas?: {
         user?: number;
@@ -5565,7 +5725,7 @@ export type GetOrganizationsData = {
     limit?: number;
     relatableUserId?: string;
     role?: 'admin' | 'member' | 'guest';
-    excludeArchived?: 'true' | 'false';
+    excludeArchived?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/organizations';
@@ -6012,7 +6172,7 @@ export type GetProjectsData = {
     workspaceId?: string;
     relatableUserId?: string;
     role?: 'admin' | 'member' | 'guest';
-    excludeArchived?: 'true' | 'false';
+    excludeArchived?: 'true' | 'false' | boolean;
     scope?: 'memberships' | 'organization';
     include?: string;
   };
@@ -6623,7 +6783,7 @@ export type GetWorkspacesData = {
     limit?: number;
     organizationId?: string;
     role?: 'admin' | 'member' | 'guest';
-    excludeArchived?: 'true' | 'false';
+    excludeArchived?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/workspaces';
@@ -6968,7 +7128,7 @@ export type CreateAttachmentsError = CreateAttachmentsErrors[keyof CreateAttachm
 
 export type CreateAttachmentsResponses = {
   /**
-   * Attachments already created (idempotent)
+   * Nothing created: rows an earlier attempt created (idempotent), and rejected ids
    */
   200: {
     data: Array<Attachment>;
@@ -7134,9 +7294,7 @@ export type UpdateAttachmentData = {
     organizationId: string;
     id: string;
   };
-  query?: {
-    fullResponse?: 'true' | 'false' | boolean;
-  };
+  query?: never;
   url: '/{tenantId}/{organizationId}/attachments/{id}';
 };
 
@@ -7420,7 +7578,7 @@ export type CreateLabelsError = CreateLabelsErrors[keyof CreateLabelsErrors];
 
 export type CreateLabelsResponses = {
   /**
-   * Labels already created (idempotent)
+   * Nothing created: rows an earlier attempt created (idempotent), and rejected ids
    */
   200: {
     data: Array<Label>;
@@ -7962,7 +8120,7 @@ export type HandleMembershipInvitationError = HandleMembershipInvitationErrors[k
 
 export type HandleMembershipInvitationResponses = {
   /**
-   * Invitation was accepted
+   * The invitation's organization
    */
   200: ChannelBase;
 };
@@ -8123,7 +8281,7 @@ export type GetPendingMembershipsResponses = {
        * The primary email address, shown to every user who shares an organization with this one.
        */
       email: string;
-      role: 'admin' | 'member' | 'guest' | null;
+      role: 'admin' | 'member' | 'guest';
       createdAt: string;
       remindedAt: string | null;
       createdBy: ActorRef | null;
@@ -8842,7 +9000,7 @@ export type CreateTasksError = CreateTasksErrors[keyof CreateTasksErrors];
 
 export type CreateTasksResponses = {
   /**
-   * Tasks already created (idempotent)
+   * Nothing created: rows an earlier attempt created (idempotent), and rejected ids
    */
   200: {
     data: Array<Task>;

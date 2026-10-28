@@ -8,14 +8,14 @@ import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
-import { projectsTable } from '#/modules/project/project-db';
+import { type InsertProjectModel, projectsTable } from '#/modules/project/project-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { buildChannelListReadWhere, type ChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 import { getOrderColumns } from '#/utils/order-column';
 import { textSearchFilter } from '#/utils/sql';
 
 interface InsertProjectsOpts {
-  projects: (typeof projectsTable.$inferInsert)[];
+  projects: InsertProjectModel[];
 }
 
 /** Insert projects and return the created rows. */
@@ -26,7 +26,7 @@ export const insertProjects = async (ctx: DbContext, { projects }: InsertProject
 
 interface UpdateProjectOpts {
   id: string;
-  values: Partial<typeof projectsTable.$inferInsert>;
+  values: Partial<InsertProjectModel>;
 }
 
 /** Update a project by ID and return the updated row. */

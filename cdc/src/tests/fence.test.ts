@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../lib/db', () => ({ cdcDb: {} }));
-vi.mock('../pipeline/handle-message', () => ({ fenceMarkerPrefix: 'sync-fence', runBetweenFlushes: vi.fn() }));
+vi.mock('../pipeline/handle-message', () => ({ runBetweenFlushes: vi.fn() }));
 
 import { compareBooks } from '../pipeline/verify';
 import { addCounts, type CounterDeltas, fence, isVisibleIn, parseSnapshot, plainCounts } from '../services/fence';
@@ -112,7 +112,15 @@ describe('fence', () => {
 describe('plainCounts and addCounts', () => {
   it('keeps the counts and leaves out the stamps, the frontiers and the signal', () => {
     const deltas = counters({
-      org: { 'e:c:attachment': 2, 'e:c:h:attachment': 2, 'm:c:total': 1, 'e:f:attachment': 40, 'e:li:h:attachment': 17, membership: 1, sequence: 3 },
+      org: {
+        'e:c:attachment': 2,
+        'e:c:h:attachment': 2,
+        'm:c:total': 1,
+        'e:f:attachment': 40,
+        'e:li:h:attachment': 17,
+        's:membership.changed': 1,
+        sequence: 3,
+      },
     });
 
     expect(plainCounts(deltas)).toEqual(counters({ org: { 'e:c:attachment': 2, 'e:c:h:attachment': 2, 'm:c:total': 1 } }));

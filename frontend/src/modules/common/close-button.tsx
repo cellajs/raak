@@ -8,7 +8,6 @@ import { cn } from '~/utils/cn';
 const sizeConfig = {
   sm: { icon: 'size-4', button: 'size-6' },
   md: { icon: 'size-5', button: 'size-7' },
-  lg: { icon: 'size-6', button: 'size-8' },
 } as const;
 
 interface CloseButtonProps {
@@ -24,7 +23,7 @@ export function CloseButton({ onClick, size = 'md', label = 'c:close', className
   const { icon, button } = sizeConfig[size];
 
   return (
-    <Button variant="ghost" size="icon" aria-label={t(label)} className={cn(button, 'opacity-70 hover:opacity-100', className)} onClick={onClick}>
+    <Button variant="ghost" size="icon" aria-label={t(label)} className={cn(button, className)} onClick={onClick}>
       <XIcon className={icon} />
     </Button>
   );

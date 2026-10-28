@@ -11,8 +11,8 @@ import { defaultHook } from '#/utils/default-hook';
 const app = new OpenAPIHono<Env>({ defaultHook });
 
 app.openapi(labelRoutes.createLabels, async (ctx) => {
-  const { replayed, ...result } = await createLabelsOp(ctx, ctx.req.valid('json'));
-  return ctx.json(result, replayed ? 200 : 201);
+  const { created, ...result } = await createLabelsOp(ctx, ctx.req.valid('json'));
+  return ctx.json(result, created ? 201 : 200);
 });
 
 app.openapi(labelRoutes.getLabels, async (ctx) => {
@@ -35,7 +35,7 @@ app.openapi(labelRoutes.updateLabel, async (ctx) => {
 
 app.openapi(labelRoutes.deleteLabels, async (ctx) => {
   const { ids } = ctx.req.valid('json');
-  const result = await deleteLabelsOp(ctx, Array.isArray(ids) ? ids : [ids]);
+  const result = await deleteLabelsOp(ctx, ids);
   return ctx.json(result, 200);
 });
 

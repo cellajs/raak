@@ -8,6 +8,10 @@ import {
 import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
+/**
+ * Takes a project out of the caller's workspace; the caller keeps the project membership.
+ * @throws The refusals of `getValidChannel` for `read`; 404 without a membership.
+ */
 export async function removeProjectWorkspaceOp(ctx: UserContext, id: string) {
   const { entity: project } = await getValidChannel(ctx, id, 'project', 'read');
   const membership = requireCurrentUserProjectMembership(ctx, project);

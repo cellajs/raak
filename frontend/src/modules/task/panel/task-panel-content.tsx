@@ -3,7 +3,6 @@ import type { Project } from 'sdk';
 import { Virtualizer, WindowVirtualizer } from 'virtua';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { BoardPanelBody } from '~/modules/common/board/board-panel';
-import { useBoardStore } from '~/modules/common/board/board-store';
 import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { MotionTaskCard } from '~/modules/task/card/motion-task-card';
@@ -41,7 +40,6 @@ interface TaskPanelContentProps {
 
 export const TaskPanelContent = memo(function TaskPanelContent({ project, panelId, tasks, counts, windowScroll }: TaskPanelContentProps) {
   const isMobile = useBreakpointBelow('sm');
-  const setActivePanel = useBoardStore((state) => state.setActivePanel);
   const hasSelectedTasks = useTaskInteractionStore((state) => state.selectedTaskIds.length > 0);
 
   const { virtualizerRef, scrollViewportRef, handleSectionToggle, shift } = usePanelScrolling({
@@ -90,10 +88,6 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
     counts.showIced && !hostsDraft && '[&_[data-task-card-id]]:scroll-mb-9',
   );
 
-  const handlePanelActivation = () => {
-    if (!isMobile) setActivePanel(project.id);
-  };
-
   const renderTask = (task: TaskProps['task']) => {
     if (isDraftTask(task)) return <DraftTaskItem key={task.id} task={task} project={project} onStatusChange={handleStatusChange} />;
     return <MotionTaskCard key={task.id} task={task} />;
@@ -101,13 +95,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
 
   return (
     <PanelTasksContext.Provider value={tasks}>
-      <BoardPanelBody
-        hasSelection={hasSelectedTasks}
-        windowScroll={windowScroll}
-        collapsedCount={collapsedMainCount(counts)}
-        onMouseEnter={handlePanelActivation}
-        onFocusCapture={handlePanelActivation}
-      >
+      <BoardPanelBody hasSelection={hasSelectedTasks} windowScroll={windowScroll} collapsedCount={collapsedMainCount(counts)}>
         {isMobile || windowScroll ? (
           <div className="mb-10 flex h-full flex-col" id={`tasks-list-${project.id}`}>
             {topSlot}

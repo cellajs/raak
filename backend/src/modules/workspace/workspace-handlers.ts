@@ -35,7 +35,7 @@ app.openapi(workspaceRoutes.updateWorkspace, async (ctx) => {
 
 app.openapi(workspaceRoutes.deleteWorkspaces, async (ctx) => {
   const { ids } = ctx.req.valid('json');
-  const data = await deleteWorkspacesOp(ctx, Array.isArray(ids) ? ids : [ids]);
+  const data = await deleteWorkspacesOp(ctx, ids);
   return ctx.json(data, 200);
 });
 

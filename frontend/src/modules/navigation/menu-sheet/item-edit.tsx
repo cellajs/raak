@@ -14,7 +14,6 @@ import { useMemberUpdateMutation } from '~/modules/memberships/query-mutations';
 import { buildMembershipUpdate } from '~/modules/navigation/menu-sheet/helpers/build-membership-update';
 import { menuItemOrder } from '~/modules/navigation/menu-sheet/helpers/menu-item-order';
 import { menuListOpenMs } from '~/modules/navigation/menu-sheet/helpers/menu-list-motion';
-import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 import { tw } from '~/utils/tw';
 
@@ -30,15 +29,14 @@ interface MembershipFlagButtonProps {
 
 function MembershipFlagButton({ icon: Icon, title, onClick }: MembershipFlagButtonProps) {
   return (
-    <Button
-      variant="none"
-      size="sm"
-      className="link-decoration active:link-decoration-strong focus-inset -mx-1 -my-0.5 h-5 rounded-sm px-1 text-primary text-xs leading-3 opacity-80 hover:underline hover:opacity-100"
+    <button
+      type="button"
+      className="link-decoration active:link-decoration-strong focus-effect focus-inset active:press -mx-1 -my-0.5 inline-flex h-5 items-center gap-1.5 whitespace-nowrap rounded-sm px-1 font-medium text-foreground-soft text-xs leading-3 transition-colors hover:text-foreground hover:underline"
       onClick={onClick}
     >
       <Icon className="size-3.25 group-data-[subitem=true]/options-item:size-3" />
       {title}
-    </Button>
+    </button>
   );
 }
 
@@ -165,7 +163,7 @@ export function MenuSheetItemEdit({
       {/* Not a clipping box: focus scrolls one to reveal a button whose box reaches past it */}
       <div className="relative min-w-0 grow text-left">
         <div className="truncate text-md leading-5 group-data-[archived=true]/options-item:opacity-70">
-          {item.name} {env.VITE_DEBUG_MODE && <span className="text-muted-foreground/50">#{item.membership.displayOrder}</span>}
+          {item.name} {env.VITE_DEBUG_MODE && <span className="text-faint-foreground">#{item.membership.displayOrder}</span>}
         </div>
         <div className="flex items-center gap-2">
           <MembershipFlagButton

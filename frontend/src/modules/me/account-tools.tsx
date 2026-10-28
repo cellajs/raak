@@ -17,8 +17,8 @@ import { AuthSectionTitle } from '~/modules/me/auth-section-title';
 import { ConnectedAppsList } from '~/modules/me/connected-apps-list';
 import { DeleteSelf } from '~/modules/me/delete-self';
 import { IdentityTile } from '~/modules/me/identity-tile';
-import { MfaSwitch } from '~/modules/me/mfa/switch';
-import { PasskeysList } from '~/modules/me/passkeys/list';
+import { MfaSwitch } from '~/modules/me/mfa-switch';
+import { PasskeysList } from '~/modules/me/passkeys-list';
 import { meAuthQueryOptions } from '~/modules/me/query';
 import { SessionsList } from '~/modules/me/sessions-list';
 import { Totp } from '~/modules/me/totp';
@@ -125,7 +125,7 @@ export function AccountAuthenticationCard() {
                 ) : (
                   <Button
                     key={id}
-                    variant="plain"
+                    variant="secondary"
                     className="sm:self-start"
                     loading={connecting === id}
                     onClick={() => connectTo(id, (search) => `${appConfig.backendAuthUrl}/${id}?${new URLSearchParams(search)}`)}
@@ -163,7 +163,7 @@ export function AccountAuthenticationCard() {
                 ) : (
                   <Button
                     key={connectionId}
-                    variant={connectionId === toConnect?.connectionId ? 'default' : 'plain'}
+                    variant={connectionId === toConnect?.connectionId ? 'default' : 'secondary'}
                     className="max-w-full sm:self-start"
                     loading={connecting === connectionId}
                     onClick={() => connectTo(connectionId, (search) => ssoStartUrl({ connectionId }, search))}

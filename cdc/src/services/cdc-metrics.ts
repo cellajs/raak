@@ -3,8 +3,9 @@ import { cdcSlotName, resourceLimits } from '../constants';
 import { cdcDb } from '../lib/db';
 import { log } from '../lib/pino';
 
-const bucketMs = 10_000; // 10s per bucket
-const bucketCount = 6; // 6 buckets = 60s rolling window
+const bucketMs = 10_000;
+/** Buckets in the rolling window: a minute. */
+const bucketCount = 6;
 const lagPollMs = 10_000;
 
 const { walLagWarnBytes, walLagUnhealthyBytes } = resourceLimits.health;
@@ -23,28 +24,16 @@ function percentile(sorted: number[], p: number): number {
 }
 
 class Metrics {
+  /** WAL bytes behind the slot's acknowledged position (null until first poll). */
+  lagBytes: number | null = null;
+  /** Whether PostgreSQL reports the replication slot as active (null until first poll). */
+  slotActive: boolean | null = null;
+  /** pg_replication_slots.wal_status: 'reserved', 'extended', 'unreserved' or 'lost'; null until the first poll. */
+  slotStatus: string | null = null;
   private buckets: Bucket[] = [];
-  private walLagBytes: number | null = null;
-  private walSlotActive: boolean | null = null;
-  private walSlotStatus: string | null = null;
   private lagInterval: ReturnType<typeof setInterval> | null = null;
   private hasWarned = false;
   private hasGoneUnhealthy = false;
-
-  /** WAL bytes behind the slot's acknowledged position (null until first poll). */
-  get lagBytes(): number | null {
-    return this.walLagBytes;
-  }
-
-  /** Whether PostgreSQL reports the replication slot as active (null until first poll). */
-  get slotActive(): boolean | null {
-    return this.walSlotActive;
-  }
-
-  /** pg_replication_slots.wal_status: 'reserved', 'extended', 'unreserved' or 'lost'; null until the first poll. */
-  get slotStatus(): string | null {
-    return this.walSlotStatus;
-  }
 
   private currentBucket(): Bucket {
     const now = Date.now();
@@ -59,10 +48,10 @@ class Metrics {
 
   /** Record one recorded and dispatched flush. */
   recordProcessing(eventCount: number, durationMs: number): void {
-    const b = this.currentBucket();
-    b.eventCount += eventCount;
-    b.processingDurations.push(durationMs);
-    b.batchSizes.push(eventCount);
+    const bucket = this.currentBucket();
+    bucket.eventCount += eventCount;
+    bucket.processingDurations.push(durationMs);
+    bucket.batchSizes.push(eventCount);
   }
 
   /** Snapshot for health endpoint. */
@@ -73,26 +62,26 @@ class Metrics {
     let windowMs = 0;
 
     const cutoff = Date.now() - bucketCount * bucketMs;
-    for (const b of this.buckets) {
-      if (b.startMs < cutoff) continue;
-      totalEvents += b.eventCount;
-      allProcessing.push(...b.processingDurations);
-      allBatchSizes.push(...b.batchSizes);
-      windowMs = Math.max(windowMs, Date.now() - b.startMs);
+    for (const bucket of this.buckets) {
+      if (bucket.startMs < cutoff) continue;
+      totalEvents += bucket.eventCount;
+      allProcessing.push(...bucket.processingDurations);
+      allBatchSizes.push(...bucket.batchSizes);
+      windowMs = Math.max(windowMs, Date.now() - bucket.startMs);
     }
 
     const sortedProc = allProcessing.slice().sort((a, b) => a - b);
     const sortedBatch = allBatchSizes.slice().sort((a, b) => a - b);
     const windowSec = Math.max(1, windowMs / 1000);
 
-    const avgBatchSize = sortedBatch.length ? Math.round((sortedBatch.reduce((a, b) => a + b, 0) / sortedBatch.length) * 10) / 10 : 0;
+    const avgBatchSize = sortedBatch.length ? Math.round((sortedBatch.reduce((sum, size) => sum + size, 0) / sortedBatch.length) * 10) / 10 : 0;
 
     return {
       windowSeconds: Math.round(windowSec),
       eventsProcessed: totalEvents,
       throughput: Math.round((totalEvents / windowSec) * 10) / 10,
       processingLatency: {
-        avg: sortedProc.length ? Math.round((sortedProc.reduce((a, b) => a + b, 0) / sortedProc.length) * 10) / 10 : 0,
+        avg: sortedProc.length ? Math.round((sortedProc.reduce((sum, duration) => sum + duration, 0) / sortedProc.length) * 10) / 10 : 0,
         p50: Math.round(percentile(sortedProc, 50) * 10) / 10,
         p95: Math.round(percentile(sortedProc, 95) * 10) / 10,
         p99: Math.round(percentile(sortedProc, 99) * 10) / 10,
@@ -104,10 +93,12 @@ class Metrics {
     };
   }
 
+  /** Reads the slot now and every `lagPollMs` after, until `stop`. */
   startLagPolling(): void {
     if (this.lagInterval) return;
-    this.pollLag();
-    this.lagInterval = setInterval(() => this.pollLag(), lagPollMs);
+    void this.pollLag();
+    this.lagInterval = setInterval(() => void this.pollLag(), lagPollMs);
+    this.lagInterval.unref?.();
   }
 
   /** Stop all background tasks. */
@@ -135,6 +126,7 @@ class Metrics {
     }
   }
 
+  /** Reads the slot's lag, whether it is read and its `wal_status`; a subscription that starts reads it at once too. */
   async pollLag(): Promise<void> {
     try {
       const result = await cdcDb.execute<{ lag_bytes: string; active: boolean; wal_status: string }>(
@@ -144,14 +136,14 @@ class Metrics {
       );
       const row = result.rows[0];
       if (row) {
-        this.walLagBytes = Number(row.lag_bytes);
-        this.walSlotActive = row.active;
-        this.walSlotStatus = row.wal_status;
-        this.logLagThresholds(this.walLagBytes);
+        this.lagBytes = Number(row.lag_bytes);
+        this.slotActive = row.active;
+        this.slotStatus = row.wal_status;
+        this.logLagThresholds(this.lagBytes);
       } else {
-        this.walLagBytes = null;
-        this.walSlotActive = false;
-        this.walSlotStatus = null;
+        this.lagBytes = null;
+        this.slotActive = false;
+        this.slotStatus = null;
         this.hasWarned = false;
         this.hasGoneUnhealthy = false;
       }

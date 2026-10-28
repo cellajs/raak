@@ -91,6 +91,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-foreground-soft: var(--foreground-soft);
+  --color-faint-foreground: var(--faint-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -275,6 +276,12 @@
   }
 }
 
+/* A label that heads content: a grid column, a table head, a tile list, a menu or select group, a nav panel, the key of a
+   key/value pair. A field label names an input and stays at the content step. A one-property utility next to it wins. */
+@utility group-label {
+  @apply font-medium text-muted-foreground text-sm;
+}
+
 /* A field framed by what it sits in, such as a filter bar, draws no edge of its own, at rest or under the pointer: its
    edge tokens turn transparent. Increased contrast leaves them alone, so the edge and its hover come back there. */
 @utility edgeless {
@@ -389,16 +396,16 @@
   }
 }
 
-/* The ring draws under `focus-ring` only (tailwind-plugin.ts): a narrow touch screen shows nothing on focus, on purpose.
+/* The ring and its offset draw under `focus-ring` only (tailwind-plugin.ts): a narrow touch screen shows nothing on focus, on purpose.
    outline-hidden keeps the forced-colors outline. */
 @layer components {
   .focus-effect {
-    @apply focus-visible:outline-hidden focus-ring:focus-visible:ring-2 focus-visible:ring-ring focus-visible:shadow-none focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+    @apply focus-visible:outline-hidden focus-ring:focus-visible:ring-2 focus-visible:ring-ring focus-visible:shadow-none focus-ring:focus-visible:ring-offset-2 focus-ring:focus-visible:ring-offset-background;
   }
 
   /* The same ring for an element whose focus lands on a descendant: a slider thumb's hidden input, an editor's contenteditable. */
   .focus-within-effect {
-    @apply has-focus-visible:outline-hidden focus-ring:has-focus-visible:ring-2 has-focus-visible:ring-ring has-focus-visible:shadow-none has-focus-visible:ring-offset-2 has-focus-visible:ring-offset-background;
+    @apply has-focus-visible:outline-hidden focus-ring:has-focus-visible:ring-2 has-focus-visible:ring-ring has-focus-visible:shadow-none focus-ring:has-focus-visible:ring-offset-2 focus-ring:has-focus-visible:ring-offset-background;
   }
 
   /* A mention, in the editor and in rendered bodies: the id marks it, so stored HTML sanitized of classes keeps the look. */
@@ -492,21 +499,30 @@
   /* Theme tokens */
   :root {
     --background: oklch(1 0 0);
+    /* Text takes one of four steps by role. Content: titles, values, cell text, field labels, active items. */
     --foreground: oklch(0.2067 0.01 285.49);
-    /* Running text a step below --foreground and above --muted-foreground: prose body and resting cards. */
+    /* Reading: running text, prose body and resting cards. */
     --foreground-soft: oklch(0.37 0.013 285.8);
+    /* Support: group labels, column headers, keys, descriptions, metadata. */
+    --muted-foreground: oklch(0.4571 0.0112 285.63);
+    /* Hint: placeholders, empty states, counts, separators, the required star. */
+    --faint-foreground: oklch(0.52 0.014 285.8);
+    /* Text on a neutral surface (card, popover, secondary, accent, sidebar) is content text; the names stay for shadcn ports. */
     --card: oklch(0.987 0.0013 285.76);
-    --card-foreground: oklch(0.2067 0.01 285.49);
+    --card-foreground: var(--foreground);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.2067 0.01 285.49);
+    --popover-foreground: var(--foreground);
+    /* High-emphasis actions and on-states: solid buttons, checked controls, links, selection. */
     --primary: oklch(0.2061 0.006 285.56);
     --primary-foreground: oklch(0.9627 0 0);
+    /* Lower-emphasis filled actions, such as Cancel. */
     --secondary: oklch(0.9575 0.0044 285.76);
-    --secondary-foreground: oklch(0.3138 0.0102 285.63);
+    --secondary-foreground: var(--foreground);
+    /* Subtle surfaces, and the hover and open fill of what a person presses (ghost, outline, toggle). */
     --muted: oklch(0.9575 0.0044 285.76);
-    --muted-foreground: oklch(0.4571 0.0112 285.63);
+    /* The highlighted item among navigable items (menu, select and search options) and the current item of a nav list. */
     --accent: oklch(0.9575 0.0044 285.76);
-    --accent-foreground: oklch(0.2067 0.01 285.49);
+    --accent-foreground: var(--foreground);
     --destructive: oklch(0.5137 0.2082 29.23);
     --destructive-foreground: oklch(0.9851 0 0);
     --border: oklch(0.92 0.004 285.75);
@@ -536,8 +552,9 @@
     --warning-foreground: oklch(0.9851 0 0);
     --info: oklch(0.5 0.16 255);
     --info-foreground: oklch(0.9851 0 0);
-    --brand: oklch(0.2061 0.006 285.56);
-    --brand-foreground: oklch(0.9627 0 0);
+    /* An app's identity color for special buttons, defaulting to each mode's primary; an app may set it apart. */
+    --brand: var(--primary);
+    --brand-foreground: var(--primary-foreground);
     /* The scrim behind every dialog, sheet and drawer, never blurred, so the page stays readable under it. */
     --overlay: oklch(0 0 0 / 0.5);
     /* Chart series: shadcn's neutral ramp on cella's zinc hue (zinc-300/500/600/700/800), shared by both modes. */
@@ -548,9 +565,9 @@
     --chart-5: oklch(0.274 0.006 286.033);
 
     --sidebar: oklch(0.9575 0.0044 285.76);
-    --sidebar-foreground: oklch(0.145 0.01 285.49);
+    --sidebar-foreground: var(--foreground);
     --sidebar-accent: oklch(0.97 0.003 285.76);
-    --sidebar-accent-foreground: oklch(0.205 0.01 285.49);
+    --sidebar-accent-foreground: var(--foreground);
     --sidebar-border: oklch(0.922 0.004 285.75);
     --sidebar-ring: var(--ring);
   }
@@ -559,18 +576,20 @@
     --background: oklch(0.1963 0.0092 285.53);
     --foreground: oklch(0.9627 0 0);
     --foreground-soft: oklch(0.871 0.006 286.3);
+    --muted-foreground: oklch(0.72 0.0128 285.86);
+    /* 4.5:1 on --muted, --secondary and --accent too, where a highlighted row puts a hint. */
+    --faint-foreground: oklch(0.68 0.0128 285.86);
     --card: oklch(0.232 0.0095 285.56);
-    --card-foreground: oklch(0.9627 0 0);
+    --card-foreground: var(--foreground);
     --popover: oklch(0.1963 0.0092 285.53);
-    --popover-foreground: oklch(0.9627 0 0);
+    --popover-foreground: var(--foreground);
     --primary: oklch(0.9851 0 0);
     --primary-foreground: oklch(0.3138 0.0102 285.63);
     --secondary: oklch(0.3138 0.0102 285.63);
-    --secondary-foreground: oklch(0.9851 0 0);
+    --secondary-foreground: var(--foreground);
     --muted: oklch(0.3138 0.0102 285.63);
-    --muted-foreground: oklch(0.8089 0.0128 285.86);
     --accent: oklch(0.3138 0.0102 285.63);
-    --accent-foreground: oklch(0.9851 0 0);
+    --accent-foreground: var(--foreground);
     --destructive: oklch(0.72 0.17 29.23);
     --destructive-foreground: oklch(0.1963 0.0092 285.53);
     --border: oklch(0.27 0.011 285.63);
@@ -584,21 +603,21 @@
     --warning-foreground: oklch(0.1963 0.0092 285.53);
     --info: oklch(0.72 0.14 250);
     --info-foreground: oklch(0.1963 0.0092 285.53);
-    --brand: oklch(0.9851 0 0);
-    --brand-foreground: oklch(0.3138 0.0102 285.63);
+    --brand: var(--primary);
+    --brand-foreground: var(--primary-foreground);
     /* Black over a near-black page separates less, so the dark scrim dims further. */
     --overlay: oklch(0 0 0 / 0.7);
 
     --sidebar: oklch(0.3138 0.0102 285.63);
-    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-foreground: var(--foreground);
     --sidebar-accent: oklch(0.269 0.0098 285.6);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-accent-foreground: var(--foreground);
     --sidebar-border: oklch(0.269 0.0098 285.6);
   }
 
   /* Increased contrast (WCAG 1.4.11): every edge steps up together, since raising only the fields is what made
-     them read as a different family. Link underlines step up one tier. Soft text reads at full strength; status and the
-     other text tokens never move. */
+     them read as a different family. Link underlines step up one tier. Soft text reads at full strength and hints at the
+     support step; status and the other text tokens never move. */
   @media (prefers-contrast: more) {
     :root {
       --border: var(--edge-raised);
@@ -608,6 +627,7 @@
       --edge-overlay: var(--edge-raised);
       --edge-floating: 30%;
       --foreground-soft: var(--foreground);
+      --faint-foreground: var(--muted-foreground);
       --link-decoration: 65%;
       --link-decoration-strong: 100%;
     }
@@ -622,6 +642,7 @@
     --edge-overlay: var(--edge-raised);
     --edge-floating: 30%;
     --foreground-soft: var(--foreground);
+    --faint-foreground: var(--muted-foreground);
     --link-decoration: 65%;
     --link-decoration-strong: 100%;
   }
@@ -638,7 +659,10 @@
      overflow-x-clip (on html and body, iOS needs both) keeps stray wide content from widening the layout
      viewport, which on phones reads as the page zooming out and flipping to desktop breakpoints. */
   html {
-    @apply font-sans overscroll-none overflow-x-clip max-sm:text-[118.75%];
+    @apply font-sans overflow-x-clip max-sm:text-[118.75%];
+    /* Touch keeps none for the app's own pull-to-refresh (body as well). A fine pointer gets contain: in Chrome a root
+       none on an axis also stops every nested scroller from bouncing on that axis. */
+    @apply overscroll-none pointer-fine:overscroll-contain;
 
     /* Native scrollbars and form controls follow the theme. A macOS overlay scrollbar takes its thumb color from the
        scroller's color-scheme, so a transparent scroller such as the PDF viewer needs it to show a light thumb in dark mode. */
@@ -678,7 +702,7 @@
   }
 
   body {
-    @apply bg-background text-foreground min-h-full overscroll-none overflow-x-clip antialiased font-normal;
+    @apply bg-background text-foreground min-h-full overscroll-none pointer-fine:overscroll-contain overflow-x-clip antialiased font-normal;
   }
 
   .container {

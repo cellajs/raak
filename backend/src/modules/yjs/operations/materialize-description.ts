@@ -1,21 +1,22 @@
 import { isProduct } from 'shared';
 import { uuidv7 } from 'uuidv7';
-import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { baseDb } from '#/db/db';
 import { tenantReadById } from '#/db/tenant-context';
 import { resolveEntity } from '#/modules/entities/entities-queries';
 import { findMembershipsByUserIds } from '#/modules/memberships/memberships-queries';
+import { withOrganizationDefaults } from '#/modules/organization/helpers/select';
+import { loadTenant } from '#/modules/tenants/load-tenant';
 import { findUserModelsByIds } from '#/modules/user/user-queries';
-import { yjsMaterializeScope } from '#/modules/yjs/helpers/materialize-window';
+import { yjsMaterializeWindow } from '#/modules/yjs/helpers/materialize-window';
 import { sanitizeBlockMediaUrls } from '#/modules/yjs/helpers/sanitize-block-media';
-import { getYjsMaterializer } from '#/modules/yjs/yjs-materializers';
+import { getYjsMaterializer, type YjsMaterializerContext } from '#/modules/yjs/yjs-materializers';
 import { log } from '#/utils/logger';
 
-/** The editors are read on the base pool: the relay calls without a request context. */
+/** The editors, the tenant and the organization are read on the base pool: the relay calls without a request context. */
 const dbCtx = { var: { db: baseDb } };
 
-export interface MaterializeDescriptionInput {
+interface MaterializeDescriptionInput {
   entityType: string;
   entityId: string;
   tenantId: string;
@@ -23,12 +24,15 @@ export interface MaterializeDescriptionInput {
   description: string;
   /** Senders of the compacted log, newest first: the first who may still update the entity is credited with the write. */
   editors: string[];
-  /** The server-origin log rows (no sender) merged into `description`, none when absent; another server row of the document refuses the write (409). */
+  /**
+   * The server-origin log rows (no sender) merged into `description`, none when absent; another server row of the
+   * document refuses the write (409).
+   */
   serverRowIds?: readonly number[];
 }
 
 /** The description is stored; `sanitized` when media URLs were blanked. */
-export interface MaterializeDescriptionResult {
+interface MaterializeDescriptionResult {
   sanitized: boolean;
 }
 
@@ -37,7 +41,7 @@ export interface MaterializeDescriptionResult {
  * from the entity row: a row missing from the named tenant is gone (410, so the relay deletes the document's rows),
  * and another organization is refused (403). The write is credited to the newest editor who may still update the
  * entity, through the entity's materializer, which runs the normal update operation and its permission check. When
- * no editor may, the write is refused (403) and the relay keeps the edits. A server-origin row of the document's log
+ * no editor may, or the tenant is suspended or archived, the write is refused (403) and the relay keeps the edits. A server-origin row of the document's log
  * outside `serverRowIds` is an outside write committed after the relay read its window: the write is refused (409), so
  * it never overwrites that write, and the relay retries with a window that holds it.
  */
@@ -52,10 +56,9 @@ export async function materializeDescriptionOp(input: MaterializeDescriptionInpu
     throw new AppError(400, 'invalid_request', 'warn', { meta: { reason: `No Yjs materializer registered for ${entityType}` } });
   }
 
+  const gone = () => new AppError(410, 'not_found', 'warn', { entityType, meta: { reason: 'The entity is gone' } });
   const row = await tenantReadById(input.tenantId, (tx) => resolveEntity({ var: { db: tx } }, { entityType, identifier: input.entityId }));
-  if (!row || row.tenantId !== input.tenantId) {
-    throw new AppError(410, 'not_found', 'warn', { entityType, meta: { reason: 'The entity is gone' } });
-  }
+  if (!row || row.tenantId !== input.tenantId) throw gone();
   if (row.organizationId !== input.organizationId) {
     throw new AppError(403, 'forbidden', 'warn', { entityType, meta: { reason: 'Organization does not match the entity' } });
   }
@@ -65,34 +68,44 @@ export async function materializeDescriptionOp(input: MaterializeDescriptionInpu
     log.warn('Yjs materialization sanitized untrusted media URLs', { entityType, entityId: input.entityId, invalidUrls });
   }
 
-  const [users, memberships] = await Promise.all([
+  const [users, memberships, tenant, organization] = await Promise.all([
     findUserModelsByIds(dbCtx, { ids: input.editors }),
     findMembershipsByUserIds(dbCtx, { userIds: input.editors }),
+    loadTenant(row.tenantId),
+    resolveEntity(dbCtx, { entityType: 'organization', identifier: row.organizationId }),
   ]);
+  // The entity row's foreign keys hold both, so a miss is a tenant removed since that read.
+  if (!tenant || !organization) throw gone();
+  // As `tenantGuard` refuses every request to a tenant that is not active; the relay keeps the edits and retries.
+  if (tenant.status !== 'active') {
+    throw new AppError(403, 'forbidden', 'warn', { entityType, meta: { resource: 'tenant', tenantStatus: tenant.status } });
+  }
 
   for (const editorId of input.editors) {
     const user = users.find((candidate) => candidate.id === editorId);
     if (!user) continue;
     const bindings = memberships.filter((membership) => membership.userId === editorId);
+    const membership = bindings.find((binding) => binding.organizationId === organization.id && binding.channelType === 'organization') ?? null;
 
-    // Worker context only: persist as this editor with no system-administrator bypass, matching relay authorization.
-    const ctx = {
+    // This editor in the organization, as the guards set a request's context, with no system-administrator bypass,
+    // matching relay authorization.
+    const ctx: YjsMaterializerContext = {
       var: {
         user,
-        userId: user.id,
         actor: { kind: 'user', id: user.id, bindings, scopes: null },
         isSystemAdmin: false,
-        memberships: bindings,
         db: baseDb,
         tenantId: row.tenantId,
-        organizationId: row.organizationId,
+        tenant,
+        organizationId: organization.id,
+        organization: { ...withOrganizationDefaults(organization), membership },
       },
-    } as unknown as UserContext;
+    };
 
     try {
       // Empty fieldTimestamps lets the pipeline stamp a fresh server HLC. The window reaches the yjs module's
       // `<type>.updated` handler, which checks it under the entity row lock.
-      await yjsMaterializeScope.run({ entityId: input.entityId, serverRowIds: input.serverRowIds ?? [] }, () =>
+      await yjsMaterializeWindow.run({ entityId: input.entityId, serverRowIds: input.serverRowIds ?? [] }, () =>
         materializer(
           ctx,
           input.entityId,
@@ -102,7 +115,7 @@ export async function materializeDescriptionOp(input: MaterializeDescriptionInpu
       );
       return { sanitized };
     } catch (err) {
-      // This editor may no longer update the row (or no longer see it, as with another author's draft): try the next.
+      // This editor may not update the row now, or not see it (another author's draft): try the next.
       if (err instanceof AppError && (err.status === 403 || err.status === 404)) continue;
       throw err;
     }

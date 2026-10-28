@@ -23,7 +23,11 @@ const labelsRoutes = createXRoutes(['labels', 'app', 'product'], {
     description: 'Creates one or more labels within a project.',
     request: { params: tenantOrgParamSchema, body: jsonBody(labelCreateManyStxBodySchema) },
     responses: {
-      200: json('Labels already created (idempotent)', labelCreateResponseSchema, mockBatchLabelsResponse()),
+      200: json(
+        'Nothing created: rows an earlier attempt created (idempotent), and rejected ids',
+        labelCreateResponseSchema,
+        mockBatchLabelsResponse(),
+      ),
       201: json('Labels created', labelCreateResponseSchema, mockBatchLabelsResponse()),
     },
   }),

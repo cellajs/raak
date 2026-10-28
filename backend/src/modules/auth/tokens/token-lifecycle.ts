@@ -1,17 +1,19 @@
+import { randomInt } from 'node:crypto';
 import type { Context } from 'hono';
-import type { TokenType } from 'shared';
+import { appConfig, type TokenType } from 'shared';
 import { generateId } from 'shared/utils/entity-id';
-import { nanoid } from 'shared/utils/nanoid';
 import type { DbContext, Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { baseDb, type Tx } from '#/db/db';
 import { deleteAuthCookie, getAuthCookie, setAuthCookie } from '#/modules/auth/general/helpers/cookie';
 import { findSession } from '#/modules/auth/sessions/operations/resolve-session';
 import { findLiveSession } from '#/modules/auth/sessions/sessions-queries';
-import { type CookieTokenType, type LinkTokenType, tokenPolicies } from '#/modules/auth/tokens/token-policies';
+import { type CodeTokenType, type CookieTokenType, type LinkTokenType, tokenPolicies } from '#/modules/auth/tokens/token-policies';
+import type { InsertTokenModel } from '#/modules/auth/tokens/tokens-db';
 import {
   deleteBoundToken,
   deleteReplacedTokens,
+  deleteSessionCodeToken,
   findBoundToken,
   findLinkToken,
   findTokenBySingleUse,
@@ -20,14 +22,21 @@ import {
   updateTokenRedeemed,
   updateTokenUser,
 } from '#/modules/auth/tokens/tokens-queries';
-import type { InsertTokenModel } from '#/modules/auth/tokens-db';
 import { findUserByEmail } from '#/modules/user/user-queries';
-import { hashToken } from '#/utils/hash-token';
+import { hashToken, newHashedToken } from '#/utils/hash-token';
 import { isExpiredDate } from '#/utils/is-expired-date';
 import { isoDateIn } from '#/utils/iso-date';
 
 /** Token reads and writes without a caller's transaction run on the base pool, whatever the route's context holds. */
 const dbCtx = { var: { db: baseDb } };
+
+/** A code token's raw value and its hash: as many digits as an authenticator code, so the client enters both in one input. */
+const newHashedCode = () => {
+  const raw = randomInt(0, 10 ** appConfig.totp.digits)
+    .toString()
+    .padStart(appConfig.totp.digits, '0');
+  return { raw, hash: hashToken(raw) };
+};
 
 /** What a new token records besides its secret and expiry, which issuing sets. */
 export type NewToken = Pick<InsertTokenModel, 'type' | 'email'> &
@@ -58,9 +67,13 @@ export const issueTokens = async (ctx: DbContext, tokens: NewToken[]): Promise<{
 
   await deleteReplacedTokens(ctx, { tokens });
 
-  const issued = tokens.map((token) => ({ token, id: generateId(), rawToken: nanoid(40) }));
+  const issued = tokens.map((token) => ({
+    token,
+    id: generateId(),
+    ...(tokenPolicies[token.type].carrier === 'code' ? newHashedCode() : newHashedToken()),
+  }));
   const rows = await insertTokens(ctx, {
-    values: issued.map(({ token, id, rawToken }) => ({
+    values: issued.map(({ token, id, hash }) => ({
       id,
       type: token.type,
       email: token.email,
@@ -73,16 +86,16 @@ export const issueTokens = async (ctx: DbContext, tokens: NewToken[]): Promise<{
       sessionId: token.sessionId ?? null,
       authStrategy: token.authStrategy ?? null,
       connectionId: token.connectionId ?? null,
-      secret: hashToken(rawToken),
+      secret: hash,
       expiresAt: isoDateIn(tokenPolicies[token.type].ttl),
     })),
   });
 
   const rowsById = new Map(rows.map((row) => [row.id, row]));
-  return issued.map(({ id, rawToken }) => {
+  return issued.map(({ id, raw }) => {
     const token = rowsById.get(id);
     if (!token) throw new AppError(500, 'server_error', 'error', { meta: { reason: 'token_not_stored' } });
-    return { token, rawToken };
+    return { token, rawToken: raw };
   });
 };
 
@@ -98,7 +111,7 @@ export const issueToken = async (ctx: DbContext, token: NewToken) => {
  */
 export const issueCookieToken = async (ctx: Context<Env>, token: NewToken & { type: CookieTokenType }) => {
   const { token: record, rawToken } = await issueToken(dbCtx, token);
-  await setAuthCookie(ctx, token.type, rawToken, tokenPolicies[token.type].ttl);
+  setAuthCookie(ctx, token.type, rawToken, tokenPolicies[token.type].ttl);
   return record;
 };
 
@@ -108,7 +121,8 @@ const expired = (token: TokenRecord) => new AppError(401, `${token.type}_expired
 /**
  * Refuses a link that belongs to another account than the one this browser is signed in to. A link issued without an
  * account goes to its policy's `unboundOpener`: the account holding its address by now (a new account when nobody
- * does), or any signed-in account (an invitation not yet bound to a user, answered as that account).
+ * does), or any signed-in account (an invitation not yet bound to a user, which only an account holding its address
+ * accepts).
  */
 const refuseOtherAccount = async (ctx: Context<Env>, type: LinkTokenType, token: TokenRecord) => {
   if (!token.userId && tokenPolicies[type].unboundOpener === 'any-account') return;
@@ -117,8 +131,8 @@ const refuseOtherAccount = async (ctx: Context<Env>, type: LinkTokenType, token:
   if (!signedIn) return;
 
   const { user } = signedIn;
-  const ownerId = token.userId ?? (await findUserByEmail(dbCtx, { email: token.email }))?.id;
-  if (ownerId !== user.id) throw new AppError(409, 'user_mismatch', 'warn');
+  const holderId = token.userId ?? (await findUserByEmail(dbCtx, { email: token.email }))?.id;
+  if (holderId !== user.id) throw new AppError(409, 'user_mismatch', 'warn');
 };
 
 /**
@@ -126,7 +140,7 @@ const refuseOtherAccount = async (ctx: Context<Env>, type: LinkTokenType, token:
  * by itself: it may come from another link of the same type.
  */
 const heldByThisBrowser = async (ctx: Context<Env>, token: TokenRecord) => {
-  const cookie = await getAuthCookie(ctx, token.type);
+  const cookie = getAuthCookie(ctx, token.type);
   if (!cookie) return null;
 
   const held = await findTokenBySingleUse(dbCtx, { id: token.id, cookie });
@@ -137,14 +151,14 @@ const heldByThisBrowser = async (ctx: Context<Env>, token: TokenRecord) => {
  * Settles the account of a link issued without one, in the transaction that redeems it, and returns its user id: the
  * token is bound to that user. A throw rolls the redemption back, so the link stays unopened.
  */
-export type ClaimTokenOwner = (tx: Tx, token: TokenRecord) => Promise<string>;
+type ClaimTokenHolder = (tx: Tx, token: TokenRecord) => Promise<string>;
 
 interface InvokeTokenOpts {
   type: LinkTokenType;
-  /** The raw value from the link. */
+  /** The raw value in the link's URL; the database holds only its hash. */
   rawToken: string;
   /** For a link issued without an account (a sign-up link); runs only in the redemption that wins. */
-  claimOwner?: ClaimTokenOwner;
+  claimHolder?: ClaimTokenHolder;
 }
 
 /**
@@ -152,12 +166,12 @@ interface InvokeTokenOpts {
  * redemption wins a compare-and-set on `invokedAt`: the token's lifetime becomes its type's single-use window and this
  * browser gets the single-use cookie that binds the token to it. After that the link opens again only in the browser
  * holding that cookie, checked in SQL against the stored hash on a fresh read. A link issued without an account gets
- * its owner from `claimOwner`, committed with the redemption.
+ * its holder from `claimHolder`, committed with the redemption.
  * @returns The redeemed token.
  * @throws AppError 401 `<type>_not_found`, 401 `<type>_expired` (expired, or redeemed by another browser), 409
- *   `user_mismatch` while signed in to another account, or what `claimOwner` throws.
+ *   `user_mismatch` while signed in to another account, or what `claimHolder` throws.
  */
-export const invokeToken = async (ctx: Context<Env>, { type, rawToken, claimOwner }: InvokeTokenOpts): Promise<TokenRecord> => {
+export const invokeToken = async (ctx: Context<Env>, { type, rawToken, claimHolder }: InvokeTokenOpts): Promise<TokenRecord> => {
   const { singleUseWindow } = tokenPolicies[type];
 
   const token = await findLinkToken(dbCtx, { type, rawToken });
@@ -174,24 +188,23 @@ export const invokeToken = async (ctx: Context<Env>, { type, rawToken, claimOwne
   }
 
   // Compare-and-set on `invokedAt IS NULL`: of two concurrent redemptions exactly one binds a browser.
-  const rawSingleUse = nanoid(40);
+  const singleUse = newHashedToken();
   const redeem = (redeemCtx: DbContext) =>
-    // Hash at rest: the raw value lives only in the browser's cookie.
-    updateTokenRedeemed(redeemCtx, { id: token.id, singleUseToken: hashToken(rawSingleUse), expiresAt: isoDateIn(singleUseWindow) });
+    updateTokenRedeemed(redeemCtx, { id: token.id, singleUseToken: singleUse.hash, expiresAt: isoDateIn(singleUseWindow) });
 
   const redeemed =
-    token.userId || !claimOwner
+    token.userId || !claimHolder
       ? await redeem(dbCtx)
       : await baseDb.transaction(async (tx) => {
           const txCtx = { var: { db: tx } };
           const won = await redeem(txCtx);
           if (!won) return won;
-          const userId = await claimOwner(tx, won);
+          const userId = await claimHolder(tx, won);
           return updateTokenUser(txCtx, { id: won.id, userId });
         });
 
   if (redeemed) {
-    await setAuthCookie(ctx, type, rawSingleUse, singleUseWindow);
+    setAuthCookie(ctx, type, singleUse.raw, singleUseWindow);
     return redeemed;
   }
 
@@ -202,7 +215,7 @@ export const invokeToken = async (ctx: Context<Env>, { type, rawToken, claimOwne
 };
 
 /** The link types whose request the asking browser remembers, in a cookie named after the type. */
-type RequestedLinkType = 'magic' | 'step-up';
+type RequestedLinkType = 'magic';
 
 /**
  * Remembers, in the browser that asked, which link it asked for, as long as the link lives: opening the link there
@@ -213,8 +226,7 @@ export const rememberLinkRequest = (ctx: Context<Env>, type: RequestedLinkType, 
   setAuthCookie(ctx, `${type}-requested`, tokenId, tokenPolicies[type].ttl);
 
 /** Whether this browser asked for the link: its marker for the type names the token. */
-export const requestedHere = async (ctx: Context<Env>, type: RequestedLinkType, tokenId: string) =>
-  (await getAuthCookie(ctx, `${type}-requested`)) === tokenId;
+export const isRequestedHere = (ctx: Context<Env>, type: RequestedLinkType, tokenId: string) => getAuthCookie(ctx, `${type}-requested`) === tokenId;
 
 /** Drops the marker once the link is used: it has nothing left to say. */
 export const forgetLinkRequest = (ctx: Context<Env>, type: RequestedLinkType) => deleteAuthCookie(ctx, `${type}-requested`);
@@ -227,13 +239,43 @@ export const forgetLinkRequest = (ctx: Context<Env>, type: RequestedLinkType) =>
  *   expired: one shape for a link and a cookie-carried type alike.
  */
 export const readBoundToken = async (ctx: Context<Env>, type: TokenType): Promise<TokenRecord> => {
-  const cookie = await getAuthCookie(ctx, type);
+  const cookie = getAuthCookie(ctx, type);
   const token = cookie ? await findBoundToken(dbCtx, { type, cookie }) : undefined;
   if (!token) throw new AppError(401, `${type}_not_found`, 'warn');
   if (isExpiredDate(token.expiresAt)) throw expired(token);
 
   return token;
 };
+
+interface IssueCodeTokenOpts {
+  type: CodeTokenType;
+  userId: string;
+  email: string;
+  /** The session that enters the code: the only one it serves. */
+  sessionId: string;
+}
+
+/**
+ * Issues an emailed code for one session, replacing the session's earlier code of the type.
+ * @returns The stored row and the code, which exists only here and in the mail.
+ */
+export const issueCodeToken = async ({ type, userId, email, sessionId }: IssueCodeTokenOpts) => {
+  const { token, rawToken } = await issueToken(dbCtx, { type, userId, email, createdBy: userId, sessionId });
+  return { token, code: rawToken };
+};
+
+interface SpendCodeTokenOpts {
+  type: CodeTokenType;
+  sessionId: string;
+  code: string;
+}
+
+/**
+ * Spends the session's emailed code of `type` when `code` matches it. A wrong code leaves the token for the next try;
+ * the caller's rate limiter counts the misses.
+ * @returns The spent token, or null for a wrong, expired or never issued code.
+ */
+export const spendCodeToken = async (opts: SpendCodeTokenOpts): Promise<TokenRecord | null> => (await deleteSessionCodeToken(dbCtx, opts)) ?? null;
 
 /**
  * When the spend deletes this browser's cookie. `now`: the spend runs on the pool and is final at once. `after-commit`:
@@ -257,7 +299,7 @@ export const spendCookieToken = async (
   opts: SpendCookieTokenOpts = { deleteCookie: 'now' },
 ): Promise<TokenRecord | null> => {
   const spendCtx = opts.deleteCookie === 'after-commit' ? opts.txCtx : dbCtx;
-  const cookie = await getAuthCookie(ctx, type);
+  const cookie = getAuthCookie(ctx, type);
   if (opts.deleteCookie === 'now') deleteAuthCookie(ctx, type);
   if (!cookie) return null;
 

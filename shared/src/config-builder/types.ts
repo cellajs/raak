@@ -32,6 +32,11 @@ export interface FederationConfig {
   snapshotClaims: readonly string[];
   /** Whether the institution operates the mailbox it asserts, so a sign-in through it proves the address. */
   addressAuthority: boolean;
+  /**
+   * The `acr` values by which an institution asserts it used multi-factor authentication. A sign-in carrying one starts
+   * stepped up, as a second factor would. Absent or empty: no SSO sign-in of this federation counts as a factor.
+   */
+  mfaAcr?: readonly string[];
 }
 export type BaseOAuthProviders = 'github' | 'google' | 'microsoft';
 
@@ -45,7 +50,7 @@ export interface S3ConfigInput {
   privateCDNUrl?: string;
 }
 
-export interface S3Config extends Required<S3ConfigInput> {}
+export type S3Config = Required<S3ConfigInput>;
 
 export interface RequestLimitsConfig {
   default: number;
@@ -85,6 +90,7 @@ export interface UppyRestrictionsConfig {
   requiredMetaFields: string[];
 }
 
+/** Which attachments a device keeps in IndexedDB for offline use, and how it downloads and uploads them. */
 export interface LocalBlobStorageConfig {
   enabled: boolean;
   maxFileSize: number;
@@ -127,11 +133,23 @@ export interface ThemeNavigationConfig {
   sheetPanelWidth: string;
 }
 
+/** Mail colors, each `#rrggbb`. */
+export interface ThemeEmailConfig {
+  button: string;
+  /** The button's 2px border: its shape where a client darkens the panel and leaves a dark fill alone. */
+  buttonEdge: string;
+  buttonLabel: string;
+  /** The button under the mail's own dark styles. */
+  darkButton: string;
+  darkButtonLabel: string;
+}
+
 export interface ThemeConfig {
   navigation: ThemeNavigationConfig;
   colors: Record<string, string>;
   strokeWidth: number;
   screenSizes: Record<string, string>;
+  email: ThemeEmailConfig;
 }
 
 export interface CompanyConfig {
@@ -146,12 +164,14 @@ export interface CompanyConfig {
   country: string;
   registration: string;
   vatNumber: string;
+  /** Link behind "Get directions" and the address on the contact page. */
   directionsUrl: string;
   scheduleCallUrl: string;
   socialUrl: string;
   blueskyHandle: string;
   element: string;
   githubUrl: string;
+  /** MapLibre zoom of the contact map: 3 shows Europe, 14 a few streets. */
   mapZoom: number;
   coordinates: { lat: number; lng: number };
 }
@@ -193,12 +213,10 @@ export interface ConfigStringArrays {
   uploadTemplateIds: readonly string[];
 }
 
-/**
- * The config an app must satisfy (`satisfies RequiredConfig` in its default.ts). The generic keeps
- * arrays as literal tuples (`['organization']`, not `readonly string[]`) so Drizzle v1 gets strict enums.
- */
-/** The placement surfaces that exist once per app; the rest belong to a channel. */
-export type SingletonSlot = 'account.settings' | 'account.preferences' | 'home.sections' | 'user.profile' | 'system.tabs';
+/** The placement surfaces that exist once per app, in the order they are declared; the rest belong to a channel. */
+export const singletonSlots = ['account.settings', 'account.preferences', 'home.sections', 'user.profile', 'system.tabs'] as const;
+
+export type SingletonSlot = (typeof singletonSlots)[number];
 
 /** A channel's own placement surfaces; the only ones a channel row can store an arrangement for. */
 export type ChannelSlotOf<C extends string> = `${C}.settings` | `${C}.tabs`;
@@ -216,6 +234,10 @@ export interface NavigationConfig<C extends string = string> {
   pageTabs: Partial<Record<C, 'menu'>>;
 }
 
+/**
+ * The config an app must satisfy (`satisfies RequiredConfig` in its default.ts). The generic keeps
+ * arrays as literal tuples (`['organization']`, not `readonly string[]`) so Drizzle v1 gets strict enums.
+ */
 export interface RequiredConfig<T extends ConfigStringArrays = ConfigStringArrays> {
   entityTypes: T['entityTypes'];
   channelEntityTypes: T['channelEntityTypes'];
@@ -293,6 +315,7 @@ export interface RequiredConfig<T extends ConfigStringArrays = ConfigStringArray
   apiDescription: string;
 
   requestLimits: RequestLimitsConfig;
+  // Request body limits, in bytes.
   jsonBodyLimit: number;
   fileUploadLimit: number;
   defaultBodyLimit: number;
@@ -311,6 +334,7 @@ export interface RequiredConfig<T extends ConfigStringArrays = ConfigStringArray
   pushServiceHosts: readonly string[];
 
   theme: ThemeConfig;
+  /** Background classes for an avatar or cover without an image, picked per id. */
   placeholderColors: readonly string[];
 
   defaultLanguage: string;
@@ -320,9 +344,12 @@ export interface RequiredConfig<T extends ConfigStringArrays = ConfigStringArray
 
   defaultUserFlags: Record<string, boolean>;
 
+  /** Per-organization feature flags and their defaults (e.g. `coursesEnabled: true`), read from `organization.organizationFlags`. */
   defaultOrganizationFlags: Record<string, boolean>;
 
-  // Defaults layered under each organization's stored jsonb. The template ships {}; apps widen
-  // the value (e.g. `{ primaryLabels: [...] }`) in their own config.
+  /**
+   * Setup defaults layered under each organization's stored jsonb, read from `organization.setupConfig`. The template
+   * ships {}; apps widen the value (e.g. `{ primaryLabels: [...] }`) in their own config.
+   */
   defaultSetupConfig: Record<string, unknown>;
 }

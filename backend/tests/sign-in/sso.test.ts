@@ -9,7 +9,7 @@ import { setUserSession } from '#/modules/auth/sessions/operations/create-sessio
 import { resolveSession } from '#/modules/auth/sessions/operations/resolve-session';
 import { exchangeFederationCode } from '#/modules/auth/sso/helpers/federation-client';
 import { roleFromClaims } from '#/modules/auth/sso/role-from-claims';
-import { tokensTable } from '#/modules/auth/tokens-db';
+import { tokensTable } from '#/modules/auth/tokens/tokens-db';
 import { connectionsTable, type InsertConnectionModel } from '#/modules/connections/connections-db';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -57,10 +57,12 @@ vi.mock('#/modules/auth/sso/helpers/federations', async (importOriginal) => {
       clientId: 'test.projectcampus.com',
       clientSecret: 'test-secret',
       redirectUri: `${appConfig.backendAuthUrl}/sso/callback`,
+      // A new app's config names no federation, so the MFA test's acr comes from here.
+      mfaAcr: ['https://refeds.org/profile/mfa'],
     }),
   };
 });
-// The role seam is the app's to fill: a test stands in for an app's mapping, the default stays real.
+// `roleFromClaims` is the app's to fill: a test stands in for an app's mapping, the default stays real.
 vi.mock('#/modules/auth/sso/role-from-claims', async (importOriginal) => {
   const actual = await importOriginal<typeof import('#/modules/auth/sso/role-from-claims')>();
   return { ...actual, roleFromClaims: vi.fn(actual.roleFromClaims) };
@@ -213,6 +215,17 @@ describe('SSO sign-in through an institution', async () => {
     expect(identity.lastUsedAt).not.toBeNull();
     expect(identity.data).toMatchObject({ eduperson_affiliation: ['employee', 'member'] });
     expect(await membershipsOf(user.id)).toHaveLength(1);
+  });
+
+  it('must not start a session stepped up unless the institution asserts MFA', async () => {
+    const { connection } = await seedConnection();
+
+    await signInThrough(connection.id);
+    expect(lastSessionCall()).toEqual(['surfconext', 'regular', { connectionId: connection.id }]);
+
+    // Positive control: the federation lists this acr as multi-factor, so the session starts stepped up by it.
+    await signInThrough(connection.id, claimsOf({ acr: 'https://refeds.org/profile/mfa' }));
+    expect(lastSessionCall()).toEqual(['surfconext', 'regular', { connectionId: connection.id, steppedUpVia: 'sso' }]);
   });
 
   it('refuses an account from an institution the connection does not accept, eduID included', async () => {
@@ -422,7 +435,8 @@ describe('SSO sign-in through an institution', async () => {
       await requireSso(organization.tenantId);
 
       // The institution proved the address and its tenant excludes magic links: the address sends none on request.
-      await expectRefusal(await call(sendMagicLink, { body: { email: studentEmail }, headers: defaultHeaders }), 403, 'sso_required');
+      expect((await call(sendMagicLink, { body: { email: studentEmail }, headers: defaultHeaders })).response.status).toBe(204);
+      expect(await magicTokensOf(user.id)).toHaveLength(0);
 
       // The same person under a new subject collides with their own account; having signed in there, the link goes out.
       await expectRefusal(await signInThrough(connection.id), 409, 'sso_email_exists');

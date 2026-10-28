@@ -4,8 +4,8 @@ import type { Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { baseDb } from '#/db/db';
 import { deleteAuthCookie, getAuthCookie, setAuthCookie } from '#/modules/auth/general/helpers/cookie';
-import { requestedHere } from '#/modules/auth/tokens/token-lifecycle';
-import { deleteUnopenedLinkToken, findLinkToken } from '#/modules/auth/tokens/tokens-queries';
+import { isRequestedHere } from '#/modules/auth/tokens/token-lifecycle';
+import { deleteUnopenedLinkToken, findLinkToken, type TokenRecord } from '#/modules/auth/tokens/tokens-queries';
 import { isExpiredDate } from '#/utils/is-expired-date';
 import { TimeSpan } from '#/utils/time-span';
 
@@ -18,12 +18,27 @@ const heldLinkLifetime = new TimeSpan(10, 'm');
 /** The frontend page where a link opened in another browser is confirmed. */
 const confirmSignInPath = '/auth/confirm-sign-in';
 
-/** The unopened, unexpired magic link a raw value names, or undefined. */
-export const findOpenableMagicLink = async (rawToken: string) => {
-  const token = await findLinkToken(dbCtx, { type: 'magic', rawToken });
+/**
+ * The magic link when it can still be opened.
+ * @throws AppError 401 `magic_not_found` without a link, `magic_expired` for an opened or expired one.
+ */
+const openable = (token: TokenRecord | undefined): TokenRecord => {
   if (!token) throw new AppError(401, 'magic_not_found', 'warn');
   if (token.invokedAt || isExpiredDate(token.expiresAt)) throw new AppError(401, 'magic_expired', 'warn');
   return token;
+};
+
+/** The unopened, unexpired magic link a raw value names; any other is refused as {@link openable} says. */
+export const findOpenableMagicLink = async (rawToken: string) => openable(await findLinkToken(dbCtx, { type: 'magic', rawToken }));
+
+/**
+ * The raw value of the magic link this browser holds for confirmation.
+ * @throws AppError 401 `magic_expired` when it holds none.
+ */
+export const readHeldMagicLink = (ctx: Context<Env>) => {
+  const rawToken = getAuthCookie(ctx, 'magic-pending');
+  if (!rawToken) throw new AppError(401, 'magic_expired', 'warn');
+  return rawToken;
 };
 
 /**
@@ -51,10 +66,10 @@ export const holdMagicLinkOutsideItsBrowser = async (ctx: Context<Env>, rawToken
   // An unknown link takes the direct path, which refuses it the same way it always has. So does an opened one: only the
   // browser holding that link's own single-use cookie gets back in, and a `magic` cookie from any other link does not.
   if (!token || token.invokedAt) return null;
-  if (await requestedHere(ctx, 'magic', token.id)) return null;
+  if (isRequestedHere(ctx, 'magic', token.id)) return null;
 
-  await findOpenableMagicLink(rawToken);
-  await setAuthCookie(ctx, 'magic-pending', rawToken, heldLinkLifetime);
+  openable(token);
+  setAuthCookie(ctx, 'magic-pending', rawToken, heldLinkLifetime);
   return ctx.redirect(new URL(confirmSignInPath, appConfig.frontendUrl), 302);
 };
 
@@ -63,7 +78,7 @@ export const holdMagicLinkOutsideItsBrowser = async (ctx: Context<Env>, rawToken
  * computer can neither confirm it here nor reopen it from the history.
  */
 export const dropHeldMagicLink = async (ctx: Context<Env>) => {
-  const rawToken = await getAuthCookie(ctx, 'magic-pending');
+  const rawToken = getAuthCookie(ctx, 'magic-pending');
   if (!rawToken) return;
   deleteAuthCookie(ctx, 'magic-pending');
   await deleteUnopenedLinkToken(dbCtx, { type: 'magic', rawToken });

@@ -1,32 +1,15 @@
 import type { ActorContext } from '#/core/context';
-import { withActorRef } from '#/modules/actors/actor-refs';
-import { getChannelCounts } from '#/modules/entities/entities-queries';
-import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
-import { getTaskStatusCounts } from '#/modules/task/operations/get-task-status-counts';
+import { toProjectResponse } from '#/modules/project/operations/to-project-response';
 import { getValidChannel } from '#/permissions';
 
+/**
+ * A project by id, or by slug with `bySlug`, with the counts and the caller's membership `include` asks for.
+ * @throws The refusals of `getValidChannel` for `read`.
+ */
 export async function getProjectOp(ctx: ActorContext, id: string, opts: { bySlug?: boolean; include: string[] }) {
   const { bySlug, include } = opts;
 
-  const { entity: project, membership } = await getValidChannel(ctx, id, 'project', 'read', bySlug);
+  const { entity, membership } = await getValidChannel(ctx, id, 'project', 'read', bySlug);
 
-  const includeCounts = include.includes('counts');
-  const includeMembership = include.includes('membership');
-
-  const [counts, taskStatusCounts, projectWithAudit] = await Promise.all([
-    includeCounts ? getChannelCounts(ctx, { entityType: 'project', entityId: project.id }) : undefined,
-    includeCounts ? getTaskStatusCounts(ctx, project.id) : undefined,
-    withActorRef(ctx, project),
-  ]);
-
-  const included: { counts?: typeof counts & { taskStatusCounts: typeof taskStatusCounts }; membership?: ReturnType<typeof toMembershipBase> } = {};
-
-  if (counts) included.counts = { ...counts, taskStatusCounts };
-
-  // A service account's grant is not a membership row; only a user's row is returned.
-  if (includeMembership && membership && isMembershipRow(membership)) {
-    included.membership = toMembershipBase(membership);
-  }
-
-  return { ...projectWithAudit, included };
+  return toProjectResponse(ctx, entity, membership, { counts: include.includes('counts'), membership: include.includes('membership') });
 }

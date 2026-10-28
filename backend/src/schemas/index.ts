@@ -6,7 +6,7 @@ export {
   entityIdParamSchema,
   entityTypeSchema,
   entityWithTypeQuerySchema,
-  excludeArchivedQuerySchema,
+  /** @public */
   fullResponseQuerySchema,
   type IncludeOption,
   idInTenantOrgParamSchema,
@@ -41,15 +41,15 @@ export {
 } from '#/schemas/common-schemas';
 export { membershipCountSchema } from '#/schemas/count-schemas';
 export { errorResponseRefs } from '#/schemas/error-response-schemas';
-export { mapEntitiesToSchema } from '#/schemas/map-entities-to-schema';
 export { minimalBaseSchema } from '#/schemas/minimal-base';
 export {
   type AppCatchupResponse,
   appCatchupResponseSchema,
-  type CatchupChangeSummary,
+  type CatchupOrganizationSummary,
   type CatchupView,
   type CatchupViewAnswer,
-  type StreamNotification,
+  type StreamChange,
+  type StreamSignal,
   streamCatchupBodySchema,
 } from '#/schemas/stream-schemas';
 export {

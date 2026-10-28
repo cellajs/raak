@@ -1,7 +1,9 @@
-import { Building2Icon, FolderIcon, StickyNoteIcon, UsersIcon } from 'lucide-react';
+import { Building2Icon, FolderIcon, UsersIcon } from 'lucide-react';
+import type { GetPublicCountsResponse } from 'sdk';
 import { appConfig } from 'shared';
 import { nanoid } from 'shared/utils/nanoid';
 import type { TKey } from '~/lib/i18n-locales';
+import type { IconComponent } from '~/modules/common/icons/types';
 import type { InfoCard } from '~/modules/marketing/about/info-cards';
 import type { PricingPlan } from '~/modules/marketing/about/pricing';
 import type { ShowcaseItem } from '~/modules/marketing/about/showcase';
@@ -75,8 +77,7 @@ export const counts = [
   { id: 'user', title: 'c:user_other', icon: UsersIcon },
   { id: 'organization', title: 'c:organization_other', icon: Building2Icon },
   { id: 'project', title: 'c:project_other', icon: FolderIcon },
-  { id: 'task', title: 'c:task_other', icon: StickyNoteIcon },
-] as const;
+] as const satisfies readonly { id: keyof GetPublicCountsResponse; title: TKey; icon: IconComponent }[];
 
 // About - Why
 

@@ -1,9 +1,9 @@
 import { z } from '@hono/zod-openapi';
 import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
-import { publicGuard, stepUpGuard, userGuard } from '#/middlewares/guard';
+import { publicGuard, stepUpEnrollGuard, stepUpGuard, userGuard } from '#/middlewares/guard';
 import { singlePointsLimiter, totpVerificationLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockTotpKeyResponse } from '#/modules/auth/auth-mocks';
-import { totpCreateBodySchema } from '#/modules/auth/totps/totps-schema';
+import { totpCodeBodySchema } from '#/modules/auth/totps/totps-schema';
 import { cookieSchema } from '#/schemas';
 
 const authTotpsRoutes = createXRoutes(['auth', 'cella'], {
@@ -11,23 +11,22 @@ const authTotpsRoutes = createXRoutes(['auth', 'cella'], {
     method: 'post',
     path: '/totp/generate-key',
     xEnabledBy: { strategy: 'totp' },
-    xGuard: [userGuard, stepUpGuard],
+    xGuard: [userGuard, stepUpEnrollGuard],
     xRateLimiter: [singlePointsLimiter],
     summary: 'Generate TOTP key',
     description: 'Generates a new TOTP key for current user and returns a provisioning URI and Base32 manual key.',
-    responses: { 200: json('Challenge created', z.object({ totpUri: z.string(), manualKey: z.string() }), mockTotpKeyResponse()) },
+    responses: { 200: json('TOTP key generated', z.object({ totpUri: z.string(), manualKey: z.string() }), mockTotpKeyResponse()) },
   }),
   createTotp: xRoute({
     method: 'post',
     path: '/totp',
     xEnabledBy: { strategy: 'totp' },
-    xGuard: [userGuard, stepUpGuard],
+    xGuard: [userGuard, stepUpEnrollGuard],
     xRateLimiter: [singlePointsLimiter],
     summary: 'Set TOTP',
     description:
       'Confirms TOTP setup by verifying a code from the authenticator app for the first time. On success, TOTP is registered for current user.',
-    request: { body: jsonBody(totpCreateBodySchema.pick({ code: true })) },
-
+    request: { body: jsonBody(totpCodeBodySchema) },
     responses: { 201: { description: 'TOTP created' } },
   }),
   deleteTotp: xRoute({
@@ -36,7 +35,7 @@ const authTotpsRoutes = createXRoutes(['auth', 'cella'], {
     xGuard: [userGuard, stepUpGuard],
     xRateLimiter: [singlePointsLimiter],
     summary: 'Delete TOTP',
-    description: 'Delete TOTP credential for current user.',
+    description: "Delete the current user's authenticator app (TOTP).",
     responses: { 204: { description: 'TOTP deleted' } },
   }),
   signInWithTotp: xRoute({
@@ -47,7 +46,7 @@ const authTotpsRoutes = createXRoutes(['auth', 'cella'], {
     xRateLimiter: [totpVerificationLimiter],
     summary: 'Verify TOTP',
     description: 'Validates the TOTP code and completes TOTP based authentication.',
-    request: { body: jsonBody(totpCreateBodySchema) },
+    request: { body: jsonBody(totpCodeBodySchema) },
     responses: { 204: { description: 'TOTP verified', headers: z.object({ 'Set-Cookie': cookieSchema }) } },
   }),
 });

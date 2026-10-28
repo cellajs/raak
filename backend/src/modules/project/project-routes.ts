@@ -10,7 +10,7 @@ import {
   projectSchema,
   projectUpdateBodySchema,
   projectWithMembershipSchema,
-  workspaceIdQuerySchema,
+  projectWorkspaceQuerySchema,
 } from '#/modules/project/project-schema';
 import {
   batchResponseSchema,
@@ -29,7 +29,7 @@ const projectRoutes = createXRoutes(['projects', 'app', 'channel'], {
     xRateLimiter: [insertEntityLock, bulkPointsLimiter],
     summary: 'Create projects',
     description: 'Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.',
-    request: { params: tenantOrgParamSchema, query: workspaceIdQuerySchema, body: jsonBody(projectCreateBodySchema) },
+    request: { params: tenantOrgParamSchema, query: projectWorkspaceQuerySchema, body: jsonBody(projectCreateBodySchema) },
     responses: { 201: json('Projects created', projectCreateResponseSchema, mockBatchProjectsResponse()) },
   }),
   getProjects: xRoute({
@@ -79,7 +79,7 @@ const projectRoutes = createXRoutes(['projects', 'app', 'channel'], {
     xRateLimiter: [singlePointsLimiter],
     summary: 'Assign project to workspace',
     description: "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
-    request: { params: idInTenantOrgParamSchema, query: workspaceIdQuerySchema },
+    request: { params: idInTenantOrgParamSchema, query: projectWorkspaceQuerySchema },
     responses: { 200: json('Project assigned to the new workspace', projectWithMembershipSchema, mockProjectResponse()) },
   }),
   removeProjectWorkspace: xRoute({
@@ -99,7 +99,7 @@ const projectRoutes = createXRoutes(['projects', 'app', 'channel'], {
     xRateLimiter: [singlePointsLimiter],
     summary: 'Move project between workspaces',
     description: 'Moves a project from one workspace to another.',
-    request: { params: idInTenantOrgParamSchema, query: workspaceIdQuerySchema },
+    request: { params: idInTenantOrgParamSchema, query: projectWorkspaceQuerySchema },
     responses: { 200: json('Moved project', projectWithMembershipSchema, mockProjectResponse()) },
   }),
   deleteProjects: xRoute({

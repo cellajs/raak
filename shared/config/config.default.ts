@@ -91,7 +91,7 @@ export const config = {
    * Placement ids per surface, in display order: tabs on a channel's bar, sections on a settings or
    * profile page. A surface listed here is total, so an id left out has no placement on it; a
    * surface left out renders every registered placement in its declared order. The first id of a
-   * tab bar is also the tab a channel link lands on.
+   * tab bar is also the tab a channel link opens on.
    */
   surfaces: {} as Partial<Record<SlotOf<(typeof hierarchy.channelTypes)[number]>, readonly string[]>>,
 
@@ -143,6 +143,8 @@ export const config = {
   // Same-origin: every service is a path under the app origin, so cookies stay
   // first-party (`__Host-`, SameSite=Strict), CORS disappears and CSP collapses
   // to 'self'. The LB routes /api, /yjs and /mcp by path prefix (matchPathBegin).
+  // These URLs are the single source: the config builder derives `services.<slug>.publicUrl`
+  // from them, so mode configs override the URLs here and never the `services` block.
   frontendUrl: 'https://www.raak.dev',
   backendUrl: 'https://www.raak.dev/api',
   backendAuthUrl: 'https://www.raak.dev/api/auth',
@@ -150,14 +152,15 @@ export const config = {
   mcpUrl: 'https://www.raak.dev/mcp',
   /** The OAuth authorization server (issuer). Same origin under `/oauth`, so the session cookie reaches its consent screen. */
   oauthUrl: 'https://www.raak.dev/oauth',
+  // Which services this app runs; a mode config flips a flag here, e.g. mcp on in staging only.
   services: {
-    frontend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev' },
-    backend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev/api' },
+    frontend: { enabled: true as boolean },
+    backend: { enabled: true as boolean },
     cdc: { enabled: true as boolean },
-    yjs: { enabled: true as boolean, publicUrl: 'wss://www.raak.dev/yjs' },
+    yjs: { enabled: true as boolean },
     // MCP needs the oauth authorization server to issue its access tokens; both stay off until that is deployed.
-    mcp: { enabled: false as boolean, publicUrl: 'https://www.raak.dev/mcp' },
-    oauth: { enabled: false as boolean, publicUrl: 'https://www.raak.dev/oauth' },
+    mcp: { enabled: false as boolean },
+    oauth: { enabled: false as boolean },
     // The job store's maintainer (cron and queue supervision); off means no sweeps or queues run anywhere.
     jobs: { enabled: true as boolean },
   },
@@ -201,9 +204,7 @@ export const config = {
 
   has: {
     pwa: true as boolean,
-    /** Web Push delivery for notifications; also needs VAPID_* backend env vars. */
     push: false as boolean,
-    /** Comment and reply emails: shows the preference in the account settings and mails those who turn it on. */
     commentEmail: false as boolean,
     selfRegistration: false as boolean,
     waitlist: true as boolean,
@@ -218,7 +219,7 @@ export const config = {
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
   cookieVersion: 'v3',
-  clientCacheVersion: 'v23-notification-query',
+  clientCacheVersion: 'v24-public-counts',
 
   // Authentication
 
@@ -231,7 +232,7 @@ export const config = {
   /**
    * Maximum concurrent sessions per user. On sign-in, the oldest sessions beyond the cap are
    * hard-deleted (Hanko-style eviction). Keep comfortably above a realistic device count. This is
-   * bloat/abuse protection (credential-stuffing bursts, unbounded session accumulation), not a UX
+   * bloat/abuse protection (bursts of sign-ins with stolen passwords, unbounded session accumulation), not a UX
    * feature. Regular and `mfa` sessions count together; `impersonation` sessions are left alone.
    */
   maxSessionsPerUser: 10,
@@ -323,6 +324,19 @@ export const config = {
     navigation: { hasSidebarTextLabels: false, sidebarWidthExpanded: '16rem', sidebarWidthCollapsed: '4rem', sheetPanelWidth: '20rem' },
     colors: {},
     strokeWidth: 1.5,
+    /**
+     * Mail colors, hex: mail clients read neither CSS variables nor oklch. Some clients recolor a mail for dark mode and
+     * leave dark fills alone, so the button's edge, or a mid-tone fill, must stand out on white and on a dark panel;
+     * `backend/tests/emails/email-colors.test.ts` checks the ratios. `darkButton` is the button under the mail's own dark
+     * styles, which Apple Mail and the Outlook apps apply.
+     */
+    email: {
+      button: '#262626',
+      buttonEdge: '#808080',
+      buttonLabel: '#ffffff',
+      darkButton: '#fafafa',
+      darkButtonLabel: '#262626',
+    },
     screenSizes: { xs: '420px', sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1400px' },
   } as const,
   placeholderColors: [

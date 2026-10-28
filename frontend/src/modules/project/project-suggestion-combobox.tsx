@@ -156,11 +156,7 @@ export function ProjectSuggestionCombobox({
                         </div>
 
                         <div className="flex items-center gap-0.5">
-                          <Badge
-                            size="sm"
-                            variant="plain"
-                            className="invisible gap-1 group-data-[assigned-workspace=true]/project-option:visible max-sm:hidden"
-                          >
+                          <Badge size="sm" soft className="invisible gap-1 group-data-[assigned-workspace=true]/project-option:visible max-sm:hidden">
                             <span className="max-w-32 truncate">
                               {assignedWorkspaceId === workspaceId
                                 ? t('c:in_current_workspace')

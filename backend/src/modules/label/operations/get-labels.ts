@@ -14,6 +14,10 @@ import { seqRangeOf } from '#/utils/seq-range';
 
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
 
+/**
+ * A page of the labels the caller may read in the organization; `projectId` or `workspaceId` narrows it. A range read
+ * (`afterSeq`, `untilSeq`) includes deleted rows.
+ */
 export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promise<{ items: LabelModel[]; total: number }> {
   const { projectId, workspaceId, ...queryInfo } = input;
   const { q, sort, order, offset, limit, modes } = queryInfo;

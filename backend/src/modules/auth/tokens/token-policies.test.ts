@@ -3,7 +3,7 @@ import { appConfig } from 'shared';
 import { describe, expect, it } from 'vitest';
 import type { Env } from '#/core/context';
 import { setAuthCookie } from '#/modules/auth/general/helpers/cookie';
-import { tokenPolicies } from '#/modules/auth/tokens/token-policies';
+import { type TokenPolicy, tokenPolicies } from '#/modules/auth/tokens/token-policies';
 import { setCookieOf } from '../../../../tests/helpers';
 
 const linkTypes = appConfig.tokenTypes.filter((type) => tokenPolicies[type].carrier === 'link');
@@ -23,16 +23,19 @@ describe('token policies', () => {
   });
 
   it("sets each token type's cookie with its policy's SameSite", async () => {
-    const app = new Hono<Env>().get('/:type', async (ctx) => {
+    const app = new Hono<Env>().get('/:type', (ctx) => {
       const type = appConfig.tokenTypes.find((name) => name === ctx.req.param('type'));
       if (!type) return ctx.body(null, 404);
-      await setAuthCookie(ctx, type, 'value', tokenPolicies[type].ttl);
+      setAuthCookie(ctx, type, 'value', tokenPolicies[type].ttl);
       return ctx.body(null, 204);
     });
 
     for (const type of appConfig.tokenTypes) {
+      const policy: TokenPolicy = tokenPolicies[type];
+      // A code travels in a mail only: no cookie carries it.
+      if (policy.carrier === 'code') continue;
       const response = await app.request(`/${type}`);
-      const expected = tokenPolicies[type].sameSite === 'lax' ? 'SameSite=Lax' : 'SameSite=Strict';
+      const expected = policy.sameSite === 'lax' ? 'SameSite=Lax' : 'SameSite=Strict';
       expect(setCookieOf(response, type).line, type).toContain(expected);
     }
   });

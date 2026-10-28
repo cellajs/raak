@@ -1,24 +1,15 @@
-import { type EntityRole, hierarchy } from 'shared';
+import type { z } from '@hono/zod-openapi';
+import { hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { withActorRefs } from '#/modules/actors/actor-refs';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { findMemberPreviewsByChannels } from '#/modules/memberships/memberships-queries';
 import type { UserMinimalBase } from '#/modules/user/helpers/user-minimal';
 import { findWorkspacesPaginated } from '#/modules/workspace/workspace-queries';
+import type { workspaceListQuerySchema } from '#/modules/workspace/workspace-schema';
 
-interface GetWorkspacesInput {
-  q?: string;
-  sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
-  order?: 'asc' | 'desc';
-  offset: number;
-  limit: number;
-  organizationId?: string;
-  role?: EntityRole;
-  excludeArchived?: boolean;
-  include: string[];
-}
-
-export async function getWorkspacesOp(ctx: UserContext, input: GetWorkspacesInput) {
+/** A page of the workspaces the caller is a member of; for a system admin, archived tenants' workspaces too. */
+export async function getWorkspacesOp(ctx: UserContext, input: z.infer<typeof workspaceListQuerySchema>) {
   const user = ctx.var.user;
   const { include, ...queryOpts } = input;
 

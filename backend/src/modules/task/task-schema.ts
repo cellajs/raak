@@ -55,7 +55,7 @@ const taskCreateSchema = taskInsertSchema.pick({ name: true, description: true }
   ...placementFieldsSchema('task'),
 });
 
-/** Wire registration: lens-widened schemas + entity-bound runtime seams for task */
+/** Wire registration: lens-widened schemas bound to the task entity at runtime. */
 export const taskContract = evolutionContract.product('task', {
   createItem: taskCreateSchema,
   updateOps: {

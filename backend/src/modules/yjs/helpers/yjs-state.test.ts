@@ -28,7 +28,7 @@ vi.mock('yjs', async (importOriginal) => {
   };
 });
 
-const { classifyUpdate, collectGarbage, isIntegrable, mergeLog, mergeState } = await import('./yjs-state');
+const { classifyUpdate, collectGarbage, mergeLog, mergeState } = await import('./yjs-state');
 
 const row = (id: number, payload: Uint8Array) => ({ id, payload, userId: `user-${id}` });
 
@@ -61,7 +61,6 @@ describe('mergeState', () => {
     const verify = new Y.Doc();
     Y.applyUpdate(verify, merged);
     expect(verify.getText('t').toString()).toBe('abc');
-    expect(isIntegrable(merged)).toBe(true);
   });
 });
 
@@ -92,7 +91,7 @@ describe('mergeLog', () => {
 
   it('must not return a lone undecodable row as the document', () => {
     const bad = row(1, new Uint8Array([1, 2, 3]));
-    expect(mergeLog(null, [bad])).toEqual({ state: null, rejected: [bad] });
+    expect(mergeLog(null, [bad])).toEqual({ state: null, accepted: [], rejected: [bad] });
   });
 
   it('must not let a row that decodes but will not merge block the rows around it', () => {
@@ -111,18 +110,6 @@ describe('mergeLog', () => {
     const { state, rejected } = mergeLog(null, [row(1, mapUpdate('a', 1)), row(2, mapUpdate('b', 2))]);
     expect(rejected).toEqual([]);
     expect(readMap(state!)).toEqual({ a: 1, b: 2 });
-  });
-});
-
-describe('isIntegrable', () => {
-  it('is false when a later update is stored without the one it depends on', () => {
-    const doc = new Y.Doc();
-    const updates: Uint8Array[] = [];
-    doc.on('update', (u: Uint8Array) => updates.push(u));
-    doc.getText('t').insert(0, 'a');
-    doc.getText('t').insert(1, 'b');
-    expect(isIntegrable(updates[1])).toBe(false);
-    expect(isIntegrable(Y.mergeUpdates(updates))).toBe(true);
   });
 });
 

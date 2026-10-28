@@ -3,7 +3,7 @@ import { getAndSetMe } from '~/modules/me/helpers';
 import { meKeys, myMembershipsQueryOptions } from '~/modules/me/query';
 import { memberQueryKeys } from '~/modules/memberships/query';
 import { getEntityQueryKeys, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
-import { queryClient } from '~/query/query-client';
+import { defaultStaleTime, queryClient } from '~/query/query-client';
 
 function invalidateAllChannelDetails(): void {
   for (const channelType of appConfig.channelEntityTypes) {
@@ -21,19 +21,18 @@ export function invalidateChannelList(channelType: ChannelEntityType | null): vo
   }
 }
 
+/** Member lists and pending invitation lists, of one organization or, without one, of all. */
 export function invalidateMemberQueries(organizationId: string | null): void {
-  if (organizationId) {
+  for (const queryKey of [memberQueryKeys.list.base, ['invites', ...memberQueryKeys.list.base]]) {
     queryClient.invalidateQueries({
-      queryKey: memberQueryKeys.list.base,
+      queryKey,
       predicate: (query) =>
+        !organizationId ||
         query.queryKey.some(
           (segment) => typeof segment === 'object' && segment !== null && 'organizationId' in segment && segment.organizationId === organizationId,
         ),
       refetchType: 'active',
     });
-  } else {
-    // Catchup fallback: every member query.
-    queryClient.invalidateQueries({ queryKey: memberQueryKeys.list.base, refetchType: 'active' });
   }
 }
 
@@ -44,8 +43,8 @@ export function invalidateMemberships(): void {
 
 /** `query` deduplicates against an in-flight getMyMemberships, which invalidateQueries would not, avoiding a redundant fetch on app init. */
 export function fetchMemberships(): Promise<unknown> {
-  // The client's default stale time: a catchup within 30 seconds of the route loader's read fetches nothing.
-  return queryClient.query({ ...myMembershipsQueryOptions(), staleTime: 30_000 });
+  // A catchup within the stale time of the route loader's read fetches nothing.
+  return queryClient.query({ ...myMembershipsQueryOptions(), staleTime: defaultStaleTime });
 }
 
 /** Called after membership updates, since a role change alters permissions. */

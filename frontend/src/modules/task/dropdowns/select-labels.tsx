@@ -174,7 +174,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     return (
       <ComboboxItem key={label.id} value={label.slug} className={cn(comboboxRowClass, isSelected && 'font-medium')}>
         <LabelModeIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
-        <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
+        <div className={cn('grow', label.projectId !== projectId && !isSelected && 'text-faint-foreground')}>{label.name}</div>
         <span className="pointer-events-none flex size-4 items-center justify-center">
           {isSelected && <CheckIcon className="pointer-coarse:size-5 size-4 text-success" />}
         </span>
@@ -280,7 +280,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
   const createItem = searchValue.trim() !== '' && !projectLabels.some((label) => label.slug === labelSlug(searchValue)) && (
     <ComboboxItem value={`${createSentinelPrefix}${searchValue}`} className={cn(comboboxActionButtonClass, 'mt-1')}>
       {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
-      <Badge className="ml-2 px-2 py-0" variant="plain">
+      <Badge className="ml-2 px-2 py-0" soft>
         {searchValue}
       </Badge>
     </ComboboxItem>
@@ -384,7 +384,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             onClick={() => setSelectedCollapsed((collapsed) => !collapsed)}
           >
             {t('c:selected')}
-            {selectedCollapsed && <span className="ml-1 text-xs opacity-70">{selectedLabels.length}</span>}
+            {selectedCollapsed && <span className="ml-1 text-faint-foreground text-xs">{selectedLabels.length}</span>}
             <span className="grow" />
             <ChevronDownIcon className={cn('size-3.5 transition-transform', !selectedCollapsed && 'rotate-180')} />
           </button>
@@ -399,7 +399,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
                 </ComboboxGroup>
               ) : (
                 <>
-                  <div className="p-1.5 text-center text-muted-foreground/50 text-sm">
+                  <div className="p-1.5 text-center text-faint-foreground text-sm">
                     {t('c:no_resource_found', { resource: t('c:label_other').toLowerCase() })}
                   </div>
                   {inDrawer && (
@@ -407,7 +407,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
                       <Button variant="row" onClick={() => handleCreateClick(searchValue)}>
                         <PlusIcon />
                         {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
-                        <Badge className="px-2 py-0" variant="plain">
+                        <Badge className="px-2 py-0" soft>
                           {searchValue}
                         </Badge>
                       </Button>
@@ -431,7 +431,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             {!isMobile && createItem}
           </ComboboxList>
           {visibleLabels.length === 0 && searchValue.trim() === '' && (
-            <div className="flex items-center justify-center p-1.5 text-muted-foreground/50 text-sm">
+            <div className="flex items-center justify-center p-1.5 text-faint-foreground text-sm">
               {t('c:no_resource_yet', { resource: t('c:label_other').toLowerCase() })}
             </div>
           )}

@@ -13,7 +13,7 @@ import { attachmentId, ORG_ID, TENANT_ID } from './seeds/ids';
 import { TOTAL_USERS } from './seeds/user-constants';
 import { type DbCounters, startStackSampler, type WindowSummary, walBytesBetween } from './stack-sampler';
 
-/** Message types on the relay socket: y-websocket's sync, and the relay's own `Generation` and `Saved` (yjs/src/sync/relay.ts). */
+/** Message types on the relay socket: y-websocket's sync, and the relay's own `Generation` and `Saved` (yjs/src/constants.ts). */
 const MESSAGE = { sync: 0, generation: 4, saved: 5 } as const;
 const SYNC = { step2: 1, update: 2 } as const;
 /** The relay's log channel: every append notifies there since release 2, so a listener counts the relay's pg_notify volume. */
@@ -309,16 +309,14 @@ function typeOnce(run: RunState, typer: Typer): void {
   run.sink.keystroke();
 }
 
-/** An SSE change notification: `product` with `productType` and `subjectId` since the entity rename, `entity` before. */
+/** An SSE change: product rows of one `productType`. */
 interface StreamChange {
-  kind?: string;
-  productType?: string;
-  entityType?: string;
+  productType: string;
 }
 
 /**
- * One user on the app's SSE stream, counting attachment notifications per phase, as a non-editing viewer sees them. Under
- * load CDC batches changes of one scope into a notification (`count`, `batchUntilSeq`), so notifications are fewer than writes.
+ * One user on the app's SSE stream, counting attachment change frames per phase, as a non-editing viewer sees them. Under
+ * load CDC batches changes of one scope into one frame (`count`, `batchUntilSeq`), so frames are fewer than writes.
  */
 async function watchStream(run: RunState, userIndex: number, signal: AbortSignal): Promise<void> {
   try {
@@ -342,8 +340,8 @@ async function watchStream(run: RunState, userIndex: number, signal: AbortSignal
           .join('');
         try {
           const n = JSON.parse(data) as StreamChange;
-          if ((n.kind === 'product' ? n.productType : n.entityType) !== 'attachment') continue;
-          bump(run, `sse.notifications.${run.phase}`);
+          if (n.productType !== 'attachment') continue;
+          bump(run, `sse.changes.${run.phase}`);
         } catch {
           bump(run, 'sse.error.parse');
         }
@@ -673,7 +671,7 @@ export async function runYjsTyping(options: YjsTypingOptions, sink: YjsTypingSin
   const tail = counterDeltas(startCounters, tailCounters);
   const keystrokes = run.counters['yjs.keystrokes'] ?? 0;
   const materializeTyping = writes.filter((w) => w.phase === 'typing').length;
-  const sseTyping = run.counters['sse.notifications.typing'] ?? 0;
+  const sseTyping = run.counters['sse.changes.typing'] ?? 0;
   const report: YjsTypingReport = {
     options,
     startedAt: new Date(typingStartEpoch).toISOString(),
@@ -700,7 +698,7 @@ export async function runYjsTyping(options: YjsTypingOptions, sink: YjsTypingSin
       viewers: sseViewers,
       perSec: perSec(sseTyping, typingMs),
       total: sseTyping,
-      tail: run.counters['sse.notifications.settle'] ?? 0,
+      tail: run.counters['sse.changes.settle'] ?? 0,
     },
     cdc: {
       typing: activityRows[0]?.typing ?? 0,

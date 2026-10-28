@@ -1,30 +1,15 @@
 import type { ActorContext } from '#/core/context';
-import { withActorRef } from '#/modules/actors/actor-refs';
-import { getChannelCounts } from '#/modules/entities/entities-queries';
-import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
+import { toWorkspaceResponse } from '#/modules/workspace/operations/to-workspace-response';
 import { getValidChannel } from '#/permissions/get-valid-channel';
 
-interface GetWorkspaceOpts {
-  bySlug?: boolean;
-  include: string[];
-}
-
-export async function getWorkspaceOp(ctx: ActorContext, id: string, opts: GetWorkspaceOpts) {
+/**
+ * A workspace by id, or by slug with `bySlug`, with the counts and the caller's membership `include` asks for.
+ * @throws The refusals of `getValidChannel` for `read`.
+ */
+export async function getWorkspaceOp(ctx: ActorContext, id: string, opts: { bySlug?: boolean; include: string[] }) {
   const { bySlug, include } = opts;
 
-  const { entity: workspace, membership } = await getValidChannel(ctx, id, 'workspace', 'read', bySlug);
+  const { entity, membership } = await getValidChannel(ctx, id, 'workspace', 'read', bySlug);
 
-  const includeCounts = include.includes('counts');
-  const includeMembership = include.includes('membership');
-
-  const [counts, workspaceWithAudit] = await Promise.all([
-    includeCounts ? getChannelCounts(ctx, { entityType: 'workspace', entityId: workspace.id }) : undefined,
-    withActorRef(ctx, workspace),
-  ]);
-
-  const included: { counts?: typeof counts; membership?: ReturnType<typeof toMembershipBase> } = {};
-  if (counts) included.counts = counts;
-  if (includeMembership && membership && isMembershipRow(membership)) included.membership = toMembershipBase(membership);
-
-  return { ...workspaceWithAudit, included };
+  return toWorkspaceResponse(ctx, entity, membership, { counts: include.includes('counts'), membership: include.includes('membership') });
 }

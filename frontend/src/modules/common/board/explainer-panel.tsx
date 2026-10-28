@@ -27,7 +27,7 @@ export function ExplainerPanel() {
       icon={<InfoIcon />}
       title={t('c:getting_started')}
       headerActions={
-        <Button variant="ghost" size="sm" className="font-normal opacity-70 hover:opacity-100" onClick={() => setAlertSeen('welcome-text')}>
+        <Button variant="ghost" size="sm" className="font-normal text-muted-foreground" onClick={() => setAlertSeen('welcome-text')}>
           <span>{t('c:dont_show_again')}</span>
         </Button>
       }

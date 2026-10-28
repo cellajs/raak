@@ -4,7 +4,7 @@ import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { userActorRef, withActorRefs } from '#/modules/actors/actor-refs';
-import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
+import { countTenantEntityRows } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { checkSlugsAvailable } from '#/modules/entities/operations/check-slug';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
@@ -12,17 +12,22 @@ import { insertMemberships } from '#/modules/memberships/operations/insert-membe
 import { resolveProjectWorkspaceId } from '#/modules/project/operations/project-workspace-membership';
 import { insertProjects } from '#/modules/project/project-queries';
 import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
+import { assertTenantQuota } from '#/modules/tenants/tenant-restrictions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
-import { filterWithRejection, takeWithRestriction } from '#/utils/rejection-utils';
+import { filterWithRejection } from '#/utils/rejection-utils';
 
 const defaultTaskStatusCounts = { accepted: 0, reviewed: 0, delivered: 0, finished: 0, started: 0, unstarted: 0, iced: 0 };
 
 type CreateProjectItem = z.infer<typeof projectCreateBodySchema>[number];
 
+/**
+ * Creates projects in the organization, filed under the caller's workspace, each with its creator as admin. An item
+ * whose slug is taken is rejected as `slug_exists`.
+ * @throws AppError 403 `restrict_by_app` past the tenant's project quota.
+ */
 export async function createProjectsOp(ctx: UserContext, rawItems: CreateProjectItem[], workspaceId: string) {
-  // Lens seam: canonicalize old-shape field names before any body access
   const items = rawItems.map((item) => projectContract.normalizeBody(item));
   const user = ctx.var.user;
   const organization = ctx.var.organization;
@@ -31,35 +36,18 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
   // keeping a new project's membership org-consistent with the workspace it is filed under.
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
 
-  // Check if adding is allowed based on the organization's restrictions
-  const currentProjectsCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'project' });
-  const projectRestrictions = ctx.var.tenant.restrictions.quotas.project;
+  const slugAvailability = await checkSlugsAvailable(
+    ctx,
+    items.map((item) => item.slug),
+    'project',
+  );
+  const { items: itemsToCreate, rejectionState } = filterWithRejection(items, (item) => slugAvailability.get(item.slug) === true, 'slug_exists');
+  if (itemsToCreate.length === 0) return { data: [], ...rejectionState };
 
-  const availableSlots = projectRestrictions === 0 ? items.length : projectRestrictions - currentProjectsCount;
+  const currentProjects = await countTenantEntityRows(ctx, { entityType: 'project' });
+  assertTenantQuota(ctx, 'project', currentProjects, itemsToCreate.length);
 
-  // Check slug availability in database
-  const slugs = items.map((item) => item.slug);
-  const slugAvailability = slugs.length > 0 ? await checkSlugsAvailable(ctx, slugs, 'project') : new Map();
-
-  // Filter by slug availability, track rejections
-  const slugFiltered = filterWithRejection(items, (item) => slugAvailability.get(item.slug) === true, 'slug_exists');
-
-  // Enforce restriction (0 means unlimited)
-  const restrictionFiltered =
-    projectRestrictions === 0
-      ? { items: slugFiltered.items, rejectionState: slugFiltered.rejectionState }
-      : takeWithRestriction(slugFiltered.items, availableSlots, 'restrict_by_org', slugFiltered.rejectionState);
-
-  // Final items to create and rejection state
-  const itemsToCreate = restrictionFiltered.items;
-  const rejectionState = restrictionFiltered.rejectionState;
-
-  // If nothing to create, return early
-  if (itemsToCreate.length === 0) {
-    return { data: [] as never[], ...rejectionState };
-  }
-
-  // Permission check (same for all items since entityType + org is the same)
+  // One subject for the whole batch: every item is a project in this organization
   canCreateEntity(ctx, buildSubject('project', { organizationId: organization.id }));
 
   // One transaction for the rows, the handlers of `project.created` (the label module seeds primary labels) and the
@@ -94,13 +82,11 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
 
   log.info('Projects created', { count: projectRecords.length, ids: projectRecords.map((project) => project.id) });
 
-  // Invalidate membership cache so subsequent requests see the new membership
+  // The caller's next request reads the new memberships
   invalidateCache.user(user.id);
 
-  // Build counts for response
   const counts = buildZeroCounts('project', 'admin');
-  // Map memberships by projectId
-  const membershipByProjectId = new Map(createdMemberships.map((m) => [m.projectId, m]));
+  const membershipByProjectId = new Map(createdMemberships.map((membership) => [membership.projectId, membership]));
 
   const projectsWithAudit = await withActorRefs(ctx, projectRecords, [userActorRef(user)]);
 

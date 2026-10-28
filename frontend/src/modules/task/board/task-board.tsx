@@ -61,8 +61,8 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
   const isLoadingProjects = !projectsProp && isPending;
 
   useEffect(() => {
-    setActiveBoard(boardId, workspace ? 'workspace' : 'project');
-  }, [boardId, workspace, setActiveBoard]);
+    setActiveBoard(boardId);
+  }, [boardId, setActiveBoard]);
 
   // One board-level subscription closes the mobile create-task dialog on navigation, not one per panel action
   useEffect(() => router.subscribe('onBeforeLoad', () => dialoger.getState().remove('create-task')), [router]);

@@ -6,10 +6,11 @@ import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
-import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
+import { countTenantEntityRows } from '#/modules/entities/entities-queries';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { findLabelsByOrg, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
+import { assertTenantQuota } from '#/modules/tenants/tenant-restrictions';
 import { getValidChannel } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
@@ -20,18 +21,18 @@ import { log } from '#/utils/logger';
 
 type CreateLabelsInput = z.infer<typeof labelCreateManyStxBodySchema>;
 
+/**
+ * Creates the labels of a batch, each placed in its home channel. An item an earlier attempt of this create wrote comes
+ * back as its stored row; an item neither created nor the caller's live row is listed in `rejectedIds`.
+ * @returns The rows, the rejected ids, and `created` when this request inserted a row.
+ * @throws AppError 403 `restrict_by_app` past the tenant's label quota.
+ */
 export async function createLabelsOp(
   ctx: OrgContext,
   rawInput: CreateLabelsInput,
-): Promise<{ data: LabelModel[]; rejectedIds: string[]; replayed: boolean }> {
-  // Lens seam: canonicalize old-shape field names before any body access
+): Promise<{ data: LabelModel[]; rejectedIds: string[]; created: boolean }> {
   const input = rawInput.map((item) => labelContract.normalizeCreateItem(item));
-  const { organization, tenant } = ctx.var;
-  const labelRestrictions = tenant.restrictions.quotas.label;
-
-  if (labelRestrictions !== 0 && input.length > labelRestrictions) {
-    throw new AppError(403, 'restrict_by_org', 'warn', { entityType: 'label' });
-  }
+  const { organization } = ctx.var;
 
   // Rows an earlier attempt of this create wrote come back as they are; only the other items are created.
   const replayed = await checkIdempotency(
@@ -41,14 +42,10 @@ export async function createLabelsOp(
   );
   const replayedIds = new Set(replayed.map((row) => row.id));
   const fresh = input.filter((item) => !replayedIds.has(item.id));
-  if (fresh.length === 0) return { data: replayed, rejectedIds: [], replayed: true };
+  if (fresh.length === 0) return { data: replayed, rejectedIds: [], created: false };
 
-  // Check restriction limits. Concurrent requests may slightly overshoot.
-  const currentCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'label' });
-
-  if (labelRestrictions !== 0 && currentCount + fresh.length > labelRestrictions) {
-    throw new AppError(403, 'restrict_by_org', 'warn', { entityType: 'label' });
-  }
+  const currentLabels = await countTenantEntityRows(ctx, { entityType: 'label' });
+  assertTenantQuota(ctx, 'label', currentLabels, fresh.length);
 
   // Creating primary/epic labels requires project-admin authority (project update permission)
   const managedHome = async (homeCtx: OrgContext, id: string, type: ChannelEntityType) => (await getValidChannel(homeCtx, id, type, 'update')).entity;
@@ -100,10 +97,16 @@ export async function createLabelsOp(
 
   log.info('Labels created', { count: labelRecords.length });
 
-  // An attempt of this create running at the same time and committing first leaves this insert without those rows
+  // An attempt of this create running at the same time and committing first leaves this insert without those rows; any
+  // other id left out names a row that is not the caller's live one (another actor's, or a deleted one) and is rejected.
   const insertedIds = new Set(labelRecords.map((row) => row.id));
   const missingIds = fresh.map((item) => item.id).filter((id) => !insertedIds.has(id));
   const committedMeanwhile = missingIds.length > 0 ? await checkIdempotency(ctx, labelsTable, missingIds) : [];
+  const committedIds = new Set(committedMeanwhile.map((row) => row.id));
 
-  return { data: [...replayed, ...labelRecords, ...committedMeanwhile], rejectedIds: [], replayed: false };
+  return {
+    data: [...replayed, ...labelRecords, ...committedMeanwhile],
+    rejectedIds: missingIds.filter((id) => !committedIds.has(id)),
+    created: labelRecords.length > 0,
+  };
 }

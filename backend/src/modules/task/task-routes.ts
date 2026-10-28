@@ -34,7 +34,11 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     description: 'Creates one or more tasks within a project.',
     request: { params: tenantOrgParamSchema, body: jsonBody(taskCreateManyStxBodySchema) },
     responses: {
-      200: json('Tasks already created (idempotent)', taskCreateResponseSchema, mockBatchTasksResponse()),
+      200: json(
+        'Nothing created: rows an earlier attempt created (idempotent), and rejected ids',
+        taskCreateResponseSchema,
+        mockBatchTasksResponse(),
+      ),
       201: json('Tasks created', taskCreateResponseSchema, mockBatchTasksResponse()),
     },
   }),

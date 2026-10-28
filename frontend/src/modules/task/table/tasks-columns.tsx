@@ -135,7 +135,7 @@ export const useColumns = (opts: {
         return (
           <div className="inline-flex items-center gap-1">
             <span className="text-success">{checked}</span>
-            <span className="opacity-50">/</span>
+            <span className="text-faint-foreground">/</span>
             <span>{total}</span>
           </div>
         );

@@ -1,6 +1,5 @@
 import { useSearch } from '@tanstack/react-router';
-import { Suspense, useEffect } from 'react';
-import { useBoardStore } from '~/modules/common/board/board-store';
+import { Suspense } from 'react';
 import { ScrollReset } from '~/modules/common/scroll-reset';
 import { MobilePanelSkeleton } from '~/modules/task/board/board-skeleton';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
@@ -14,11 +13,6 @@ export function MobileBoard({ projects, workspace, publicView }: Pick<ResolvedBo
   const sorted = sortByMembership(projects);
 
   const currentProject = sorted.find((project) => project.slug === projectSlug) || sorted[0];
-
-  const setActivePanel = useBoardStore((state) => state.setActivePanel);
-  useEffect(() => {
-    setActivePanel(currentProject.id);
-  }, [currentProject.id, setActivePanel]);
 
   return (
     <ScrollReset>

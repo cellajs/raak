@@ -2,13 +2,14 @@ import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { XIcon } from 'lucide-react';
 import type * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
-function Dialog({ ...props }: DialogPrimitive.Root.Props) {
+export function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
-function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
+export function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
@@ -16,7 +17,7 @@ function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
-function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
+export function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
@@ -33,7 +34,7 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
   );
 }
 
-function DialogContent({
+export function DialogContent({
   className,
   children,
   container,
@@ -93,7 +94,7 @@ function DialogContent({
   );
 }
 
-function DialogHeader({ className, sticky, children, ...props }: React.ComponentProps<'div'> & { sticky?: boolean }) {
+export function DialogHeader({ className, sticky, children, ...props }: React.ComponentProps<'div'> & { sticky?: boolean }) {
   return (
     <div
       data-slot="dialog-header"
@@ -118,7 +119,8 @@ export function HeaderClose() {
   return (
     <DialogPrimitive.Close
       data-slot="dialog-close"
-      className="focus-effect absolute top-0 right-0 hidden rounded-sm p-1 opacity-70 transition-opacity hover:bg-accent hover:opacity-100 group-[.with-close-btn]/header:block data-disabled:pointer-events-none"
+      render={<Button variant="ghost" size="icon" />}
+      className="absolute top-0 right-0 hidden size-7 group-[.with-close-btn]/header:inline-flex"
     >
       <XIcon className="size-5" />
       <span className="sr-only">{t('c:close')}</span>
@@ -126,16 +128,14 @@ export function HeaderClose() {
   );
 }
 
-function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
+export function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return <div data-slot="dialog-footer" className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)} {...props} />;
 }
 
-function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
+export function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return <DialogPrimitive.Title data-slot="dialog-title" className={cn('font-semibold leading-none', className)} {...props} />;
 }
 
-function DialogDescription({ className, ...props }: DialogPrimitive.Description.Props) {
+export function DialogDescription({ className, ...props }: DialogPrimitive.Description.Props) {
   return <DialogPrimitive.Description data-slot="dialog-description" className={cn('text-muted-foreground text-sm', className)} {...props} />;
 }
-
-export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger };

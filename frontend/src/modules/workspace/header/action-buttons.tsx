@@ -42,7 +42,7 @@ export function WorkspaceActionButtons() {
       label: t('c:add_resource', { resource: t('c:project').toLowerCase() }),
       onClick: createNewProject,
       ref: refs.add,
-      variant: 'plain' as const,
+      variant: 'secondary' as const,
     },
     ...(hasSettings
       ? [
@@ -115,7 +115,7 @@ export function WorkspaceActionButtons() {
         variant="ghost"
         aria-label={t('c:resource_options', { resource: t('c:workspace') })}
         onClick={({ currentTarget }) => openMobileMenu(currentTarget)}
-        className={cn('data-dropdowner-active:bg-accent/50 group-data-[search-focused=true]/boardHeader:hidden md:hidden', searchQuery && 'hidden')}
+        className={cn('data-dropdowner-active:bg-muted group-data-[search-focused=true]/boardHeader:hidden md:hidden', searchQuery && 'hidden')}
       >
         <EllipsisVerticalIcon />
       </Button>

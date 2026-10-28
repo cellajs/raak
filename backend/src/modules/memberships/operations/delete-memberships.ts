@@ -2,36 +2,29 @@ import type { ChannelEntityType } from 'shared';
 import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { deleteMembershipsByIds, findMembershipsByUserIdsAndChannel } from '#/modules/memberships/memberships-queries';
-import { getValidChannel } from '#/permissions/get-valid-channel';
+import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
 interface DeleteMembershipsInput {
-  ids: string[];
+  userIds: string[];
   entityId: string;
   entityType: ChannelEntityType;
 }
 
+/** Deletes the channel's memberships of these users, which needs `delete` on it; a user id without one comes back rejected. */
 export async function deleteMembershipsOp(ctx: UserContext, input: DeleteMembershipsInput) {
-  const { ids, entityId, entityType } = input;
+  const { userIds, entityId, entityType } = input;
 
   const { entity } = await getValidChannel(ctx, entityId, entityType, 'delete');
 
-  const membershipIds = Array.isArray(ids) ? ids : [ids];
+  const targets = await findMembershipsByUserIdsAndChannel(ctx, { userIds, channelId: entity.id });
+  const rejectedIds = userIds.filter((id) => !targets.some((target) => target.userId === id));
 
-  const targets = await findMembershipsByUserIdsAndChannel(ctx, { userIds: membershipIds, channelId: entity.id });
-
-  const rejectedIds: string[] = [];
-
-  for (const id of membershipIds) {
-    if (!targets.some((target) => target.userId === id)) rejectedIds.push(id);
+  if (targets.length) {
+    await deleteMembershipsByIds(ctx, { ids: targets.map((target) => target.id) });
+    for (const target of targets) invalidateCache.user(target.userId);
+    log.info('Memberships deleted', { count: targets.length, userIds: targets.map((target) => target.userId) });
   }
 
-  if (targets.length === 0) return { data: [] as never[], rejectedIds };
-
-  await deleteMembershipsByIds(ctx, { ids: targets.map((target) => target.id) });
-  for (const target of targets) invalidateCache.user(target.userId);
-
-  log.info('Memberships deleted', { count: targets.length, ids: targets.map((t) => t.userId) });
-
-  return { data: [] as never[], rejectedIds };
+  return { data: [], rejectedIds };
 }

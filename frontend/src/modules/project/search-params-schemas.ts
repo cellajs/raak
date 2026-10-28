@@ -1,5 +1,5 @@
 import { zGetProjectsQuery } from 'sdk/zod.gen';
-import z from 'zod';
+import { z } from 'zod';
 import { entityViewSearchParam } from '~/modules/entities/entity-grid/view-mode';
 
 export const projectsSearchDefaults = { q: '', sort: 'name', order: 'asc', view: 'grid' } as const;

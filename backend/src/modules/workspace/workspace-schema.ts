@@ -8,7 +8,7 @@ import { workspacesTable } from '#/modules/workspace/workspace-db';
 import { mockWorkspaceResponse } from '#/modules/workspace/workspace-mocks';
 import {
   batchResponseSchema,
-  excludeArchivedQuerySchema,
+  booleanTransformSchema,
   includeQuerySchema,
   paginationQuerySchema,
   validIdSchema,
@@ -40,7 +40,7 @@ const workspaceWithMembershipSchema = workspaceSchema.extend({
   included: workspaceIncludedSchema.extend({ membership: membershipBaseSchema }),
 });
 
-/** Wire registration: lens-widened schemas + entity-bound runtime seam for workspace */
+/** Wire registration: lens-widened schemas bound to the workspace entity at runtime. */
 export const workspaceContract = evolutionContract.channel('workspace', {
   createItem: z.object({ id: validTempIdSchema, name: validNameSchema }),
   updateBody: createInsertSchema(workspacesTable, { name: validNameSchema }).pick({ name: true }).partial(),
@@ -58,6 +58,6 @@ export const workspaceListQuerySchema = paginationQuerySchema.extend({
   order: z.enum(['asc', 'desc']).default('asc'),
   organizationId: validIdSchema.optional(),
   role: z.enum(roles.all).optional(),
-  excludeArchived: excludeArchivedQuerySchema,
+  excludeArchived: booleanTransformSchema,
   include: includeQuerySchema,
 });

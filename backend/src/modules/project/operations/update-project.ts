@@ -1,24 +1,25 @@
+import type { z } from '@hono/zod-openapi';
 import type { ActorContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { updateStamps } from '#/db/utils/stamps';
-import { withActorRef } from '#/modules/actors/actor-refs';
 import { releaseReplacedImages } from '#/modules/attachment/operations/release-replaced-images';
-import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { checkSlugAvailable } from '#/modules/entities/operations/check-slug';
-import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
+import { toProjectResponse } from '#/modules/project/operations/to-project-response';
 import { updateProject } from '#/modules/project/project-queries';
-import { projectContract } from '#/modules/project/project-schema';
-import { getTaskStatusCounts } from '#/modules/task/operations/get-task-status-counts';
+import { projectContract, type projectUpdateBodySchema } from '#/modules/project/project-schema';
 import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
-export async function updateProjectOp(ctx: ActorContext, id: string, rawInput: Record<string, unknown>) {
-  // Lens seam: canonicalize old-shape field names before any body access
+/**
+ * Updates a project and returns it with its counts and the caller's membership.
+ * @throws The refusals of `getValidChannel` for `update`; 409 `slug_exists` when another row holds the new slug.
+ */
+export async function updateProjectOp(ctx: ActorContext, id: string, rawInput: z.infer<typeof projectUpdateBodySchema>) {
   const input = projectContract.normalizeBody(rawInput);
 
   const { entity: project, membership } = await getValidChannel(ctx, id, 'project', 'update');
 
-  const slug = input.slug as string | undefined;
+  const { slug } = input;
 
   if (slug && slug !== project.slug) {
     const slugAvailable = await checkSlugAvailable(ctx, slug, 'project');
@@ -27,21 +28,9 @@ export async function updateProjectOp(ctx: ActorContext, id: string, rawInput: R
 
   const values = { ...input, ...updateStamps(ctx.var.actor.id) };
   const updatedProjectRecord = await updateProject(ctx, { id: project.id, values });
-  await releaseReplacedImages({ owner: { organizationId: project.organizationId, tenantId: project.tenantId }, before: project, after: input });
+  await releaseReplacedImages({ holder: { organizationId: project.organizationId, tenantId: project.tenantId }, before: project, after: input });
 
   log.info('Project updated', { projectId: updatedProjectRecord.id });
 
-  // Get updated counts
-  const [counts, taskStatusCounts] = await Promise.all([
-    getChannelCounts(ctx, { entityType: 'project', entityId: updatedProjectRecord.id }),
-    getTaskStatusCounts(ctx, updatedProjectRecord.id),
-  ]);
-
-  const projectWithAudit = await withActorRef(ctx, updatedProjectRecord);
-  const included = {
-    ...(membership && isMembershipRow(membership) && { membership: toMembershipBase(membership) }),
-    counts: { ...counts, taskStatusCounts },
-  };
-
-  return { ...projectWithAudit, included };
+  return toProjectResponse(ctx, updatedProjectRecord, membership, { counts: true, membership: true });
 }

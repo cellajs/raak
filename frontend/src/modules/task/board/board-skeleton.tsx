@@ -166,7 +166,7 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
 
       {isInWorkspace ? (
         <>
-          <Button className="max-md:hidden" variant="plain">
+          <Button className="max-md:hidden" variant="secondary">
             <PlusIcon />
             <span className="max-md:hidden xl:hidden">{t('c:add')}</span>
             <span className="max-xl:hidden">{t('c:add_resource', { resource: t('c:project').toLowerCase() })}</span>
@@ -288,7 +288,7 @@ function PanelHeaderSkeleton({ boardId, panelId, projectPage, project, sectionFi
               </Button>
             )}
             {hostsCreateButton && (
-              <Button variant="plain" size="xs" className={newTaskButtonClass}>
+              <Button variant="secondary" size="xs" className={newTaskButtonClass}>
                 <PlusIcon className="size-4.5" />
                 <span>{t('c:task')}</span>
               </Button>

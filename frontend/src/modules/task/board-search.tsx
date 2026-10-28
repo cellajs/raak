@@ -169,7 +169,7 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
                 onMouseDown={preventInputBlur}
                 onClick={toggleSearchMode}
               >
-                <Badge variant="plain" size="micro" className="cursor-pointer">
+                <Badge soft size="micro" className="cursor-pointer">
                   {matchMode}
                 </Badge>
               </button>

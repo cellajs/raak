@@ -9,7 +9,7 @@ import { usersTable } from '#/modules/user/user-db';
 import { mockStxBase } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
 import { serviceAccountWithKey } from './oauth-helpers';
-import { clearSecurityTestData, createTestTenant, type TestTenant } from './security/helpers';
+import { clearSecurityTestData, createTestTenant, insertPasskey, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
 import { setTestConfig } from './test-utils';
 
@@ -108,6 +108,8 @@ describe('Task link previews of a private task', async () => {
   });
 
   it('names a service account as the author of a task it wrote', async () => {
+    // Creating a service account asks a second factor of the admin's session
+    await insertPasskey(tenant.user);
     const { clientId } = await serviceAccountWithKey({ tenantId: tenant.tenantId, id: tenant.organization.id }, tenant.sessionCookie);
     const botTaskId = generateId();
     await db.insert(tasksTable).values(taskRow(botTaskId, clientId));

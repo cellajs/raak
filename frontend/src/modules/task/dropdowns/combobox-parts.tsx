@@ -49,5 +49,5 @@ interface HotkeyIndexBadgeProps {
 /** The item's 1-based hotkey position; pass `undefined` while searching or when digit hotkeys do not apply. */
 export function HotkeyIndexBadge({ index }: HotkeyIndexBadgeProps) {
   if (index === undefined) return null;
-  return <span className="mx-1 text-xs opacity-50 max-sm:hidden">{index + 1}</span>;
+  return <span className="mx-1 text-faint-foreground text-xs max-sm:hidden">{index + 1}</span>;
 }
