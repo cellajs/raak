@@ -10,6 +10,7 @@ import { deleteStamps, updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
+import { projectsTable } from '#/modules/project/project-db';
 import { getOrderColumns } from '#/utils/order-column';
 import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
 import { keywordSearchFilter, textSearchFilter } from '#/utils/sql';
@@ -120,6 +121,19 @@ export const findLiveLabelProjects = async (ctx: ActorContext, { ids, projectIds
     );
 };
 
+/**
+ * Locks the project row so the primary-label deletes of one project, which keep it a live primary label, run one at a
+ * time. `FOR NO KEY UPDATE` leaves the foreign-key checks of rows inserted into the project (`KEY SHARE`) unblocked.
+ */
+export const lockProjectForPrimaryLabels = async (ctx: ActorContext, { projectId }: { projectId: string }) => {
+  const { db } = ctx.var;
+  await db
+    .select({ id: projectsTable.id })
+    .from(projectsTable)
+    .where(and(eq(projectsTable.id, projectId), requestScopeWhere(ctx, projectsTable, 'project')))
+    .for('no key update');
+};
+
 /** Mode and project of the live labels among `ids`. */
 export const findLiveLabelModes = async (ctx: ActorContext, { ids }: { ids: string[] }) => {
   const { db } = ctx.var;
@@ -127,27 +141,6 @@ export const findLiveLabelModes = async (ctx: ActorContext, { ids }: { ids: stri
     .select({ id: labelsTable.id, mode: labelsTable.mode, projectId: labelsTable.projectId })
     .from(labelsTable)
     .where(and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)));
-};
-
-/**
- * Locks a project's live primary labels and returns their ids, so two deletes cannot each leave the other's last one.
- * Ordered by id, so concurrent lockers take the rows in one order.
- */
-export const lockLivePrimaryLabelIds = async (ctx: ActorContext, { projectId }: { projectId: string }) => {
-  const { db } = ctx.var;
-  return db
-    .select({ id: labelsTable.id })
-    .from(labelsTable)
-    .where(
-      and(
-        eq(labelsTable.projectId, projectId),
-        requestScopeWhere(ctx, labelsTable, 'label'),
-        eq(labelsTable.mode, 'primary'),
-        isNull(labelsTable.deletedAt),
-      ),
-    )
-    .orderBy(asc(labelsTable.id))
-    .for('update');
 };
 
 interface PropagateSetupConfigLabelsOpts {

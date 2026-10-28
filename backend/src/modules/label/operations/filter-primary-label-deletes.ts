@@ -1,6 +1,6 @@
 import type { ActorContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import { findLiveLabelModes, lockLivePrimaryLabelIds } from '#/modules/label/label-queries';
+import { findLiveLabelModes, findLivePrimaryLabels, lockProjectForPrimaryLabels } from '#/modules/label/label-queries';
 import { getValidChannel } from '#/permissions';
 
 /**
@@ -21,7 +21,7 @@ export const filterPrimaryLabelDeletes = async (
     (row) => row.projectId,
   );
 
-  // In project id order, so two deletes that lock primary labels of the same projects lock them in one order
+  // In project id order, so two deletes that lock the same projects lock them in one order
   for (const [projectId, primaries] of [...primariesByProject].sort(([a], [b]) => a.localeCompare(b))) {
     try {
       await getValidChannel(ctx, projectId, 'project', 'update');
@@ -30,11 +30,14 @@ export const filterPrimaryLabelDeletes = async (
       for (const { id } of primaries) rejected.add(id);
       continue;
     }
-    const liveCount = (await lockLivePrimaryLabelIds(ctx, { projectId })).length;
+    await lockProjectForPrimaryLabels(ctx, { projectId });
+    // Read after the lock: a primary label another delete removed meanwhile is neither counted nor rejected
+    const liveIds = new Set((await findLivePrimaryLabels(ctx, { projectIds: [projectId] })).map(({ id }) => id));
+    const livePrimaries = primaries.filter(({ id }) => liveIds.has(id));
     // A project keeps at least one live primary label; when the batch would drop below that,
     // every primary id in the batch for this project is rejected (no partial keep).
-    if (liveCount - primaries.length < 1) {
-      for (const { id } of primaries) rejected.add(id);
+    if (liveIds.size - livePrimaries.length < 1) {
+      for (const { id } of livePrimaries) rejected.add(id);
     }
   }
 

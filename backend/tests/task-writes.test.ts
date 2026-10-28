@@ -1,8 +1,9 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { createLabels, createProjects, createTasks, createWorkspaces, getLabels, updateTask } from 'sdk';
 import { generateId } from 'shared/utils/entity-id';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { labelsTable } from '#/modules/label/label-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { tasksTable } from '#/modules/task/task-db';
 import { TaskStatus } from '#/modules/task/task-properties';
@@ -23,11 +24,42 @@ describe('Task writes: moves, relation ids and full responses', async () => {
   let admin: Awaited<ReturnType<typeof createOrgUser>>;
   let member: Awaited<ReturnType<typeof createOrgUser>>;
   let outsider: Awaited<ReturnType<typeof createOrgUser>>;
+  let leaver: Awaited<ReturnType<typeof createOrgUser>>;
+  let orgAdmin: Awaited<ReturnType<typeof createOrgUser>>;
   let projectA: string;
   let projectB: string;
+  let foreignProject: string;
 
   const headersOf = (user: { sessionCookie: string }) => ({ ...defaultHeaders, Cookie: user.sessionCookie });
   const firstId = (result: { data?: unknown }) => String((result.data as { data: { id: string }[] } | undefined)?.data[0].id);
+
+  /** A project created through the API, so it has its primary labels and the creating admin is a member of it. */
+  const createProject = async (orgPath: typeof path, user: { sessionCookie: string }, name: string) => {
+    const headers = headersOf(user);
+    const workspaceId = firstId(await call(createWorkspaces, { path: orgPath, body: [{ id: `temp-${nanoid()}`, name: 'Home' }], headers }));
+    return firstId(
+      await call(createProjects, {
+        path: orgPath,
+        query: { workspaceId },
+        body: [{ id: `temp-${nanoid()}`, name, slug: `${name.toLowerCase()}-${crypto.randomUUID().slice(0, 8)}`, public: false }],
+        headers,
+      }),
+    );
+  };
+
+  const joinProjectA = (userId: string) =>
+    adminDb.insert(membershipsTable).values({
+      id: generateId(),
+      tenantId: path.tenantId,
+      channelType: 'project',
+      channelId: projectA,
+      userId,
+      role: 'member',
+      displayOrder: 1,
+      createdBy: admin.id,
+      organizationId: path.organizationId,
+      projectId: projectA,
+    });
 
   beforeAll(async () => {
     const org = await createTestOrganization();
@@ -35,46 +67,30 @@ describe('Task writes: moves, relation ids and full responses', async () => {
     admin = await createOrgUser(call, org.tenantId, org.id, `task-writes-admin-${nanoid(6)}`, adminRole);
     member = await createOrgUser(call, org.tenantId, org.id, `task-writes-member-${nanoid(6)}`, 'member');
     outsider = await createOrgUser(call, org.tenantId, org.id, `task-writes-outsider-${nanoid(6)}`, 'member');
+    leaver = await createOrgUser(call, org.tenantId, org.id, `task-writes-leaver-${nanoid(6)}`, 'member');
+    orgAdmin = await createOrgUser(call, org.tenantId, org.id, `task-writes-org-admin-${nanoid(6)}`, adminRole);
 
-    // Created through the API, so each project has its primary labels and the admin is a member of both
-    const headers = headersOf(admin);
-    const workspaceId = firstId(await call(createWorkspaces, { path, body: [{ id: `temp-${nanoid()}`, name: 'Home' }], headers }));
-    const project = async (name: string) =>
-      firstId(
-        await call(createProjects, {
-          path,
-          query: { workspaceId },
-          body: [{ id: `temp-${nanoid()}`, name, slug: `${name.toLowerCase()}-${crypto.randomUUID().slice(0, 8)}`, public: false }],
-          headers,
-        }),
-      );
-    projectA = await project('Alpha');
-    projectB = await project('Beta');
+    projectA = await createProject(path, admin, 'Alpha');
+    projectB = await createProject(path, admin, 'Beta');
 
-    // The member works in project A only
-    await adminDb.insert(membershipsTable).values({
-      id: generateId(),
-      tenantId: org.tenantId,
-      channelType: 'project',
-      channelId: projectA,
-      userId: member.id,
-      role: 'member',
-      displayOrder: 1,
-      createdBy: admin.id,
-      organizationId: org.id,
-      projectId: projectA,
-    });
+    // The member and the leaver work in project A only; the second admin is a member of no project
+    await joinProjectA(member.id);
+    await joinProjectA(leaver.id);
+
+    const otherOrg = await createTestOrganization();
+    const otherAdmin = await createOrgUser(call, otherOrg.tenantId, otherOrg.id, `task-writes-other-admin-${nanoid(6)}`, adminRole);
+    foreignProject = await createProject({ tenantId: otherOrg.tenantId, organizationId: otherOrg.id }, otherAdmin, 'Foreign');
   });
 
   afterAll(async () => await clearSecurityTestData());
 
-  const createTask = async (body: Record<string, unknown> = {}) => {
+  const createTask = async (body: Record<string, unknown> = {}, user: { sessionCookie: string } = admin) => {
     const result = await call(createTasks, {
       path,
       body: [
         { id: crypto.randomUUID(), name: 'Task', description: null, projectId: projectA, status: TaskStatus.Unstarted, stx: mockStxBase(), ...body },
       ],
-      headers: headersOf(admin),
+      headers: headersOf(user),
     });
     expect(result.response.status).toBe(201);
     return (result.data as { data: TaskResponse[] }).data[0];
@@ -149,5 +165,44 @@ describe('Task writes: moves, relation ids and full responses', async () => {
     const added = await update(admin, task.id, { labels: { add: [foreignLabel], remove: [] }, assignedTo: { add: [outsider.id], remove: [] } });
     expect(added.response.status).toBe(200);
     expect(await storedRow(task.id)).toMatchObject({ labels: [ownLabel], assignedTo: [admin.id] });
+  });
+
+  it('keeps the assignees and labels the row holds when an update adds others', async () => {
+    const goneLabel = await createLabel(projectA);
+    const liveLabel = await createLabel(projectA);
+    const task = await createTask({ labels: [goneLabel], assignedTo: [leaver.id] });
+    expect(await storedRow(task.id)).toMatchObject({ labels: [goneLabel], assignedTo: [leaver.id] });
+
+    await adminDb.delete(membershipsTable).where(and(eq(membershipsTable.userId, leaver.id), eq(membershipsTable.projectId, projectA)));
+    await adminDb.update(labelsTable).set({ deletedAt: new Date().toISOString(), deletedBy: admin.id }).where(eq(labelsTable.id, goneLabel));
+
+    const added = await update(admin, task.id, { assignedTo: { add: [member.id], remove: [] }, labels: { add: [liveLabel], remove: [] } });
+
+    expect(added.response.status).toBe(200);
+    const row = await storedRow(task.id);
+    expect({ assignedTo: [...row.assignedTo].sort(), labels: [...row.labels].sort() }).toEqual({
+      assignedTo: [leaver.id, member.id].sort(),
+      labels: [goneLabel, liveLabel].sort(),
+    });
+  });
+
+  it('lets an organization admin who is no project member assign themselves', async () => {
+    const created = await createTask({ assignedTo: [orgAdmin.id] }, orgAdmin);
+    expect(await storedRow(created.id)).toMatchObject({ assignedTo: [orgAdmin.id] });
+
+    const task = await createTask();
+    const assigned = await update(orgAdmin, task.id, { assignedTo: { add: [orgAdmin.id], remove: [] } });
+
+    expect(assigned.response.status).toBe(200);
+    expect(await storedRow(task.id)).toMatchObject({ assignedTo: [orgAdmin.id] });
+  });
+
+  it("answers 404 to a move into another organization's project and keeps the task", async () => {
+    const task = await createTask();
+
+    const moved = await update(admin, task.id, { projectId: foreignProject });
+
+    expect(moved.response.status).toBe(404);
+    expect((await storedRow(task.id)).projectId).toBe(projectA);
   });
 });

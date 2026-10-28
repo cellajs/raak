@@ -1,7 +1,9 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { createLabels, createProjects, createTasks, createWorkspaces, deleteLabels, getLabels, getProject, getWorkspace } from 'sdk';
 import { afterEach, describe, expect, it } from 'vitest';
+import { labelsTable } from '#/modules/label/label-db';
+import { projectsTable } from '#/modules/project/project-db';
 import { tasksTable } from '#/modules/task/task-db';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { mockStxBase, mockStxFor } from '#/schemas/sync-transaction-mocks';
@@ -127,6 +129,50 @@ describe('Label lists, primary label deletes and API key reads of their channels
     const all = await call(deleteLabels, { path: ctx.path, body: { ids: rest.map((label) => label.id) }, headers: ctx.headers });
     expect((all.data as { rejectedIds: string[] }).rejectedIds.sort()).toEqual(rest.map((label) => label.id).sort());
     expect((await listLabels(ctx, { modes: 'primary' })).total).toBe(rest.length);
+  });
+
+  it('does not reject a primary label another delete removes while this one waits for the project', async () => {
+    const ctx = await orgWithProject();
+    const [doubled, kept, ...extra] = (await listLabels(ctx, { modes: 'primary' })).items;
+    const deletedAt = new Date().toISOString();
+    if (extra.length > 0) {
+      await adminDb
+        .update(labelsTable)
+        .set({ deletedAt, deletedBy: ctx.user.id })
+        .where(
+          inArray(
+            labelsTable.id,
+            extra.map(({ id }) => id),
+          ),
+        );
+    }
+
+    // The first delete holds the project and has removed the label, uncommitted, until the second one waits on it.
+    const holderPid = Promise.withResolvers<number>();
+    const secondWaiting = Promise.withResolvers<void>();
+    const first = adminDb.transaction(async (tx) => {
+      await tx.select({ id: projectsTable.id }).from(projectsTable).where(eq(projectsTable.id, ctx.projectId)).for('no key update');
+      await tx.update(labelsTable).set({ deletedAt, deletedBy: ctx.user.id }).where(eq(labelsTable.id, doubled.id));
+      const { rows } = await tx.execute<{ pid: number }>(sql`SELECT pg_backend_pid() AS pid`);
+      holderPid.resolve(rows[0].pid);
+      await secondWaiting.promise;
+    });
+    const pid = await holderPid.promise;
+    const second = call(deleteLabels, { path: ctx.path, body: { ids: [doubled.id] }, headers: ctx.headers });
+    for (;;) {
+      const { rows } = await adminDb.execute<{ waiting: number }>(
+        sql`SELECT count(*)::int AS waiting FROM pg_stat_activity WHERE ${pid} = ANY(pg_blocking_pids(pid))`,
+      );
+      if (rows[0].waiting > 0) break;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    secondWaiting.resolve();
+    await first;
+
+    const removed = await second;
+    expect(removed.response.status).toBe(200);
+    expect((removed.data as { rejectedIds: string[] }).rejectedIds).toEqual([]);
+    expect((await listLabels(ctx, { modes: 'primary' })).items.map(({ id }) => id)).toEqual([kept.id]);
   });
 
   it('creates a label or a task only in a project of the request organization', async () => {
