@@ -21,9 +21,9 @@ export const navIconStrokeWidth = 1.8;
 export const navItemIconClass = tw('size-6 shrink-0 transition-transform group-hover:scale-110 sm:size-5');
 
 function NavItemIcon({ navItem }: { navItem: NavItem }) {
-  if (navItem.iconSlot) {
-    const IconSlot = navItem.iconSlot;
-    return <IconSlot className={navItemIconClass} icon={navItem.icon} />;
+  if (navItem.iconOverride) {
+    const IconOverride = navItem.iconOverride;
+    return <IconOverride className={navItemIconClass} icon={navItem.icon} />;
   }
 
   const Icon = navItem.icon;
@@ -31,9 +31,9 @@ function NavItemIcon({ navItem }: { navItem: NavItem }) {
 }
 
 function NavItemBadge({ navItem, isActive, className }: { navItem: NavItem; isActive: boolean; className?: string }) {
-  if (!navItem.badgeSlot) return null;
-  const BadgeSlot = navItem.badgeSlot;
-  return <BadgeSlot isActive={isActive} className={className} />;
+  if (!navItem.badge) return null;
+  const ItemBadge = navItem.badge;
+  return <ItemBadge isActive={isActive} className={className} />;
 }
 
 interface SidebarNavButtonProps {
@@ -78,7 +78,7 @@ export function SidebarNavButton({
         isActive={isActive}
         aria-current={isCurrent || undefined}
         className={cn(
-          'group h-14 justify-center text-sidebar-foreground ring-inset transition-[width] duration-200 ease-linear hover:bg-background/30 data-[collapsed=true]:w-16 [&>svg]:size-5',
+          'group h-14 justify-center text-sidebar-foreground ring-inset transition-[width] duration-200 ease-linear data-[collapsed=true]:w-16 [&>svg]:size-5',
           className,
         )}
       >
@@ -114,7 +114,7 @@ export function SidebarNavItemButton({
       isActive={isActive}
       itemClassName={itemClassName}
       onClick={() => onClick(navItem.id, buttonRef)}
-      className="relative data-[active=true]:bg-background/50"
+      className="relative"
       badge={<NavItemBadge navItem={navItem} isActive={isActive} className="top-2 left-8" />}
     >
       <NavItemIcon navItem={navItem} />
@@ -133,7 +133,7 @@ export function BottomBarNavItemButton({ navItem, isActive, onClick }: Omit<NavI
       id={`${navItem.id}-nav`}
       data-active={isActive}
       onClick={() => onClick(navItem.id, buttonRef)}
-      className="group active:press relative flex size-14 items-center justify-center rounded-md text-sidebar-foreground hover:bg-background/30 data-[active=true]:bg-background/50"
+      className="group active:press relative flex size-14 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent data-[active=true]:bg-sidebar-accent"
     >
       <NavItemIcon navItem={navItem} />
       <span className="sr-only">{t(`c:${navItem.id}`)}</span>

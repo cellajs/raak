@@ -1,20 +1,18 @@
 import { and, desc, eq, getColumns, gt, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
 import type { TokenType } from 'shared';
 import type { DbContext } from '#/core/context';
-import { type LinkTokenType, type TokenReplacement, tokenPolicies } from '#/modules/auth/tokens/token-policies';
-import { type InsertTokenModel, tokensTable, type UnsafeTokenModel } from '#/modules/auth/tokens-db';
+import { type CodeTokenType, type LinkTokenType, type TokenReplacement, tokenPolicies } from '#/modules/auth/tokens/token-policies';
+import { type InsertTokenModel, tokensTable, type UnsafeTokenModel } from '#/modules/auth/tokens/tokens-db';
 import { hashToken } from '#/utils/hash-token';
 import { getIsoDate } from '#/utils/iso-date';
 
-export type { PendingSignUp } from '#/modules/auth/tokens-db';
+export type { PendingSignUp } from '#/modules/auth/tokens/tokens-db';
 
 /** A token row without its secrets: the hashes of the raw value and of the single-use value stay in this module. */
 export type TokenRecord = Omit<UnsafeTokenModel, 'secret' | 'singleUseToken'>;
 
-const { secret: _secret, singleUseToken: _singleUseToken, ...safeColumns } = getColumns(tokensTable);
-
 /** The columns of a {@link TokenRecord}, for the queries of this module. */
-const tokenColumns = safeColumns;
+const { secret: _secret, singleUseToken: _singleUseToken, ...tokenColumns } = getColumns(tokensTable);
 
 /** By the token's own id, or by its membership invitation (the newest token). */
 type FindInvitationTokenOpts = ({ id: string } | { inactiveMembershipId: string }) & {
@@ -27,9 +25,8 @@ type FindInvitationTokenOpts = ({ id: string } | { inactiveMembershipId: string 
  * these, never by its address: an address can hold newer tokens from other invitations.
  */
 export const findInvitationToken = async (ctx: DbContext, opts: FindInvitationTokenOpts): Promise<TokenRecord | undefined> => {
-  const { db } = ctx.var;
   const byKey = 'id' in opts ? eq(tokensTable.id, opts.id) : eq(tokensTable.inactiveMembershipId, opts.inactiveMembershipId);
-  const query = db
+  const query = ctx.var.db
     .select(tokenColumns)
     .from(tokensTable)
     .where(and(eq(tokensTable.type, 'invitation'), byKey))
@@ -45,8 +42,7 @@ interface HasLiveInvitationTokenOpts {
 
 /** Whether an unexpired invitation token is addressed to `email`: the trace a system invitation leaves. */
 export const hasLiveInvitationToken = async (ctx: DbContext, { email }: HasLiveInvitationTokenOpts) => {
-  const { db } = ctx.var;
-  const [liveToken] = await db
+  const [liveToken] = await ctx.var.db
     .select({ id: tokensTable.id })
     .from(tokensTable)
     .where(and(eq(tokensTable.email, email), eq(tokensTable.type, 'invitation'), gt(tokensTable.expiresAt, getIsoDate())))
@@ -60,8 +56,7 @@ interface FindSystemInvitationTokensOpts {
 
 /** The unopened system invitations (no membership row) addressed to any of `emails`, expired ones included. */
 export const findSystemInvitationTokens = async (ctx: DbContext, { emails }: FindSystemInvitationTokensOpts) => {
-  const { db } = ctx.var;
-  return db
+  return ctx.var.db
     .select({ id: tokensTable.id, email: tokensTable.email, expiresAt: tokensTable.expiresAt })
     .from(tokensTable)
     .where(
@@ -81,22 +76,25 @@ interface DeleteInvitationTokensOpts {
 /** An answered or bound invitation is handled in-app, so its emailed links have no further use. */
 export const deleteInvitationTokens = async (ctx: DbContext, { inactiveMembershipIds }: DeleteInvitationTokensOpts) => {
   if (!inactiveMembershipIds.length) return;
-  const { db } = ctx.var;
-  await db.delete(tokensTable).where(inArray(tokensTable.inactiveMembershipId, inactiveMembershipIds));
+  await ctx.var.db.delete(tokensTable).where(inArray(tokensTable.inactiveMembershipId, inactiveMembershipIds));
 };
 
-interface BindTokenToUserOpts {
-  tokenId: string;
+interface UpdateTokenUserOpts {
+  id: string;
   userId: string;
 }
 
-/** Binds a token sent to an address without an account to the account that has proven the address since. */
-export const bindTokenToUser = async (ctx: DbContext, { tokenId, userId }: BindTokenToUserOpts) => {
-  const { db } = ctx.var;
-  return db
+/**
+ * Binds a token issued without an account to the account settled for it: the one holding its address by now, or the
+ * one a sign-up link's redemption created. Undefined when the token is bound already.
+ */
+export const updateTokenUser = async (ctx: DbContext, { id, userId }: UpdateTokenUserOpts) => {
+  const [bound] = await ctx.var.db
     .update(tokensTable)
     .set({ userId })
-    .where(and(eq(tokensTable.id, tokenId), isNull(tokensTable.userId)));
+    .where(and(eq(tokensTable.id, id), isNull(tokensTable.userId)))
+    .returning(tokenColumns);
+  return bound;
 };
 
 /** What decides which earlier tokens a new one replaces. */
@@ -145,9 +143,13 @@ interface InsertTokensOpts {
   values: InsertTokenModel[];
 }
 
+/** Stores new tokens; returns the stored rows without their secrets. */
 export const insertTokens = async (ctx: DbContext, { values }: InsertTokensOpts) => {
   return ctx.var.db.insert(tokensTable).values(values).returning(tokenColumns);
 };
+
+/** Names the token a link of `type` carries, by the hash of the raw value in its URL. */
+const namedBy = (type: LinkTokenType, rawToken: string) => and(eq(tokensTable.secret, hashToken(rawToken)), eq(tokensTable.type, type));
 
 interface FindLinkTokenOpts {
   type: LinkTokenType;
@@ -157,11 +159,7 @@ interface FindLinkTokenOpts {
 
 /** The link token a raw value names, read without redeeming it; undefined when there is none. */
 export const findLinkToken = async (ctx: DbContext, { type, rawToken }: FindLinkTokenOpts): Promise<TokenRecord | undefined> => {
-  const [token] = await ctx.var.db
-    .select(tokenColumns)
-    .from(tokensTable)
-    .where(and(eq(tokensTable.secret, hashToken(rawToken)), eq(tokensTable.type, type)))
-    .limit(1);
+  const [token] = await ctx.var.db.select(tokenColumns).from(tokensTable).where(namedBy(type, rawToken)).limit(1);
   return token;
 };
 
@@ -173,8 +171,7 @@ interface DeleteUnopenedLinkTokenOpts {
 
 /** Deletes the unopened link a raw value names, so neither its URL nor a confirmation page can redeem it any more. */
 export const deleteUnopenedLinkToken = async (ctx: DbContext, { type, rawToken }: DeleteUnopenedLinkTokenOpts) => {
-  const secret = hashToken(rawToken);
-  await ctx.var.db.delete(tokensTable).where(and(eq(tokensTable.secret, secret), eq(tokensTable.type, type), isNull(tokensTable.invokedAt)));
+  await ctx.var.db.delete(tokensTable).where(and(namedBy(type, rawToken), isNull(tokensTable.invokedAt)));
 };
 
 interface UpdateTokenRedeemedOpts {
@@ -196,17 +193,6 @@ export const updateTokenRedeemed = async (ctx: DbContext, { id, singleUseToken, 
     .where(and(eq(tokensTable.id, id), isNull(tokensTable.invokedAt)))
     .returning(tokenColumns);
   return redeemed;
-};
-
-interface UpdateTokenUserOpts {
-  id: string;
-  userId: string;
-}
-
-/** Binds a token to the account settled for it. */
-export const updateTokenUser = async (ctx: DbContext, { id, userId }: UpdateTokenUserOpts) => {
-  const [owned] = await ctx.var.db.update(tokensTable).set({ userId }).where(eq(tokensTable.id, id)).returning(tokenColumns);
-  return owned;
 };
 
 /**
@@ -239,6 +225,32 @@ interface DeleteBoundTokenOpts {
 /** Deletes the token a browser's cookie of `type` binds it to; returns the deleted row, undefined when there was none. */
 export const deleteBoundToken = async (ctx: DbContext, { type, cookie }: DeleteBoundTokenOpts) => {
   const [spent] = await ctx.var.db.delete(tokensTable).where(boundTo(type, cookie)).returning(tokenColumns);
+  return spent;
+};
+
+interface DeleteSessionCodeTokenOpts {
+  type: CodeTokenType;
+  sessionId: string;
+  /** The code as the user entered it. */
+  code: string;
+}
+
+/**
+ * Deletes the session's unexpired code token of `type` when `code` matches it; returns the deleted row, undefined
+ * otherwise. The session narrows the search first, so a guess can match only this session's code; a miss deletes nothing.
+ */
+export const deleteSessionCodeToken = async (ctx: DbContext, { type, sessionId, code }: DeleteSessionCodeTokenOpts) => {
+  const [spent] = await ctx.var.db
+    .delete(tokensTable)
+    .where(
+      and(
+        eq(tokensTable.type, type),
+        eq(tokensTable.sessionId, sessionId),
+        eq(tokensTable.secret, hashToken(code)),
+        gt(tokensTable.expiresAt, getIsoDate()),
+      ),
+    )
+    .returning(tokenColumns);
   return spent;
 };
 

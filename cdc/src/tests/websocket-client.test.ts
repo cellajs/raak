@@ -51,7 +51,10 @@ vi.mock('ws', async () => {
 
 vi.mock('../lib/db', () => ({ cdcDb: { execute: vi.fn(async () => ({ rows: [] })) } }));
 // The real monitor measures this test process, which is busy at times.
-vi.mock('shared/utils/event-loop-monitor', () => ({ getEventLoopLagMs: () => 0 }));
+vi.mock('shared/utils/event-loop-monitor', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('shared/utils/event-loop-monitor')>()),
+  getEventLoopLagMs: () => 0,
+}));
 
 const latest = () => sockets.at(-1) as FakeSocket;
 
@@ -173,7 +176,7 @@ describe('wsClient.send', () => {
 
   it('must not report a row that cannot be serialized as the API being away: it fails its flush, and counts toward stuck', async () => {
     const wsClient = await freshClient();
-    const { sendMessageToApi } = await import('../services/activity-service');
+    const { sendMessageToApi } = await import('../services/api-messages');
     const { FlushBuffer } = await import('../services/flush-buffer');
     const { replicationState } = await import('../services/replication-state');
     const { resourceLimits } = await import('../constants');

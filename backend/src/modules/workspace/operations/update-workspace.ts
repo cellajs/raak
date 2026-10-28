@@ -1,15 +1,17 @@
+import type { z } from '@hono/zod-openapi';
 import type { ActorContext } from '#/core/context';
 import { updateStamps } from '#/db/utils/stamps';
-import { withActorRef } from '#/modules/actors/actor-refs';
-import { getChannelCounts } from '#/modules/entities/entities-queries';
-import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
+import { toWorkspaceResponse } from '#/modules/workspace/operations/to-workspace-response';
 import { updateWorkspace } from '#/modules/workspace/workspace-queries';
-import { workspaceContract } from '#/modules/workspace/workspace-schema';
+import { workspaceContract, type workspaceUpdateBodySchema } from '#/modules/workspace/workspace-schema';
 import { getValidChannel } from '#/permissions/get-valid-channel';
 import { log } from '#/utils/logger';
 
-export async function updateWorkspaceOp(ctx: ActorContext, id: string, rawInput: { name?: string }) {
-  // Lens seam: canonicalize old-shape field names before any body access
+/**
+ * Updates a workspace and returns it with its counts and the caller's membership.
+ * @throws The refusals of `getValidChannel` for `update`.
+ */
+export async function updateWorkspaceOp(ctx: ActorContext, id: string, rawInput: z.infer<typeof workspaceUpdateBodySchema>) {
   const input = workspaceContract.normalizeBody(rawInput);
 
   const { entity: workspace, membership } = await getValidChannel(ctx, id, 'workspace', 'update');
@@ -19,9 +21,5 @@ export async function updateWorkspaceOp(ctx: ActorContext, id: string, rawInput:
 
   log.info('Workspace updated', { workspaceId: updatedWorkspaceRecord.id });
 
-  const counts = await getChannelCounts(ctx, { entityType: workspace.entityType, entityId: workspace.id });
-  const workspaceWithAudit = await withActorRef(ctx, updatedWorkspaceRecord);
-  const included = { ...(membership && isMembershipRow(membership) && { membership: toMembershipBase(membership) }), counts };
-
-  return { ...workspaceWithAudit, included };
+  return toWorkspaceResponse(ctx, updatedWorkspaceRecord, membership, { counts: true, membership: true });
 }

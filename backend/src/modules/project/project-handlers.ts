@@ -59,7 +59,7 @@ app.openapi(projectRoutes.moveProjectToWorkspace, async (ctx) => {
 
 app.openapi(projectRoutes.deleteProjects, async (ctx) => {
   const { ids } = ctx.req.valid('json');
-  const data = await deleteProjectsOp(ctx, Array.isArray(ids) ? ids : [ids]);
+  const data = await deleteProjectsOp(ctx, ids);
   return ctx.json(data, 200);
 });
 

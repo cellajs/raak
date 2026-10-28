@@ -94,7 +94,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
       {pickers.map(({ type, icon: Icon, label }) => (
         <TooltipButton key={type} toolTipContent={label} side="top">
           <Button
-            variant="plain"
+            variant="secondary"
             size="icon"
             aria-label={label}
             className="data-dropdowner-active:soft-bg-strong data-dropdowner-active:soft-border-medium"

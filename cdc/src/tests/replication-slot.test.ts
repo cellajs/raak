@@ -22,8 +22,7 @@ vi.mock('../lib/db', () => {
         return { rows: [] };
       },
     },
-    buildVerifiedSsl: () => undefined,
-    stripSslParams: (url: string) => url,
+    sslCa: undefined,
   };
 });
 
@@ -32,7 +31,7 @@ vi.mock('../network/websocket-client', () => ({ wsClient: { isConnected: () => t
 // The lost cases have their own tests: here the loop gets a `settle` step, and only the rebuild limit is read.
 vi.mock('../pipeline/verify', () => ({
   rebuildAllowed: () => books.rebuildAllowed,
-  readLostCaseFacts: vi.fn(),
+  readLostCaseFacts: vi.fn(async () => ({ hasHistory: false, countersAreLost: false })),
   rebuildBooks: vi.fn(),
   rebuildWasInterrupted: vi.fn(),
   ensureBooksStateRestored: vi.fn(),

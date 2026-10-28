@@ -126,7 +126,7 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
         variant="ghost"
         aria-label={t('c:resource_options', { resource: t('c:project') })}
         onClick={({ currentTarget }) => openOptionsDropdown(currentTarget)}
-        className={cn('data-dropdowner-active:bg-accent/50', className)}
+        className={cn('data-dropdowner-active:bg-muted', className)}
       >
         <EllipsisVerticalIcon />
       </Button>

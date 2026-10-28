@@ -27,7 +27,7 @@ function TaskSheetTitle({ taskId }: TaskSheetTitleProps) {
     <span className="flex items-center gap-2">
       {t('c:task')}
       {isReadOnly && (
-        <Badge variant="plain" className="font-normal opacity-75">
+        <Badge soft className="font-normal">
           {t('c:read_only')}
         </Badge>
       )}

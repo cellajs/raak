@@ -9,12 +9,15 @@ import { otel } from '#/lib/tracing';
 // the module routes `#/routes` mounts.
 import '#/modules';
 import { mcpHandlers } from '#/modules/mcp/mcp-handlers';
+import { mcpMountPath } from '#/modules/mcp/mcp-routes';
 import { createBaseApp } from '#/server';
+
+let server: ServerType | undefined;
 
 /**
  * The MCP face as its own process: the tool endpoint and its protected-resource metadata, behind tokens from the
- * authorization server. Needs no AI credential; `SCW_AI_API_KEY` only switches the app's own AI features on. Under
- * singleVM the API process calls this with the mcp port and `inProcess`: telemetry and the wait for the API are its own.
+ * authorization server. Under singleVM the API process calls this with the mcp port and `inProcess`: telemetry, the
+ * wait for the API and the shutdown handler are its own, and its cleanup calls `shutdownMcpWorker`.
  */
 export async function startMcpWorker(options: { port?: number; inProcess?: boolean } = {}): Promise<void> {
   const port = options.port ?? env.PORT;
@@ -23,28 +26,34 @@ export async function startMcpWorker(options: { port?: number; inProcess?: boole
     return;
   }
 
-  const hasAiKey = !!env.SCW_AI_API_KEY;
   if (!options.inProcess) {
     otel.start();
     otel.verifyConnection();
     // Wait for the API to be ready (it owns migrations)
-    if (env.NODE_ENV === 'development') await waitForBackend(2000, 60_000, appConfig.devPorts.api);
+    if (env.NODE_ENV === 'development') await waitForBackend({ apiPort: appConfig.devPorts.api });
   }
 
   // An app of its own: folded into the API process, the API's app takes no routes once it has answered a request.
   const app = createBaseApp();
-  app.route('/:tenantId/:organizationId/mcp', mcpHandlers);
+  app.route(mcpMountPath, mcpHandlers);
 
-  const server: ServerType = serve({ fetch: app.fetch, hostname: '0.0.0.0', port }, () => {
-    baseLog.info(`MCP service listening on port ${port}${hasAiKey ? '' : ' (AI features off)'}`);
+  server = serve({ fetch: app.fetch, hostname: '0.0.0.0', port }, () => {
+    baseLog.info(`MCP service listening on port ${port}`);
   });
 
-  setupGracefulShutdown({
-    name: 'mcp-worker',
-    cleanup: async () => {
-      server.close();
-      if (!options.inProcess) await otel.shutdown();
-    },
-    log: (msg) => baseLog.info(msg),
-  });
+  if (!options.inProcess) {
+    setupGracefulShutdown({
+      name: 'mcp-worker',
+      cleanup: async () => {
+        shutdownMcpWorker();
+        await otel.shutdown();
+      },
+      log: (msg) => baseLog.info(msg),
+    });
+  }
+}
+
+/** Closes the MCP listener: its own process's shutdown, and the API's cleanup under `singleVM`. */
+export function shutdownMcpWorker(): void {
+  server?.close();
 }

@@ -12,12 +12,10 @@ import { cn } from '~/utils/cn';
 const tagTypeConfig = {
   operations: {
     linkTo: '/docs/operations' as const,
-    getHash: (name: string) => `tag/${name}`,
     getSearch: (collapse: boolean, name: string) => ({ operationTag: collapse ? undefined : name }),
   },
   schemas: {
     linkTo: '/docs/schemas' as const,
-    getHash: (name: string) => name,
     getSearch: (collapse: boolean, name: string) => ({ schemaTag: collapse ? undefined : name }),
   },
 };
@@ -55,8 +53,8 @@ function CollapsibleTagItemBase<T>({
   onPrerender,
 }: CollapsibleTagItemProps<T>) {
   const isMobile = useBreakpointBelow('md', false);
-  const { linkTo, getSearch, getHash } = tagTypeConfig[type];
-  const hash = getHash(tag.name);
+  const { linkTo, getSearch } = tagTypeConfig[type];
+  const hash = `tag/${tag.name}`;
   // Only a re-click at the tag itself collapses it; at one of its items or elsewhere, the click jumps here and leaves it open
   const collapseOnClick = isExpanded && isAtTag;
 
@@ -74,7 +72,7 @@ function CollapsibleTagItemBase<T>({
             draggable={false}
             className={cn(
               buttonVariants({ variant: 'ghost' }),
-              'group focus-inset h-8 w-full justify-start pl-5 font-normal opacity-80 group-data-[active=true]/tag:bg-accent group-data-[active=true]/tag:font-medium group-data-[expanded=true]/tag:opacity-100',
+              'group focus-inset h-8 w-full justify-start pl-5 font-normal text-muted-foreground group-data-[active=true]/tag:bg-accent group-data-[active=true]/tag:font-medium group-data-[expanded=true]/tag:text-foreground',
             )}
             onMouseEnter={!isExpanded ? onPrerender : undefined}
             // Leaves the mobile sheet open, so expanding a tag shows its items
@@ -84,7 +82,7 @@ function CollapsibleTagItemBase<T>({
       >
         <div className="absolute left-[0.53rem] size-1 rounded-full bg-muted-foreground/30 group-data-[expanded=true]/tag:bg-muted-foreground/60" />
         <span className="truncate">{tag.name}</span>
-        <span className="text-muted-foreground text-xs opacity-0 transition-opacity group-data-[expanded=true]/tag:hidden sm:group-hover:opacity-100">
+        <span className="text-faint-foreground text-xs opacity-0 transition-opacity group-data-[expanded=true]/tag:hidden sm:group-hover:opacity-100">
           {tag.count}
         </span>
         <ChevronDownIcon className="invisible ml-auto shrink-0 opacity-40 transition-transform duration-200 group-hover:visible group-data-[expanded=true]/tag:rotate-180" />

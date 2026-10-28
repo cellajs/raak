@@ -1,18 +1,34 @@
 import { and, asc, eq, inArray, isNull, notInArray, sql } from 'drizzle-orm';
-import { appConfig, type ProductEntityType, toTableName } from 'shared';
+import { isProduct, type ProductEntityType, toTableName } from 'shared';
 import type { DbContext } from '#/core/context';
-import type { YjsDocKey, YjsDocScope, YjsDocumentRead } from '#/modules/yjs/helpers/yjs-log';
+import type { LogRow, YjsDocKey, YjsDocScope, YjsDocumentRead } from '#/modules/yjs/helpers/yjs-log';
 import { yjsDocumentsTable, yjsUpdatesTable } from '#/modules/yjs/yjs-db';
 import { getIsoDate } from '#/utils/iso-date';
 
-// No `#/env` import and no pool: the Yjs relay imports this file, and passes its own transaction as `ctx.var.db`.
+// No `#/env` import and no pool, here or in any other file of this module the Yjs relay imports through `#/`: the relay
+// passes its own transaction as `ctx.var.db`.
 
 /** `(entity_type, entity_id)` within the document's own tenant, so a read is the same with RLS bypassed. */
-const docWhere = ({ entityType, entityId, tenantId }: YjsDocKey) =>
+export const docWhere = ({ entityType, entityId, tenantId }: YjsDocKey) =>
   and(eq(yjsDocumentsTable.entityType, entityType), eq(yjsDocumentsTable.entityId, entityId), eq(yjsDocumentsTable.tenantId, tenantId));
 
-const logWhere = ({ entityType, entityId, tenantId }: YjsDocKey) =>
+/** The document's log rows, by the same key as `docWhere`. */
+export const logWhere = ({ entityType, entityId, tenantId }: YjsDocKey) =>
   and(eq(yjsUpdatesTable.entityType, entityType), eq(yjsUpdatesTable.entityId, entityId), eq(yjsUpdatesTable.tenantId, tenantId));
+
+interface FindYjsLogOpts {
+  doc: YjsDocKey;
+}
+
+/** The document's log, oldest first, in the caller's transaction; empty when nothing is logged. */
+export const findYjsLog = async (ctx: DbContext, { doc }: FindYjsLogOpts): Promise<LogRow[]> => {
+  const rows = await ctx.var.db
+    .select({ id: yjsUpdatesTable.id, payload: yjsUpdatesTable.payload, userId: yjsUpdatesTable.userId })
+    .from(yjsUpdatesTable)
+    .where(logWhere(doc))
+    .orderBy(asc(yjsUpdatesTable.id));
+  return rows.map((row) => ({ ...row, payload: new Uint8Array(row.payload) }));
+};
 
 interface FindYjsDocumentOpts {
   doc: YjsDocKey;
@@ -26,23 +42,13 @@ interface FindYjsDocumentOpts {
  * both tables are fail-closed under RLS, and a read without it finds no row.
  */
 export const findYjsDocument = async (ctx: DbContext, { doc }: FindYjsDocumentOpts): Promise<YjsDocumentRead | null> => {
-  const { db } = ctx.var;
-  const [document] = await db
+  const [document] = await ctx.var.db
     .select({ state: yjsDocumentsTable.state, generation: yjsDocumentsTable.generation })
     .from(yjsDocumentsTable)
     .where(docWhere(doc))
     .for('share');
   if (!document) return null;
-  const rows = await db
-    .select({ id: yjsUpdatesTable.id, payload: yjsUpdatesTable.payload, userId: yjsUpdatesTable.userId })
-    .from(yjsUpdatesTable)
-    .where(logWhere(doc))
-    .orderBy(asc(yjsUpdatesTable.id));
-  return {
-    generation: document.generation,
-    base: new Uint8Array(document.state),
-    rows: rows.map((row) => ({ ...row, payload: new Uint8Array(row.payload) })),
-  };
+  return { generation: document.generation, base: new Uint8Array(document.state), rows: await findYjsLog(ctx, { doc }) };
 };
 
 interface InsertYjsDocumentOpts {
@@ -63,7 +69,7 @@ export const insertYjsDocument = async (ctx: DbContext, { doc, state }: InsertYj
     .onConflictDoNothing({ target: [yjsDocumentsTable.entityType, yjsDocumentsTable.entityId] });
 };
 
-interface FindYjsDocumentUnderKeyShareOpts {
+interface FindYjsDocumentGenerationOpts {
   doc: YjsDocKey;
 }
 
@@ -71,7 +77,7 @@ interface FindYjsDocumentUnderKeyShareOpts {
  * The document row's generation, the row held FOR KEY SHARE until the caller's transaction ends: a retirement, which
  * deletes the row, waits for it, and a read's FOR SHARE lets it through. Undefined when no row exists.
  */
-export const findYjsDocumentUnderKeyShare = async (ctx: DbContext, { doc }: FindYjsDocumentUnderKeyShareOpts) => {
+export const findYjsDocumentGeneration = async (ctx: DbContext, { doc }: FindYjsDocumentGenerationOpts) => {
   const [document] = await ctx.var.db
     .select({ generation: yjsDocumentsTable.generation })
     .from(yjsDocumentsTable)
@@ -167,7 +173,7 @@ export const getTableColumnNames = (ctx: DbContext, { table }: GetTableColumnNam
   return cached;
 };
 
-interface FindEntityDescriptionForShareOpts {
+interface FindEntityDescriptionOpts {
   doc: YjsDocScope;
 }
 
@@ -175,12 +181,12 @@ interface FindEntityDescriptionForShareOpts {
  * The entity's stored description, read FOR SHARE in the caller's transaction: an outside write's UPDATE of the row
  * waits until the caller commits, and a write in flight commits first and is read. Null when no live row exists in the
  * document's tenant (deleted, or never there). By convention the Yjs-edited column is `description`: a table without
- * it locks its row and gives none, and an entity type the app does not declare has no row to lock. The app-owned table
- * is queried by name, after access to the entity was verified; the tenant and live-row predicates repeat what RLS
- * applies, so the read is the same on a connection that bypasses it.
+ * it locks its row and gives none, and a type that is not a product type holds no document and has no row to lock.
+ * The app-owned table is queried by name, after access to the entity was verified; the tenant and live-row predicates
+ * repeat what RLS applies, so the read is the same on a connection that bypasses it.
  */
-export const findEntityDescriptionForShare = async (ctx: DbContext, { doc }: FindEntityDescriptionForShareOpts) => {
-  if (!(appConfig.entityTypes as readonly string[]).includes(doc.entityType)) return { description: null };
+export const findEntityDescription = async (ctx: DbContext, { doc }: FindEntityDescriptionOpts) => {
+  if (!isProduct(doc.entityType)) return { description: null };
 
   const table = toTableName(doc.entityType);
   const existing = await getTableColumnNames(ctx, { table });

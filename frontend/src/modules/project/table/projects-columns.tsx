@@ -99,8 +99,8 @@ export const useColumns = (organization: EnrichedOrganization) => {
           </>
         ) : (
           <>
-            <LockIcon className="opacity-50" />
-            <span className="opacity-50">{t('c:private')}</span>
+            <LockIcon className="text-muted-foreground" />
+            <span className="text-muted-foreground">{t('c:private')}</span>
           </>
         ),
     },

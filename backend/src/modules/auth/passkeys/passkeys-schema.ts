@@ -25,6 +25,7 @@ const webAuthnAttestationSchema = z.object({
   clientExtensionResults: z.unknown().optional(),
   type: z.literal('public-key'),
 });
+export type WebAuthnAttestation = z.infer<typeof webAuthnAttestationSchema>;
 
 /** WebAuthn authentication response (`AuthenticationResponseJSON`); binary fields are base64url strings. */
 export const webAuthnAssertionSchema = z.object({
@@ -35,12 +36,13 @@ export const webAuthnAssertionSchema = z.object({
   clientExtensionResults: z.unknown().optional(),
   type: z.literal('public-key'),
 });
+export type WebAuthnAssertion = z.infer<typeof webAuthnAssertionSchema>;
 
 export const passkeyCreateBodySchema = z.object({ attestation: webAuthnAttestationSchema, nameOnDevice: z.string().max(maxLength.field) });
 
 export const passkeyChallengeBodySchema = z.object({ type: challengeTypeSchema });
 
-/** `credentialIds` lists the account's passkeys for an MFA challenge only; it is empty for any other challenge. */
+/** `credentialIds` lists the account's passkeys for an MFA or step-up challenge; empty for a sign-in or registration challenge. */
 export const passkeyChallengeSchema = z.object({ challenge: z.string(), credentialIds: z.array(z.string()) });
 
 export const passkeyVerificationBodySchema = z.object({ assertion: webAuthnAssertionSchema, type: passkeyTypeSchema });

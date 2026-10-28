@@ -4,12 +4,15 @@ import { deleteWorkspacesByIds } from '#/modules/workspace/workspace-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { log } from '#/utils/logger';
 
+/**
+ * Deletes the workspaces the caller may delete.
+ * @returns The ids the caller may not delete, as `rejectedIds`.
+ */
 export async function deleteWorkspacesOp(ctx: UserContext, ids: string[]) {
-  const toDeleteIds = Array.isArray(ids) ? ids : [ids];
-  const { allowedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'workspace', toDeleteIds);
+  const { allowedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'workspace', ids);
   await deleteWorkspacesByIds(ctx, { ids: allowedIds });
 
-  // Invalidate membership cache so deleted memberships are absent from later reads.
+  // The caller's next request reads their memberships without the deleted ones
   invalidateCache.user(ctx.var.user.id);
 
   log.info('Workspaces deleted', { count: allowedIds.length, ids: allowedIds });

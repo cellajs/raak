@@ -1,40 +1,31 @@
+import type { z } from '@hono/zod-openapi';
 import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { userActorRef, withActorRefs } from '#/modules/actors/actor-refs';
-import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
+import { countTenantEntityRows } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { generateUniqueSlugs } from '#/modules/entities/operations/generate-unique-slugs';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { insertMemberships } from '#/modules/memberships/operations/insert-memberships';
+import { assertTenantQuota } from '#/modules/tenants/tenant-restrictions';
 import { insertWorkspaces } from '#/modules/workspace/workspace-queries';
 import { workspaceContract } from '#/modules/workspace/workspace-schema';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
-import { createRejectionState, takeWithRestriction } from '#/utils/rejection-utils';
+import { createRejectionState } from '#/utils/rejection-utils';
 
-type CreateWorkspaceItem = { id: string; name: string };
+/**
+ * Creates workspaces in the organization, each with its creator as admin and a slug derived from the creator and the
+ * organization.
+ * @throws AppError 403 `restrict_by_app` past the tenant's workspace quota.
+ */
+export async function createWorkspacesOp(ctx: UserContext, rawItems: z.infer<typeof workspaceContract.createItemSchema>[]) {
+  const itemsToCreate = rawItems.map((item) => workspaceContract.normalizeBody(item));
+  const { user, organization } = ctx.var;
 
-export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorkspaceItem[]) {
-  // Lens seam: canonicalize old-shape field names before any body access
-  const items = rawItems.map((item) => workspaceContract.normalizeBody(item));
-  const db = ctx.var.db;
-  const user = ctx.var.user;
-  const organization = ctx.var.organization;
-
-  const currentWorkspacesCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'workspace' });
-  const workspaceRestrictions = ctx.var.tenant.restrictions.quotas.workspace;
-  const availableSlots = workspaceRestrictions === 0 ? items.length : workspaceRestrictions - currentWorkspacesCount;
-
-  const restrictionFiltered =
-    workspaceRestrictions === 0 ? { items, rejectionState: createRejectionState() } : takeWithRestriction(items, availableSlots, 'restrict_by_org');
-
-  const itemsToCreate = restrictionFiltered.items;
-  const rejectionState = restrictionFiltered.rejectionState;
-
-  if (itemsToCreate.length === 0) {
-    return { data: [] as never[], ...rejectionState };
-  }
+  const currentWorkspaces = await countTenantEntityRows(ctx, { entityType: 'workspace' });
+  assertTenantQuota(ctx, 'workspace', currentWorkspaces, itemsToCreate.length);
 
   canCreateEntity(ctx, buildSubject('workspace', { organizationId: organization.id }));
 
@@ -52,24 +43,27 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
     organizationId: organization.id,
   }));
 
-  const workspaceRecords = await insertWorkspaces(ctx, { workspaces: workspaceValues });
+  // A workspace and its creator's membership commit together: a workspace without its admin reaches no one
+  const { workspaceRecords, createdMemberships } = await ctx.var.db.transaction(async (tx) => {
+    const txCtx = { var: { db: tx } };
+    const workspaceRecords = await insertWorkspaces(txCtx, { workspaces: workspaceValues });
+    const membershipInserts = workspaceRecords.map((workspace) => ({
+      userId: user.id,
+      createdBy: user.id,
+      role: 'admin' as const,
+      entity: { ...workspace, tenantId: organization.tenantId },
+    }));
+    const createdMemberships = await insertMemberships(txCtx, { items: membershipInserts });
+    return { workspaceRecords, createdMemberships };
+  });
 
-  log.info('Workspaces created', { count: workspaceRecords.length, ids: workspaceRecords.map((ws) => ws.id) });
+  log.info('Workspaces created', { count: workspaceRecords.length, ids: workspaceRecords.map((workspace) => workspace.id) });
 
-  const membershipInserts = workspaceRecords.map((ws) => ({
-    userId: user.id,
-    createdBy: user.id,
-    role: 'admin' as const,
-    entity: { ...ws, tenantId: organization.tenantId },
-  }));
-
-  const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
-
-  // Invalidate membership cache so subsequent requests see the new membership
+  // The caller's next request reads the new memberships
   invalidateCache.user(user.id);
 
   const counts = buildZeroCounts('workspace', 'admin');
-  const membershipByWsId = new Map(createdMemberships.map((m) => [m.workspaceId, m]));
+  const membershipByWsId = new Map(createdMemberships.map((membership) => [membership.workspaceId, membership]));
   const workspacesWithAudit = await withActorRefs(ctx, workspaceRecords, [userActorRef(user)]);
 
   const workspaceResponses = workspacesWithAudit.map((ws) => {
@@ -77,5 +71,5 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
     return { ...ws, included: { membership: toMembershipBase(membership), counts } };
   });
 
-  return { data: workspaceResponses, ...rejectionState };
+  return { data: workspaceResponses, ...createRejectionState() };
 }

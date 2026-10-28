@@ -3,6 +3,9 @@ import { type ELDHistogram, monitorEventLoopDelay } from 'node:perf_hooks';
 /** How long one sampling window lasts. A burst leaves the reading within two windows. */
 export const eventLoopWindowMs = 30_000;
 
+/** The event-loop lag, in milliseconds, from which a service's own health reads degraded, and unhealthy. */
+export const eventLoopLagLimitsMs = { degraded: 100, unhealthy: 1_000 } as const;
+
 /** The timer the histogram samples with. An idle loop fires it on time, so this much of every sample is no delay. */
 const resolutionMs = 20;
 
@@ -25,10 +28,10 @@ function ensureStarted(): ELDHistogram {
 }
 
 /** A mean of the histogram as delay in milliseconds: the time between two samples, less the timer's own interval. */
-const toDelayMs = (meanNs: number | null): number => {
+function toDelayMs(meanNs: number | null): number {
   if (meanNs === null || !Number.isFinite(meanNs)) return 0;
   return Math.max(0, Math.round((meanNs / 1e6 - resolutionMs) * 10) / 10);
-};
+}
 
 /**
  * Mean event-loop delay in milliseconds, reported by `/health`: the worse of the window that ended last and the one

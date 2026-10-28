@@ -1,13 +1,12 @@
 import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
-import { orgGuard, stepUpGuard, tenantGuard, userGuard } from '#/middlewares/guard';
+import { orgGuard, stepUpFactorGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
-import { idInTenantOrgParamSchema, paginationSchema, tenantOrgParamSchema } from '#/schemas';
 import {
   mockApiKeyResponse,
   mockCreatedApiKeyResponse,
   mockPaginatedServiceAccountsResponse,
   mockServiceAccountResponse,
-} from './service-accounts-mocks';
+} from '#/modules/service-accounts/service-accounts-mocks';
 import {
   apiKeyParamSchema,
   apiKeySchema,
@@ -19,17 +18,18 @@ import {
   serviceAccountListQuerySchema,
   serviceAccountSchema,
   updateServiceAccountBodySchema,
-} from './service-accounts-schema';
+} from '#/modules/service-accounts/service-accounts-schema';
+import { idInTenantOrgParamSchema, paginationSchema, tenantOrgParamSchema } from '#/schemas';
 
 /**
- * All routes are user-only: creating and managing machine actors is a human act (D9). Each operation first checks
- * that the caller may update the organization.
+ * All routes are user-only: creating and managing machine actors is a human act. Each operation first checks that the
+ * caller may update the organization.
  */
-export const serviceAccountRoutes = createXRoutes(['service-accounts', 'cella'], {
+const serviceAccountRoutes = createXRoutes(['service-accounts', 'cella'], {
   createServiceAccount: xRoute({
     method: 'post',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard, stepUpGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard, stepUpFactorGuard],
     xRateLimiter: [singlePointsLimiter],
     summary: 'Create service account',
     description:
@@ -73,7 +73,7 @@ export const serviceAccountRoutes = createXRoutes(['service-accounts', 'cella'],
   createApiKey: xRoute({
     method: 'post',
     path: '/{id}/keys',
-    xGuard: [userGuard, tenantGuard, orgGuard, stepUpGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard, stepUpFactorGuard],
     xRateLimiter: [singlePointsLimiter],
     summary: 'Create API key',
     description:
@@ -92,3 +92,5 @@ export const serviceAccountRoutes = createXRoutes(['service-accounts', 'cella'],
     responses: { 200: json('API key was revoked', apiKeySchema) },
   }),
 });
+
+export { serviceAccountRoutes };

@@ -2,8 +2,8 @@ import type { DbContext } from '#/core/context';
 import { issueToken, type NewToken } from '#/modules/auth/tokens/token-lifecycle';
 import { findInvitationToken, type TokenRecord } from '#/modules/auth/tokens/tokens-queries';
 import { resolveEntity } from '#/modules/entities/entities-queries';
-import { findPendingInactiveMembership, stampInactiveMembershipsReminded } from '#/modules/memberships/memberships-queries';
-import { sendInvitationMails } from '#/modules/memberships/operations/invitation-mail';
+import { findPendingInactiveMembership, stampInactiveMembershipsReminded } from '#/modules/memberships/inactive-memberships-queries';
+import { sendInvitationMails } from '#/modules/memberships/operations/send-invitation-mails';
 import { stampWaitlistRequestInvited } from '#/modules/requests/requests-queries';
 import { findUserByEmail, findUserById } from '#/modules/user/user-queries';
 import { getIsoDate } from '#/utils/iso-date';
@@ -68,7 +68,7 @@ export const resendInvitationEmail = async (ctx: DbContext, oldToken: TokenRecor
   if (invitation) {
     const { entity } = invitation;
     await sendInvitationMails(ctx, {
-      sender: sender ?? { name: 'System' },
+      sender,
       channel: { type: invitation.channelType, slug: entity.slug, name: entity.name, role: invitation.role },
       // A channel below the organization carries no default language here: the app's applies.
       organization: 'defaultLanguage' in entity ? entity : null,
@@ -77,7 +77,7 @@ export const resendInvitationEmail = async (ctx: DbContext, oldToken: TokenRecor
     await stampInactiveMembershipsReminded(ctx, { ids: [invitation.id], remindedAt: getIsoDate() });
     log.info('Membership invitation has been resent', { inactiveMembershipId: invitation.id, tokenId });
   } else {
-    await sendInvitationMails(ctx, { sender: sender ?? { name: 'System' }, invited });
+    await sendInvitationMails(ctx, { sender, invited });
     log.info('System invitation has been resent', { tokenId });
   }
 

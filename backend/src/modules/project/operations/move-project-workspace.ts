@@ -9,6 +9,10 @@ import {
 import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
+/**
+ * Moves the caller's project membership to another of their workspaces, at the end of its order.
+ * @throws The refusals of `getValidChannel` for `read`; 404 without a membership; 409 `workspace_in_other_organization`.
+ */
 export async function moveProjectToWorkspaceOp(ctx: UserContext, id: string, workspaceId: string) {
   const { entity: project } = await getValidChannel(ctx, id, 'project', 'read');
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);

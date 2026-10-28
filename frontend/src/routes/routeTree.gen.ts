@@ -38,8 +38,7 @@ import { Route as PublicAuthConsentRouteImport } from './_public/auth/consent'
 import { Route as PublicAuthErrorRouteImport } from './_public/auth/error'
 import { Route as PublicAuthMfaRouteImport } from './_public/auth/mfa'
 import { Route as PublicAuthSignOutRouteImport } from './_public/auth/sign-out'
-import { Route as PublicAuthStepUpConfirmedRouteImport } from './_public/auth/step-up-confirmed'
-import { Route as PublicAuthUnsubscribedRouteImport } from './_public/auth/unsubscribed'
+import { Route as PublicAuthUnsubscribeRouteImport } from './_public/auth/unsubscribe'
 import { Route as AppTenantIdOrganizationSlugOrganizationRouteRouteImport } from './_app/$tenantId.$organizationSlug/organization/route'
 import { Route as PublicContentDocsIndexRouteImport } from './_public/_content/docs/index'
 import { Route as PublicContentDocsOperationsRouteImport } from './_public/_content/docs/operations'
@@ -205,15 +204,9 @@ const PublicAuthSignOutRoute = PublicAuthSignOutRouteImport.update({
   path: '/sign-out',
   getParentRoute: () => PublicAuthRouteRoute,
 } as any)
-const PublicAuthStepUpConfirmedRoute =
-  PublicAuthStepUpConfirmedRouteImport.update({
-    id: '/step-up-confirmed',
-    path: '/step-up-confirmed',
-    getParentRoute: () => PublicAuthRouteRoute,
-  } as any)
-const PublicAuthUnsubscribedRoute = PublicAuthUnsubscribedRouteImport.update({
-  id: '/unsubscribed',
-  path: '/unsubscribed',
+const PublicAuthUnsubscribeRoute = PublicAuthUnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
   getParentRoute: () => PublicAuthRouteRoute,
 } as any)
 const AppTenantIdOrganizationSlugOrganizationRouteRoute =
@@ -366,8 +359,7 @@ export interface FileRoutesByFullPath {
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
   '/auth/sign-out': typeof PublicAuthSignOutRoute
-  '/auth/step-up-confirmed': typeof PublicAuthStepUpConfirmedRoute
-  '/auth/unsubscribed': typeof PublicAuthUnsubscribedRoute
+  '/auth/unsubscribe': typeof PublicAuthUnsubscribeRoute
   '/$tenantId/$organizationSlug/organization': typeof AppTenantIdOrganizationSlugOrganizationRouteRouteWithChildren
   '/docs/operations': typeof PublicContentDocsOperationsRoute
   '/docs/overview': typeof PublicContentDocsOverviewRoute
@@ -415,8 +407,7 @@ export interface FileRoutesByTo {
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
   '/auth/sign-out': typeof PublicAuthSignOutRoute
-  '/auth/step-up-confirmed': typeof PublicAuthStepUpConfirmedRoute
-  '/auth/unsubscribed': typeof PublicAuthUnsubscribedRoute
+  '/auth/unsubscribe': typeof PublicAuthUnsubscribeRoute
   '/$tenantId/$organizationSlug/organization': typeof AppTenantIdOrganizationSlugOrganizationRouteRouteWithChildren
   '/docs/operations': typeof PublicContentDocsOperationsRoute
   '/docs/overview': typeof PublicContentDocsOverviewRoute
@@ -470,8 +461,7 @@ export interface FileRoutesById {
   '/_public/auth/error': typeof PublicAuthErrorRoute
   '/_public/auth/mfa': typeof PublicAuthMfaRoute
   '/_public/auth/sign-out': typeof PublicAuthSignOutRoute
-  '/_public/auth/step-up-confirmed': typeof PublicAuthStepUpConfirmedRoute
-  '/_public/auth/unsubscribed': typeof PublicAuthUnsubscribedRoute
+  '/_public/auth/unsubscribe': typeof PublicAuthUnsubscribeRoute
   '/_app/$tenantId/$organizationSlug/organization': typeof AppTenantIdOrganizationSlugOrganizationRouteRouteWithChildren
   '/_public/_content/docs/operations': typeof PublicContentDocsOperationsRoute
   '/_public/_content/docs/overview': typeof PublicContentDocsOverviewRoute
@@ -522,8 +512,7 @@ export interface FileRouteTypes {
     | '/auth/error'
     | '/auth/mfa'
     | '/auth/sign-out'
-    | '/auth/step-up-confirmed'
-    | '/auth/unsubscribed'
+    | '/auth/unsubscribe'
     | '/$tenantId/$organizationSlug/organization'
     | '/docs/operations'
     | '/docs/overview'
@@ -571,8 +560,7 @@ export interface FileRouteTypes {
     | '/auth/error'
     | '/auth/mfa'
     | '/auth/sign-out'
-    | '/auth/step-up-confirmed'
-    | '/auth/unsubscribed'
+    | '/auth/unsubscribe'
     | '/$tenantId/$organizationSlug/organization'
     | '/docs/operations'
     | '/docs/overview'
@@ -625,8 +613,7 @@ export interface FileRouteTypes {
     | '/_public/auth/error'
     | '/_public/auth/mfa'
     | '/_public/auth/sign-out'
-    | '/_public/auth/step-up-confirmed'
-    | '/_public/auth/unsubscribed'
+    | '/_public/auth/unsubscribe'
     | '/_app/$tenantId/$organizationSlug/organization'
     | '/_public/_content/docs/operations'
     | '/_public/_content/docs/overview'
@@ -860,18 +847,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicAuthSignOutRouteImport
       parentRoute: typeof PublicAuthRouteRoute
     }
-    '/_public/auth/step-up-confirmed': {
-      id: '/_public/auth/step-up-confirmed'
-      path: '/step-up-confirmed'
-      fullPath: '/auth/step-up-confirmed'
-      preLoaderRoute: typeof PublicAuthStepUpConfirmedRouteImport
-      parentRoute: typeof PublicAuthRouteRoute
-    }
-    '/_public/auth/unsubscribed': {
-      id: '/_public/auth/unsubscribed'
-      path: '/unsubscribed'
-      fullPath: '/auth/unsubscribed'
-      preLoaderRoute: typeof PublicAuthUnsubscribedRouteImport
+    '/_public/auth/unsubscribe': {
+      id: '/_public/auth/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/auth/unsubscribe'
+      preLoaderRoute: typeof PublicAuthUnsubscribeRouteImport
       parentRoute: typeof PublicAuthRouteRoute
     }
     '/_app/$tenantId/$organizationSlug/organization': {
@@ -1167,8 +1147,7 @@ interface PublicAuthRouteRouteChildren {
   PublicAuthErrorRoute: typeof PublicAuthErrorRoute
   PublicAuthMfaRoute: typeof PublicAuthMfaRoute
   PublicAuthSignOutRoute: typeof PublicAuthSignOutRoute
-  PublicAuthStepUpConfirmedRoute: typeof PublicAuthStepUpConfirmedRoute
-  PublicAuthUnsubscribedRoute: typeof PublicAuthUnsubscribedRoute
+  PublicAuthUnsubscribeRoute: typeof PublicAuthUnsubscribeRoute
   PublicAuthEmailVerificationReasonRoute: typeof PublicAuthEmailVerificationReasonRoute
   PublicAuthSsoConnectionIdRoute: typeof PublicAuthSsoConnectionIdRoute
 }
@@ -1180,8 +1159,7 @@ const PublicAuthRouteRouteChildren: PublicAuthRouteRouteChildren = {
   PublicAuthErrorRoute: PublicAuthErrorRoute,
   PublicAuthMfaRoute: PublicAuthMfaRoute,
   PublicAuthSignOutRoute: PublicAuthSignOutRoute,
-  PublicAuthStepUpConfirmedRoute: PublicAuthStepUpConfirmedRoute,
-  PublicAuthUnsubscribedRoute: PublicAuthUnsubscribedRoute,
+  PublicAuthUnsubscribeRoute: PublicAuthUnsubscribeRoute,
   PublicAuthEmailVerificationReasonRoute:
     PublicAuthEmailVerificationReasonRoute,
   PublicAuthSsoConnectionIdRoute: PublicAuthSsoConnectionIdRoute,

@@ -1,5 +1,5 @@
 import process from 'node:process';
-import { getEventLoopLagMs } from 'shared/utils/event-loop-monitor';
+import { eventLoopLagLimitsMs, getEventLoopLagMs } from 'shared/utils/event-loop-monitor';
 import { resourceLimits } from '../constants';
 import { type MetricsSnapshot, metrics } from '../services/cdc-metrics';
 import { type ReplicationFailure, replicationState } from '../services/replication-state';
@@ -47,7 +47,9 @@ interface HealthResponse {
 }
 
 /** The reasons whose rule holds, in the order given. */
-const holding = (rules: [holds: boolean, reason: string][]): string[] => rules.filter(([holds]) => holds).map(([, reason]) => reason);
+function holding(rules: [holds: boolean, reason: string][]): string[] {
+  return rules.filter(([holds]) => holds).map(([, reason]) => reason);
+}
 
 /**
  * Grades the worker, for its own endpoint and for the push to the API alike, so the two never disagree. Unhealthy is
@@ -70,7 +72,7 @@ export function gradeWorker(): WorkerGrade {
     // The slot does not hold the WAL the worker needs any more, or is about to lose it.
     [slotStatus === 'lost' || slotStatus === 'unreserved', 'slot_lost'],
     [lagBytes !== null && lagBytes >= limits.walLagUnhealthyBytes, 'wal_lag_critical'],
-    [eventLoopLagMs >= limits.eventLoopLagUnhealthyMs, 'event_loop_lag'],
+    [eventLoopLagMs >= eventLoopLagLimitsMs.unhealthy, 'event_loop_lag'],
   ]);
 
   const degraded = holding([
@@ -81,7 +83,7 @@ export function gradeWorker(): WorkerGrade {
     // Known only after the first poll of the slot: before it there is nothing to judge.
     [subscribed && slotStatus !== null && slotActive === false, 'slot_inactive'],
     [lagBytes !== null && lagBytes >= limits.walLagDegradedBytes && lagBytes < limits.walLagUnhealthyBytes, 'wal_lag_high'],
-    [eventLoopLagMs >= limits.eventLoopLagDegradedMs, 'event_loop_lag'],
+    [eventLoopLagMs >= eventLoopLagLimitsMs.degraded, 'event_loop_lag'],
   ]);
 
   return {

@@ -45,7 +45,7 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
               />
             </TooltipButton>
             <TooltipButton toolTipContent={`${t('c:created_at')} ${dateShort(task.createdAt)}`} side="bottom" sideOffset={5} hideWhenDetached>
-              <span className="ml-1 text-center text-xs opacity-50">
+              <span className="ml-1 text-center text-muted-foreground text-xs">
                 {isOnline ? <RelativeDate date={task.createdAt} /> : t('c:update_on_online')}
               </span>
             </TooltipButton>

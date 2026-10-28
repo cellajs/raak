@@ -18,6 +18,9 @@ import type {
   CheckSlugData,
   CheckSlugErrors,
   CheckSlugResponses,
+  ConfirmInvitationAddressData,
+  ConfirmInvitationAddressErrors,
+  ConfirmInvitationAddressResponses,
   ConfirmMagicLinkData,
   ConfirmMagicLinkErrors,
   CreateApiKeyData,
@@ -289,6 +292,8 @@ import type {
   MoveProjectToWorkspaceData,
   MoveProjectToWorkspaceErrors,
   MoveProjectToWorkspaceResponses,
+  OpenUnsubscribeLinkData,
+  OpenUnsubscribeLinkErrors,
   PostAppCatchupData,
   PostAppCatchupErrors,
   PostAppCatchupResponses,
@@ -316,6 +321,9 @@ import type {
   ResolveTaskLinkData,
   ResolveTaskLinkErrors,
   ResolveTaskLinkResponses,
+  ResubscribeNotificationsData,
+  ResubscribeNotificationsErrors,
+  ResubscribeNotificationsResponses,
   RevokeApiKeyData,
   RevokeApiKeyErrors,
   RevokeApiKeyResponses,
@@ -337,9 +345,9 @@ import type {
   SendSsoRecoveryLinkData,
   SendSsoRecoveryLinkErrors,
   SendSsoRecoveryLinkResponses,
-  SendStepUpLinkData,
-  SendStepUpLinkErrors,
-  SendStepUpLinkResponses,
+  SendStepUpCodeData,
+  SendStepUpCodeErrors,
+  SendStepUpCodeResponses,
   SignInWithPasskeyData,
   SignInWithPasskeyErrors,
   SignInWithPasskeyResponses,
@@ -375,6 +383,7 @@ import type {
   ToggleMfaResponses,
   UnsubscribeNotificationsData,
   UnsubscribeNotificationsErrors,
+  UnsubscribeNotificationsResponses,
   UpdateAttachmentData,
   UpdateAttachmentErrors,
   UpdateAttachmentResponses,
@@ -424,6 +433,7 @@ import {
   zCheckEmailResponse,
   zCheckMembershipInviteResponse,
   zCheckSlugResponse,
+  zConfirmInvitationAddressResponse,
   zCreateApiKeyResponse,
   zCreateAttachmentsResponse,
   zCreateConnectionResponse,
@@ -513,6 +523,7 @@ import {
   zResendInvitationWithTokenResponse,
   zResendPendingInvitationResponse,
   zResolveTaskLinkResponse,
+  zResubscribeNotificationsResponse,
   zRevokeApiKeyResponse,
   zRevokeConnectedAppResponse,
   zRevokeMySessionsResponse,
@@ -520,7 +531,7 @@ import {
   zSendMagicLinkResponse,
   zSendNewsletterResponse,
   zSendSsoRecoveryLinkResponse,
-  zSendStepUpLinkResponse,
+  zSendStepUpCodeResponse,
   zSignInWithPasskeyResponse,
   zSignInWithTotpResponse,
   zSignOutResponse,
@@ -530,6 +541,7 @@ import {
   zStopImpersonationResponse,
   zSystemInviteResponse,
   zToggleMfaResponse,
+  zUnsubscribeNotificationsResponse,
   zUpdateAttachmentResponse,
   zUpdateConnectionResponse,
   zUpdateLabelResponse,
@@ -632,7 +644,7 @@ export const getPendingMfa = <ThrowOnError extends boolean = true>(
 /**
  * Invoke token session
  *
- * Opens an emailed link of a link-carried token type: a magic link or a provider address verification signs in, a step-up link proves presence on this browser's session, an invitation hands the app a single-use token session in a cookie. Redirects to the app.
+ * Opens an emailed link of a link-carried token type: a magic link or a provider address verification signs in, an invitation hands the app a single-use token session in a cookie. Redirects to the app.
  *
  * **GET /auth/invoke-token/{type}/{token}** ·· [invokeToken](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/invoke-token/{type}/{token}) ·· _auth · cella_
  *
@@ -653,7 +665,7 @@ export const invokeToken = <ThrowOnError extends boolean = true>(
 /**
  * Get token data
  *
- * Get basic token data from single-use token session, It returns basic data if the session is still valid.
+ * Gets basic data of the token held in the single-use token session: its address and, for a membership invitation, what it grants. It answers only while the session is valid.
  *
  * **GET /auth/token/{type}/{id}** ·· [getTokenData](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/token/{type}/{id}) ·· _auth · cella_
  *
@@ -675,7 +687,7 @@ export const getTokenData = <ThrowOnError extends boolean = true>(
 /**
  * Accept invitation token as current user
  *
- * Accepts the membership invitation held in the single-use token session as the signed-in user, also when it was sent to a different email address. Only an invitation not yet bound to another user can be accepted this way.
+ * Accepts the membership invitation held in the single-use token session as the signed-in user, who must hold the invited address. An account on another address first confirms it (`confirmInvitationAddress`); until then the answer is 403 `invitation_address_unproven`. Only an invitation not yet bound to another user can be accepted this way.
  *
  * **POST /auth/invitation-token/accept** ·· [acceptInvitationToken](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/invitation-token/accept) ·· _auth · cella_
  *
@@ -689,6 +701,26 @@ export const acceptInvitationToken = <ThrowOnError extends boolean = true>(
     responseValidator: async (data) => await zAcceptInvitationTokenResponse.parseAsync(data),
     responseStyle: 'data',
     url: '/auth/invitation-token/accept',
+    ...options,
+  });
+
+/**
+ * Confirm the invited address
+ *
+ * Mails the address the invitation in the single-use token session went to a new link, bound to the signed-in account. The new link replaces the older ones; opened from that inbox, it adds the address to the account and lets it accept.
+ *
+ * **POST /auth/invitation-token/confirm-address** ·· [confirmInvitationAddress](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/invitation-token/confirm-address) ·· _auth · cella_
+ *
+ * @param {confirmInvitationAddressData} options
+ * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
+ */
+export const confirmInvitationAddress = <ThrowOnError extends boolean = true>(
+  options?: Options<ConfirmInvitationAddressData, ThrowOnError>,
+): RequestResult<ConfirmInvitationAddressResponses, ConfirmInvitationAddressErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).post<ConfirmInvitationAddressResponses, ConfirmInvitationAddressErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zConfirmInvitationAddressResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/auth/invitation-token/confirm-address',
     ...options,
   });
 
@@ -785,7 +817,7 @@ export const signOut = <ThrowOnError extends boolean = true>(
 /**
  * Send magic link
  *
- * Sends a magic link sign-in email to the specified address. Always returns 204 to prevent email enumeration.
+ * Sends a magic link sign-in email to the specified address. Returns 204 whether or not the address has an account. An account whose organization requires its institution's sign-in gets a mail pointing there; only a browser that signed in to that account gets 403 `sso_required` instead.
  *
  * **POST /auth/magic/send** ·· [sendMagicLink](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/magic/send) ·· _auth · cella_
  *
@@ -870,7 +902,7 @@ export const generateTotpKey = <ThrowOnError extends boolean = true>(
 /**
  * Delete TOTP
  *
- * Delete TOTP credential for current user.
+ * Delete the current user's authenticator app (TOTP).
  *
  * **DELETE /auth/totp** ·· [deleteTotp](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/DELETE/auth/totp) ·· _auth · cella_
  *
@@ -1301,11 +1333,12 @@ export const sendSsoRecoveryLink = <ThrowOnError extends boolean = true>(
 /**
  * Get step-up state
  *
- * Whether this session stands stepped up for account-security actions, and what the user can offer to step up: a passkey or TOTP they hold, else an emailed confirmation link or a new sign-in.
+ * Whether this session stands stepped up for a kind of action, and what the user can offer to step up: a passkey or TOTP they hold, an emailed code, or setting up a second factor.
  *
  * **GET /auth/step-up** ·· [getStepUp](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/step-up) ·· _auth · cella_
  *
  * @param {getStepUpData} options
+ * @param {enum=} options.query.tier - `enum` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getStepUp = <ThrowOnError extends boolean = true>(
@@ -1319,15 +1352,16 @@ export const getStepUp = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Step up with a second factor
+ * Step up
  *
- * Proves the user is present on this session with a passkey assertion (to a step-up passkey challenge) or a TOTP code of a factor they hold. Account-security actions then pass for ten minutes.
+ * Proves the user is present on this session with a passkey assertion (to a step-up passkey challenge), a TOTP code of a factor they hold, or the code a step-up mail carried. The proof counts for ten minutes.
  *
  * **POST /auth/step-up** ·· [stepUp](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/step-up) ·· _auth · cella_
  *
  * @param {stepUpData} options
  * @param {object} options.body.passkeyData - `object`
  * @param {string=} options.body.totpCode - `string` (optional)
+ * @param {string=} options.body.emailCode - `string` (optional)
  * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
  */
 export const stepUp = <ThrowOnError extends boolean = true>(
@@ -1365,28 +1399,23 @@ export const getStepUpPasskeyChallenge = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Email a step-up link
+ * Email a step-up code
  *
- * For a user without a passkey or TOTP: emails a confirmation link that steps up this session when opened in this browser within ten minutes. The link signs nobody in.
+ * For a user without a passkey or TOTP, or one replacing a lost factor while MFA is off: emails a code that steps up this session when entered within ten minutes.
  *
- * **POST /auth/step-up/link** ·· [sendStepUpLink](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/step-up/link) ·· _auth · cella_
+ * **POST /auth/step-up/code** ·· [sendStepUpCode](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/step-up/code) ·· _auth · cella_
  *
- * @param {sendStepUpLinkData} options
- * @param {string=} options.body.redirect - `string` (optional)
+ * @param {sendStepUpCodeData} options
  * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
  */
-export const sendStepUpLink = <ThrowOnError extends boolean = true>(
-  options?: Options<SendStepUpLinkData, ThrowOnError>,
-): RequestResult<SendStepUpLinkResponses, SendStepUpLinkErrors, ThrowOnError, 'data'> =>
-  (options?.client ?? client).post<SendStepUpLinkResponses, SendStepUpLinkErrors, ThrowOnError, 'data'>({
-    responseValidator: async (data) => await zSendStepUpLinkResponse.parseAsync(data),
+export const sendStepUpCode = <ThrowOnError extends boolean = true>(
+  options?: Options<SendStepUpCodeData, ThrowOnError>,
+): RequestResult<SendStepUpCodeResponses, SendStepUpCodeErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).post<SendStepUpCodeResponses, SendStepUpCodeErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zSendStepUpCodeResponse.parseAsync(data),
     responseStyle: 'data',
-    url: '/auth/step-up/link',
+    url: '/auth/step-up/code',
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
   });
 
 /**
@@ -1499,8 +1528,7 @@ export const updateConnection = <ThrowOnError extends boolean = true>(
 /**
  * Check slug availability
  *
- * Checks whether a given slug is available for the specified entity type. A slug is unique across all tenants.
- * Primarily used to prevent slug collisions before creating or updating an entity.
+ * Checks whether a given slug is available for the specified entity type. A slug is unique across all tenants. Primarily used to prevent slug collisions before creating or updating an entity.
  *
  * **POST /entities/{tenantId}/check-slug** ·· [checkSlug](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/POST/entities/{tenantId}/check-slug) ·· _entities · cella_
  *
@@ -1525,9 +1553,9 @@ export const checkSlug = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * App event SSE stream
+ * App SSE stream
  *
- * SSE stream for membership and entity notifications affecting the current user. Sends lightweight notifications.
+ * SSE stream of what changed for the current user, with ids only: a `change` event for product rows it may read, a `signal` event for anything else, such as its own memberships and inbox.
  *
  * **GET /entities/app/stream** ·· [getAppStream](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/GET/entities/app/stream) ·· _entities · cella_
  *
@@ -1544,9 +1572,9 @@ export const getAppStream = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * App event catchup
+ * App stream catchup
  *
- * Fetch missed entity and membership changes since last sync. Send cursor and declared views (prefix sets + org-sequence cursors) in the body.
+ * Fetch what a client missed since its last sync: frontiers and counts per declared view (prefix sets + org-sequence cursors in the body), and per organization the versions of its versioned signals.
  *
  * **POST /entities/app/stream** ·· [postAppCatchup](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/POST/entities/app/stream) ·· _entities · cella_
  *
@@ -1711,7 +1739,7 @@ export const getMyInvitations = <ThrowOnError extends boolean = true>(
 /**
  * Revoke sessions
  *
- * Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for 30 days. Revoking the current session signs out.
+ * Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for the retention period. Revoking the current session signs out.
  *
  * **DELETE /me/sessions** ·· [revokeMySessions](https://www.raak.dev/docs/operations?operationTag=me#tag/me/DELETE/me/sessions) ·· _me · cella_
  *
@@ -1734,9 +1762,9 @@ export const revokeMySessions = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Leave entity
+ * Leave channel
  *
- * Removes the current user from an entity they are a member of.
+ * Removes the current user from a channel entity they are a member of.
  *
  * **DELETE /me/leave** ·· [deleteMyMembership](https://www.raak.dev/docs/operations?operationTag=me#tag/me/DELETE/me/leave) ·· _me · cella_
  *
@@ -1841,8 +1869,7 @@ export const revokeConnectedApp = <ThrowOnError extends boolean = true>(
 /**
  * Get public counts
  *
- * Returns basic count metrics for entity types such as users and organizations.
- * This endpoint is public and uses a 1 minute in memory cache for performance.
+ * Returns the number of users and of each channel entity type, such as organizations. This endpoint is public and uses a 1 minute in memory cache for performance.
  *
  * **GET /metrics/public** ·· [getPublicCounts](https://www.raak.dev/docs/operations?operationTag=metrics#tag/metrics/GET/metrics/public) ·· _metrics · cella_
  *
@@ -1956,24 +1983,70 @@ export const updateNotificationPreferences = <ThrowOnError extends boolean = tru
   });
 
 /**
- * Unsubscribe from a notification category
+ * Open an unsubscribe link
  *
- * Turns off one email category from a link in an email. The token identifies the user and the category, so unsubscribing from the digest leaves other email untouched. No auth.
+ * Redirects an unsubscribe link from an email to the page that asks to confirm it, and changes nothing: mail scanners and link previews open links on their own. No auth.
  *
- * **GET /notifications/unsubscribe** ·· [unsubscribeNotifications](https://www.raak.dev/docs/operations?operationTag=notifications#tag/notifications/GET/notifications/unsubscribe) ·· _notifications · cella_
+ * **GET /notifications/unsubscribe** ·· [openUnsubscribeLink](https://www.raak.dev/docs/operations?operationTag=notifications#tag/notifications/GET/notifications/unsubscribe) ·· _notifications · cella_
  *
- * @param {unsubscribeNotificationsData} options
+ * @param {openUnsubscribeLinkData} options
  * @param {string} options.query.user - `string`
  * @param {enum} options.query.category - `enum`
  * @param {string} options.query.token - `string`
  * @returns Possible status codes: 302, 400, 401, 403, 404, 409, 429
  */
-export const unsubscribeNotifications = <ThrowOnError extends boolean = true>(
-  options: Options<UnsubscribeNotificationsData, ThrowOnError>,
-): RequestResult<unknown, UnsubscribeNotificationsErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).get<unknown, UnsubscribeNotificationsErrors, ThrowOnError, 'data'>({
+export const openUnsubscribeLink = <ThrowOnError extends boolean = true>(
+  options: Options<OpenUnsubscribeLinkData, ThrowOnError>,
+): RequestResult<unknown, OpenUnsubscribeLinkErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<unknown, OpenUnsubscribeLinkErrors, ThrowOnError, 'data'>({
     responseStyle: 'data',
     url: '/notifications/unsubscribe',
+    ...options,
+  });
+
+/**
+ * Unsubscribe from a notification category
+ *
+ * Turns off one email category. The token identifies the user and the category, so unsubscribing from the digest leaves other email untouched. The confirmation page and a mail client's one-click unsubscribe (RFC 8058) post here. No auth.
+ *
+ * **POST /notifications/unsubscribe** ·· [unsubscribeNotifications](https://www.raak.dev/docs/operations?operationTag=notifications#tag/notifications/POST/notifications/unsubscribe) ·· _notifications · cella_
+ *
+ * @param {unsubscribeNotificationsData} options
+ * @param {string} options.query.user - `string`
+ * @param {enum} options.query.category - `enum`
+ * @param {string} options.query.token - `string`
+ * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
+ */
+export const unsubscribeNotifications = <ThrowOnError extends boolean = true>(
+  options: Options<UnsubscribeNotificationsData, ThrowOnError>,
+): RequestResult<UnsubscribeNotificationsResponses, UnsubscribeNotificationsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<UnsubscribeNotificationsResponses, UnsubscribeNotificationsErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zUnsubscribeNotificationsResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/notifications/unsubscribe',
+    ...options,
+  });
+
+/**
+ * Turn a notification category back on
+ *
+ * Undoes an unsubscribe with the same link token, from the page that confirmed it. No auth.
+ *
+ * **POST /notifications/resubscribe** ·· [resubscribeNotifications](https://www.raak.dev/docs/operations?operationTag=notifications#tag/notifications/POST/notifications/resubscribe) ·· _notifications · cella_
+ *
+ * @param {resubscribeNotificationsData} options
+ * @param {string} options.query.user - `string`
+ * @param {enum} options.query.category - `enum`
+ * @param {string} options.query.token - `string`
+ * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
+ */
+export const resubscribeNotifications = <ThrowOnError extends boolean = true>(
+  options: Options<ResubscribeNotificationsData, ThrowOnError>,
+): RequestResult<ResubscribeNotificationsResponses, ResubscribeNotificationsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<ResubscribeNotificationsResponses, ResubscribeNotificationsErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zResubscribeNotificationsResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/notifications/resubscribe',
     ...options,
   });
 
@@ -2120,7 +2193,7 @@ export const getRequests = <ThrowOnError extends boolean = true>(
 /**
  * Create request
  *
- * Submits a request: a contact form message, a newsletter signup or a waitlist entry. Every submission gets the same answer: an address that has an account gets an email pointing to sign-in, and a repeat of a waitlist or newsletter signup is dropped.
+ * Submits a request: a contact form message, a newsletter signup or a waitlist entry. Every submission gets the same answer: a waitlist entry from an address that has an account gets an email pointing to sign-in, and a repeat of a waitlist or newsletter signup is dropped.
  *
  * **POST /requests** ·· [createRequest](https://www.raak.dev/docs/operations?operationTag=requests#tag/requests/POST/requests) ·· _requests · cella_
  *
@@ -2147,7 +2220,7 @@ export const createRequest = <ThrowOnError extends boolean = true>(
 /**
  * Get unseen counts
  *
- * Returns the number of unseen product entities per parent channel entity (e.g., project) and entity type for the current user. Computed within the rolling seen window so entities older than seen_by retention do not participate.
+ * Returns the number of unseen product entities per parent channel entity and entity type for the current user. Counts only entities created or published within the seen window: an older one is never unseen.
  *
  * **GET /unseen/counts** ·· [getUnseenCounts](https://www.raak.dev/docs/operations?operationTag=seen#tag/seen/GET/unseen/counts) ·· _seen · cella_
  *
@@ -2415,7 +2488,7 @@ export const getTenants = <ThrowOnError extends boolean = true>(
 /**
  * Create a tenant for yourself
  *
- * Creates a new tenant (workspace) for the authenticated user. A user may own multiple tenants; an org-less tenant from a prior failed attempt is reused instead of creating a duplicate.
+ * Creates a new tenant (workspace) for the authenticated user. A user may own multiple tenants; an org-less tenant from a prior failed attempt is reused, and takes the new name.
  *
  * **POST /tenants/self** ·· [selfCreateTenant](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/POST/tenants/self) ·· _tenants · cella_
  *
@@ -2542,7 +2615,7 @@ export const getApiProtectedResourceMetadata = <ThrowOnError extends boolean = t
 /**
  * Delete organizations
  *
- * Deletes one or more organizations by ID within a tenant.
+ * Deletes organizations by ID within a tenant. Deleting archives the tenant: members lose access at once, and the organization with everything in it is removed after the archived period; until then a system admin can restore it.
  *
  * **DELETE /{tenantId}/organizations** ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/DELETE/{tenantId}/organizations) ·· _organizations · cella · channel_
  *
@@ -2605,7 +2678,7 @@ export const createOrganizations = <ThrowOnError extends boolean = true>(
  * @param {integer=} options.query.limit - `integer` (optional)
  * @param {string=} options.query.relatableUserId - `string` (optional)
  * @param {enum=} options.query.role - `enum` (optional)
- * @param {enum=} options.query.excludeArchived - `enum` (optional)
+ * @param {enum | boolean=} options.query.excludeArchived - `enum | boolean` (optional)
  * @param {string=} options.query.include - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -2780,7 +2853,7 @@ export const createProjects = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.workspaceId - `string` (optional)
  * @param {string=} options.query.relatableUserId - `string` (optional)
  * @param {enum=} options.query.role - `enum` (optional)
- * @param {enum=} options.query.excludeArchived - `enum` (optional)
+ * @param {enum | boolean=} options.query.excludeArchived - `enum | boolean` (optional)
  * @param {enum=} options.query.scope - `enum` (optional)
  * @param {string=} options.query.include - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -2991,7 +3064,7 @@ export const createWorkspaces = <ThrowOnError extends boolean = true>(
  * @param {integer=} options.query.limit - `integer` (optional)
  * @param {string=} options.query.organizationId - `string` (optional)
  * @param {enum=} options.query.role - `enum` (optional)
- * @param {enum=} options.query.excludeArchived - `enum` (optional)
+ * @param {enum | boolean=} options.query.excludeArchived - `enum | boolean` (optional)
  * @param {string=} options.query.include - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -3061,7 +3134,7 @@ export const updateWorkspace = <ThrowOnError extends boolean = true>(
 /**
  * Delete attachments
  *
- * Deletes one or more attachment records by ID. This does not delete the underlying file in storage.
+ * Deletes one or more attachments by ID. Their stored files are kept for the deleted-items period, then deleted when the retention procedure removes the rows.
  *
  * **DELETE /{tenantId}/{organizationId}/attachments** ·· [deleteAttachments](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/DELETE/{tenantId}/{organizationId}/attachments) ·· _attachments · cella · product_
  *
@@ -3119,7 +3192,7 @@ export const getAttachments = <ThrowOnError extends boolean = true>(
 /**
  * Create attachments
  *
- * Registers one or more new attachments after client side upload. Includes metadata like name, type, and linked entity. Every storage key must lie under the caller's own upload prefix and name a stored object; the size comes from storage.
+ * Registers one or more new attachments after client side upload. Includes metadata like name, content type, size and storage keys. Every storage key must lie under the caller's own upload prefix and name a stored object; the size comes from storage.
  *
  * **POST /{tenantId}/{organizationId}/attachments** ·· [createAttachments](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/POST/{tenantId}/{organizationId}/attachments) ·· _attachments · cella · product_
  *
@@ -3195,7 +3268,7 @@ export const getAttachment = <ThrowOnError extends boolean = true>(
 /**
  * Update attachment
  *
- * Updates metadata of an attachment, such as its name or associated entity.
+ * Renames an attachment or replaces its description.
  *
  * **PUT /{tenantId}/{organizationId}/attachments/{id}** ·· [updateAttachment](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/PUT/{tenantId}/{organizationId}/attachments/{id}) ·· _attachments · cella · product_
  *
@@ -3203,7 +3276,6 @@ export const getAttachment = <ThrowOnError extends boolean = true>(
  * @param {string} options.path.tenantId - `string`
  * @param {string} options.path.organizationId - `string`
  * @param {string} options.path.id - `string`
- * @param {enum | boolean=} options.query.fullResponse - `enum | boolean` (optional)
  * @param {object=} options.body.ops - `object` (optional)
  * @param {any=} options.body.stx - `any` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -3414,7 +3486,7 @@ export const getMcpProtectedResourceMetadata = <ThrowOnError extends boolean = t
 /**
  * MCP endpoint
  *
- * Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to.
+ * Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to; in a batch it gets its own insufficient_scope error, the other calls keep their results, and the 200 carries the challenge.
  *
  * **POST /{tenantId}/{organizationId}/mcp** ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=mcp#tag/mcp/POST/{tenantId}/{organizationId}/mcp) ·· _mcp · cella_
  *
@@ -3439,7 +3511,7 @@ export const handleMcp = <ThrowOnError extends boolean = true>(
 /**
  * Delete memberships
  *
- * Deletes one or more memberships by ID. This removes the membership but does not delete the associated user(s).
+ * Deletes the memberships of one or more members of a channel entity, named by their user IDs; the users themselves stay. An ID without a membership in the channel comes back in `rejectedIds`.
  *
  * **DELETE /{tenantId}/{organizationId}/memberships** ·· [deleteMemberships](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/DELETE/{tenantId}/{organizationId}/memberships) ·· _memberships · cella_
  *
@@ -3558,7 +3630,7 @@ export const updateMembership = <ThrowOnError extends boolean = true>(
 /**
  * Respond to membership invitation
  *
- * Accepting activates the associated membership. Rejecting simply removes the invitation token.
+ * Accepting makes the caller a member of the invited channel, or leaves a membership they hold as it is; rejecting declines the invitation, and its emailed link stops working. Either answer returns the invitation's organization.
  *
  * **POST /{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}** ·· [handleMembershipInvitation](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/POST/{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}) ·· _memberships · cella_
  *
@@ -3641,7 +3713,7 @@ export const getPendingMemberships = <ThrowOnError extends boolean = true>(
 /**
  * Resend pending invitation
  *
- * Re-sends the invitation email for a pending membership, named by its own id; an invitation holding a token gets a fresh one. Answers 204 alike for every pending invitation. Requires update permission on the invited channel; the public auth resend endpoint stays for invitees holding an expired token.
+ * Re-sends the invitation email for a pending membership, named by its own id; an invitation holding a token gets a fresh one, and one held in a draft channel waits for its publish. Answers 204 alike for every pending invitation. Requires update permission on the invited channel; the public auth resend endpoint stays for invitees holding an expired token.
  *
  * **POST /{tenantId}/{organizationId}/memberships/pending/{id}/resend** ·· [resendPendingInvitation](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/POST/{tenantId}/{organizationId}/memberships/pending/{id}/resend) ·· _memberships · cella_
  *

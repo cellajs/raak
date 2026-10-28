@@ -10,6 +10,10 @@ import { seqRangeOf } from '#/utils/seq-range';
 
 type GetTasksInput = z.infer<typeof taskListQuerySchema>;
 
+/**
+ * A page of the tasks the caller may read in the organization; `projectId` or `workspaceId` narrows it. A range read
+ * (`afterSeq`, `untilSeq`) includes deleted rows.
+ */
 export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise<Awaited<ReturnType<typeof getTasks>>> {
   const { projectId, workspaceId, ...queryInfo } = input;
   const range = seqRangeOf(input);

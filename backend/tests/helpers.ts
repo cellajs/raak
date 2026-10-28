@@ -9,9 +9,8 @@ import { mailer } from '#/lib/mailer';
 import { mockPastIsoDate } from '#/mocks';
 import { authCookieName, type CookieName, sealAuthCookie } from '#/modules/auth/general/helpers/cookie';
 import { type InsertIdentityModel, identitiesTable } from '#/modules/auth/oauth/identities-db';
-import { newSessionToken } from '#/modules/auth/sessions/helpers/session-token';
-import { type AuthStrategy, type SessionTypes, type StepUpProof, sessionsTable } from '#/modules/auth/sessions/sessions-db';
-import { type InsertTokenModel, tokensTable } from '#/modules/auth/tokens-db';
+import { type AuthStrategy, type SessionType, type StepUpProof, sessionsTable } from '#/modules/auth/sessions/sessions-db';
+import { type InsertTokenModel, tokensTable } from '#/modules/auth/tokens/tokens-db';
 import { generateTOTP } from '#/modules/auth/totps/helpers/totp-core';
 import { encryptTotpSecret } from '#/modules/auth/totps/helpers/totp-secret-encryption';
 import { totpsTable } from '#/modules/auth/totps/totps-db';
@@ -26,7 +25,7 @@ import { mockEmail, mockUser } from '#/modules/user/user-mocks';
 import { insertUsers } from '#/modules/user/user-queries';
 import type { apiErrorSchema } from '#/schemas';
 import { decodeBase32 } from '#/utils/base32';
-import { hashToken } from '#/utils/hash-token';
+import { hashToken, newHashedToken } from '#/utils/hash-token';
 import { adminRole, defaultHeaders } from './fixtures';
 
 export type ErrorResponse = z.infer<typeof apiErrorSchema>;
@@ -69,7 +68,7 @@ export const sentMails = () =>
 export const mailsTo = (email: string) => sentMails().filter(({ recipient }) => recipient.email === email);
 
 /**
- * The link `key` names in the last mail, a static prop (`stepUpUrl`) or a recipient field (`inviteLink`), and the raw
+ * The link `key` names in the last mail, a static prop (`magicLinkUrl`) or a recipient field (`inviteLink`), and the raw
  * token at its end.
  */
 export function mailedLink(key: string) {
@@ -208,7 +207,7 @@ export async function createTestOrganization(overrides?: Partial<ReturnType<type
 }
 
 interface TestSessionOpts {
-  type?: SessionTypes;
+  type?: SessionType;
   authStrategy?: AuthStrategy;
   /** Backdates the session's creation, e.g. past the step-up window. */
   ageMs?: number;
@@ -234,7 +233,7 @@ export async function insertTestSession(
     steppedUpVia,
   }: TestSessionOpts = {},
 ) {
-  const { token, secret } = newSessionToken();
+  const { raw: token, hash: secret } = newHashedToken();
   const id = generateId();
   const createdAt = new Date(Date.now() - ageMs).toISOString();
 

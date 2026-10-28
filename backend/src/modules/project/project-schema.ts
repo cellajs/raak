@@ -9,7 +9,7 @@ import { projectsTable } from '#/modules/project/project-db';
 import { mockProjectResponse } from '#/modules/project/project-mocks';
 import {
   batchResponseSchema,
-  excludeArchivedQuerySchema,
+  booleanTransformSchema,
   includeQuerySchema,
   noDuplicateSlugsRefine,
   paginationQuerySchema,
@@ -56,7 +56,7 @@ export const projectSchema = z
 
 export const projectWithMembershipSchema = projectSchema.extend({ included: projectIncludedSchema.extend({ membership: membershipBaseSchema }) });
 
-/** Wire registration: lens-widened schemas + entity-bound runtime seam for project */
+/** Wire registration: lens-widened schemas bound to the project entity at runtime. */
 export const projectContract = evolutionContract.channel('project', {
   createItem: z.object({ id: validTempIdSchema, name: validNameSchema, slug: validSlugSchema, public: z.boolean() }),
   updateBody: createInsertSchema(projectsTable, {
@@ -78,7 +78,7 @@ export const projectCreateBodySchema = projectContract.createItemSchema
 
 export const projectCreateResponseSchema = batchResponseSchema(projectWithMembershipSchema);
 
-export const workspaceIdQuerySchema = z.object({ workspaceId: validIdSchema });
+export const projectWorkspaceQuerySchema = z.object({ workspaceId: validIdSchema });
 
 export const projectUpdateBodySchema = projectContract.updateBodySchema;
 
@@ -89,7 +89,7 @@ export const projectListQuerySchema = paginationQuerySchema.extend({
   workspaceId: validIdSchema.optional(),
   relatableUserId: validIdSchema.optional(),
   role: z.enum(roles.all).optional(),
-  excludeArchived: excludeArchivedQuerySchema,
+  excludeArchived: booleanTransformSchema,
   scope: z.enum(['memberships', 'organization']).default('memberships'),
   include: includeQuerySchema,
 });

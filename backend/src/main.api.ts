@@ -20,7 +20,7 @@ otel.verifyConnection();
 
 let server: ReturnType<typeof serveApi> | undefined;
 let internalListener: ReturnType<typeof serveInternal> | undefined;
-/** Stops what this process starts besides its listeners: the GeoIP refresh. */
+/** Stops what this process starts besides its own two listeners: the GeoIP refresh, and under `singleVM` the services it runs. */
 const stops: (() => unknown)[] = [];
 
 const startTunnel = appConfig.mode === 'tunnel' ? (await import('../scripts/start-tunnel')).startTunnel : () => null;
@@ -56,29 +56,36 @@ const main = async () => {
   internalListener = serveInternal({ port: env.INTERNAL_PORT });
 
   server = serveApi({ fetch: app.fetch, port }, async () => {
+    // Every API process serves the relay's materialize route, so each one warns.
+    (await import('#/modules/yjs/yjs-materializers')).warnWhenNoYjsMaterializer();
     // Single-VM: this API process also runs every enabled service in-process, through each subsystem's own start().
     if (appConfig.singleVM) {
       if (appConfig.services.cdc.enabled) {
         console.info(`${timestamp()} [startup] singleVM + cdc: this process takes the replication slot once the previous generation releases it`);
-        // The replication loop never resolves, so detach it and log failures to prevent unhandled rejections.
-        void (await import('cdc-worker')).runCdcWorker().catch((error) => {
+        const cdc = await import('cdc-worker');
+        stops.push(cdc.shutdownCdcWorker);
+        // The replication loop runs until that stop, so detach it and log failures to prevent unhandled rejections.
+        void cdc.runCdcWorker({ inProcess: true }).catch((error) => {
           console.error(`${timestamp()} [startup] in-process cdc worker crashed:`, error);
         });
       }
-      if (appConfig.services.yjs.enabled) await (await import('yjs-worker')).startYjsWorker();
-      (await import('#/modules/yjs/yjs-materializers')).warnWhenNoYjsMaterializer();
+      if (appConfig.services.yjs.enabled) {
+        const yjs = await import('yjs-worker');
+        stops.push(yjs.shutdownYjsWorker);
+        await yjs.startYjsWorker({ inProcess: true });
+      }
       // Folded workers listen on their own ports (the LB routes each path to the host VM on that port); the API
       // process keeps PORT for itself.
-      if (appConfig.services.mcp.enabled)
-        await (await import('#/modules/mcp/worker/mcp-worker-entry')).startMcpWorker({
-          port: appConfig.devPorts.mcp,
-          inProcess: true,
-        });
-      if (appConfig.services.oauth.enabled)
-        await (await import('#/modules/oauth-server/worker/oauth-worker-entry')).startOauthServer({
-          port: appConfig.devPorts.oauth,
-          inProcess: true,
-        });
+      if (appConfig.services.mcp.enabled) {
+        const mcp = await import('#/modules/mcp/worker/mcp-worker-entry');
+        stops.push(mcp.shutdownMcpWorker);
+        await mcp.startMcpWorker({ port: appConfig.devPorts.mcp, inProcess: true });
+      }
+      if (appConfig.services.oauth.enabled) {
+        const oauth = await import('#/modules/oauth-server/worker/oauth-worker-entry');
+        stops.push(oauth.shutdownOauthWorker);
+        await oauth.startOauthWorker({ port: appConfig.devPorts.oauth, inProcess: true });
+      }
       // The folded jobs worker needs no port: this process's /health carries the jobs component.
       if (appConfig.services.jobs.enabled) await (await import('#/lib/jobs-worker')).startJobsWorker({ inProcess: true });
     }
@@ -100,8 +107,8 @@ Tunnel: ${pc.bold(pc.magentaBright(tunnelUrl || '-'))}`);
 setupGracefulShutdown({
   name: 'api',
   cleanup: async () => {
-    for (const stop of stops) await stop();
-    await stopPgBoss();
+    // Side by side, so a slow drain never takes the job queue's grace period.
+    await Promise.all([...stops.map((stop) => stop()), stopPgBoss()]);
     server?.close();
     internalListener?.close();
     await otel.shutdown();

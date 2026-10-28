@@ -17,7 +17,7 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, type Plugin, type UserConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
 import rootPkg from '../package.json' with { type: 'json' };
-import { appConfig } from '../shared/index.ts';
+import { appConfig, urlEnvNames } from '../shared/index.ts';
 import { docsEditor } from './vite/docs-editor.ts';
 import { docsFrontmatter } from './vite/docs-frontmatter.ts';
 import { indexHtml } from './vite/index-html.ts';
@@ -95,29 +95,37 @@ const frontendUrl = new URL(appConfig.frontendUrl);
 // Imported repository docs use relative links so they also work on GitHub and in editors. When a
 // target has a docs wrapper, keep navigation inside the site; other repo paths still point to GitHub.
 const repoDocRoutes = {
-  'cella/ARCHITECTURE.md': '/docs/page/architecture',
-  'cella/CLIENT.md': '/docs/page/architecture/client',
-  'cella/MULTI_TENANCY.md': '/docs/page/architecture/multi_tenancy',
-  'cella/SYNC_ENGINE.md': '/docs/page/architecture/sync-engine',
-  'cella/PERMISSIONS.md': '/docs/page/architecture/permissions',
-  'cella/SCHEMA_EVOLUTION.md': '/docs/page/architecture/schema-evolution',
-  'cella/OTEL.md': '/docs/page/architecture/observability',
-  'cella/ADD_ENTITY.md': '/docs/page/guides/new-entity',
-  'cella/TESTING.md': '/docs/page/guides/testing',
-  'cella/RELEASES.md': '/docs/page/guides/releases',
+  'cella/QUICKSTART.md': '/docs/page/quickstart',
   'cella/CHANGELOG.md': '/docs/page/changelog',
   'cella/AGENTS.md': '/docs/page/llms',
-  'cella/QUICKSTART.md': '/docs/page/quickstart',
-  'cdc/README.md': '/docs/page/architecture/cdc',
-  'yjs/README.md': '/docs/page/architecture/yjs',
-  'cella/DEPLOYMENT.md': '/docs/page/guides/deployment',
-  'cella/INTEROPERABILITY.md': '/docs/page/architecture/interoperability',
-  'cella/AUTHENTICATION.md': '/docs/page/architecture/authentication',
-  'oauth/README.md': '/docs/page/architecture/oauth',
-  'mcp/README.md': '/docs/page/architecture/mcp',
-  'jobs/README.md': '/docs/page/architecture/jobs',
+  'cella/ARCHITECTURE.md': '/docs/page/architecture',
+  'cella/SYNC_ENGINE.md': '/docs/page/sync-engine',
+  'cella/CLIENT.md': '/docs/page/sync-engine/client',
+  'cdc/README.md': '/docs/page/sync-engine/cdc',
+  'yjs/README.md': '/docs/page/sync-engine/yjs',
+  'cella/SCHEMA_EVOLUTION.md': '/docs/page/sync-engine/schema-evolution',
+  'cella/AUTHENTICATION.md': '/docs/page/security/authentication',
+  'cella/authentication/SSO.md': '/docs/page/security/authentication/sso',
+  'cella/authentication/SESSIONS.md': '/docs/page/security/authentication/sessions',
+  'cella/PERMISSIONS.md': '/docs/page/security/permissions',
+  'cella/MULTI_TENANCY.md': '/docs/page/security/multi-tenancy',
+  'cella/INTEROPERABILITY.md': '/docs/page/interoperability',
+  'oauth/README.md': '/docs/page/interoperability/oauth',
+  'mcp/README.md': '/docs/page/interoperability/mcp',
+  'cella/OTEL.md': '/docs/page/observability',
+  'jobs/README.md': '/docs/page/jobs',
+  'cella/TESTING.md': '/docs/page/guides/testing',
   'bench/README.md': '/docs/page/guides/load-testing',
+  'cella/RELEASES.md': '/docs/page/guides/releases',
+  'cella/DEPLOYMENT.md': '/docs/page/guides/deployment',
+  'cella/deployment/FRESH_INSTALLATION.md': '/docs/page/guides/deployment/fresh-installation',
+  'cella/deployment/KEYS.md': '/docs/page/guides/deployment/keys',
+  'cella/deployment/CHANGING_INFRASTRUCTURE.md': '/docs/page/guides/deployment/changing-infrastructure',
+  'cella/deployment/RUNBOOKS.md': '/docs/page/guides/deployment/runbooks',
+  'infra/README.md': '/docs/page/guides/deployment/infra-cli',
 } as const;
+
+const repoLinks = { repoRoot: path.resolve(import.meta.dirname, '..'), repoUrl: appConfig.company.githubUrl, docRoutes: repoDocRoutes };
 
 // Tunnel mode: frontendUrl is the public ngrok origin (no port); Vite still listens locally.
 const devPort = Number(frontendUrl.port) || appConfig.devPorts.frontend;
@@ -364,10 +372,7 @@ const viteConfig = {
           remarkGfm,
           remarkStripRepoDocH1,
           // Autolink inline code that names a real repo file to its GitHub blob URL.
-          [
-            remarkLinkRepoPaths,
-            { repoRoot: path.resolve(import.meta.dirname, '..'), repoUrl: appConfig.company.githubUrl, docRoutes: repoDocRoutes },
-          ],
+          [remarkLinkRepoPaths, repoLinks],
         ],
         // Generate GitHub-compatible heading slugs with the scroll-spy's DOM prefix.
         // Keep aligned with frontmatter heading extraction.
@@ -389,8 +394,8 @@ const viteConfig = {
       }),
     },
     // Build-time frontmatter index of docs pages (virtual:docs-frontmatter), so the
-    // docs sidebar/table metadata doesn't statically import the page bodies.
-    docsFrontmatter(),
+    // docs sidebar/table metadata doesn't statically import the page bodies; also /llms.txt.
+    docsFrontmatter({ ...repoLinks, name: appConfig.name, description: appConfig.description, siteUrl: appConfig.frontendUrl }),
     // Dev-only write-back endpoint so the pages table can edit frontmatter and
     // reparent pages by rewriting/moving the md/mdx files (apply: 'serve').
     docsEditor(),
@@ -445,9 +450,7 @@ const viteConfig = {
     // The dev port offset is passed as resolved here: the browser cannot derive it from the checkout.
     'process.env': {
       ...Object.fromEntries(
-        (['NODE_ENV', 'APP_MODE', 'FRONTEND_URL', 'BACKEND_URL', 'BACKEND_AUTH_URL', 'YJS_URL', 'MCP_URL'] as const)
-          .filter((key) => process.env[key] !== undefined)
-          .map((key) => [key, process.env[key]]),
+        ['NODE_ENV', 'APP_MODE', ...Object.values(urlEnvNames)].filter((key) => process.env[key] !== undefined).map((key) => [key, process.env[key]]),
       ),
       ...(appConfig.devPortOffset ? { DEV_PORT_OFFSET: String(appConfig.devPortOffset) } : {}),
     },

@@ -249,7 +249,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                     {primaryLabels.map((label) => (
                       <ToggleGroupItem tabIndex={0} size="sm" value={label.id} className="group flex-1 font-normal" key={label.id}>
                         <PrimaryLabelIcon label={label} />
-                        <span className="ml-2 min-w-0 truncate opacity-75 group-data-pressed:font-medium group-data-pressed:opacity-100">
+                        <span className="ml-2 min-w-0 truncate text-muted-foreground group-data-pressed:font-medium group-data-pressed:text-foreground">
                           {label.name}
                         </span>
                       </ToggleGroupItem>
@@ -267,10 +267,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
             render={({ field: { onChange, value: labels } }) => (
               <FormItem>
                 <div
-                  className={cn(
-                    buttonVariants({ variant: 'input', size: 'sm', press: false }),
-                    'relative flex h-auto min-h-9 justify-start py-1 hover:bg-accent/20',
-                  )}
+                  className={cn(buttonVariants({ variant: 'input', size: 'sm', press: false }), 'relative flex h-auto min-h-9 justify-start py-1')}
                 >
                   <FormControl>
                     <button
@@ -304,8 +301,8 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                       ))
                     ) : (
                       <>
-                        <TagIcon className="opacity-75" />
-                        <span className="ml-1 opacity-75">{t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}</span>
+                        <TagIcon className="text-faint-foreground" />
+                        <span className="ml-1 text-faint-foreground">{t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}</span>
                       </>
                     )}
                   </div>
@@ -366,7 +363,8 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                         </>
                       ) : (
                         <>
-                          <UserXIcon className="size-4 opacity-75" /> <span className="ml-0.5 font-normal opacity-75">{t('c:assign_to')}</span>
+                          <UserXIcon className="size-4 text-faint-foreground" />{' '}
+                          <span className="ml-0.5 font-normal text-faint-foreground">{t('c:assign_to')}</span>
                         </>
                       )}
                     </span>
@@ -397,7 +395,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                         disabled={!isDirty}
                         aria-label={t('c:set_resource', { resource: t('c:status').toLowerCase() })}
                         press={false}
-                        className="rounded-none rounded-r border-l border-l-background/25"
+                        className="rounded-none rounded-r border-l-background/25"
                         id={`status-${formId}`}
                         onClick={({ currentTarget }) =>
                           openTaskDropdown({

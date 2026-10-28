@@ -1,6 +1,18 @@
-const plainCountPrefixes = ['e:c:', 'm:c:'];
+/** The live rows of a type in a channel's subtree: `e:c:{type}`. */
+export const entityCountPrefix = 'e:c:';
+/** The live rows of a type homed at the channel itself: `e:c:h:{type}`. */
+export const entityCountHomePrefix = 'e:c:h:';
+/** The newest sequence position of a type in a channel's subtree: `e:f:{type}`. */
+export const frontierPrefix = 'e:f:';
+/** The newest sequence position of a type's rows homed at the channel itself: `e:f:h:{type}`. */
+export const frontierHomePrefix = 'e:f:h:';
+/** The version of a versioned signal on its organization's row, `s:{signal type}`: it only counts up, and a recount leaves it alone. */
+export const signalVersionPrefix = 's:';
+
+const plainCountPrefixes = [entityCountPrefix, 'm:c:'];
+/** Last insert and update timestamps of a type's rows homed at the channel: `e:li:h:{type}`, `e:lu:h:{type}`. */
 const stampPrefixes = ['e:li:', 'e:lu:'];
-const frontierPrefix = 'e:f:';
+/** The organization row's sequence reservation counter. */
 const sequenceKey = 'sequence';
 
 const startsWithAny = (key: string, prefixes: string[]) => prefixes.some((prefix) => key.startsWith(prefix));

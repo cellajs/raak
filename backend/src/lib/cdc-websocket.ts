@@ -7,7 +7,7 @@ import { type WebSocket, WebSocketServer } from 'ws';
 import { modeSecret } from '#/env';
 import { type ActivityEvent, activityBus } from '#/lib/activity-bus';
 import type { CdcSocketSnapshot, HealthStatus } from '#/lib/health-helpers';
-import { productCache } from '#/middlewares/product-cache/app-product-cache';
+import { productCacheStore } from '#/middlewares/product-cache/product-cache-store';
 import { activityActionSchema, activitySchema } from '#/modules/activities/activities-schema';
 import { log } from '#/utils/logger';
 
@@ -29,7 +29,7 @@ const messageTraceSchema = z
 
 /**
  * Validates the CDC worker payload: the product rows of one audience as `rows`, or the one whole row of a change that
- * is no product as `rowData`. @see cdc/src/services/activity-service.ts for the producing type.
+ * is no product as `rowData`. @see cdc/src/services/api-messages.ts for the producing type.
  */
 const cdcMessageSchema = z.union([
   z.object({ activity: z.object(messageActivityShape), rows: z.array(messageRowSchema).min(1), _trace: messageTraceSchema }),
@@ -99,8 +99,8 @@ const workerGrades: readonly unknown[] = ['healthy', 'degraded', 'unhealthy'] sa
 type WorkerHealthReport = { health: CdcWorkerHealth | null; receivedAt: Date };
 
 /**
- * The CDC worker's channel: one live connection, closed after `idleTimeoutMs` without a message. The internal listener
- * (lib/listeners.ts) routes and authenticates the upgrade before handing it over.
+ * The API's end of the CDC worker's socket: one live connection, closed after `idleTimeoutMs` without a message. The
+ * internal listener (lib/listeners.ts) routes and authenticates the upgrade before handing it over.
  */
 class CdcWebSocketServer {
   private wss: WebSocketServer | null = null;
@@ -197,7 +197,7 @@ class CdcWebSocketServer {
       // Drop the detail cache entry of each changed product row, so a later detail fetch re-enriches (entity-keyed cache, no token)
       const { entityType } = message.activity;
       for (const row of rows ?? []) {
-        if (entityType && typeof row.rowData.id === 'string') productCache.invalidateProduct(entityType, row.rowData.id);
+        if (entityType && typeof row.rowData.id === 'string') productCacheStore.invalidateProduct(entityType, row.rowData.id);
       }
 
       const activityEvent = { ...message.activity, type, rowData, rows, trace: message._trace ?? null } as ActivityEvent;

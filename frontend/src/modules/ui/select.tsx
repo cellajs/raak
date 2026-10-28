@@ -13,7 +13,7 @@ interface SelectProps extends Omit<SelectPrimitive.Root.Props<string>, 'onValueC
 }
 
 /** Pass `items` when labels differ from values: SelectValue reads them before the popup has ever mounted. */
-function Select({ onValueChange, value, defaultValue, ...props }: SelectProps) {
+export function Select({ onValueChange, value, defaultValue, ...props }: SelectProps) {
   // Mirrors an uncontrolled value, so its item shows the check too
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
 
@@ -33,32 +33,32 @@ function Select({ onValueChange, value, defaultValue, ...props }: SelectProps) {
   );
 }
 
-function SelectGroup({ ...props }: SelectPrimitive.Group.Props) {
+export function SelectGroup({ ...props }: SelectPrimitive.Group.Props) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
 }
 
-function SelectValue({ ...props }: SelectPrimitive.Value.Props) {
+export function SelectValue({ ...props }: SelectPrimitive.Value.Props) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
-function SelectTrigger({ className, size = 'default', children, ...props }: SelectPrimitive.Trigger.Props & { size?: 'sm' | 'default' }) {
+export function SelectTrigger({ className, size = 'default', children, ...props }: SelectPrimitive.Trigger.Props & { size?: 'sm' | 'default' }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "focus-effect flex w-fit items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input field-hover:border-input-hover bg-background px-3 py-2 text-sm transition-[color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive data-[size=default]:h-10 data-[size=sm]:h-8 data-placeholder:text-muted-foreground *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus-effect flex w-fit items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input field-hover:border-input-hover bg-background px-3 py-2 text-sm transition-[color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive data-[size=default]:h-10 data-[size=sm]:h-8 data-placeholder:text-faint-foreground *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
       )}
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon render={<ChevronDownIcon className="size-4 text-muted-foreground/70" />} />
+      <SelectPrimitive.Icon render={<ChevronDownIcon className="size-4 text-faint-foreground" />} />
     </SelectPrimitive.Trigger>
   );
 }
 
-function SelectContent({
+export function SelectContent({
   className,
   children,
   align = 'center',
@@ -98,11 +98,11 @@ function SelectContent({
   );
 }
 
-function SelectLabel({ className, ...props }: SelectPrimitive.GroupLabel.Props) {
-  return <SelectPrimitive.GroupLabel data-slot="select-label" className={cn('px-2 py-1.5 text-muted-foreground text-xs', className)} {...props} />;
+export function SelectLabel({ className, ...props }: SelectPrimitive.GroupLabel.Props) {
+  return <SelectPrimitive.GroupLabel data-slot="select-label" className={cn('group-label px-2 py-1.5', className)} {...props} />;
 }
 
-function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Props) {
+export function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Props) {
   const selectValue = useContext(SelectValueContext);
   const isSelected = selectValue !== undefined && props.value !== undefined && selectValue === props.value;
 
@@ -124,7 +124,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
   );
 }
 
-function SelectSeparator({ className, ...props }: SelectPrimitive.Separator.Props) {
+export function SelectSeparator({ className, ...props }: SelectPrimitive.Separator.Props) {
   return (
     <SelectPrimitive.Separator data-slot="select-separator" className={cn('pointer-events-none -mx-1 my-1 h-px bg-border', className)} {...props} />
   );
@@ -153,5 +153,3 @@ function SelectScrollDownButton({ className, ...props }: Partial<SelectPrimitive
     </SelectPrimitive.ScrollDownArrow>
   );
 }
-
-export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue };

@@ -2,23 +2,22 @@ import { and, desc, eq, gt, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import type { DbContext } from '#/core/context';
 import type { ActorId } from '#/db/utils/ids';
 import { actorsTable } from '#/modules/actors/actors-db';
-import { passkeysTable } from '#/modules/auth/passkeys/passkeys-db';
+import { heldFactorsSql } from '#/modules/auth/mfa/mfa-queries';
 import {
   type InsertSessionModel,
   type SessionRevocationReason,
-  type SessionTypes,
+  type SessionType,
   type StepUpProof,
   sessionFactColumns,
   sessionSafeColumns,
   sessionsTable,
 } from '#/modules/auth/sessions/sessions-db';
-import { totpsTable } from '#/modules/auth/totps/totps-db';
 import { systemRolesTable } from '#/modules/system/system-roles-db';
 import { userSelect } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
 import { getIsoDate } from '#/utils/iso-date';
 
-interface FindLiveOwnSessionsOpts {
+interface FindLiveSessionsHeldByUserOpts {
   userId: string;
   /** Only the sessions of this browser. */
   deviceIdHash?: string;
@@ -26,8 +25,8 @@ interface FindLiveOwnSessionsOpts {
   offset?: number;
 }
 
-/** The user's live sessions that are not impersonations, newest first. */
-export const findLiveOwnSessions = async (ctx: DbContext, { userId, deviceIdHash, offset = 0 }: FindLiveOwnSessionsOpts) => {
+/** The live sessions the user holds, newest first: an impersonation of the user is held by its admin and left out. */
+export const findLiveSessionsHeldByUser = async (ctx: DbContext, { userId, deviceIdHash, offset = 0 }: FindLiveSessionsHeldByUserOpts) => {
   return ctx.var.db
     .select({ id: sessionsTable.id })
     .from(sessionsTable)
@@ -90,7 +89,7 @@ interface FindSessionStatesOpts {
   ids: string[];
 }
 
-/** What decides whether these sessions still back a stream: owner, revocation, expiry and the admin session behind an impersonation. */
+/** What decides whether these sessions still back a stream: user, revocation, expiry and the admin session behind an impersonation. */
 export const findSessionStates = async (ctx: DbContext, { ids }: FindSessionStatesOpts) => {
   return ctx.var.db
     .select({
@@ -123,13 +122,14 @@ interface InsertSessionOpts {
   values: InsertSessionModel;
 }
 
+/** Stores a session; its `secret` is the hash of the session token, never the token. */
 export const insertSession = async (ctx: DbContext, { values }: InsertSessionOpts) => {
   await ctx.var.db.insert(sessionsTable).values(values);
 };
 
 interface UpdateSessionsRevokedOpts {
   /** Which sessions: the user's, optionally only these ids or this type, or the impersonations layered on these sessions. */
-  match: { userId: string; ids?: string[]; type?: SessionTypes } | { impersonatorSessionIds: string[] };
+  match: { userId: string; ids?: string[]; type?: SessionType } | { impersonatorSessionIds: string[] };
   revokedBy: ActorId | null;
   revocationReason: SessionRevocationReason;
 }
@@ -148,10 +148,11 @@ export const updateSessionsRevoked = async (ctx: DbContext, { match, revokedBy, 
         )
       : inArray(sessionsTable.impersonatorSessionId, match.impersonatorSessionIds);
 
+  const now = getIsoDate();
   return ctx.var.db
     .update(sessionsTable)
-    .set({ revokedAt: getIsoDate(), revokedBy, revocationReason })
-    .where(and(isNull(sessionsTable.revokedAt), gt(sessionsTable.expiresAt, getIsoDate()), matched))
+    .set({ revokedAt: now, revokedBy, revocationReason })
+    .where(and(isNull(sessionsTable.revokedAt), gt(sessionsTable.expiresAt, now), matched))
     .returning(sessionSafeColumns);
 };
 
@@ -164,18 +165,20 @@ interface GetStepUpFactsOpts {
 
 /**
  * What a session's step-up state is decided from, in one query: the proof it was stamped with inside the window, whether
- * it signed in inside the window, and which second factors its user holds. Undefined when the session row is gone.
+ * it signed in inside the window, which second factors its user holds and whether MFA is on. Undefined when the session
+ * row is gone.
  */
 export const getStepUpFacts = async (ctx: DbContext, { sessionId, userId, since }: GetStepUpFactsOpts) => {
-  // Compared in SQL: `created_at` is a timestamp without zone, which JavaScript would parse as local time.
   // The factors are looked up by the session's user id as a parameter: a select field renders its columns without their
   // table, so a `sessions` column in these subqueries would name the subquery's own `user_id`.
+  const held = heldFactorsSql(userId);
   const [row] = await ctx.var.db
     .select({
       stampedVia: sql<StepUpProof | null>`case when ${sessionsTable.steppedUpAt} > ${since} then ${sessionsTable.steppedUpVia} end`,
       signedInRecently: sql<boolean>`${sessionsTable.createdAt} > ${since}`,
-      hasPasskey: sql<boolean>`exists (select 1 from ${passkeysTable} where ${passkeysTable.userId} = ${userId})`,
-      hasTotp: sql<boolean>`exists (select 1 from ${totpsTable} where ${totpsTable.userId} = ${userId})`,
+      hasPasskey: held.passkey,
+      hasTotp: held.totp,
+      mfaRequired: sql<boolean>`exists (select 1 from ${usersTable} where ${usersTable.id} = ${userId} and ${usersTable.mfaRequired})`,
     })
     .from(sessionsTable)
     .where(eq(sessionsTable.id, sessionId));

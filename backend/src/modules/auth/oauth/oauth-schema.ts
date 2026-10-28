@@ -1,20 +1,24 @@
 import { z } from '@hono/zod-openapi';
-import { appConfig, type FederationKey } from 'shared';
-import { supportedOAuthProviders } from '#/modules/auth/oauth/identities-db';
+import type { Context } from 'hono';
+import type { BaseOAuthProviders } from 'shared/config-builder/types';
+import type { Env } from '#/core/context';
+import { federationKeys } from '#/modules/auth/sso/helpers/federation-keys';
 
-const federationKeys = Object.keys(appConfig.federations) as FederationKey[];
+const oauthProviderIds = ['github', 'google', 'microsoft'] as const satisfies readonly BaseOAuthProviders[];
 
 const oauthFlowTypes = ['auth', 'connect', 'invite', 'verify'] as const;
-export type OAuthFlowType = (typeof oauthFlowTypes)[number];
 
 export const oauthQuerySchema = z.object({ type: z.enum(oauthFlowTypes).default('auth'), redirectAfter: z.string().optional() });
+
+/** The request of a route that starts a round trip, its query validated by `oauthQuerySchema`. */
+export type OAuthStartContext = Context<Env, string, { out: { query: z.infer<typeof oauthQuerySchema> } }>;
 
 /**
  * The state cookie of one round trip; `provider` is the OAuth provider or SSO federation whose start minted the
  * state, `connectionId` the institution an SSO start was pinned to.
  */
 export const oauthCookiePayloadSchema = z.object({
-  provider: z.enum([...supportedOAuthProviders, ...federationKeys]),
+  provider: z.enum([...oauthProviderIds, ...federationKeys]),
   type: z.enum(oauthFlowTypes).default('auth'),
   redirectAfter: z.string().optional(),
   codeVerifier: z.string().optional(),
@@ -32,3 +36,6 @@ export const oauthCallbackQuerySchema = z.object({
   error_description: z.string().optional(),
   error_uri: z.string().optional(),
 });
+
+/** The request of a provider or federation callback, its query validated by `oauthCallbackQuerySchema`. */
+export type OAuthCallbackContext = Context<Env, string, { out: { query: z.infer<typeof oauthCallbackQuerySchema> } }>;

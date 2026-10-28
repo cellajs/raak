@@ -5,9 +5,9 @@ import type { CookieOptions } from 'hono/utils/cookie';
 import { appConfig, type TokenType } from 'shared';
 import { safeEqual } from 'shared/utils/safe-equal';
 import type { Env } from '#/core/context';
-import { isTokenType, tokenPolicies } from '#/modules/auth/tokens/token-policies';
+import { env } from '#/env';
+import { isTokenType, type TokenPolicy, tokenPolicies } from '#/modules/auth/tokens/token-policies';
 import type { TimeSpan } from '#/utils/time-span';
-import { env } from '../../../../env';
 
 /**
  * Cookie signing secrets from `COOKIE_SECRET`, one or a comma-separated list: the first signs, any verifies, so a new
@@ -32,24 +32,26 @@ export type CookieName =
   | 'passkey-challenge'
   | 'magic-requested'
   | 'magic-pending'
-  | 'step-up-requested'
   | 'sso-recovery'
   | `oauth-state-${string}`;
 
 /**
  * Cookies read on a navigation another site started stay SameSite Lax: the OAuth state, plus the device id and the
- * magic-link and step-up request markers, which the OAuth callback and emailed links must see to recognize the
- * browser. A token type's own cookie follows its policy. All others, sessions included, are same-origin only.
- * @see initiation.ts
+ * magic-link request marker, which the OAuth callback and emailed links must see to recognize the browser. A token
+ * type's own cookie follows its policy. All others, sessions included, are same-origin only.
+ * @see handle-oauth-initiation.ts
  */
-const laxCookies = new Set<CookieName>(['device-id', 'magic-requested', 'step-up-requested']);
-const isLaxCookie = (name: CookieName) =>
-  isTokenType(name) ? tokenPolicies[name].sameSite === 'lax' : laxCookies.has(name) || name.startsWith('oauth-state-');
-
-/** Effective wire name: hono prepends `__Host-` when the prefix option is active. For consumers naming the cookie outside this helper. */
-export const authCookieName = (name: CookieName) => `${prefix === 'host' ? '__Host-' : ''}${appConfig.slug}-${name}-${appConfig.cookieVersion}`;
+const laxCookies = new Set<CookieName>(['device-id', 'magic-requested']);
+const isLaxCookie = (name: CookieName) => {
+  if (!isTokenType(name)) return laxCookies.has(name) || name.startsWith('oauth-state-');
+  const policy: TokenPolicy = tokenPolicies[name];
+  return policy.carrier !== 'code' && policy.sameSite === 'lax';
+};
 
 const versionedCookieName = (name: CookieName) => `${appConfig.slug}-${name}-${appConfig.cookieVersion}`;
+
+/** Effective wire name: hono prepends `__Host-` when the prefix option is active. For consumers naming the cookie outside this helper. */
+export const authCookieName = (name: CookieName) => `${prefix === 'host' ? '__Host-' : ''}${versionedCookieName(name)}`;
 
 /** The MAC covers the cookie's name and expiry with its content: a value signed for one cookie never reads as another. */
 const cookieMac = (secret: string, versionedName: string, expiresAt: number, content: string) =>
@@ -83,7 +85,7 @@ const openAuthCookie = (name: CookieName, sealed: string): string | undefined =>
 };
 
 /** Sets a signed auth cookie; SameSite per `isLaxCookie`. */
-export const setAuthCookie = async (ctx: Context<Env>, name: CookieName, content: string, timeSpan: TimeSpan) => {
+export const setAuthCookie = (ctx: Context<Env>, name: CookieName, content: string, timeSpan: TimeSpan) => {
   // A lifetime measured from a stored expiry has milliseconds; the cookie and its seal both take whole seconds.
   const maxAge = Math.floor(timeSpan.seconds());
   const options = {
@@ -98,12 +100,10 @@ export const setAuthCookie = async (ctx: Context<Env>, name: CookieName, content
 };
 
 /** Reads an auth cookie's content; a missing, forged, transplanted or expired value reads as undefined. */
-export const getAuthCookie = async (ctx: Context, name: CookieName) => {
+export const getAuthCookie = (ctx: Context, name: CookieName) => {
   const sealed = getCookie(ctx, versionedCookieName(name), prefix);
   return sealed ? openAuthCookie(name, sealed) : undefined;
 };
 
-export const deleteAuthCookie = (ctx: Context, name: CookieName) => {
-  // Must mirror the set attributes (prefix implies Path=/, Secure, no Domain), or the browser keeps the original cookie.
-  return deleteCookie(ctx, versionedCookieName(name), { path: '/', secure, prefix });
-};
+/** Deletes an auth cookie: the attributes must mirror the set ones (prefix implies Path=/, Secure, no Domain), or the browser keeps it. */
+export const deleteAuthCookie = (ctx: Context, name: CookieName) => deleteCookie(ctx, versionedCookieName(name), { path: '/', secure, prefix });

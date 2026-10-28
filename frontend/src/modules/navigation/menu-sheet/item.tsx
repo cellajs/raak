@@ -48,7 +48,7 @@ export function MenuSheetItem({ item, isSubitem, icon: Icon }: MenuSheetItemProp
       resetScroll={false}
       activeOptions={{ exact: false, includeHash: false, includeSearch: isSubitem }}
       activeProps={{ 'data-link-active': true }}
-      className="group/menu-sheet-item relative flex h-12 w-full select-none items-start gap-1 rounded-sm ring-2 ring-transparent ring-inset standalone:[-webkit-touch-callout:none] focus:outline-hidden focus-visible:ring-ring active:bg-accent/60 data-[subitem=true]:h-10 sm:hover:bg-foreground/8 sm:hover:text-accent-foreground"
+      className="group/menu-sheet-item relative flex h-12 w-full select-none items-start gap-1 rounded-sm ring-2 ring-transparent ring-inset standalone:[-webkit-touch-callout:none] focus:outline-hidden focus-visible:ring-ring active:bg-accent data-[subitem=true]:h-10 sm:hover:bg-accent sm:hover:text-foreground"
     >
       <span className="absolute inset-y-3 left-0 w-1 rounded-lg bg-primary opacity-0 transition-opacity group-data-[link-active=true]/menu-sheet-item:opacity-100" />
       {/* The card backing keeps the submenu line from showing through a dimmed avatar; an icon avatar sits above that line, so it goes without */}
@@ -75,7 +75,7 @@ export function MenuSheetItem({ item, isSubitem, icon: Icon }: MenuSheetItemProp
           </span>
         )}
       </span>
-      <div className="flex grow flex-col justify-center truncate pr-2 text-left group-hover/menu-sheet-item:opacity-100 group-data-[link-active=true]/menu-sheet-item:opacity-100 sm:opacity-80">
+      <div className="flex grow flex-col justify-center truncate pr-2 text-left">
         <div className="truncate pt-3.5 text-md leading-5 transition-spacing duration-100 ease-in-out group-hover/menu-sheet-item:delay-300 group-data-[subitem=true]/menu-sheet-item:pt-2 group-data-[link-active=true]/menu-sheet-item:font-medium group-data-[subitem=true]/menu-sheet-item:text-sm sm:group-hover/menu-sheet-item:pt-[0.3rem] sm:group-data-[subitem=true]/menu-sheet-item:group-hover/menu-sheet-item:pt-[0.06rem]">
           {item.name}
         </div>

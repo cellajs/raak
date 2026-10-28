@@ -6,7 +6,7 @@ import { baseDb as db } from '#/db/db';
 import type { StepUpProof } from '#/modules/auth/sessions/sessions-db';
 import { totpsTable } from '#/modules/auth/totps/totps-db';
 import { usersTable } from '#/modules/user/user-db';
-import { createTotpUser, expectRefusal } from '../helpers';
+import { createTotpUser, expectRefusal, mailsTo } from '../helpers';
 import { createAppClient } from '../test-client';
 import { clearSecurityTestData, insertPasskey, passkeysOf } from './helpers';
 import { insertStaleSession, insertSteppedUpSession } from './session-helpers';
@@ -47,6 +47,16 @@ describe('MFA toggle step-up', async () => {
     expect(await mfaRequiredOf(user.id)).toBe(false);
   });
 
+  it('mails an MFA change once, to the request that made it', async () => {
+    const { user, headers } = await totpUserWithSession(true);
+    const disabledMails = () => mailsTo(user.email).filter(({ statics }) => statics.type === 'mfa-disabled');
+
+    // A second request finds MFA off already: it answers as the first did, and the owner hears of one change.
+    expect((await call(toggleMfa, { body: { mfaRequired: false }, headers })).response.status).toBe(200);
+    expect((await call(toggleMfa, { body: { mfaRequired: false }, headers })).response.status).toBe(200);
+    expect(disabledMails()).toHaveLength(1);
+  });
+
   // MFA keeps two factors so a lost one can be replaced: removing either while MFA is on would switch it off unasked.
   it('must not turn MFA off by deleting the authenticator app via deleteTotp', async () => {
     const { user, headers } = await totpUserWithSession(true);
@@ -68,6 +78,13 @@ describe('MFA toggle step-up', async () => {
     const { user, headers } = await totpUserWithSession(false, { withPasskey: false });
     const { error, response } = await call(toggleMfa, { body: { mfaRequired: true }, headers });
     await expectRefusal({ response, error }, 400, 'mfa_factors_required');
+    expect(await mfaRequiredOf(user.id)).toBe(false);
+  });
+
+  it('must not turn on MFA via a session an SSO sign-in stepped up, which names no factor for the mfa session', async () => {
+    const { user, headers } = await totpUserWithSession(false, { via: 'sso' });
+    const { error, response } = await call(toggleMfa, { body: { mfaRequired: true }, headers });
+    await expectRefusal({ response, error }, 403, 'step_up_required');
     expect(await mfaRequiredOf(user.id)).toBe(false);
   });
 

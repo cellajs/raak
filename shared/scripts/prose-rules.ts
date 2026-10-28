@@ -1,26 +1,39 @@
-/**
- * Prose rules for source comments and authored Markdown. `required` rules fail `pnpm style`; `review` rules print
- * under `pnpm style:audit` only. Every rule reads source comments; `docs` rules also read Markdown and MDX prose.
- */
 import type { Finding } from './repo-files.ts';
 
+/** A wording rule, read in every source comment. */
 export interface ProseRule {
+  /** The rule id each finding prints in brackets. */
   name: string;
   pattern: RegExp;
+  /** `required` fails `pnpm style`; `review` prints under `pnpm style:audit` only. */
   level: 'required' | 'review';
+  /** The advice printed after the matched term. */
   message: string;
+  /** Also read in Markdown and MDX prose. */
   docs?: boolean;
+  /** Read in the whole text of a source file, strings and JSON values included, not only in its comments. */
+  text?: boolean;
   /** Repo-relative paths the rule skips. */
   exclude?: RegExp;
 }
 
-/** Agent-associated wording, skipped in infra/ and in text that is generated or addresses app maintainers. */
-const agentWording = { level: 'review', docs: true, exclude: /^(?:cella\/alignments\/|infra\/|sdk\/gen\/)/ } as const;
+/** Agent-associated wording, skipped in infra/ and in alignments, which address app maintainers. */
+const agentWording = { level: 'review', docs: true, exclude: /^(?:cella\/alignments\/|infra\/)/ } as const;
 
+/**
+ * Files no prose rule reads, on top of a rule's own `exclude` and the app's `proseExclude`: in source, migrations,
+ * the alignment folders and generated code; in docs, the changelogs release-please writes from commit messages.
+ */
+export function isProseExempt(file: string, kind: 'source' | 'doc'): boolean {
+  if (kind === 'doc') return file.endsWith('CHANGELOG.md');
+  return ['backend/drizzle/', 'cella/alignments/', 'sdk/gen/'].some((prefix) => file.startsWith(prefix)) || file.includes('.gen.');
+}
+
+/** The rules the comment and doc checks apply; a required one also gets its line in the README. */
 export const proseRules: ProseRule[] = [
-  { name: 'em-dash', pattern: /—/, level: 'required', message: 'split the sentence, use a colon, or drop the clause', docs: true },
+  { name: 'em-dash', pattern: /\u2014/, level: 'required', message: 'split the sentence, use a colon, or drop the clause', docs: true, text: true },
   {
-    name: 'contrast-history',
+    name: 'contrast-phrase',
     pattern: /\b(?:instead|rather than|as opposed to)\b/i,
     level: 'required',
     message: 'state the current behavior or local constraint directly',
@@ -58,9 +71,11 @@ export const proseRules: ProseRule[] = [
   },
   {
     name: 'materialization-jargon',
-    pattern: /\bmateriali[sz](?:e|ed|es|ing|ation|ations)\b/i,
+    // The Yjs operation is the word's one use: a comment that names Yjs, the relay or a collaborative document passes.
+    pattern: /(?<!\b(?:yjs|relay|collaborative)\b[\s\S]*)\bmateriali[sz](?:e|ed|es|ing|ation|ations)\b(?![\s\S]*\b(?:yjs|relay|collaborative)\b)/i,
     level: 'review',
     message: 'use a concrete verb unless this names the formal Yjs operation',
+    exclude: /yjs/i,
   },
   {
     name: 'load-bearing',
@@ -90,9 +105,11 @@ export const proseRules: ProseRule[] = [
   },
   {
     name: 'surface-as-verb',
-    pattern: /\b(?:surface|surfaces|surfaced)\b/i,
+    // The noun names a placement surface (`appConfig.surfaces`): a bare form counts as a verb only after a modal, a
+    // negation or an adverb.
+    pattern: /\bsurfac(?:ed|ing)\b|(?<=\b(?:to|will|would|can|could|may|might|must|should|shall|not|never|still|also|\w+ly)\s+)surfaces?\b/i,
     ...agentWording,
-    message: 'when used as a verb, prefer report, show, return, or expose',
+    message: 'prefer report, show, return, or expose',
   },
   {
     name: 'wiring-metaphor',

@@ -22,7 +22,7 @@ export const revealDraftHostPanel = (projectId: string, draftStatus: TaskStatus)
   const viewSections = taskBoardStore.getState().panelData[boardId]?.[projectId]?.viewSections;
   const hostSection = resolveDraftHostSection(viewSections, draftStatus);
   const panelId = hostSection ? makePanelKey(projectId, hostSection) : projectId;
-  boardStore.getState().togglePanelCollapsedState(panelId, false);
+  boardStore.getState().setPanelCollapsed(panelId, false);
 
   const { setPanelSectionExpanded } = taskBoardStore.getState();
   if (draftStatus === TaskStatus.Accepted) setPanelSectionExpanded(boardId, projectId, 'accepted', true);

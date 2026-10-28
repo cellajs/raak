@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ActivityEvent } from '#/lib/activity-bus';
-import { buildStreamNotification } from '#/modules/entities/stream/build-message';
+import { buildStreamChange } from '#/modules/entities/stream/build-change';
+import type { AppStreamProductEvent } from '#/modules/entities/stream/types';
 
 const labelRow = (deletedAt: string | null = null) => ({
   rowData: { id: 'label-1', organizationId: 'org-1', projectId: 'project-1', deletedAt },
@@ -8,7 +8,7 @@ const labelRow = (deletedAt: string | null = null) => ({
   movedFrom: null,
 });
 
-const labelEvent = (overrides: Record<string, unknown>): ActivityEvent =>
+const labelEvent = (overrides: Record<string, unknown>): AppStreamProductEvent =>
   ({
     id: 'activity-1',
     type: 'label.updated',
@@ -24,23 +24,23 @@ const labelEvent = (overrides: Record<string, unknown>): ActivityEvent =>
     trace: null,
     stx: null,
     ...overrides,
-  }) as unknown as ActivityEvent;
+  }) as unknown as AppStreamProductEvent;
 
 // Hint shape drives whether hosts refresh or strip their embedded copies (task.labels).
 // Soft deletes ride the wire as updates, so classification must read the row, not the action.
-describe('buildStreamNotification propagation hint', () => {
+describe('buildStreamChange propagation hint', () => {
   it('classifies a live label update as an update hint', () => {
-    const { propagation } = buildStreamNotification(labelEvent({}));
+    const { propagation } = buildStreamChange(labelEvent({}));
     expect(propagation).toMatchObject({ hostProduct: 'task', update: ['label-1'], remove: [] });
   });
 
   it('classifies a soft-deleted label row as a removal hint', () => {
-    const { propagation } = buildStreamNotification(labelEvent({ rows: [labelRow('2026-07-26T21:00:00Z')] }));
+    const { propagation } = buildStreamChange(labelEvent({ rows: [labelRow('2026-07-26T21:00:00Z')] }));
     expect(propagation).toMatchObject({ update: [], remove: ['label-1'] });
   });
 
   it('classifies a hard delete as a removal hint', () => {
-    const { propagation } = buildStreamNotification(labelEvent({ action: 'delete' }));
+    const { propagation } = buildStreamChange(labelEvent({ action: 'delete' }));
     expect(propagation).toMatchObject({ update: [], remove: ['label-1'] });
   });
 });

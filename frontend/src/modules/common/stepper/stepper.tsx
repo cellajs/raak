@@ -3,7 +3,7 @@ import { Children, cloneElement, isValidElement, useState } from 'react';
 import type { StepProps, StepperProps } from '~/modules/common/stepper/types';
 import { StepperContext, useStepper } from '~/modules/common/stepper/use-stepper';
 import { Button } from '~/modules/ui/button';
-import { Collapsible, CollapsibleContent } from '~/modules/ui/collapsible';
+import { Collapsible, CollapsibleContent, collapsiblePanelClass } from '~/modules/ui/collapsible';
 import { cn } from '~/utils/cn';
 
 /** Vertical stepper: every step shows a numbered button and its label, only the current step's content is open. */
@@ -55,7 +55,7 @@ export function Step({ children, label, checkIcon: Check = CheckIcon, index = 0 
             variant="ghost"
             type="button"
             tabIndex={isClickable ? 0 : -1}
-            className="pointer-events-none size-(--step-icon-size) rounded-full border-2 p-0 data-[clickable=true]:pointer-events-auto data-[completed=true]:border-primary data-[current=true]:border-primary data-[completed=true]:bg-primary data-[current=true]:bg-secondary data-[completed=true]:text-primary-foreground"
+            className="pointer-events-none size-(--step-icon-size) rounded-full border-2 border-border p-0 data-[clickable=true]:pointer-events-auto data-[completed=true]:border-primary data-[current=true]:border-primary data-[completed=true]:bg-primary data-[current=true]:bg-secondary data-[completed=true]:text-primary-foreground"
             aria-current={isCurrentStep ? 'step' : undefined}
             data-current={isCurrentStep}
             data-completed={isCompletedStep}
@@ -64,14 +64,12 @@ export function Step({ children, label, checkIcon: Check = CheckIcon, index = 0 
           >
             {isCompletedStep ? <Check className="size-4" /> : <span className="text-md">{index + 1}</span>}
           </Button>
-          {!!label && <div className={cn('ms-2 text-sm', index > activeStep && 'opacity-80')}>{label}</div>}
+          {!!label && <div className={cn('ms-2 text-sm', index > activeStep && 'text-muted-foreground')}>{label}</div>}
         </div>
       )}
       <div className="group-not-last/step:min-h-4 max-sm:relative max-sm:z-1 sm:ps-(--step-icon-size)">
         <Collapsible open={isCurrentStep}>
-          <CollapsibleContent className="overflow-hidden motion-safe:data-closed:animate-collapsible-up motion-safe:data-open:animate-collapsible-down">
-            {children}
-          </CollapsibleContent>
+          <CollapsibleContent className={collapsiblePanelClass}>{children}</CollapsibleContent>
         </Collapsible>
       </div>
     </div>

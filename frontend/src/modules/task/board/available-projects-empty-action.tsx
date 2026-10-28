@@ -30,7 +30,7 @@ export function AvailableProjectsEmptyAction({ workspace, fallback }: AvailableP
   return (
     <div className="flex max-w-lg flex-col items-center gap-3">
       <p className="text-balance text-muted-foreground text-sm">{t('c:unassigned_projects', { count: availableCount })}</p>
-      <Button type="button" variant="plain" onClick={selectExistingProjects}>
+      <Button type="button" variant="secondary" onClick={selectExistingProjects}>
         <PlusIcon />
         <span>{t('c:unassigned_projects_action')}</span>
       </Button>

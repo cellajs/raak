@@ -8,7 +8,7 @@ import { mockStxBase, mockStxFor } from '#/schemas/sync-transaction-mocks';
 import { adminRole, defaultHeaders } from './fixtures';
 import { adminDb, createTestOrganization } from './helpers';
 import { bearerHeaders, serviceAccountWithKey } from './oauth-helpers';
-import { clearSecurityTestData, createOrgUser } from './security/helpers';
+import { clearSecurityTestData, createFactorOrgUser } from './security/helpers';
 import { createAppClient } from './test-client';
 import { setTestConfig } from './test-utils';
 
@@ -24,7 +24,7 @@ describe('Label lists, primary label deletes and API key reads of their channels
   /** An organization whose admin owns one project, created through the API so it has its primary labels. */
   async function orgWithProject() {
     const org = await createTestOrganization();
-    const user = await createOrgUser(call, org.tenantId, org.id, `admin-${nanoid(8)}`, adminRole);
+    const user = await createFactorOrgUser(call, org.tenantId, org.id, `admin-${nanoid(8)}`, adminRole);
     const path = { tenantId: org.tenantId, organizationId: org.id };
     const headers = { ...defaultHeaders, Cookie: user.sessionCookie };
     const firstId = (result: { data?: unknown }) => String((result.data as { data: { id: string }[] } | undefined)?.data[0].id);

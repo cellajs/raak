@@ -1,7 +1,7 @@
 import type { ChannelEntityType } from 'shared';
 import type { UserContext } from '#/core/context';
 import { planInvites, toInviteOutcome } from '#/modules/memberships/operations/plan-invites';
-import { getValidChannel } from '#/permissions/get-valid-channel';
+import { getValidChannel } from '#/permissions';
 
 interface CheckInvitesInput {
   emails: string[];
@@ -16,8 +16,7 @@ interface CheckInvitesInput {
  */
 export async function checkInvitesOp(ctx: UserContext, { emails, entityId, entityType }: CheckInvitesInput) {
   const { entity } = await getValidChannel(ctx, entityId, entityType, 'update');
-  const normalized = [...new Set(emails.map((email) => email.toLowerCase().trim()))];
 
-  const plan = await planInvites(ctx, { emails: normalized, entity, entityType, held: true });
+  const plan = await planInvites(ctx, { emails, entity, entityType, held: true });
   return { outcomes: plan.map((item) => toInviteOutcome(item.outcome === 'add' ? { ...item, outcome: 'invite' } : item)) };
 }

@@ -18,8 +18,10 @@ export const tasksTable = snakeCase.table(
     expandable: boolean().default(false).notNull(),
     summary: varchar({ length: maxLength.html }).notNull(),
     summaryLength: integer().default(0).notNull(),
-    // Exactly one primary label (task type) per task; a per-project labels row with mode 'primary'.
-    // No FK: labels are soft-deleted and delete flows reassign references synchronously.
+    /**
+     * Exactly one primary label (task type) per task; a per-project labels row with mode 'primary'. No FK: labels are
+     * soft-deleted and delete flows reassign references synchronously.
+     */
     primaryLabelId: uuid().notNull(),
     displayOrder: doublePrecision().notNull(),
     status: integer().notNull(),
@@ -28,8 +30,10 @@ export const tasksTable = snakeCase.table(
     assignedTo: text().array().notNull().default(sql`'{}'::text[]`),
     checkboxCount: integer().default(0).notNull(),
     checkedCount: integer().default(0).notNull(),
-    // Derived from description media blocks (attachmentId props). Owned-lifecycle
-    // productEmbedding host column: the CDC worker GCs attachment rows it no longer references.
+    /**
+     * Derived from description media blocks (attachmentId props). Owned-lifecycle productEmbedding host column: the CDC
+     * worker deletes the attachment rows it stops referencing.
+     */
     attachments: uuid().array().notNull().default(sql`'{}'::uuid[]`),
     ...channelRelationColumns('task'),
   },

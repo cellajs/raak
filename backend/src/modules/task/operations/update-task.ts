@@ -23,8 +23,9 @@ type ReturnTask = Awaited<ReturnType<typeof hydrateTask>>;
 type UpdateTaskContext = { var: ActorContext['var'] & Partial<Pick<UserContext['var'], 'user'>> };
 
 /**
- * Also the task's Yjs materializer: the relay calls it with `materialized` for a collaborative description.
- * `serverOrigin` stamps the fields with the server clock, for a transaction the server built (the Yjs relay).
+ * Also the task's Yjs materializer: `materializeDescriptionOp` calls it with `materialized` for a collaborative
+ * description the relay posts. `serverOrigin` stamps the fields with the server clock, for a transaction the server
+ * built (the Yjs relay).
  */
 export async function updateTaskOp(
   ctx: UpdateTaskContext,

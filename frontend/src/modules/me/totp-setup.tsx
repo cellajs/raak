@@ -14,7 +14,15 @@ import { Button } from '~/modules/ui/button';
 /** The key's challenge cookie lives 5 minutes; the setup expires the key slightly before, to avoid a race. */
 const keyExpiryMs = 4.5 * 60 * 1000;
 
-export function TotpSetup() {
+interface TotpSetupProps {
+  /** After the key is confirmed; defaults to closing the setup dialog. */
+  onDone?: () => void;
+  /** Defaults to closing the setup dialog. */
+  onCancel?: () => void;
+}
+
+/** The QR code of a new authenticator key and the form that confirms it with its first code. */
+export function TotpSetup({ onDone, onCancel }: TotpSetupProps) {
   const { t } = useTranslation();
 
   const [formVersion, setFormVersion] = useState(0);
@@ -32,7 +40,8 @@ export function TotpSetup() {
   const closeSetup = () => dialoger.getState().remove('totp-setup');
 
   // A wrong code remounts the form, so the code must be entered again.
-  const onSubmit = (body: { code: string }) => createTotp(body, { onSuccess: closeSetup, onError: () => setFormVersion((version) => version + 1) });
+  const onSubmit = (body: { code: string }) =>
+    createTotp(body, { onSuccess: onDone ?? closeSetup, onError: () => setFormVersion((version) => version + 1) });
 
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -56,13 +65,13 @@ export function TotpSetup() {
       {expiredUri === data.totpUri ? (
         <div className="flex flex-col items-center gap-3 py-2">
           <p className="text-muted-foreground text-sm">{t('c:totp_qr.expired')}</p>
-          <Button variant="plain" loading={isFetching} onClick={() => refetch()}>
+          <Button variant="secondary" loading={isFetching} onClick={() => refetch()}>
             <RefreshCwIcon className="size-3.5" />
             {t('c:refresh')}
           </Button>
         </div>
       ) : (
-        <TotpConfirmationForm key={formVersion} onSubmit={onSubmit} loading={isPending} onCancel={closeSetup} />
+        <TotpConfirmationForm key={formVersion} onSubmit={onSubmit} loading={isPending} onCancel={onCancel ?? closeSetup} />
       )}
     </div>
   );

@@ -65,7 +65,7 @@ const refusalAsNull = (err: unknown): null => {
  * of it.
  * @throws AppError 401 without a token, for an unknown, revoked or expired one, or for an impersonation's.
  */
-export const readOwnSession = async (sessionToken: string | undefined): Promise<ResolvedSession> => {
+export const readBrowserSession = async (sessionToken: string | undefined): Promise<ResolvedSession> => {
   if (!sessionToken) throw new AppError(401, 'unauthorized', 'warn');
   const entry = await readSession(sessionToken);
   if (entry.session.type === 'impersonation') throw new AppError(401, 'unauthorized', 'warn');
@@ -82,8 +82,8 @@ export const readOwnSession = async (sessionToken: string | undefined): Promise<
  *   this browser's own session does not back.
  */
 export const resolveSession = async (ctx: Context, { clearOnError = false }: { clearOnError?: boolean } = {}): Promise<PresentedSession> => {
-  const sessionToken = await getAuthCookie(ctx, 'session');
-  const impersonationToken = await getAuthCookie(ctx, 'impersonation');
+  const sessionToken = getAuthCookie(ctx, 'session');
+  const impersonationToken = getAuthCookie(ctx, 'impersonation');
 
   // Only a refusal clears the cookie: it holds the only copy of the token, so a failed read (the database away) keeps it.
   const clearIfRefused = async (cookie: 'session' | 'impersonation', read: () => Promise<PresentedSession>) => {
@@ -109,7 +109,7 @@ export const resolveSession = async (ctx: Context, { clearOnError = false }: { c
     });
   }
 
-  return clearIfRefused('session', async () => ({ ...(await readOwnSession(sessionToken)), impersonator: null }));
+  return clearIfRefused('session', async () => ({ ...(await readBrowserSession(sessionToken)), impersonator: null }));
 };
 
 /**

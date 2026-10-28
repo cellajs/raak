@@ -8,12 +8,12 @@ import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
-import { workspacesTable } from '#/modules/workspace/workspace-db';
+import { type InsertWorkspaceModel, workspacesTable } from '#/modules/workspace/workspace-db';
 import { getOrderColumns } from '#/utils/order-column';
 import { textSearchFilter } from '#/utils/sql';
 
 interface InsertWorkspacesOpts {
-  workspaces: (typeof workspacesTable.$inferInsert)[];
+  workspaces: InsertWorkspaceModel[];
 }
 
 /** Insert workspaces and return the created rows. */
@@ -24,7 +24,7 @@ export const insertWorkspaces = async (ctx: DbContext, { workspaces }: InsertWor
 
 interface UpdateWorkspaceOpts {
   id: string;
-  values: Partial<typeof workspacesTable.$inferInsert>;
+  values: Partial<InsertWorkspaceModel>;
 }
 
 /** Update a workspace by ID and return the updated row. */

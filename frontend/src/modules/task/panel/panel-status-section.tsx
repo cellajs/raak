@@ -129,8 +129,8 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
             colors.fill,
             colors.text,
             isIced
-              ? 'border-b-sky-500/10 hover:bg-sky-100 hover:text-sky-800 max-sm:border-b dark:hover:bg-sky-900 dark:hover:text-sky-300'
-              : 'border-t border-t-transparent hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900 dark:hover:text-green-400',
+              ? 'hover:bg-sky-100 hover:text-sky-800 max-sm:border-b-sky-500/10 dark:hover:bg-sky-900 dark:hover:text-sky-300'
+              : 'hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900 dark:hover:text-green-400',
             !isIced && colors.border,
           )}
         >

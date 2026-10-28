@@ -49,7 +49,15 @@
           },
           "stepUpGuard": {
             "name": "stepUp",
-            "description": "Requires a recent proof of presence on this session: a passkey or TOTP the user holds, else a fresh sign-in or emailed link; refuses impersonation"
+            "description": "Requires a recent proof of presence on this session: a passkey or TOTP the user holds, else a fresh sign-in or an emailed code; refuses impersonation"
+          },
+          "stepUpFactorGuard": {
+            "name": "stepUpFactor",
+            "description": "Requires a recent proof of a second factor the user holds, or an SSO sign-in whose institution asserted MFA; refuses impersonation"
+          },
+          "stepUpEnrollGuard": {
+            "name": "stepUpEnroll",
+            "description": "Requires a recent proof of presence on this session: a passkey or TOTP the user holds, a fresh sign-in or an emailed code; refuses impersonation"
           },
           "sysAdminGuard": {
             "name": "sysAdmin",
@@ -194,12 +202,12 @@
     },
     {
       "name": "channel",
-      "description": "Operations on channel entities (entities that have memberships, e.g. organizations, projects).",
+      "description": "Operations on channel entities: the entities that have memberships.",
       "x-kind": "entity"
     },
     {
       "name": "product",
-      "description": "Operations on product entities (content entities without membership, e.g. tasks, pages, attachments).",
+      "description": "Operations on product entities: the content entities, which have no memberships.",
       "x-kind": "entity"
     },
     {
@@ -209,7 +217,7 @@
     },
     {
       "name": "activities",
-      "description": "Audit log entries tracking create, update, and delete operations across all resources, written\n    by the CDC worker. Activities provide an audit trail and can be extended for webhook delivery.",
+      "description": "Audit log entries tracking create, update, and delete operations across all resources, written by the CDC worker. Activities provide an audit trail and can be extended for webhook delivery.",
       "x-parent": "cella",
       "x-kind": "hidden"
     },
@@ -221,55 +229,55 @@
     },
     {
       "name": "attachments",
-      "description": "Endpoints for managing file based attachments (such as images, PDFs, and documents) linked to\n    entities such as organizations or users. Files are uploaded directly by the client, while the API handles\n    metadata registration, linking, access, and preview utilities. The description is edited collaboratively\n    and is a notification source for mentions.",
+      "description": "Endpoints for managing file based attachments (such as images, PDFs, and documents) in an organization or one of its channels. Files are uploaded directly by the client, while the API registers their metadata, links the stored files and signs download URLs. The description is edited collaboratively and is a notification source for mentions.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "auth",
-      "description": "Endpoints for authentication, supporting multiple sign-in methods including OAuth\n    (Google, Microsoft, GitHub), institutional SSO through a federation (SURFconext) and passkeys (WebAuthn). They\n    cover sign-up, sign-in, email verification, account linking, and impersonation for system admins.",
+      "description": "Endpoints for authentication, supporting sign-in by magic link, passkey (WebAuthn), OAuth (Google, Microsoft, GitHub) and institutional SSO through a federation (SURFconext), with TOTP as a second factor. They cover sign-up, sign-in, MFA, step-up, email verification, account linking, and impersonation for system admins.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "connections",
-      "description": "Connections: the institutions a tenant trusts to assert its members' identities through an SSO\n    federation (SURFconext first). System admins create them per tenant; a connection's id is the public entry key of\n    the tenant's SSO sign-in, and its domains decide which asserted institution the sign-in accepts.",
+      "description": "Connections: the institutions a tenant trusts to assert its members' identities through an SSO federation (SURFconext first). System admins create them per tenant; a connection's id is the public entry key of the tenant's SSO sign-in, and its domains decide which asserted institution the sign-in accepts.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "entities",
-      "description": "Endpoints that operate across multiple entity types, such as users and organizations.\n    Entities are identifiable domain objects that may be contextual, hierarchical (with parent/child\n    relations), or actor-like. These routes provide shared logic across modules, including slug validation\n    and entity visibility.",
+      "description": "Endpoints that operate across multiple entity types, such as users and organizations. Entities are identifiable domain objects that may be contextual, hierarchical (with parent/child relations), or actor-like. These routes check slug availability and serve the app stream and its catchup, which tell a signed-in client about changes to the entities it may read and send it signals about the rest.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "labels",
-      "description": "Endpoints for managing labels, which are lightweight, user defined tags assigned to tasks.\n    Labels help categorize and filter tasks (for example client, api, or backend). They exist at the\n    project level and are available to all members of the project.",
+      "description": "Endpoints for managing labels, which are lightweight, user defined tags assigned to tasks. Labels help categorize and filter tasks (for example client, api, or backend). They exist at the project level and are available to all members of the project.",
       "x-parent": "app",
       "x-kind": "module"
     },
     {
       "name": "mcp",
-      "description": "Endpoints exposing the AI capability layer, which is a server-side MCP tool registry surfaced to\n    external clients through a Model Context Protocol (MCP) endpoint. It ships no LLM transport or agent of its\n    own; apps build AI features and agent products (such as chat) on top, reusing the same MCP tool registry.",
+      "description": "Endpoints exposing the AI capability layer, which is a server-side MCP tool registry surfaced to external clients through a Model Context Protocol (MCP) endpoint. It ships no LLM transport or agent of its own; apps build AI features and agent products (such as chat) on top, reusing the same MCP tool registry.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "me",
-      "description": "Endpoints scoped to the current user, meaning the user associated with the active session making\n    the request. Unlike the users endpoints, which may operate on any user in the system, me endpoints act\n    exclusively on the current user and follow a different authorization flow.",
+      "description": "Endpoints scoped to the current user, meaning the user associated with the active session making the request. The users endpoints read other users; me endpoints act exclusively on the current user and follow a different authorization flow.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "oauth-server",
-      "description": "The authorization server: node-oidc-provider on the app origin under /oauth, issuing the access\n    tokens the API and the MCP endpoint accept. Runs as its own process (MODE=oauth) or folded into the API under\n    singleVM; the store it writes is swept nightly by the database's retention procedure.",
+      "description": "The authorization server: node-oidc-provider on the app origin under /oauth, issuing the access tokens the API and the MCP endpoint accept. Runs as its own process (MODE=oauth) or folded into the API under singleVM; the store it writes is swept nightly by the database's retention procedure.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "memberships",
-      "description": "Endpoints for managing memberships, which represent one-to-one relationships between a\n    user and a contextual entity such as an organization. Each membership includes role information and\n    status flags such as archived or muted. Memberships can also reference parent entities to easily have a\n    hierarchical context available.",
+      "description": "Endpoints for managing memberships, which represent one-to-one relationships between a user and a channel entity such as an organization. Each membership includes role information and status flags such as archived or muted. Memberships can also reference parent entities to easily have a hierarchical context available.",
       "x-parent": "cella",
       "x-kind": "module"
     },
@@ -281,31 +289,31 @@
     },
     {
       "name": "notifications",
-      "description": "Per-recipient inbox for mentions and addressed activity, plus the daily/weekly\n    email digest. Product modules opt in by declaring a notifications source on their own\n    defineBackendModule call (who counts as a recipient is the only app-specific part); with no\n    source declared the whole module is dormant. Rows are partitioned by createdAt so retention is\n    automatic, and excluded from CDC because they are per-user state, not synced content.",
+      "description": "Per-recipient inbox for mentions and addressed activity, plus the daily/weekly email digest. Product modules opt in by declaring a notifications source on their own defineBackendModule call (who counts as a recipient is the only app-specific part); with no source declared the whole module is dormant. Rows are partitioned by createdAt so retention is automatic, and excluded from CDC because they are per-user state, not synced content.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "organizations",
-      "description": "Endpoints for managing organizations, which are core channel entities and the highest ancestor\n    in the entity hierarchy. Organizations define access boundaries and are typically the primary scope for\n    permissions and resource management.",
+      "description": "Endpoints for managing organizations, which are core channel entities and the highest ancestor in the entity hierarchy. Organizations define access boundaries and are typically the primary scope for permissions and resource management.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "projects",
-      "description": "Endpoints for managing projects, which are the primary collaborative contexts containing\n    tasks, labels, and attachments. Every project belongs to exactly one organization, which defines its\n    access scope and ownership. Projects support multiple members and permission based collaboration.",
+      "description": "Endpoints for managing projects, which are the primary collaborative contexts containing tasks, labels, and attachments. Every project belongs to exactly one organization, which defines its access scope and ownership. Projects support multiple members and permission based collaboration.",
       "x-parent": "app",
       "x-kind": "module"
     },
     {
       "name": "push",
-      "description": "Web Push delivery for the notification inbox: per-device subscriptions, VAPID key\n    exposure and the sender that turns fresh notification rows into pushes for offline\n    subscribers. Dormant unless has.push is on AND the deployment carries VAPID keys.",
+      "description": "Web Push delivery for the notification inbox: per-device subscriptions, VAPID key exposure and the sender that turns fresh notification rows into pushes for offline subscribers. Dormant unless has.push is on and the deployment carries VAPID keys and a subject that web-push accepts.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "requests",
-      "description": "Endpoints for handling incoming requests such as contact form submissions, newsletter signups,\n    and waitlist entries.",
+      "description": "Endpoints for handling incoming requests such as contact form submissions, newsletter signups, and waitlist entries.",
       "x-parent": "cella",
       "x-kind": "module"
     },
@@ -317,43 +325,43 @@
     },
     {
       "name": "service-accounts",
-      "description": "Machine actors and their API keys. A service account is the actor an API key runs as: bound to\n    the organization at a role, disabled rather than deleted, named in provenance like a user. Keys are opaque secrets\n    shown once; a key may narrow what its account can do through scopes, never widen it.",
+      "description": "Machine actors and their API keys. A service account is the actor an API key runs as: bound to the organization at a role, disabled rather than deleted, named in provenance like a user. Keys are opaque secrets shown once; a key may narrow what its account can do through scopes, never widen it.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "system",
-      "description": "System level endpoints for system admins: inviting users to the app by email, updating and deleting\n    any user, and sending a newsletter to the members of chosen organizations.",
+      "description": "System level endpoints for system admins: inviting users to the app by email, updating and deleting any user, and sending a newsletter to the members of chosen organizations.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "tasks",
-      "description": "Endpoints for managing tasks, which represent actionable items of work within a project. Tasks\n    support labeling, assignment, and status tracking, and are strictly scoped to their parent project.",
+      "description": "Endpoints for managing tasks, which represent actionable items of work within a project. Tasks support labeling, assignment, and status tracking, and are strictly scoped to their parent project.",
       "x-parent": "app",
       "x-kind": "module"
     },
     {
       "name": "tenants",
-      "description": "Endpoints for managing tenants, which are top-level isolation boundaries used by Row-Level\n    Security (RLS) to partition data. Only system administrators can manage tenants.",
+      "description": "Tenants: the top-level isolation boundaries Row-Level Security (RLS) partitions data by. A tenant holds one organization and carries its quotas, rate limits and sign-in policy. System admins list and update tenants, a signed-in user creates one of their own, and an archived tenant is removed after the archived period.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "users",
-      "description": "Endpoints for managing users at the system level. Unlike channel entities such as\n    organizations, a user is a global entity that is not scoped to a specific context. These endpoints are\n    intended for administrative operations on any user in the system.",
+      "description": "Endpoints for reading other users: the users who share an organization with the requesting user, or every user for a system admin. Unlike channel entities such as organizations, a user is a global entity that is not scoped to an organization. Administrative operations on users are system endpoints.",
       "x-parent": "cella",
       "x-kind": "module"
     },
     {
       "name": "workspaces",
-      "description": "Endpoints for managing workspaces, which act as personal containers for organizing related\n    projects. Each workspace is owned by a single user and is not shared with others. Workspaces\n    enable users to bundle multiple projects into a private, logical grouping, offering better\n    organization and separation across domains or contexts.",
+      "description": "Endpoints for managing workspaces, which act as personal containers for organizing related projects. Each workspace is owned by a single user and is not shared with others. Workspaces enable users to bundle multiple projects into a private, logical grouping, offering better organization and separation across domains or contexts.",
       "x-parent": "app",
       "x-kind": "module"
     },
     {
       "name": "yjs",
-      "description": "Endpoints for Yjs collaborative editing support: a short-lived token per entity for the Yjs relay\n    worker, and pull and push routes that sync a document through the API while the relay is out of reach. The relay's\n    materialize route, which writes a compacted collaborative document to its entity, is served on the internal\n    listener only.",
+      "description": "Endpoints for Yjs collaborative editing support: a short-lived token per entity for the Yjs relay worker, and pull and push routes that sync a document through the API while the relay is out of reach. The relay's materialize route, which writes a compacted collaborative document to its entity, is served on the internal listener only.",
       "x-parent": "cella",
       "x-kind": "module"
     }
@@ -795,40 +803,26 @@
         },
         "x-tags": ["base", "cella"]
       },
-      "StreamNotification": {
+      "StreamChange": {
         "type": "object",
         "properties": {
-          "kind": {
-            "type": "string",
-            "enum": ["product", "membership"],
-            "description": "Discriminant for the notification: product-entity sync vs membership change"
-          },
           "action": {
             "type": "string",
             "enum": ["create", "update", "delete", "moveOut"],
             "description": "Change kind; moveOut = the row left this path (reparent) and is no longer readable there"
           },
           "productType": {
-            "type": ["string", "null"],
-            "enum": ["task", "label", "attachment", null]
-          },
-          "resourceType": {
-            "type": ["string", "null"],
-            "enum": ["request", "membership", "inactive_membership", "tenant", "system_role", "service_account", "api_key", "oauth_client", null]
+            "type": "string",
+            "enum": ["task", "label", "attachment"]
           },
           "subjectId": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "organizationId": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "tenantId": {
             "type": ["string", "null"]
-          },
-          "channelType": {
-            "type": ["string", "null"],
-            "enum": ["organization", "workspace", "project", null],
-            "description": "Channel entity type for membership events (e.g. organization, project)"
           },
           "path": {
             "type": ["string", "null"],
@@ -840,7 +834,7 @@
           },
           "channelId": {
             "type": ["string", "null"],
-            "description": "Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)"
+            "description": "Deepest channel entity ID above the rows, which groups unseen counts"
           },
           "stx": {
             "anyOf": [
@@ -854,7 +848,7 @@
           },
           "batchUntilSeq": {
             "type": ["integer", "null"],
-            "description": "Last sequence position for a batched notification: client should fetch range"
+            "description": "Last sequence position for a batched change: client should fetch range"
           },
           "count": {
             "type": ["integer", "null"],
@@ -870,30 +864,30 @@
               "embeddedProduct": {
                 "type": "string",
                 "enum": ["task", "label", "attachment"],
-                "description": "Product type whose change triggered the propagation (e.g. label)"
+                "description": "Embedded product type whose change triggered the propagation"
               },
               "hostProduct": {
                 "type": "string",
                 "enum": ["task", "label", "attachment"],
-                "description": "Host product type whose cache should be patched (e.g. task)"
+                "description": "Host product type whose cache should be patched"
               },
               "hostColumn": {
                 "type": "string",
-                "description": "Column on the host product that embeds the changed product (e.g. labels)"
+                "description": "Column on the host product that embeds the changed product"
               },
               "update": {
                 "type": "array",
                 "items": {
                   "type": "string"
                 },
-                "description": "Host product IDs that need cache refresh"
+                "description": "Embedded row IDs whose cached copies in host rows need a refresh"
               },
               "remove": {
                 "type": "array",
                 "items": {
                   "type": "string"
                 },
-                "description": "Host product IDs that need the embedded reference removed"
+                "description": "Embedded row IDs (deleted or soft deleted) that host rows drop"
               }
             },
             "required": ["embeddedProduct", "hostProduct", "hostColumn", "update", "remove"],
@@ -901,14 +895,11 @@
           }
         },
         "required": [
-          "kind",
           "action",
           "productType",
-          "resourceType",
           "subjectId",
           "organizationId",
           "tenantId",
-          "channelType",
           "path",
           "seq",
           "channelId",
@@ -918,28 +909,54 @@
           "spreadWindow",
           "propagation"
         ],
-        "description": "A live notification that a product entity or a membership changed, naming the entity, its path and sequence range rather than the row. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.",
+        "description": "A live change of product rows, naming the rows, their path and sequence range but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.",
         "example": {
-          "kind": "product",
-          "action": "update",
+          "action": "delete",
           "productType": "attachment",
-          "resourceType": null,
-          "subjectId": "e781e15e-ec97-4ad0-aa42-418ee4c50d02",
-          "organizationId": "3a9fc6f0-5cf3-491b-a437-8e8c3a3796f6",
-          "tenantId": "14qv8uf107q9zmdjan1ygz1e",
-          "channelType": null,
-          "path": "3a9fc6f0-5cf3-491b-a437-8e8c3a3796f6",
-          "channelId": "967b4d7e-cf6a-480d-8005-cee1180d3e4a",
-          "seq": 218,
+          "subjectId": "00f807bd-cd41-467a-873e-e3fdf380db7d",
+          "organizationId": "d0102854-b763-413e-8dfb-8e38e2cac8f5",
+          "tenantId": "ar3rydltry0gpl2zi6lz65m9",
+          "path": "d0102854-b763-413e-8dfb-8e38e2cac8f5",
+          "channelId": "5d704379-9680-4740-9cb0-43fded3f5508",
+          "seq": 265,
           "stx": {
-            "mutationId": "725782b0-16f4-4b4f-9577-8ebfa336f370",
-            "sourceId": "be2fe601-891c-4ade-b70e-12c6d41d18b9",
+            "mutationId": "aeeb762f-2105-4211-842f-250beb5701cf",
+            "sourceId": "2244cc73-64fe-4d50-97ee-f520aebf873e",
             "fieldTimestamps": {}
           },
           "batchUntilSeq": null,
           "count": null,
           "spreadWindow": null,
           "propagation": null
+        },
+        "x-tags": ["data", "entities", "cella"]
+      },
+      "StreamSignal": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Registered signal type, `<module>.<past tense>` (e.g. membership.changed, notification.created)"
+          },
+          "organizationId": {
+            "type": ["string", "null"]
+          },
+          "subjectId": {
+            "type": ["string", "null"],
+            "description": "The one row the signal is about; null when it is about the organization as a whole"
+          },
+          "version": {
+            "type": ["integer", "null"],
+            "description": "Counter value of a versioned signal, when the sender knows it; catchup returns the stored one"
+          }
+        },
+        "required": ["type", "organizationId", "subjectId", "version"],
+        "description": "A live message that something which is not a product row changed, such as a membership or an inbox row. It arrives as a `signal` event on `/entities/app/stream`; the handler the type registers refetches what it shows.",
+        "example": {
+          "type": "membership.changed",
+          "organizationId": "1be38924-da6b-4eea-ab8e-0e94769102fc",
+          "subjectId": "27983ef1-9055-4794-ab1b-540257e8ce1f",
+          "version": null
         },
         "x-tags": ["data", "entities", "cella"]
       },
@@ -1781,7 +1798,7 @@
                 },
                 "steppedUpVia": {
                   "type": ["string", "null"],
-                  "enum": ["passkey", "totp", "email", null]
+                  "enum": ["passkey", "totp", "email", "sso", null]
                 },
                 "isCurrent": {
                   "type": "boolean"
@@ -1879,7 +1896,7 @@
               "userId": "b301e7af-e587-410c-8dd4-a5c678f6be37",
               "type": "regular",
               "createdAt": "2024-05-28T17:45:48.607Z",
-              "expiresAt": "2024-06-27T17:45:48.607Z",
+              "expiresAt": "2024-06-04T17:45:48.607Z",
               "deviceName": "Firefox on Windows",
               "deviceType": "desktop",
               "deviceOs": "macOS",
@@ -2867,7 +2884,7 @@
                   "type": "integer",
                   "minimum": 0
                 },
-                "description": "Entity quotas (0 = unlimited)"
+                "description": "Caps per tenant on entities, service accounts and API keys (0 = unlimited)"
               },
               "rateLimits": {
                 "type": "object",
@@ -2875,7 +2892,7 @@
                   "apiPointsPerHour": {
                     "type": "integer",
                     "minimum": 0,
-                    "description": "Max API points per hour per user within this tenant (0 = no tenant limit; the global safety ceiling still applies)"
+                    "description": "Max API points per hour per actor within this tenant (0 = no tenant limit; the global safety ceiling still applies)"
                   }
                 },
                 "required": ["apiPointsPerHour"]
@@ -4292,7 +4309,14 @@
             "enum": ["admin", "member", "guest"]
           }
         },
-        "required": ["email", "outcome"]
+        "required": ["email", "outcome"],
+        "description": "What an invite does, or would do, with one address, told only from what the inviter already sees: the channel's invitations by address and its members by their listed address. An address an account holds reads as one no account holds.",
+        "example": {
+          "email": "p.okafor@example.net",
+          "outcome": "remind",
+          "invitedAt": "2026-10-20T09:12:00.000Z"
+        },
+        "x-tags": ["data", "memberships", "cella"]
       },
       "ServiceAccount": {
         "type": "object",
@@ -4400,11 +4424,17 @@
             }
           ],
           "oauthClientId": null,
-          "createdBy": "9363c51c-e97a-4ee4-9dbe-ebe841e8f2f9",
           "createdAt": "2024-09-01T22:49:17.262Z",
           "updatedAt": "2024-09-01T22:49:17.262Z",
-          "updatedBy": null,
-          "lastSeenAt": "2024-09-01T22:49:17.262Z"
+          "lastSeenAt": "2024-09-01T22:49:17.262Z",
+          "createdBy": {
+            "id": "b49a55f9-fa14-4193-ae0b-e26a7862c0b1",
+            "kind": "user",
+            "name": "Mafalda Mueller",
+            "slug": "mafalda_mueller",
+            "thumbnailUrl": null
+          },
+          "updatedBy": null
         },
         "x-tags": ["data", "service-accounts", "cella"]
       },
@@ -4708,7 +4738,7 @@
         "operationId": "invokeToken",
         "tags": ["auth", "cella"],
         "summary": "Invoke token session",
-        "description": "Opens an emailed link of a link-carried token type: a magic link or a provider address verification signs in, a step-up link proves presence on this browser's session, an invitation hands the app a single-use token session in a cookie. Redirects to the app.",
+        "description": "Opens an emailed link of a link-carried token type: a magic link or a provider address verification signs in, an invitation hands the app a single-use token session in a cookie. Redirects to the app.",
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -4716,7 +4746,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["oauth-verification", "invitation", "magic", "step-up"]
+              "enum": ["oauth-verification", "invitation", "magic"]
             },
             "required": true,
             "name": "type",
@@ -4770,7 +4800,7 @@
         "operationId": "getTokenData",
         "tags": ["auth", "cella"],
         "summary": "Get token data",
-        "description": "Get basic token data from single-use token session, It returns basic data if the session is still valid.",
+        "description": "Gets basic data of the token held in the single-use token session: its address and, for a membership invitation, what it grants. It answers only while the session is valid.",
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -4778,7 +4808,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["oauth-verification", "invitation", "magic", "step-up"]
+              "enum": ["oauth-verification", "invitation", "magic"]
             },
             "required": true,
             "name": "type",
@@ -4876,7 +4906,7 @@
         "operationId": "acceptInvitationToken",
         "tags": ["auth", "cella"],
         "summary": "Accept invitation token as current user",
-        "description": "Accepts the membership invitation held in the single-use token session as the signed-in user, also when it was sent to a different email address. Only an invitation not yet bound to another user can be accepted this way.",
+        "description": "Accepts the membership invitation held in the single-use token session as the signed-in user, who must hold the invited address. An account on another address first confirms it (`confirmInvitationAddress`); until then the answer is 403 `invitation_address_unproven`. Only an invitation not yet bound to another user can be accepted this way.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -4890,6 +4920,45 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/auth/invitation-token/confirm-address": {
+      "post": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "operationId": "confirmInvitationAddress",
+        "tags": ["auth", "cella"],
+        "summary": "Confirm the invited address",
+        "description": "Mails the address the invitation in the single-use token session went to a new link, bound to the signed-in account. The new link replaces the older ones; opened from that inbox, it adds the address to the account and lets it accept.",
+        "x-guard": ["userGuard"],
+        "x-rate-limiter": ["spamLimiter"],
+        "x-cache": [],
+        "responses": {
+          "204": {
+            "description": "Confirmation link sent to the invited address"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -5109,7 +5178,7 @@
         "operationId": "sendMagicLink",
         "tags": ["auth", "cella"],
         "summary": "Send magic link",
-        "description": "Sends a magic link sign-in email to the specified address. Always returns 204 to prevent email enumeration.",
+        "description": "Sends a magic link sign-in email to the specified address. Returns 204 whether or not the address has an account. An account whose organization requires its institution's sign-in gets a mail pointing there; only a browser that signed in to that account gets 403 `sso_required` instead.",
         "x-enabled-by": {
           "strategy": "magic"
         },
@@ -5140,7 +5209,7 @@
         },
         "responses": {
           "204": {
-            "description": "Magic link email sent (or silently ignored if email not found)"
+            "description": "Accepted alike whether a link, a pointer to the institution or nothing was mailed"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -5274,12 +5343,12 @@
         "x-enabled-by": {
           "strategy": "totp"
         },
-        "x-guard": ["userGuard", "stepUpGuard"],
+        "x-guard": ["userGuard", "stepUpEnrollGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "responses": {
           "200": {
-            "description": "Challenge created",
+            "description": "TOTP key generated",
             "content": {
               "application/json": {
                 "example": {
@@ -5336,7 +5405,7 @@
         "x-enabled-by": {
           "strategy": "totp"
         },
-        "x-guard": ["userGuard", "stepUpGuard"],
+        "x-guard": ["userGuard", "stepUpEnrollGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "requestBody": {
@@ -5389,7 +5458,7 @@
         "operationId": "deleteTotp",
         "tags": ["auth", "cella"],
         "summary": "Delete TOTP",
-        "description": "Delete TOTP credential for current user.",
+        "description": "Delete the current user's authenticator app (TOTP).",
         "x-guard": ["userGuard", "stepUpGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -5496,7 +5565,7 @@
         "x-enabled-by": {
           "strategy": "passkey"
         },
-        "x-guard": ["userGuard", "stepUpGuard"],
+        "x-guard": ["userGuard", "stepUpEnrollGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "requestBody": {
@@ -6747,10 +6816,24 @@
         "operationId": "getStepUp",
         "tags": ["auth", "cella"],
         "summary": "Get step-up state",
-        "description": "Whether this session stands stepped up for account-security actions, and what the user can offer to step up: a passkey or TOTP they hold, else an emailed confirmation link or a new sign-in.",
+        "description": "Whether this session stands stepped up for a kind of action, and what the user can offer to step up: a passkey or TOTP they hold, an emailed code, or setting up a second factor.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["factor", "account", "enroll"],
+              "default": "account",
+              "description": "The kind of action asked about: `factor` hands out lasting access, `account` changes or ends the account, `enroll` sets up a second factor."
+            },
+            "required": false,
+            "description": "The kind of action asked about: `factor` hands out lasting access, `account` changes or ends the account, `enroll` sets up a second factor.",
+            "name": "tier",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Step-up state",
@@ -6761,15 +6844,15 @@
                   "properties": {
                     "steppedUp": {
                       "type": "boolean",
-                      "description": "The session proved its user presence recently enough for account-security actions."
+                      "description": "The session proved its user present recently enough for the tier."
                     },
                     "methods": {
                       "type": "array",
                       "items": {
                         "type": "string",
-                        "enum": ["passkey", "totp", "email", "sign_in"]
+                        "enum": ["passkey", "totp", "email", "enroll"]
                       },
-                      "description": "What the user can offer to step up; empty while impersonating."
+                      "description": "What the user can offer to step up for the tier; empty while impersonating."
                     }
                   },
                   "required": ["steppedUp", "methods"]
@@ -6805,8 +6888,8 @@
         ],
         "operationId": "stepUp",
         "tags": ["auth", "cella"],
-        "summary": "Step up with a second factor",
-        "description": "Proves the user is present on this session with a passkey assertion (to a step-up passkey challenge) or a TOTP code of a factor they hold. Account-security actions then pass for ten minutes.",
+        "summary": "Step up",
+        "description": "Proves the user is present on this session with a passkey assertion (to a step-up passkey challenge), a TOTP code of a factor they hold, or the code a step-up mail carried. The proof counts for ten minutes.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["stepUpLimiter"],
         "x-cache": [],
@@ -6857,6 +6940,10 @@
                     "required": ["id", "rawId", "response", "type"]
                   },
                   "totpCode": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  },
+                  "emailCode": {
                     "type": "string",
                     "pattern": "^\\d{6}$"
                   }
@@ -6951,37 +7038,23 @@
         }
       }
     },
-    "/auth/step-up/link": {
+    "/auth/step-up/code": {
       "post": {
         "security": [
           {
             "cookieAuth": []
           }
         ],
-        "operationId": "sendStepUpLink",
+        "operationId": "sendStepUpCode",
         "tags": ["auth", "cella"],
-        "summary": "Email a step-up link",
-        "description": "For a user without a passkey or TOTP: emails a confirmation link that steps up this session when opened in this browser within ten minutes. The link signs nobody in.",
+        "summary": "Email a step-up code",
+        "description": "For a user without a passkey or TOTP, or one replacing a lost factor while MFA is off: emails a code that steps up this session when entered within ten minutes.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["spamLimiter"],
         "x-cache": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "redirect": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "204": {
-            "description": "Link sent"
+            "description": "Code sent"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -7169,8 +7242,7 @@
                   },
                   "logoUrl": {
                     "type": "string",
-                    "maxLength": 255,
-                    "format": "uri"
+                    "maxLength": 255
                   }
                 },
                 "required": ["issuer", "displayName", "claimValues", "idpEntityIds"]
@@ -7294,8 +7366,7 @@
                   },
                   "logoUrl": {
                     "type": "string",
-                    "maxLength": 255,
-                    "format": "uri"
+                    "maxLength": 255
                   }
                 }
               }
@@ -7411,7 +7482,7 @@
         "operationId": "checkSlug",
         "tags": ["entities", "cella"],
         "summary": "Check slug availability",
-        "description": "Checks whether a given slug is available for the specified entity type. A slug is unique across all tenants.\n      Primarily used to prevent slug collisions before creating or updating an entity.",
+        "description": "Checks whether a given slug is available for the specified entity type. A slug is unique across all tenants. Primarily used to prevent slug collisions before creating or updating an entity.",
         "x-guard": ["userGuard", "tenantGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -7483,8 +7554,8 @@
         ],
         "operationId": "getAppStream",
         "tags": ["entities", "cella"],
-        "summary": "App event SSE stream",
-        "description": "SSE stream for membership and entity notifications affecting the current user. Sends lightweight notifications.",
+        "summary": "App SSE stream",
+        "description": "SSE stream of what changed for the current user, with ids only: a `change` event for product rows it may read, a `signal` event for anything else, such as its own memberships and inbox.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["streamConnectLimiter"],
         "x-cache": [],
@@ -7525,8 +7596,8 @@
         ],
         "operationId": "postAppCatchup",
         "tags": ["entities", "cella"],
-        "summary": "App event catchup",
-        "description": "Fetch missed entity and membership changes since last sync. Send cursor and declared views (prefix sets + org-sequence cursors) in the body.",
+        "summary": "App stream catchup",
+        "description": "Fetch what a client missed since its last sync: frontiers and counts per declared view (prefix sets + org-sequence cursors in the body), and per organization the versions of its versioned signals.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -7601,10 +7672,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "changes": {
+                  "organizations": {
                     "org-example-id": {
                       "signals": {
-                        "membership": 1
+                        "membership.changed": 1
                       }
                     }
                   },
@@ -7613,18 +7684,17 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "changes": {
+                    "organizations": {
                       "type": "object",
                       "additionalProperties": {
                         "type": "object",
                         "properties": {
                           "signals": {
                             "type": "object",
-                            "properties": {
-                              "membership": {
-                                "type": "integer"
-                              }
-                            }
+                            "additionalProperties": {
+                              "type": "integer"
+                            },
+                            "description": "Versions by signal type: bump-only counters a client compares with the ones it stored"
                           },
                           "propagation": {
                             "type": "array",
@@ -7634,30 +7704,30 @@
                                 "embeddedProduct": {
                                   "type": "string",
                                   "enum": ["task", "label", "attachment"],
-                                  "description": "Product type whose change triggered the propagation (e.g. label)"
+                                  "description": "Embedded product type whose change triggered the propagation"
                                 },
                                 "hostProduct": {
                                   "type": "string",
                                   "enum": ["task", "label", "attachment"],
-                                  "description": "Host product type whose cache should be patched (e.g. task)"
+                                  "description": "Host product type whose cache should be patched"
                                 },
                                 "hostColumn": {
                                   "type": "string",
-                                  "description": "Column on the host product that embeds the changed product (e.g. labels)"
+                                  "description": "Column on the host product that embeds the changed product"
                                 },
                                 "update": {
                                   "type": "array",
                                   "items": {
                                     "type": "string"
                                   },
-                                  "description": "Host product IDs that need cache refresh"
+                                  "description": "Embedded row IDs whose cached copies in host rows need a refresh"
                                 },
                                 "remove": {
                                   "type": "array",
                                   "items": {
                                     "type": "string"
                                   },
-                                  "description": "Host product IDs that need the embedded reference removed"
+                                  "description": "Embedded row IDs (deleted or soft deleted) that host rows drop"
                                 }
                               },
                               "required": ["embeddedProduct", "hostProduct", "hostColumn", "update", "remove"]
@@ -7665,7 +7735,7 @@
                           }
                         }
                       },
-                      "description": "Per-org change summary: { [organizationId]: { signals?, propagation? } }"
+                      "description": "Per organization: signal versions and propagation hints, { [organizationId]: { signals?, propagation? } }"
                     },
                     "views": {
                       "type": "array",
@@ -7708,7 +7778,7 @@
                       "description": "Generation of the sync books. A client that holds another one refetches its synced data and takes the frontiers as baselines"
                     }
                   },
-                  "required": ["changes", "cursor"]
+                  "required": ["organizations", "cursor"]
                 }
               }
             }
@@ -8000,7 +8070,7 @@
         "x-cache": [],
         "responses": {
           "200": {
-            "description": "User sign-up info",
+            "description": "Sign-in methods and sessions",
             "content": {
               "application/json": {
                 "schema": {
@@ -8182,7 +8252,7 @@
         "operationId": "revokeMySessions",
         "tags": ["me", "cella"],
         "summary": "Revoke sessions",
-        "description": "Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for 30 days. Revoking the current session signs out.",
+        "description": "Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for the retention period. Revoking the current session signs out.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -8303,7 +8373,7 @@
                           },
                           "steppedUpVia": {
                             "type": ["string", "null"],
-                            "enum": ["passkey", "totp", "email", null]
+                            "enum": ["passkey", "totp", "email", "sso", null]
                           }
                         },
                         "required": [
@@ -8385,8 +8455,8 @@
         ],
         "operationId": "deleteMyMembership",
         "tags": ["me", "cella"],
-        "summary": "Leave entity",
-        "description": "Removes the current user from an entity they are a member of.",
+        "summary": "Leave channel",
+        "description": "Removes the current user from a channel entity they are a member of.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -8711,7 +8781,7 @@
         "operationId": "getPublicCounts",
         "tags": ["metrics", "cella"],
         "summary": "Get public counts",
-        "description": "Returns basic count metrics for entity types such as users and organizations.\n      This endpoint is public and uses a 1 minute in memory cache for performance.",
+        "description": "Returns the number of users and of each channel entity type, such as organizations. This endpoint is public and uses a 1 minute in memory cache for performance.",
         "x-guard": ["publicGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -8724,10 +8794,7 @@
                   "user": 404,
                   "organization": 303,
                   "workspace": 387,
-                  "project": 306,
-                  "task": 366,
-                  "label": 248,
-                  "attachment": 365
+                  "project": 306
                 },
                 "schema": {
                   "type": "object",
@@ -8743,18 +8810,9 @@
                     },
                     "project": {
                       "type": "number"
-                    },
-                    "task": {
-                      "type": "number"
-                    },
-                    "label": {
-                      "type": "number"
-                    },
-                    "attachment": {
-                      "type": "number"
                     }
                   },
-                  "required": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
+                  "required": ["user", "organization", "workspace", "project"]
                 }
               }
             }
@@ -9175,10 +9233,10 @@
     "/notifications/unsubscribe": {
       "get": {
         "security": [],
-        "operationId": "unsubscribeNotifications",
+        "operationId": "openUnsubscribeLink",
         "tags": ["notifications", "cella"],
-        "summary": "Unsubscribe from a notification category",
-        "description": "Turns off one email category from a link in an email. The token identifies the user and the category, so unsubscribing from the digest leaves other email untouched. No auth.",
+        "summary": "Open an unsubscribe link",
+        "description": "Redirects an unsubscribe link from an email to the page that asks to confirm it, and changes nothing: mail scanners and link previews open links on their own. No auth.",
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -9212,7 +9270,7 @@
         ],
         "responses": {
           "302": {
-            "description": "Redirect to the frontend",
+            "description": "Redirect to the confirmation page",
             "headers": {
               "Location": {
                 "schema": {
@@ -9221,6 +9279,130 @@
                 "required": true
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      },
+      "post": {
+        "security": [],
+        "operationId": "unsubscribeNotifications",
+        "tags": ["notifications", "cella"],
+        "summary": "Unsubscribe from a notification category",
+        "description": "Turns off one email category. The token identifies the user and the category, so unsubscribing from the digest leaves other email untouched. The confirmation page and a mail client's one-click unsubscribe (RFC 8058) post here. No auth.",
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["tokenLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "user",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["digest", "mention", "comment", "newsletter"]
+            },
+            "required": true,
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "token",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Category turned off"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/notifications/resubscribe": {
+      "post": {
+        "security": [],
+        "operationId": "resubscribeNotifications",
+        "tags": ["notifications", "cella"],
+        "summary": "Turn a notification category back on",
+        "description": "Undoes an unsubscribe with the same link token, from the page that confirmed it. No auth.",
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["tokenLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "user",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["digest", "mention", "comment", "newsletter"]
+            },
+            "required": true,
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "token",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Category turned on"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -9610,7 +9792,7 @@
         "operationId": "createRequest",
         "tags": ["requests", "cella"],
         "summary": "Create request",
-        "description": "Submits a request: a contact form message, a newsletter signup or a waitlist entry. Every submission gets the same answer: an address that has an account gets an email pointing to sign-in, and a repeat of a waitlist or newsletter signup is dropped.",
+        "description": "Submits a request: a contact form message, a newsletter signup or a waitlist entry. Every submission gets the same answer: a waitlist entry from an address that has an account gets an email pointing to sign-in, and a repeat of a waitlist or newsletter signup is dropped.",
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["spamLimiter"],
         "x-cache": [],
@@ -9894,7 +10076,7 @@
         "operationId": "getUnseenCounts",
         "tags": ["seen", "cella"],
         "summary": "Get unseen counts",
-        "description": "Returns the number of unseen product entities per parent channel entity (e.g., project) and entity type for the current user. Computed within the rolling seen window so entities older than seen_by retention do not participate.",
+        "description": "Returns the number of unseen product entities per parent channel entity and entity type for the current user. Counts only entities created or published within the seen window: an older one is never unseen.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
@@ -11038,7 +11220,7 @@
         "operationId": "selfCreateTenant",
         "tags": ["tenants", "cella"],
         "summary": "Create a tenant for yourself",
-        "description": "Creates a new tenant (workspace) for the authenticated user. A user may own multiple tenants; an org-less tenant from a prior failed attempt is reused instead of creating a duplicate.",
+        "description": "Creates a new tenant (workspace) for the authenticated user. A user may own multiple tenants; an org-less tenant from a prior failed attempt is reused, and takes the new name.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -11198,7 +11380,7 @@
                             "minimum": 0
                           }
                         },
-                        "description": "Entity quotas (0 = unlimited)"
+                        "description": "Caps per tenant on entities, service accounts and API keys (0 = unlimited)"
                       },
                       "allowUnregisteredClients": {
                         "type": "boolean"
@@ -11335,84 +11517,30 @@
                 "example": {
                   "items": [
                     {
-                      "id": "af54c332-26e9-48e2-9f9d-8ade4a445d7f",
-                      "entityType": "user",
+                      "id": "407ebc2f-af54-4c33-9226-e98e2f9d8ade",
+                      "createdAt": "2024-09-01T15:27:58.824Z",
+                      "updatedAt": "2024-10-09T09:41:44.154Z",
                       "name": "Elton Beahan",
-                      "firstName": "Elton",
-                      "lastName": "Beahan",
-                      "email": "elton.beahan@gmail.com",
-                      "slug": "eltonbeahan78",
                       "description": null,
+                      "entityType": "user",
+                      "slug": "elton.beahan",
                       "thumbnailUrl": null,
                       "bannerUrl": null,
-                      "language": "en",
-                      "newsletter": false,
-                      "contrast": "system",
-                      "mfaRequired": false,
-                      "userFlags": {
-                        "finishedOnboarding": false
-                      },
-                      "createdAt": "2024-12-14T16:10:19.376Z",
-                      "updatedAt": "2024-12-14T16:10:19.376Z",
-                      "updatedBy": null,
-                      "lastSignInAt": "2024-12-14T16:10:19.376Z",
-                      "lastSeenAt": "2024-12-14T16:10:19.376Z",
-                      "memberships": [
-                        {
-                          "id": "d33f6120-b967-4064-bbb8-8b24b6b50c11",
-                          "tenantId": "dbp099",
-                          "channelType": "organization",
-                          "channelId": "1008ac1a-ccec-476f-9baf-e65971876f04",
-                          "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
-                          "organizationId": "1008ac1a-ccec-476f-9baf-e65971876f04",
-                          "workspaceId": null,
-                          "projectId": null,
-                          "role": "member",
-                          "displayOrder": 70,
-                          "muted": false,
-                          "archived": false
-                        }
-                      ]
+                      "email": "elton_beahan40@hotmail.com",
+                      "lastSeenAt": "2024-10-09T09:41:44.154Z"
                     },
                     {
-                      "id": "c64d1a0d-9853-4aeb-8360-296b55c24f83",
-                      "entityType": "user",
+                      "id": "74fc53a0-c64d-41a0-9d98-53aeb360296b",
+                      "createdAt": "2024-05-10T18:17:52.266Z",
+                      "updatedAt": "2024-11-05T16:38:04.981Z",
                       "name": "Moriah Adams",
-                      "firstName": "Moriah",
-                      "lastName": "Adams",
-                      "email": "moriah.adams@hotmail.com",
-                      "slug": "moriahadams",
                       "description": null,
+                      "entityType": "user",
+                      "slug": "moriah.adams",
                       "thumbnailUrl": null,
                       "bannerUrl": null,
-                      "language": "en",
-                      "newsletter": true,
-                      "contrast": "system",
-                      "mfaRequired": false,
-                      "userFlags": {
-                        "finishedOnboarding": false
-                      },
-                      "createdAt": "2024-01-03T10:14:05.394Z",
-                      "updatedAt": "2024-01-03T10:14:05.394Z",
-                      "updatedBy": null,
-                      "lastSignInAt": "2024-01-03T10:14:05.394Z",
-                      "lastSeenAt": "2024-01-03T10:14:05.394Z",
-                      "memberships": [
-                        {
-                          "id": "9e822f98-ecac-4acf-ab1f-e617c6f9a972",
-                          "tenantId": "6xgvt4",
-                          "channelType": "organization",
-                          "channelId": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
-                          "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
-                          "organizationId": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
-                          "workspaceId": null,
-                          "projectId": null,
-                          "role": "admin",
-                          "displayOrder": 41,
-                          "muted": false,
-                          "archived": false
-                        }
-                      ]
+                      "email": "moriah.adams5@hotmail.com",
+                      "lastSeenAt": "2024-11-05T16:38:04.981Z"
                     }
                   ],
                   "total": 2
@@ -11543,28 +11671,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3c6f6c47-89c3-4946-870e-f4ee338ae389",
-                  "entityType": "user",
-                  "name": "Isai Senger",
-                  "firstName": "Isai",
-                  "lastName": "Senger",
-                  "email": "isai_senger@hotmail.com",
-                  "slug": "isaisenger90",
+                  "id": "cf387e16-8ae6-4047-89c7-8295efab57f0",
+                  "createdAt": "2024-01-11T09:56:56.168Z",
+                  "updatedAt": "2024-01-14T14:34:48.360Z",
+                  "name": "Zelma Murazik",
                   "description": null,
+                  "entityType": "user",
+                  "slug": "zelma_murazik1",
                   "thumbnailUrl": null,
                   "bannerUrl": null,
-                  "language": "en",
-                  "newsletter": false,
-                  "contrast": "system",
-                  "mfaRequired": false,
-                  "userFlags": {
-                    "finishedOnboarding": false
-                  },
-                  "createdAt": "2024-06-15T02:53:22.776Z",
-                  "updatedAt": "2024-06-15T02:53:22.776Z",
-                  "updatedBy": null,
-                  "lastSignInAt": "2024-06-15T02:53:22.776Z",
-                  "lastSeenAt": "2024-06-15T02:53:22.776Z"
+                  "email": "zelma_murazik@hotmail.com",
+                  "lastSeenAt": "2024-01-14T14:34:48.360Z"
                 },
                 "schema": {
                   "allOf": [
@@ -12263,7 +12380,7 @@
         "operationId": "deleteOrganizations",
         "tags": ["organizations", "cella", "channel"],
         "summary": "Delete organizations",
-        "description": "Deletes one or more organizations by ID within a tenant.",
+        "description": "Deletes organizations by ID within a tenant. Deleting archives the tenant: members lose access at once, and the organization with everything in it is removed after the archived period; until then a system admin can restore it.",
         "x-guard": ["userGuard", "tenantGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -12440,8 +12557,16 @@
           },
           {
             "schema": {
-              "type": "string",
-              "enum": ["true", "false"]
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
             "name": "excludeArchived",
@@ -13897,8 +14022,16 @@
           },
           {
             "schema": {
-              "type": "string",
-              "enum": ["true", "false"]
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
             "name": "excludeArchived",
@@ -15640,8 +15773,16 @@
           },
           {
             "schema": {
-              "type": "string",
-              "enum": ["true", "false"]
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
             "name": "excludeArchived",
@@ -16270,16 +16411,16 @@
             "cookieAuth": []
           },
           {
-            "apiKey": []
+            "apiKey": ["attachment:write"]
           },
           {
-            "oauth2": []
+            "oauth2": ["attachment:write"]
           }
         ],
         "operationId": "createAttachments",
         "tags": ["attachments", "cella", "product"],
         "summary": "Create attachments",
-        "description": "Registers one or more new attachments after client side upload. Includes metadata like name, type, and linked entity. Every storage key must lie under the caller's own upload prefix and name a stored object; the size comes from storage.",
+        "description": "Registers one or more new attachments after client side upload. Includes metadata like name, content type, size and storage keys. Every storage key must lie under the caller's own upload prefix and name a stored object; the size comes from storage.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -16396,7 +16537,7 @@
         },
         "responses": {
           "200": {
-            "description": "Attachments already created (idempotent)",
+            "description": "Nothing created: rows an earlier attempt created (idempotent), and rejected ids",
             "content": {
               "application/json": {
                 "example": {
@@ -16692,9 +16833,9 @@
         "operationId": "deleteAttachments",
         "tags": ["attachments", "cella", "product"],
         "summary": "Delete attachments",
-        "description": "Deletes one or more attachment records by ID. This does not delete the underlying file in storage.",
+        "description": "Deletes one or more attachments by ID. Their stored files are kept for the deleted-items period, then deleted when the retention procedure removes the rows.",
         "x-tool": {
-          "description": "Delete attachments by id. The stored files stay in storage.",
+          "description": "Delete attachments by id. Their stored files are kept for the deleted-items period, then deleted with the rows.",
           "approvalRequired": true,
           "entity": "attachment"
         },
@@ -17085,7 +17226,7 @@
         "operationId": "updateAttachment",
         "tags": ["attachments", "cella", "product"],
         "summary": "Update attachment",
-        "description": "Updates metadata of an attachment, such as its name or associated entity.",
+        "description": "Renames an attachment or replaces its description.",
         "x-tool": {
           "description": "Rename an attachment or replace its description.",
           "approvalRequired": true,
@@ -17121,23 +17262,6 @@
             "required": true,
             "name": "id",
             "in": "path"
-          },
-          {
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
-            },
-            "required": false,
-            "name": "fullResponse",
-            "in": "query"
           }
         ],
         "requestBody": {
@@ -17431,7 +17555,7 @@
         },
         "responses": {
           "200": {
-            "description": "Labels already created (idempotent)",
+            "description": "Nothing created: rows an earlier attempt created (idempotent), and rejected ids",
             "content": {
               "application/json": {
                 "example": {
@@ -18313,7 +18437,7 @@
         "operationId": "handleMcp",
         "tags": ["mcp", "cella"],
         "summary": "MCP endpoint",
-        "description": "Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to.",
+        "description": "Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to; in a batch it gets its own insufficient_scope error, the other calls keep their results, and the 200 carries the challenge.",
         "x-enabled-by": {
           "service": "mcp"
         },
@@ -18586,7 +18710,7 @@
         "operationId": "deleteMemberships",
         "tags": ["memberships", "cella"],
         "summary": "Delete memberships",
-        "description": "Deletes one or more memberships by ID. This removes the membership but does not delete the associated user(s).",
+        "description": "Deletes the memberships of one or more members of a channel entity, named by their user IDs; the users themselves stay. An ID without a membership in the channel comes back in `rejectedIds`.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -19066,7 +19190,7 @@
         "operationId": "handleMembershipInvitation",
         "tags": ["memberships", "cella"],
         "summary": "Respond to membership invitation",
-        "description": "Accepting activates the associated membership. Rejecting simply removes the invitation token.",
+        "description": "Accepting makes the caller a member of the invited channel, or leaves a membership they hold as it is; rejecting declines the invitation, and its emailed link stops working. Either answer returns the invitation's organization.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -19092,7 +19216,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Invitation was accepted",
+            "description": "The invitation's organization",
             "content": {
               "application/json": {
                 "schema": {
@@ -19637,8 +19761,8 @@
                             "description": "The primary email address, shown to every user who shares an organization with this one."
                           },
                           "role": {
-                            "type": ["string", "null"],
-                            "enum": ["admin", "member", "guest", null]
+                            "type": "string",
+                            "enum": ["admin", "member", "guest"]
                           },
                           "createdAt": {
                             "type": "string"
@@ -19700,7 +19824,7 @@
         "operationId": "resendPendingInvitation",
         "tags": ["memberships", "cella"],
         "summary": "Resend pending invitation",
-        "description": "Re-sends the invitation email for a pending membership, named by its own id; an invitation holding a token gets a fresh one. Answers 204 alike for every pending invitation. Requires update permission on the invited channel; the public auth resend endpoint stays for invitees holding an expired token.",
+        "description": "Re-sends the invitation email for a pending membership, named by its own id; an invitation holding a token gets a fresh one, and one held in a draft channel waits for its publish. Answers 204 alike for every pending invitation. Requires update permission on the invited channel; the public auth resend endpoint stays for invitees holding an expired token.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["spamLimiter", "pointsLimiter"],
         "x-cache": [],
@@ -19939,7 +20063,7 @@
         "tags": ["service-accounts", "cella"],
         "summary": "Create service account",
         "description": "Creates a machine actor bound to this organization at the given role (capped at your own), optionally issuing its first API key in the same call.",
-        "x-guard": ["userGuard", "tenantGuard", "orgGuard", "stepUpGuard"],
+        "x-guard": ["userGuard", "tenantGuard", "orgGuard", "stepUpFactorGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
@@ -20043,11 +20167,17 @@
                       }
                     ],
                     "oauthClientId": null,
-                    "createdBy": "9363c51c-e97a-4ee4-9dbe-ebe841e8f2f9",
                     "createdAt": "2024-09-01T22:49:17.262Z",
                     "updatedAt": "2024-09-01T22:49:17.262Z",
-                    "updatedBy": null,
-                    "lastSeenAt": "2024-09-01T22:49:17.262Z"
+                    "lastSeenAt": "2024-09-01T22:49:17.262Z",
+                    "createdBy": {
+                      "id": "b49a55f9-fa14-4193-ae0b-e26a7862c0b1",
+                      "kind": "user",
+                      "name": "Mafalda Mueller",
+                      "slug": "mafalda_mueller",
+                      "thumbnailUrl": null
+                    },
+                    "updatedBy": null
                   },
                   "apiKey": {
                     "id": "d4710b9b-020b-4142-9ab9-1d886a432815",
@@ -20227,11 +20357,17 @@
                         }
                       ],
                       "oauthClientId": null,
-                      "createdBy": "0796fe85-592b-48e6-b71b-17b41ee456f6",
                       "createdAt": "2024-03-18T03:56:02.722Z",
                       "updatedAt": "2024-03-18T03:56:02.722Z",
-                      "updatedBy": null,
-                      "lastSeenAt": "2024-03-18T03:56:02.722Z"
+                      "lastSeenAt": "2024-03-18T03:56:02.722Z",
+                      "createdBy": {
+                        "id": "99a36819-e0f2-470b-88d0-2f92a164c4d7",
+                        "kind": "user",
+                        "name": "Agustin Kirlin",
+                        "slug": "agustin_kirlin65",
+                        "thumbnailUrl": null
+                      },
+                      "updatedBy": null
                     },
                     {
                       "id": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
@@ -20247,11 +20383,17 @@
                         }
                       ],
                       "oauthClientId": null,
-                      "createdBy": "339b813c-f84d-4752-a3c2-ac3827d82be1",
                       "createdAt": "2024-04-20T08:15:05.883Z",
                       "updatedAt": "2024-04-20T08:15:05.883Z",
-                      "updatedBy": null,
-                      "lastSeenAt": "2024-04-20T08:15:05.883Z"
+                      "lastSeenAt": "2024-04-20T08:15:05.883Z",
+                      "createdBy": {
+                        "id": "d296abdd-ef82-40aa-a7f0-4fba2ed8a6dc",
+                        "kind": "user",
+                        "name": "Nya Nikolaus",
+                        "slug": "nya_nikolaus53",
+                        "thumbnailUrl": null
+                      },
+                      "updatedBy": null
                     }
                   ],
                   "total": 2
@@ -20509,7 +20651,7 @@
         "tags": ["service-accounts", "cella"],
         "summary": "Create API key",
         "description": "Issues an API key for a service account; the plaintext is returned once. With `rollFrom`, the previous key keeps working for the overlap window.",
-        "x-guard": ["userGuard", "tenantGuard", "orgGuard", "stepUpGuard"],
+        "x-guard": ["userGuard", "tenantGuard", "orgGuard", "stepUpFactorGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
@@ -20881,7 +21023,7 @@
         },
         "responses": {
           "200": {
-            "description": "Tasks already created (idempotent)",
+            "description": "Nothing created: rows an earlier attempt created (idempotent), and rejected ids",
             "content": {
               "application/json": {
                 "example": {

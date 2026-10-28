@@ -40,10 +40,8 @@ export const labelPalette: Record<LabelColorToken, LabelPaletteEntry> = {
     dot: 'bg-violet-500',
   },
   pink: { icon: 'text-pink-600 dark:text-pink-400', dot: 'bg-pink-500' },
-  slate: {
-    icon: 'text-slate-600 dark:text-slate-400',
-    dot: 'bg-slate-500',
-  },
+  // The gray of the support text step, so it follows the theme and the contrast setting as text does
+  slate: { icon: 'text-muted-foreground', dot: 'bg-slate-500' },
 };
 
 export const isLabelColorToken = (color: string | null | undefined): color is LabelColorToken => color != null && color in labelPalette;

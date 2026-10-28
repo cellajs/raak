@@ -31,17 +31,16 @@ function NavSheetPanel({ id, label, indicator, children }: NavSheetPanelProps) {
 
   const isOpen = navSheetPanel === id;
 
-  // Stays visible until the collapse ends, so the body shows while the panel closes
+  // Stays visible until the collapse ends, so the body shows while the panel closes and the indicator waits for it
   const [isBodyVisible, setIsBodyVisible] = useState(isOpen);
   if (isOpen && !isBodyVisible) setIsBodyVisible(true);
 
   return (
     <div>
-      {/* Borderless in both states: the open variant's border would shift the label by a pixel on toggle. */}
-      <Button onClick={() => toggleNavSheetPanel(id)} className="w-full justify-between border-0" variant={isOpen ? 'secondary' : 'ghost'}>
+      <Button onClick={() => toggleNavSheetPanel(id)} className="w-full justify-between" variant={isOpen ? 'secondary' : 'ghost'}>
         <span className="flex items-center gap-2">
           {t(label)}
-          {!isOpen && indicator}
+          {!isBodyVisible && <span className="fade-in flex animate-in items-center gap-2 duration-200">{indicator}</span>}
         </span>
         <ChevronDownIcon className={cn('opacity-50 transition-transform duration-200', isOpen && 'rotate-180')} />
       </Button>

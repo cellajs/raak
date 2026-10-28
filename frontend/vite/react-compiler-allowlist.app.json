@@ -1,5 +1,4 @@
 {
-  "src/modules/common/logo.tsx:Logo": "Compiler gap: ??= on the color props.",
   "src/modules/task/create-task-form.tsx:CreateTaskForm": "Reads refs during render: form.handleSubmit(handleFormSubmit) is built in render and the submit handler reads pendingCloseRef.",
   "src/modules/task/dropdowns/select-members.tsx:SelectMembers": "Reads and writes a ref during render to freeze the first member list at mount.",
   "src/modules/task/hooks/use-section-edge-visibility.ts:useSectionEdgeVisibility": "Compiler gap: pendingEvents++ on a variable the scroll handler captures.",

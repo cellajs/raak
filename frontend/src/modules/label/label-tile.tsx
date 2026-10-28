@@ -171,7 +171,7 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
           onBoard &&
             'outline-none before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary before:opacity-0',
           onBoard && itemFocusBarClass,
-          'focus-within:bg-accent/30 hover:bg-accent/30',
+          'focus-within:bg-muted/50 hover:bg-muted/50',
           !expanded && !(onBoard && isCurrent) && !highlighted && 'resting-text transition-[color]',
           highlighted && searchHighlightRowClass,
         )}
@@ -199,7 +199,7 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
                 className={cn(
                   '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0',
                   // Collapsed, an after-overlay stretches the button over the whole tile; the action buttons sit above it
-                  expanded ? 'font-semibold hover:bg-accent/50 focus-visible:bg-accent/50' : 'after:absolute after:inset-0',
+                  expanded ? 'font-semibold hover:bg-muted focus-visible:bg-muted' : 'after:absolute after:inset-0',
                 )}
               >
                 <span className={cn('truncate', active === 'exclude' && 'text-muted-foreground')}>

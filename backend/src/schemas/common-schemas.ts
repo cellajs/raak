@@ -117,13 +117,10 @@ export const productListQuerySchema = <T extends z.ZodRawShape>(shape: T) =>
     // TypeScript cannot see the range and paging keys through a generic `extend`; `shape` holds the product's own params.
     .superRefine((query, ctx) => refineSeqRange(query as SeqRangeQuery, ctx));
 
-/** `'true'` or `'false'`; absent is false. */
-export const excludeArchivedQuerySchema = z
-  .enum(['true', 'false'])
-  .optional()
-  .transform((val) => val === 'true');
-
-/** True returns fully hydrated relations. */
+/**
+ * True returns fully hydrated relations. App product routes read it.
+ * @public
+ */
 export const fullResponseQuerySchema = z.object({ fullResponse: booleanTransformSchema.optional() });
 
 const includeOptions = ['counts', 'membership', 'members', 'mfa'] as const;

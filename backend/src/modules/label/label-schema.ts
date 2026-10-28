@@ -52,7 +52,7 @@ export const labelEmbeddedSchema = z.object({
 type LabelEmbeddedKeys = keyof typeof labelEmbeddedSchema.shape;
 export const labelEmbeddedSelect = pick(getColumns(labelsTable), Object.keys(labelEmbeddedSchema.shape) as LabelEmbeddedKeys[]);
 
-/** Wire registration: lens-widened schemas + entity-bound runtime seams for label */
+/** Wire registration: lens-widened schemas bound to the label entity at runtime. */
 export const labelContract = evolutionContract.product('label', {
   createItem: labelCreateSchema,
   updateOps: {
@@ -61,11 +61,11 @@ export const labelContract = evolutionContract.product('label', {
     slug: labelSlugSchema,
     icon: iconNameSchema.nullable(),
     displayOrder: z.number(),
-    // Epic documentation; the update op rejects description edits on other modes
+    /** Epic documentation; the update op rejects description edits on other modes. */
     description: z.string().max(maxLength.html).nullable(),
-    // Tag <-> epic transitions (admin-gated in the op); primary rows never change mode
+    /** Tag and epic transitions (admin-gated in the op); primary rows never change mode. */
     mode: z.enum(['secondary', 'epic']),
-    // Setting true relinks a primary label to its setupConfig entry (server re-syncs fields)
+    /** Setting true relinks a primary label to its setupConfig entry (the server re-syncs its fields). */
     organizationTracked: z.boolean(),
   },
   blockFields: ['description'],
@@ -77,7 +77,7 @@ export const labelUpdateStxBodySchema = labelContract.updateBodySchema;
 export const labelListQuerySchema = productListQuerySchema({
   sort: z.enum(['name']).default('name'),
   order: z.enum(['asc', 'desc']).default('asc'),
-  // Comma-separated label modes, e.g. ?modes=secondary,epic
+  /** Comma-separated label modes, e.g. `?modes=secondary,epic`. */
   modes: z
     .string()
     .optional()

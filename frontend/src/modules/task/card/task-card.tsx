@@ -12,7 +12,7 @@ import { SeenMark } from '~/modules/seen/seen-mark';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-task-drag-indicator-store';
 import { useTaskDropLandingStore } from '~/modules/task/board/task-drop-landing-store';
-import { CardDescriptionSlot } from '~/modules/task/card/card-description-slot';
+import { TaskCardDescription } from '~/modules/task/card/task-card-description';
 import { TaskCardDragPreview } from '~/modules/task/card/task-card-drag-preview';
 import { TaskCardFooter } from '~/modules/task/card/task-card-footer';
 import { TaskCardHeader } from '~/modules/task/card/task-card-header';
@@ -196,10 +196,10 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
           'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent py-0 focus-visible:outline-hidden sm:py-0',
           isDragging && 'opacity-30',
           // Hover and current spread the status gradient; the tint is for unstarted cards, which have no gradient
-          isCurrent && 'is-focused bg-accent/30 via-40%',
+          isCurrent && 'is-focused bg-muted/50 via-40%',
           isSheet
             ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]'
-            : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-accent/30 hover:via-40%',
+            : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-muted/50 hover:via-40%',
           // A search match or a selected card keeps full strength, so it stands out among the resting ones
           !isSheet && effectiveState === 'collapsed' && !isCurrent && !task.isMatchingSearch && !isSelected && 'resting-text',
           taskCardVariants({ status: task.status }),
@@ -231,7 +231,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
               <TaskCardHeader task={task} isSheet={isSheet} animateClose={hasToggled} showDragHandle={!isSheet && !isReadOnly} />
             </StickyBox>
           )}
-          <CardDescriptionSlot
+          <TaskCardDescription
             task={task}
             state={effectiveState}
             isReadOnly={isReadOnly}

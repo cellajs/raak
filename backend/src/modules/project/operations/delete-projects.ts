@@ -4,16 +4,16 @@ import { deleteProjectsByIds } from '#/modules/project/project-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { log } from '#/utils/logger';
 
+/**
+ * Deletes the projects the caller may delete, with everything in them.
+ * @returns The ids the caller may not delete, as `rejectedIds`.
+ */
 export async function deleteProjectsOp(ctx: UserContext, ids: string[]) {
-  // Convert the ids to an array
-  const toDeleteIds = Array.isArray(ids) ? ids : [ids];
+  const { allowedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'project', ids);
 
-  const { allowedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'project', toDeleteIds);
-
-  // Delete the projects
   await deleteProjectsByIds(ctx, { ids: allowedIds });
 
-  // Invalidate membership cache so deleted memberships are absent for the current user.
+  // The caller's next request reads their memberships without the deleted ones
   invalidateCache.user(ctx.var.user.id);
 
   log.info('Projects deleted', { count: allowedIds.length, ids: allowedIds });

@@ -20,8 +20,9 @@ type UpdateLabelInput = z.infer<typeof labelUpdateStxBodySchema>;
 const trackedFields = ['name', 'color', 'icon', 'slug'] as const;
 
 /**
- * Also the label's Yjs materializer: the relay calls it with `materialized` for a collaborative epic description.
- * `serverOrigin` stamps the fields with the server clock, for a transaction the server built (the relay).
+ * Also the label's Yjs materializer: `materializeDescriptionOp` calls it with `materialized` for a collaborative epic
+ * description the relay posts. `serverOrigin` stamps the fields with the server clock, for a transaction the server
+ * built (the Yjs relay).
  */
 export async function updateLabelOp(
   ctx: OrgContext,
@@ -76,7 +77,7 @@ export async function updateLabelOp(
     }
 
     if (resolved.changed && 'description' in resolved.values) {
-      const description = resolved.values.description as string | null;
+      const description = resolved.values.description;
       if (description) {
         labelContract.assertBlockFields(resolved.values, before.organizationId);
         // Keywords feed the shared board search

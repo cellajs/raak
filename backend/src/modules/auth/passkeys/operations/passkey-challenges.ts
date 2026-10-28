@@ -15,10 +15,12 @@ import type { PasskeyChallengePurpose } from '#/modules/auth/passkeys/passkey-ch
 import {
   deletePasskeyChallenge,
   deleteStalePasskeyChallenges,
+  findCredentialIdsByUser,
   findPasskeyByCredentialId,
   insertPasskeyChallenge,
   updatePasskeyCounter,
 } from '#/modules/auth/passkeys/passkeys-queries';
+import type { WebAuthnAssertion, WebAuthnAttestation } from '#/modules/auth/passkeys/passkeys-schema';
 import { hashToken } from '#/utils/hash-token';
 import { isExpiredDate } from '#/utils/is-expired-date';
 import { isoDateIn } from '#/utils/iso-date';
@@ -27,7 +29,7 @@ import { TimeSpan } from '#/utils/time-span';
 const relyingPartyId = appConfig.mode === 'development' ? 'localhost' : appConfig.domain;
 const expectedOrigin = appConfig.frontendUrl;
 
-/** Factor checks read and write on the base pool, whatever the route's context holds. */
+/** Challenges and passkeys are read and written on the base pool, whatever the route's context holds. */
 const dbCtx = { var: { db: baseDb } };
 
 /** How long a challenge can be answered; its cookie and its row expire together. */
@@ -37,28 +39,34 @@ const challengeLifetime = new TimeSpan(5, 'm');
 const verificationFailed = (error?: unknown) =>
   new AppError(401, 'passkey_verification_failed', 'warn', error instanceof Error ? { originalError: error } : {});
 
+/** A registration response that does not verify is the request's fault: a 400, never a server error. */
+const registrationFailed = (error?: unknown) =>
+  new AppError(400, 'passkey_registration_failed', 'warn', error instanceof Error ? { originalError: error } : {});
+
 interface IssuePasskeyChallengeOpts {
   purpose: PasskeyChallengePurpose;
-  /** For an mfa challenge: the account whose passkey must answer it. */
+  /** For an mfa or step-up challenge: the account whose passkey must answer it, and whose passkeys are offered. */
   userId?: string;
 }
 
 /**
  * Hands this browser a new challenge for `purpose`: its row stores the hash, the challenge itself travels in a signed
  * cookie and in the response. The challenge the browser held before is dropped, and so are expired ones.
- * @returns The challenge, 32 random bytes as base64url: the value the WebAuthn options take as they are.
+ * @returns The challenge response: the challenge, 32 random bytes as base64url (the value the WebAuthn options take as
+ *   they are), and the credential ids of `userId`'s passkeys, none without one.
  */
 export const issuePasskeyChallenge = async (ctx: Context<Env>, { purpose, userId }: IssuePasskeyChallengeOpts) => {
-  const previous = await getAuthCookie(ctx, 'passkey-challenge');
+  const previous = getAuthCookie(ctx, 'passkey-challenge');
   await deleteStalePasskeyChallenges(dbCtx, { previousHash: previous ? hashToken(previous) : undefined });
 
   const challenge = Buffer.from(getRandomValues(new Uint8Array(32))).toString('base64url');
   await insertPasskeyChallenge(dbCtx, {
     values: { challengeHash: hashToken(challenge), purpose, userId: userId ?? null, expiresAt: isoDateIn(challengeLifetime) },
   });
-  await setAuthCookie(ctx, 'passkey-challenge', challenge, challengeLifetime);
+  setAuthCookie(ctx, 'passkey-challenge', challenge, challengeLifetime);
 
-  return challenge;
+  const passkeys = userId ? await findCredentialIdsByUser(dbCtx, { userId }) : [];
+  return { challenge, credentialIds: passkeys.map((passkey) => passkey.credentialId) };
 };
 
 /**
@@ -69,7 +77,7 @@ export const issuePasskeyChallenge = async (ctx: Context<Env>, { purpose, userId
  *   was issued for another purpose, or for another account than `userId`.
  */
 const consumeChallenge = async (ctx: Context<Env>, purpose: PasskeyChallengePurpose, userId?: string) => {
-  const challenge = await getAuthCookie(ctx, 'passkey-challenge');
+  const challenge = getAuthCookie(ctx, 'passkey-challenge');
   deleteAuthCookie(ctx, 'passkey-challenge');
   if (!challenge) throw verificationFailed();
 
@@ -87,14 +95,12 @@ const consumeChallenge = async (ctx: Context<Env>, purpose: PasskeyChallengePurp
  * @throws AppError 401 `passkey_verification_failed` without a live registration challenge, 400
  *   `passkey_registration_failed` for a response that does not verify.
  */
-export const verifyPasskeyRegistration = async (ctx: Context<Env>, attestation: RegistrationResponseJSON) => {
+export const verifyPasskeyRegistration = async (ctx: Context<Env>, attestation: WebAuthnAttestation) => {
   const challenge = await consumeChallenge(ctx, 'registration');
 
-  const registrationFailed = (error?: unknown) =>
-    new AppError(400, 'passkey_registration_failed', 'warn', error instanceof Error ? { originalError: error } : {});
-
   const { verified, registrationInfo } = await verifyRegistrationResponse({
-    response: attestation,
+    // The request schema types `clientExtensionResults` as unknown, the library as extension outputs it never reads.
+    response: attestation as RegistrationResponseJSON,
     expectedChallenge: challenge,
     expectedOrigin,
     expectedRPID: relyingPartyId,
@@ -110,7 +116,7 @@ export const verifyPasskeyRegistration = async (ctx: Context<Env>, attestation: 
 };
 
 interface VerifyPasskeyAssertionOpts {
-  assertion: AuthenticationResponseJSON;
+  assertion: WebAuthnAssertion;
   purpose: Exclude<PasskeyChallengePurpose, 'registration'>;
   /** The account the passkey must belong to. Omitted for a sign-in, where the passkey names its account. */
   userId?: string;
@@ -132,7 +138,8 @@ export const verifyPasskeyAssertion = async (ctx: Context<Env>, { assertion, pur
   // The library throws for most mismatches (challenge, origin, relying party, flags, counter) and answers false for a
   // bad signature.
   const { verified, authenticationInfo } = await verifyAuthenticationResponse({
-    response: assertion,
+    // The same gap as the registration's: `clientExtensionResults`.
+    response: assertion as AuthenticationResponseJSON,
     expectedChallenge: challenge,
     expectedOrigin,
     expectedRPID: relyingPartyId,

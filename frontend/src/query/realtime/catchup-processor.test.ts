@@ -31,8 +31,8 @@ vi.mock('shared', async (importOriginal) => {
 
 // Real propagation, observed: the deferral tests assert when it runs relative to the delta fetch.
 const propagateEmbeddingsSpy = vi.fn();
-vi.mock('./propagation', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./propagation')>();
+vi.mock('~/query/realtime/propagation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('~/query/realtime/propagation')>();
   return {
     ...actual,
     propagateEmbeddings: (hint: Parameters<typeof actual.propagateEmbeddings>[0]) => {
@@ -42,19 +42,23 @@ vi.mock('./propagation', async (importOriginal) => {
   };
 });
 
-vi.mock('./membership-ops', () => ({
+vi.mock('~/query/realtime/membership-ops', () => ({
   invalidateChannelList: vi.fn(),
   invalidateMemberQueries: vi.fn(),
   fetchMemberships: vi.fn(),
   refreshMe: vi.fn(),
 }));
 
-vi.mock('./sync-priority', () => ({
-  getTenantIdForOrg: vi.fn(() => null),
-  // Viewing tier by default, so catchup flushes inline through the fetch prioritizer.
-  getSyncTier: vi.fn(() => ({ min: 0, max: 0 })),
-  isViewingChannel: () => true,
-}));
+vi.mock('~/query/realtime/sync-priority', async () => {
+  const { syncStore } = await import('~/query/realtime/sync-store');
+  return {
+    // The persisted sync store answers, as it does before the memberships cache hydrates.
+    getTenantIdForOrg: (organizationId: string) => syncStore.getState().getOrgTenantId(organizationId),
+    // Viewing tier by default, so catchup flushes inline through the fetch prioritizer.
+    getSyncTier: vi.fn(() => ({ min: 0, max: 0 })),
+    isViewingChannel: () => true,
+  };
+});
 
 // The real fetch prioritizer runs as the single fetch path; only its outward boundaries are mocked.
 vi.mock('~/modules/seen/query', () => ({ invalidateUnseenCounts: vi.fn() }));
@@ -67,8 +71,8 @@ const { createEntityKeys } = await import('~/query/basic/create-query-keys');
 const { registerEntityQueryKeys, syncChunkSize } = await import('~/query/basic/entity-query-registry');
 const { queryClient } = await import('~/query/query-client');
 const { syncStore } = await import('~/query/realtime/sync-store');
-const { flushAllNow, resetFetchPrioritizer } = await import('./fetch-prioritizer');
-const { processAppCatchup } = await import('./catchup-processor');
+const { flushAllNow, resetFetchPrioritizer } = await import('~/query/realtime/fetch-prioritizer');
+const { processAppCatchup } = await import('~/query/realtime/catchup-processor');
 
 // The real fetch prioritizer holds module state (dirty map, timer), cleared between tests.
 afterEach(() => resetFetchPrioritizer());
@@ -85,7 +89,7 @@ const rangeRequest = (afterSeq: number, untilSeq: number) => ({
 const okViewResponse = (frontier: number): PostAppCatchupResponse =>
   ({
     cursor: 'cursor-1',
-    changes: {},
+    organizations: {},
     views: [{ key: 'org-1:attachment', status: 'ok', frontiers: { attachment: frontier }, counts: { attachment: 1 } }],
   }) as unknown as PostAppCatchupResponse;
 
@@ -148,7 +152,7 @@ describe('catchup processor (view-driven)', () => {
 
     await processAppCatchup({
       cursor: 'cursor-1',
-      changes: {},
+      organizations: {},
       views: [{ key: 'org-1:attachment', status: 'opaque' }],
     } as unknown as PostAppCatchupResponse);
 
@@ -242,7 +246,7 @@ describe('registered grant-boundary views', () => {
   const answer = (over: Record<string, unknown>): PostAppCatchupResponse =>
     ({
       cursor: 'c',
-      changes: {},
+      organizations: {},
       views: [{ key: 'org-1:attachment:subtree', ...over }],
     }) as unknown as PostAppCatchupResponse;
 
@@ -275,7 +279,7 @@ describe('catchup → fetch prioritizer fold', () => {
   });
 
   it("holds a background org's catchup to its flush: the range fetch, the cursor and the propagation hint all wait for it", async () => {
-    const { getSyncTier } = await import('./sync-priority');
+    const { getSyncTier } = await import('~/query/realtime/sync-priority');
     vi.mocked(getSyncTier).mockReturnValue({ min: 2000, max: 30_000 });
 
     const keys = createEntityKeys<Record<string, never>>('attachment');
@@ -287,7 +291,7 @@ describe('catchup → fetch prioritizer fold', () => {
     queryClient.setQueryData(keys.list.org('org-1'), { items: [], total: 0 });
 
     const hint = { embeddedProduct: 'attachment', hostProduct: 'attachment', hostColumn: 'labels', update: ['host-1'], remove: [] };
-    const response = { ...okViewResponse(9), changes: { 'org-1': { propagation: [hint] } } } as PostAppCatchupResponse;
+    const response = { ...okViewResponse(9), organizations: { 'org-1': { propagation: [hint] } } } as PostAppCatchupResponse;
     await processAppCatchup(response);
 
     // The hint waits for the range that carries the fresh embedded rows, and the cursor for their ingestion.
@@ -302,7 +306,7 @@ describe('catchup → fetch prioritizer fold', () => {
   });
 
   it('propagates at once for a viewing org, whose delta fetch was awaited inline', async () => {
-    const { getSyncTier } = await import('./sync-priority');
+    const { getSyncTier } = await import('~/query/realtime/sync-priority');
     vi.mocked(getSyncTier).mockReturnValue({ min: 0, max: 0 });
 
     const keys = createEntityKeys<Record<string, never>>('attachment');
@@ -314,7 +318,7 @@ describe('catchup → fetch prioritizer fold', () => {
     queryClient.setQueryData(keys.list.org('org-1'), { items: [], total: 0 });
 
     const hint = { embeddedProduct: 'attachment', hostProduct: 'attachment', hostColumn: 'labels', update: ['host-1'], remove: [] };
-    const response = { ...okViewResponse(9), changes: { 'org-1': { propagation: [hint] } } } as PostAppCatchupResponse;
+    const response = { ...okViewResponse(9), organizations: { 'org-1': { propagation: [hint] } } } as PostAppCatchupResponse;
     await processAppCatchup(response);
 
     expect(rangeFetch).toHaveBeenCalledTimes(1);

@@ -6,6 +6,11 @@ import { filterPrimaryLabelDeletes } from '#/modules/label/operations/filter-pri
 import { reassignTasksFromDeletedPrimaries } from '#/modules/task/task-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 
+/**
+ * Soft-deletes the labels the caller may delete, keeping each project's last primary label, and moves the tasks of a
+ * deleted primary label to another one.
+ * @returns The ids the caller may not delete or the primary-label rules keep, as `rejectedIds`.
+ */
 export async function deleteLabelsOp(ctx: ActorContext, ids: string[]): Promise<{ data: []; rejectedIds: string[] }> {
   const { allowedIds: permittedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'label', ids);
   const actorId = ctx.var.actor.id;

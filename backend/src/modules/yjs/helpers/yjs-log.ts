@@ -12,6 +12,9 @@ export const yjsLogNoticeMaxIds = 200;
 /** The largest update the log takes: the cap the relay's socket puts on one frame. */
 export const yjsMaxUpdateBytes = 2 * 1024 * 1024;
 
+/** Server-origin rows one materialize request may name: the route refuses more with 400, which no retry overcomes. */
+export const yjsMaxServerRowIds = 10_000;
+
 /**
  * The largest update one HTTP push carries. Base64url-encoded, a third larger, it stays under the API's 1 MB JSON body
  * limit. The frontend posts in chunks of this size (httpChunkBytes in yjs-http.ts).
@@ -55,7 +58,7 @@ export type LogNotice =
 
 /**
  * The payload of a notice: short keys, so it stays far below the 8,000-byte limit on a notification. One row travels
- * as `id`; more as `ids`, with the newest also as `id`, which a relay that reads `id` alone (release 2) still acts on.
+ * as `id`; more as `ids`, with the newest also as `id`, which a relay that reads `id` alone still acts on.
  */
 export function encodeLogNotice(notice: LogNotice): string {
   const key = { t: notice.tenantId, e: notice.entityType, i: notice.entityId };

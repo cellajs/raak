@@ -1,15 +1,15 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import type { AuthenticationResponseJSON, RegistrationResponseJSON } from '@simplewebauthn/server';
 import type { Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { sendAccountSecurityEmail } from '#/modules/auth/general/helpers/send-account-security-email';
 import { mfaFactorRules } from '#/modules/auth/mfa/operations/factor-rules';
 import { completeMfaChallenge, validateConfirmMfaToken } from '#/modules/auth/mfa/operations/mfa-challenge';
 import { issuePasskeyChallenge, verifyPasskeyAssertion, verifyPasskeyRegistration } from '#/modules/auth/passkeys/operations/passkey-challenges';
-import { deletePasskey, findCredentialIdsByUser, insertPasskey } from '#/modules/auth/passkeys/passkeys-queries';
+import { deletePasskey, insertPasskey } from '#/modules/auth/passkeys/passkeys-queries';
 import { authPasskeysRoutes } from '#/modules/auth/passkeys/passkeys-routes';
-import { deviceInfo } from '#/modules/auth/sessions/helpers/device-info';
+import { deviceColumns, deviceInfo } from '#/modules/auth/sessions/helpers/device-info';
 import { setUserSession } from '#/modules/auth/sessions/operations/create-session';
+import { updateSessionSteppedUp } from '#/modules/auth/sessions/sessions-queries';
 import { spendCookieToken } from '#/modules/auth/tokens/token-lifecycle';
 import { findUserById } from '#/modules/user/user-queries';
 import { defaultHook } from '#/utils/default-hook';
@@ -21,26 +21,17 @@ app.openapi(authPasskeysRoutes.createPasskey, async (ctx) => {
 
   const { attestation, nameOnDevice } = ctx.req.valid('json');
 
-  const { credentialId, publicKey, counter } = await verifyPasskeyRegistration(ctx, attestation as RegistrationResponseJSON);
-
-  const device = deviceInfo(ctx);
-  const passkeyValue = {
-    userId: user.id,
-    credentialId,
-    publicKey,
-    counter,
-    nameOnDevice,
-    deviceName: device.name,
-    deviceType: device.type,
-    deviceOs: device.os,
-    browser: device.browser,
-  };
+  const { credentialId, publicKey, counter } = await verifyPasskeyRegistration(ctx, attestation);
 
   // A credential id names one account: an authenticator presenting one that is registered already is refused.
-  const newPasskey = await insertPasskey(ctx, { values: passkeyValue });
+  const newPasskey = await insertPasskey(ctx, {
+    values: { userId: user.id, credentialId, publicKey, counter, nameOnDevice, ...deviceColumns(deviceInfo(ctx)) },
+  });
   if (!newPasskey) throw new AppError(409, 'resource_already_exists', 'warn');
 
-  sendAccountSecurityEmail(user, 'passkey-added');
+  // The registration proved the new passkey on this session: it steps the session up, so the action that asked runs next.
+  await updateSessionSteppedUp(ctx, { id: ctx.var.session.id, userId: user.id, via: 'passkey' });
+  sendAccountSecurityEmail(user, 'passkey-added', { passkeyName: newPasskey.nameOnDevice });
 
   return ctx.json(newPasskey, 201);
 });
@@ -51,12 +42,10 @@ app.openapi(authPasskeysRoutes.deletePasskey, async (ctx) => {
   const { id } = ctx.req.valid('param');
 
   // The delete rolls back when MFA is on and this was the last passkey: it stays until MFA is turned off.
-  await mfaFactorRules.locked(user.id, async (tx) => {
-    await deletePasskey({ var: { db: tx } }, { userId: user.id, id });
-    await mfaFactorRules.assertKeepsFactors(tx, user.id);
-  });
+  const deleted = await mfaFactorRules.removeFactor(user.id, (txCtx) => deletePasskey(txCtx, { userId: user.id, id }));
 
-  sendAccountSecurityEmail(user, 'passkey-deleted');
+  // An id the user holds no passkey by answers 204 as well, but only a deletion mails the user.
+  if (deleted) sendAccountSecurityEmail(user, 'passkey-deleted', { passkeyName: deleted.nameOnDevice });
 
   return ctx.body(null, 204);
 });
@@ -68,26 +57,20 @@ app.openapi(authPasskeysRoutes.generatePasskeyChallenge, async (ctx) => {
   // sign-in challenge names none: the passkey the browser picks names its account.
   const user = type === 'mfa' ? (await validateConfirmMfaToken(ctx)).user : null;
 
-  const challenge = await issuePasskeyChallenge(ctx, { purpose: type, userId: user?.id });
-
-  const credentials = user ? await findCredentialIdsByUser(ctx, { userId: user.id }) : [];
-  const credentialIds = credentials.map((c) => c.credentialId);
-
-  return ctx.json({ challenge, credentialIds }, 200);
+  return ctx.json(await issuePasskeyChallenge(ctx, { purpose: type, userId: user?.id }), 200);
 });
 
 app.openapi(authPasskeysRoutes.signInWithPasskey, async (ctx) => {
   const { type, assertion } = ctx.req.valid('json');
-  const response = assertion as AuthenticationResponseJSON;
 
   if (type === 'mfa') {
-    await completeMfaChallenge(ctx, { strategy: 'passkey', assertion: response });
+    await completeMfaChallenge(ctx, { strategy: 'passkey', assertion });
     return ctx.body(null, 204);
   }
 
-  const userId = await verifyPasskeyAssertion(ctx, { assertion: response, purpose: 'authentication' });
+  const userId = await verifyPasskeyAssertion(ctx, { assertion, purpose: 'authentication' });
   const user = await findUserById(ctx, { id: userId });
-  if (!user) throw new AppError(404, 'not_found', 'warn', { entityType: 'user' });
+  if (!user) throw new AppError(404, 'not_found', 'error', { entityType: 'user' });
 
   // A regular passkey sign-in also ends a challenge this browser left open.
   await spendCookieToken(ctx, 'confirm-mfa');

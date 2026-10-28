@@ -4,6 +4,10 @@ import { dispatchMutation } from '#/lib/mutation-bus';
 import { deleteTasksByIds } from '#/modules/task/task-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 
+/**
+ * Soft-deletes the tasks the caller may delete.
+ * @returns The ids the caller may not delete, as `rejectedIds`.
+ */
 export async function deleteTasksOp(ctx: ActorContext, ids: string[]): Promise<{ data: []; rejectedIds: string[] }> {
   const { allowedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'task', ids);
 

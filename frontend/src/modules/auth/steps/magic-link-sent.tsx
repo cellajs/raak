@@ -20,7 +20,7 @@ export function MagicLinkSentStep() {
         image={
           <div className="relative">
             <MailIcon strokeWidth={1} className="size-30" />
-            <SuccessCheckmark className="absolute top-15 left-1/2 ml-4" />
+            <SuccessCheckmark className="absolute -right-1.5 bottom-2.5" />
           </div>
         }
         title={t('c:magic_link_check_email')}
@@ -30,7 +30,7 @@ export function MagicLinkSentStep() {
         </p>
       </AuthHeader>
       {!isSignup && (
-        <Button variant="plain" onClick={resetAuthStore} className="mt-2">
+        <Button variant="secondary" onClick={resetAuthStore} className="mt-2">
           <ArrowLeftIcon />
           {t('c:try_another_way')}
         </Button>

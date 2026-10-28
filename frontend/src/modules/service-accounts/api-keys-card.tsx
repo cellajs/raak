@@ -60,8 +60,8 @@ export function ApiKeysCard({ organization }: ApiKeysCardProps) {
   const openCreateDialog = async () => {
     if (!onlineManager.isOnline()) return toastOffline();
 
-    // Minting a key needs a stepped-up session: the user proves it before the form opens, so the form submits once.
-    const steppedUp = await ensureStepUp().then(
+    // Minting a key needs a second factor proven on this session, asked before the form opens so the form submits once.
+    const steppedUp = await ensureStepUp('factor').then(
       () => true,
       () => false,
     );
@@ -85,7 +85,7 @@ export function ApiKeysCard({ organization }: ApiKeysCardProps) {
     <ToolCard label="c:api_keys" description={t('c:api_keys.text')}>
       <Accordion value={openTile} onValueChange={setOpenTile}>
         {accounts.length === 0 ? (
-          <Button ref={addButtonRef} className="max-sm:w-full" variant="plain" onClick={openCreateDialog}>
+          <Button ref={addButtonRef} className="max-sm:w-full" variant="secondary" onClick={openCreateDialog}>
             <KeyRoundIcon />
             {t('c:create_resource', { resource: t('c:api_key') })}
           </Button>

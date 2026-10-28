@@ -1,18 +1,17 @@
-import { and, count, eq, inArray, isNull, lte, max, or, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, inArray, lte, max, or, type SQL, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { ChannelEntityType, EntityRole } from 'shared';
-import type { DbContext, OrgContext, UserContext } from '#/core/context';
+import type { DbContext, OrgContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
 import { actorsTable } from '#/modules/actors/actors-db';
 import { lastPostedAtOrder, memberCountsSelect } from '#/modules/memberships/helpers/member-counts';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
-import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { type InsertMembershipModel, membershipsTable } from '#/modules/memberships/memberships-db';
+import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { emailsTable } from '#/modules/user/emails-db';
 import { lastSeenOrder, memberSelect, userActorJoin } from '#/modules/user/helpers/select';
 import type { UserMinimalBase } from '#/modules/user/helpers/user-minimal';
 import { usersTable } from '#/modules/user/user-db';
-import { getIsoDate } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
 import { textSearchFilter } from '#/utils/sql';
 
@@ -21,37 +20,17 @@ interface CountMembershipsByChannelOpts {
   channelId: string;
 }
 
+/** The number of memberships of one channel. */
 export const countMembershipsByChannel = async (ctx: DbContext, { channelType, channelId }: CountMembershipsByChannelOpts) => {
   const { db } = ctx.var;
-  const [{ currentOrgMemberships }] = await db
-    .select({ currentOrgMemberships: count() })
+  const [{ total }] = await db
+    .select({ total: count() })
     .from(membershipsTable)
     .where(and(eq(membershipsTable.channelType, channelType), eq(membershipsTable.channelId, channelId)));
-  return currentOrgMemberships;
+  return total;
 };
 
-interface CountPendingInvitesByChannelOpts {
-  channelType: ChannelEntityType;
-  channelId: string;
-}
-
-/** Invitations still waiting for an answer; a rejected one is answered. */
-export const countPendingInvitesByChannel = async (ctx: DbContext, { channelType, channelId }: CountPendingInvitesByChannelOpts) => {
-  const { db } = ctx.var;
-  const [{ pendingInvites }] = await db
-    .select({ pendingInvites: count() })
-    .from(inactiveMembershipsTable)
-    .where(
-      and(
-        eq(inactiveMembershipsTable.channelType, channelType),
-        eq(inactiveMembershipsTable.channelId, channelId),
-        isNull(inactiveMembershipsTable.rejectedAt),
-      ),
-    );
-  return pendingInvites;
-};
-
-interface FindInvitationAccountsOpts {
+interface FindInviteeAccountsOpts {
   emails: string[];
   entityType: ChannelEntityType;
   entityId: string;
@@ -61,7 +40,7 @@ interface FindInvitationAccountsOpts {
  * The accounts behind invited addresses, one row per address an account holds: its primary address, its membership
  * of the channel (with the role) and whether it is a member of the organization. Addresses no account holds have no row.
  */
-export const findInvitationAccounts = async (ctx: OrgContext, { emails, entityType, entityId }: FindInvitationAccountsOpts) => {
+export const findInviteeAccounts = async (ctx: OrgContext, { emails, entityType, entityId }: FindInviteeAccountsOpts) => {
   const { db, organizationId } = ctx.var;
   const orgMemberships = alias(membershipsTable, 'org_memberships');
 
@@ -87,29 +66,6 @@ export const findInvitationAccounts = async (ctx: OrgContext, { emails, entityTy
     .where(inArray(emailsTable.email, emails));
 };
 
-interface FindInvitationsToAddressesOpts {
-  emails: string[];
-  channelId: string;
-}
-
-/** The channel's invitations addressed to exactly these addresses, pending or rejected. */
-export const findInvitationsToAddresses = async (ctx: DbContext, { emails, channelId }: FindInvitationsToAddressesOpts) => {
-  const { db } = ctx.var;
-  if (!emails.length) return [];
-  return db
-    .select({
-      id: inactiveMembershipsTable.id,
-      email: inactiveMembershipsTable.email,
-      userId: inactiveMembershipsTable.userId,
-      role: inactiveMembershipsTable.role,
-      rejectedAt: inactiveMembershipsTable.rejectedAt,
-      createdAt: inactiveMembershipsTable.createdAt,
-      remindedAt: inactiveMembershipsTable.remindedAt,
-    })
-    .from(inactiveMembershipsTable)
-    .where(and(eq(inactiveMembershipsTable.channelId, channelId), inArray(inactiveMembershipsTable.email, emails)));
-};
-
 interface FindAccountLanguagesOpts {
   userIds: string[];
 }
@@ -121,88 +77,11 @@ export const findAccountLanguages = async (ctx: DbContext, { userIds }: FindAcco
   return new Map(rows.map((row) => [row.id, row.language]));
 };
 
-interface FindPendingInactiveMembershipsByChannelsOpts {
-  channelIds: string[];
-}
-
-/** Pending (not rejected) inactive memberships for a set of contexts (deferred-invite dispatch). */
-export const findPendingInactiveMembershipsByChannels = async (ctx: DbContext, { channelIds }: FindPendingInactiveMembershipsByChannelsOpts) => {
-  const { db } = ctx.var;
-  if (!channelIds.length) return [];
-  return db
-    .select()
-    .from(inactiveMembershipsTable)
-    .where(and(inArray(inactiveMembershipsTable.channelId, channelIds), isNull(inactiveMembershipsTable.rejectedAt)));
-};
-
-interface StampInactiveMembershipsRemindedOpts {
-  ids: string[];
-  remindedAt: string;
-}
-
-/** Stamps `remindedAt` on the invitations whose mail just went out: a first mail, a reminder, a resend or a dispatch. */
-export const stampInactiveMembershipsReminded = async (ctx: DbContext, { ids, remindedAt }: StampInactiveMembershipsRemindedOpts) => {
-  const { db } = ctx.var;
-  if (!ids.length) return;
-  return db.update(inactiveMembershipsTable).set({ remindedAt }).where(inArray(inactiveMembershipsTable.id, ids));
-};
-
-interface FindPendingInactiveMembershipOpts {
-  id: string;
-  /** Lock the row for the caller's transaction, so a concurrent answer, rejection or resend waits for it. */
-  forUpdate?: boolean;
-}
-
-/** A membership invitation by id while it stands: not rejected. */
-export const findPendingInactiveMembership = async (ctx: DbContext, { id, forUpdate = false }: FindPendingInactiveMembershipOpts) => {
-  const query = ctx.var.db
-    .select()
-    .from(inactiveMembershipsTable)
-    .where(and(eq(inactiveMembershipsTable.id, id), isNull(inactiveMembershipsTable.rejectedAt)));
-  const [invitation] = forUpdate ? await query.for('update') : await query;
-  return invitation;
-};
-
-interface FindPendingInactiveMembershipByEmailOpts {
-  email: string;
-}
-
-/** A membership invitation to the address that stands, not rejected; undefined when none does. */
-export const findPendingInactiveMembershipByEmail = async (ctx: DbContext, { email }: FindPendingInactiveMembershipByEmailOpts) => {
-  const [invitation] = await ctx.var.db
-    .select({ id: inactiveMembershipsTable.id })
-    .from(inactiveMembershipsTable)
-    .where(and(eq(inactiveMembershipsTable.email, email), isNull(inactiveMembershipsTable.rejectedAt)))
-    .limit(1);
-  return invitation;
-};
-
-interface FindPendingOrganizationInvitationOpts {
-  email: string;
-  organizationId: string;
-}
-
-/** An invitation to the address into the organization itself that stands, not rejected: it names the role a sign-in must not pre-empt. */
-export const findPendingOrganizationInvitation = async (ctx: DbContext, { email, organizationId }: FindPendingOrganizationInvitationOpts) => {
-  const [invitation] = await ctx.var.db
-    .select({ id: inactiveMembershipsTable.id })
-    .from(inactiveMembershipsTable)
-    .where(
-      and(
-        eq(inactiveMembershipsTable.email, email),
-        eq(inactiveMembershipsTable.channelType, 'organization'),
-        eq(inactiveMembershipsTable.channelId, organizationId),
-        isNull(inactiveMembershipsTable.rejectedAt),
-      ),
-    )
-    .limit(1);
-  return invitation;
-};
-
 interface FindMembershipByIdInOrgOpts {
   membershipId: string;
 }
 
+/** A membership of the request's organization by id, as `MembershipBase`; one of another organization reads as missing. */
 export const findMembershipByIdInOrg = async (ctx: OrgContext, { membershipId }: FindMembershipByIdInOrgOpts) => {
   const { db, organizationId } = ctx.var;
   const [membership] = await db
@@ -218,6 +97,7 @@ interface FindMembershipsByUserIdsAndChannelOpts {
   channelId: string;
 }
 
+/** The channel's memberships of these users, as `MembershipBase`; a user without one has no row. */
 export const findMembershipsByUserIdsAndChannel = async (ctx: DbContext, { userIds, channelId }: FindMembershipsByUserIdsAndChannelOpts) => {
   const { db } = ctx.var;
   return db
@@ -230,6 +110,7 @@ interface DeleteMembershipsByIdsOpts {
   ids: string[];
 }
 
+/** Deletes memberships by id, only those of the request's organization. */
 export const deleteMembershipsByIds = async (ctx: OrgContext, { ids }: DeleteMembershipsByIdsOpts) => {
   const { db, organizationId } = ctx.var;
   return db.delete(membershipsTable).where(and(inArray(membershipsTable.id, ids), eq(membershipsTable.organizationId, organizationId)));
@@ -240,6 +121,7 @@ interface UpdateMembershipOpts {
   values: Partial<typeof membershipsTable.$inferInsert>;
 }
 
+/** Updates a membership of the request's organization and returns the row; undefined when none has the id. */
 export const updateMembership = async (ctx: OrgContext, { id, values }: UpdateMembershipOpts) => {
   const { db, organizationId } = ctx.var;
   const [updated] = await db
@@ -248,101 +130,6 @@ export const updateMembership = async (ctx: OrgContext, { id, values }: UpdateMe
     .where(and(eq(membershipsTable.id, id), eq(membershipsTable.organizationId, organizationId)))
     .returning();
   return updated;
-};
-
-interface InsertInactiveMembershipsOpts {
-  memberships: (typeof inactiveMembershipsTable.$inferInsert)[];
-}
-
-/** Insert inactive memberships in bulk, ignoring conflicts. */
-export const insertInactiveMemberships = async (ctx: DbContext, { memberships }: InsertInactiveMembershipsOpts) => {
-  const { db } = ctx.var;
-  return db
-    .insert(inactiveMembershipsTable)
-    .values(memberships)
-    .onConflictDoNothing()
-    .returning({ id: inactiveMembershipsTable.id, email: inactiveMembershipsTable.email });
-};
-
-interface FindInactiveMembershipByIdOpts {
-  id: string;
-}
-
-export const findInactiveMembershipById = async (ctx: DbContext, { id }: FindInactiveMembershipByIdOpts) => {
-  const { db } = ctx.var;
-  const [membership] = await db.select().from(inactiveMembershipsTable).where(eq(inactiveMembershipsTable.id, id));
-  return membership;
-};
-
-interface FindInactiveMembershipForUserOpts {
-  id: string;
-}
-
-/** Id path: a pending invitation bound to this user; a rejected one is answered and stays so. */
-export const findInactiveMembershipForUser = async (ctx: UserContext, { id }: FindInactiveMembershipForUserOpts) => {
-  const { db, userId } = ctx.var;
-  const [membership] = await db
-    .select()
-    .from(inactiveMembershipsTable)
-    .where(and(eq(inactiveMembershipsTable.id, id), eq(inactiveMembershipsTable.userId, userId), isNull(inactiveMembershipsTable.rejectedAt)))
-    .limit(1);
-  return membership;
-};
-
-/**
- * An invitation is claimable by a user while it is pending and unbound, or bound to that same user. Every write that
- * binds an invitation goes through this condition, so a row bound to someone else is never re-bound (GHSA-fmh4-wcc4-5jm3)
- * and a rejected one is never revived.
- */
-const claimableBy = (userId: string) =>
-  and(isNull(inactiveMembershipsTable.rejectedAt), or(isNull(inactiveMembershipsTable.userId), eq(inactiveMembershipsTable.userId, userId)));
-
-/** Token path: the invitation is answerable by this user when {@link claimableBy} holds. */
-export const findClaimableInactiveMembership = async (ctx: UserContext, { id }: FindInactiveMembershipForUserOpts) => {
-  const { db, userId } = ctx.var;
-  const [membership] = await db
-    .select()
-    .from(inactiveMembershipsTable)
-    .where(and(eq(inactiveMembershipsTable.id, id), claimableBy(userId)))
-    .limit(1);
-  return membership;
-};
-
-interface BindInactiveMembershipsOpts {
-  ids: string[];
-  userId: string;
-}
-
-/** Binds claimable invitations to the user and returns the ids it bound; an id missing from the result lost a race or belongs to someone else. */
-export const bindInactiveMemberships = async (ctx: DbContext, { ids, userId }: BindInactiveMembershipsOpts) => {
-  if (!ids.length) return [];
-  const { db } = ctx.var;
-  const bound = await db
-    .update(inactiveMembershipsTable)
-    .set({ userId })
-    .where(and(inArray(inactiveMembershipsTable.id, ids), claimableBy(userId)))
-    .returning({ id: inactiveMembershipsTable.id });
-  return bound.map((row) => row.id);
-};
-
-interface BindInactiveMembershipsByEmailOpts {
-  email: string;
-  userId: string;
-}
-
-/**
- * Binds every unbound, {@link claimableBy claimable} invitation addressed to `email` and returns the ids it bound. The
- * caller has proven that inbox. An invitation already bound to the user is left out, so the link flow that bound it
- * keeps its token.
- */
-export const bindInactiveMembershipsByEmail = async (ctx: DbContext, { email, userId }: BindInactiveMembershipsByEmailOpts) => {
-  const { db } = ctx.var;
-  const bound = await db
-    .update(inactiveMembershipsTable)
-    .set({ userId })
-    .where(and(eq(inactiveMembershipsTable.email, email), isNull(inactiveMembershipsTable.userId), claimableBy(userId)))
-    .returning({ id: inactiveMembershipsTable.id });
-  return bound.map((row) => row.id);
 };
 
 interface FindMembersPaginatedOpts {
@@ -356,17 +143,18 @@ interface FindMembersPaginatedOpts {
   limit: number;
   role?: EntityRole;
   userIds?: string[];
-  // Opt-in per-member insight counts; caller must run under tenantRead (product subqueries are RLS-guarded)
+  /** Per-member counts on the page rows (`memberCountsSelect`). */
   includeCounts?: boolean;
-  // Each member's MFA switch; the caller decides who may see it
+  /** Each member's MFA switch; the caller decides who may see it. */
   includeMfa?: boolean;
 }
 
+/** A page of a channel's members, each user with its membership, and the total. */
 export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPaginatedOpts) => {
   const { db } = ctx.var;
   const { organizationId, entityId, entityType, q, sort, order, offset, limit, role, userIds, includeCounts, includeMfa } = opts;
 
-  const $or = q ? [textSearchFilter(usersTable.name, q), textSearchFilter(usersTable.email, q)] : [];
+  const searchFilters = q ? [textSearchFilter(usersTable.name, q), textSearchFilter(usersTable.email, q)] : [];
 
   const membersFilters: SQL[] = [
     eq(membershipsTable.organizationId, organizationId),
@@ -388,7 +176,7 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
       createdAt: usersTable.createdAt,
       lastSeenAt: lastSeenOrder,
       role: membershipsTable.role,
-      // Latest live product row by the member in the viewed channel; RLS-guarded like the counts
+      // Latest live product row by the member in the viewed channel
       lastPostedAt: lastPostedAtOrder(entityType, entityId, organizationId),
     },
     tieBreaker: usersTable.id,
@@ -405,7 +193,7 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
     .from(usersTable)
     .innerJoin(membershipsTable, eq(membershipsTable.userId, usersTable.id))
     .innerJoin(actorsTable, userActorJoin)
-    .where(and(...membersFilters, or(...$or)));
+    .where(and(...membersFilters, or(...searchFilters)));
 
   const itemsQuery = membersQuery
     .orderBy(...orderBy)
@@ -417,7 +205,7 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
     .select({ id: usersTable.id })
     .from(usersTable)
     .innerJoin(membershipsTable, eq(membershipsTable.userId, usersTable.id))
-    .where(and(...membersFilters, or(...$or)));
+    .where(and(...membersFilters, or(...searchFilters)));
 
   return resolveListTotal(itemsQuery, {
     kind: 'exact',
@@ -436,7 +224,7 @@ interface FindMemberPreviewsByChannelsOpts {
 }
 
 /**
- * Member previews for a set of contexts in one batched query: the first `limit` members per context with the given
+ * Member previews for a set of channels in one batched query: the first `limit` members per channel with the given
  * role, oldest membership first. Overflow counts come from the `m:c:{role}` counters, so previews need no second query.
  */
 export const findMemberPreviewsByChannels = async (ctx: DbContext, { channelType, channelIds, role, limit }: FindMemberPreviewsByChannelsOpts) => {
@@ -444,7 +232,7 @@ export const findMemberPreviewsByChannels = async (ctx: DbContext, { channelType
   const previews = new Map<string, UserMinimalBase[]>();
   if (!channelIds.length) return previews;
 
-  // Rank members per context so a single query returns at most `limit` rows per context
+  // Rank members per channel so a single query returns at most `limit` rows per channel
   const rowNumber = sql<number>`row_number() over (
       partition by ${membershipsTable.channelId} order by ${membershipsTable.createdAt} asc
     )`.as('row_number');
@@ -475,7 +263,7 @@ export const findMemberPreviewsByChannels = async (ctx: DbContext, { channelType
     .where(lte(rankedMembers.rowNumber, limit))
     .orderBy(rankedMembers.channelId, rankedMembers.rowNumber);
 
-  // Group per context, preserving the createdAt order from the window function
+  // Group per channel, preserving the createdAt order from the window function
   for (const { channelId, ...user } of rows) {
     const list = previews.get(channelId) ?? [];
     list.push({ ...user, entityType: 'user' });
@@ -483,52 +271,6 @@ export const findMemberPreviewsByChannels = async (ctx: DbContext, { channelType
   }
 
   return previews;
-};
-
-interface FindPendingMembershipsPaginatedOpts {
-  organizationId: string;
-  entityId: string;
-  sort?: 'createdAt';
-  order?: 'asc' | 'desc';
-  offset: number;
-  limit: number;
-}
-
-/**
- * A channel's pending invitations as the inviter sees them: the address each went to, never the account that may hold
- * it, so a row looks the same whether the invitee already has an account or not.
- */
-export const findPendingMembershipsPaginated = async (ctx: DbContext, opts: FindPendingMembershipsPaginatedOpts) => {
-  const { db } = ctx.var;
-  const { organizationId, entityId, sort, order, offset, limit } = opts;
-
-  const table = inactiveMembershipsTable;
-  const orderBy = getOrderColumns({ sort, order, fallback: ['createdAt', 'desc'], columns: { createdAt: table.createdAt }, tieBreaker: table.id });
-
-  const pendingMembershipsQuery = db
-    .select({
-      id: table.id,
-      role: table.role,
-      email: table.email,
-      createdAt: table.createdAt,
-      remindedAt: table.remindedAt,
-      createdBy: table.createdBy,
-    })
-    .from(table)
-    .where(and(eq(table.channelId, entityId), eq(table.organizationId, organizationId), isNull(table.rejectedAt)));
-
-  const itemsQuery = pendingMembershipsQuery
-    .orderBy(...orderBy)
-    .limit(limit)
-    .offset(offset);
-
-  return resolveListTotal(itemsQuery, {
-    kind: 'exact',
-    getTotal: async () => {
-      const [{ total }] = await db.select({ total: count() }).from(pendingMembershipsQuery.as('pendingMemberships'));
-      return total;
-    },
-  });
 };
 
 interface FindMaxDisplayOrdersOpts {
@@ -548,6 +290,7 @@ interface InsertMembershipRowsOpts {
   values: InsertMembershipModel[];
 }
 
+/** Inserts membership rows and returns them as `MembershipBase`. */
 export const insertMembershipRows = async (ctx: DbContext, { values }: InsertMembershipRowsOpts) => {
   return ctx.var.db.insert(membershipsTable).values(values).returning(membershipBaseSelect);
 };
@@ -561,32 +304,16 @@ interface FindMembershipsByUserIdsOpts {
   userIds: string[];
 }
 
+/** A membership counts while its tenant is not archived: an organization deleted by its admin leaves every member's list at once. */
+export const inUnarchivedTenant = (tenantId: typeof membershipsTable.tenantId) =>
+  sql`NOT EXISTS (SELECT 1 FROM ${tenantsTable} WHERE ${tenantsTable.id} = ${tenantId} AND ${tenantsTable.status} = 'archived')`;
+
+/** Every membership of these users that counts, in any organization, as a session reads its own (`loadMemberships`). */
 export const findMembershipsByUserIds = async (ctx: DbContext, { userIds }: FindMembershipsByUserIdsOpts) => {
-  return ctx.var.db.select().from(membershipsTable).where(inArray(membershipsTable.userId, userIds));
-};
-
-interface InactiveMembershipIdOpts {
-  id: string;
-}
-
-export const deleteInactiveMembership = async (ctx: DbContext, { id }: InactiveMembershipIdOpts) => {
-  await ctx.var.db.delete(inactiveMembershipsTable).where(eq(inactiveMembershipsTable.id, id));
-};
-
-interface UpdateInactiveMembershipsOpts {
-  ids: string[];
-  values: { role?: EntityRole; rejectedAt?: null; remindedAt?: string | null };
-}
-
-/** Invitations sent again: a declined one opens again, a higher role replaces a lower one, the last email moves. */
-export const updateInactiveMemberships = async (ctx: DbContext, { ids, values }: UpdateInactiveMembershipsOpts) => {
-  if (!ids.length) return;
-  await ctx.var.db.update(inactiveMembershipsTable).set(values).where(inArray(inactiveMembershipsTable.id, ids));
-};
-
-/** Stamps a membership invitation rejected now. */
-export const updateInactiveMembershipRejected = async (ctx: DbContext, { id }: InactiveMembershipIdOpts) => {
-  await ctx.var.db.update(inactiveMembershipsTable).set({ rejectedAt: getIsoDate() }).where(eq(inactiveMembershipsTable.id, id));
+  return ctx.var.db
+    .select()
+    .from(membershipsTable)
+    .where(and(inArray(membershipsTable.userId, userIds), inUnarchivedTenant(membershipsTable.tenantId)));
 };
 
 interface RotateTenantMemberBindingsOpts {

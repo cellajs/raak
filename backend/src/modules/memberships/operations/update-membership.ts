@@ -9,14 +9,16 @@ import { withActorRef } from '#/modules/actors/actor-refs';
 import { membershipAsSeenBy } from '#/modules/memberships/helpers/select';
 import { findMembershipByIdInOrg, updateMembership } from '#/modules/memberships/memberships-queries';
 import { type membershipUpdateBodySchema, personalViewKeys } from '#/modules/memberships/memberships-schema';
-import { getValidChannel } from '#/permissions/get-valid-channel';
+import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
 type UpdateMembershipInput = z.infer<typeof membershipUpdateBodySchema>;
 
-/** User-only: `memberships.updatedBy` references `users`, so a service account never edits a membership (D9). */
+/**
+ * Updates a membership's role, which needs `update` on its channel, or the member's own archive, mute and menu order.
+ * User-only: `memberships.updatedBy` references `users`, so a service account never edits a membership.
+ */
 export async function updateMembershipOp(ctx: UserContext, membershipId: string, input: UpdateMembershipInput) {
-  // `memberships.updatedBy` is a user id: the type rejects `actor.id`, which could be a service account.
   const actorId = ctx.var.user.id;
   const memberships = ctx.var.memberships;
 
@@ -35,14 +37,13 @@ export async function updateMembershipOp(ctx: UserContext, membershipId: string,
   }
 
   // Archive, mute and order are the member's own view of the channel: nobody sets them for someone else.
-  const isOwnMembership = membershipToUpdate.userId === actorId;
-  if (setsPersonalView && !isOwnMembership) {
+  const isActorsMembership = membershipToUpdate.userId === actorId;
+  if (setsPersonalView && !isActorsMembership) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'user', meta: { membership: membershipId } });
   }
 
   const updatedType = membershipToUpdate.channelType;
 
-  // The new role must exist in the context's vocabulary (e.g. no org 'member' on a course)
   if (role !== undefined && !hierarchy.getRoles(updatedType).includes(role)) {
     throw new AppError(400, 'invalid_role', 'warn', { entityType: updatedType });
   }

@@ -140,13 +140,13 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
   const actionsSlot = !isCollapsed ? (
     <>
       {isReadOnly && (
-        <Badge variant="plain" className="font-normal text-xs opacity-75">
+        <Badge soft className="font-normal text-xs">
           {t('c:read_only')}
         </Badge>
       )}
       {!publicView && isInWorkspace && isPrimary && <ProjectActionsMenu project={project} className="h-8 px-2" />}
       {!isReadOnly && hostsCreateButton && (
-        <Button data-form-dirty={hasDraft} variant="plain" size="xs" className={newTaskButtonClass} onClick={toggleCreateForm}>
+        <Button data-form-dirty={hasDraft} variant="secondary" size="xs" className={newTaskButtonClass} onClick={toggleCreateForm}>
           <Badge className="absolute -top-1 -right-1 z-100 in-data-[form-dirty=false]:hidden size-2 p-0" />
           <PlusIcon className={cn('size-4.5 transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />
           <span>{t('c:task')}</span>

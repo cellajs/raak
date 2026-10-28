@@ -9,7 +9,7 @@ import { requestScopeWhere } from '#/db/utils/request-scope';
 import { deleteStamps, updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
-import { type LabelModel, labelsTable } from '#/modules/label/label-db';
+import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { getOrderColumns } from '#/utils/order-column';
 import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
 import { textSearchFilter } from '#/utils/sql';
@@ -24,7 +24,7 @@ export const findLabelsByOrg = async (ctx: ActorContext) => {
 };
 
 interface InsertLabelsOpts {
-  labels: (typeof labelsTable.$inferInsert)[];
+  labels: InsertLabelModel[];
 }
 
 /** Insert labels and return the created rows. Silently skips duplicates (PK conflict). */
