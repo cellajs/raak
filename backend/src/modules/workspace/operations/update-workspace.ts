@@ -4,7 +4,7 @@ import { updateStamps } from '#/db/utils/stamps';
 import { toWorkspaceResponse } from '#/modules/workspace/operations/to-workspace-response';
 import { updateWorkspace } from '#/modules/workspace/workspace-queries';
 import { workspaceContract, type workspaceUpdateBodySchema } from '#/modules/workspace/workspace-schema';
-import { getValidChannel } from '#/permissions/get-valid-channel';
+import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
 /**

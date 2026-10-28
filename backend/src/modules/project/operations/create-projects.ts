@@ -1,4 +1,5 @@
 import type { z } from '@hono/zod-openapi';
+import { hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
@@ -18,7 +19,7 @@ import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
 import { filterWithRejection } from '#/utils/rejection-utils';
 
-const defaultTaskStatusCounts = { accepted: 0, reviewed: 0, delivered: 0, finished: 0, started: 0, unstarted: 0, iced: 0 };
+const zeroTaskStatusCounts = { accepted: 0, reviewed: 0, delivered: 0, finished: 0, started: 0, unstarted: 0, iced: 0 };
 
 type CreateProjectItem = z.infer<typeof projectCreateBodySchema>[number];
 
@@ -31,9 +32,8 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
   const items = rawItems.map((item) => projectContract.normalizeBody(item));
   const user = ctx.var.user;
   const organization = ctx.var.organization;
+  const creatorRole = hierarchy.getMostPrivilegedRole('project');
 
-  // Guarded resolution: rejects a workspace in a different organization than the request context,
-  // keeping a new project's membership org-consistent with the workspace it is filed under.
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
 
   const slugAvailability = await checkSlugsAvailable(
@@ -71,7 +71,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
       items: projectRecords.map((project) => ({
         userId: user.id,
         createdBy: user.id,
-        role: 'admin' as const,
+        role: creatorRole,
         entity: project,
         extraFields: { workspaceId: resolvedWorkspaceId },
       })),
@@ -85,7 +85,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
   // The caller's next request reads the new memberships
   invalidateCache.user(user.id);
 
-  const counts = buildZeroCounts('project', 'admin');
+  const counts = buildZeroCounts('project', creatorRole);
   const membershipByProjectId = new Map(createdMemberships.map((membership) => [membership.projectId, membership]));
 
   const projectsWithAudit = await withActorRefs(ctx, projectRecords, [userActorRef(user)]);
@@ -94,7 +94,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
     const membership = membershipByProjectId.get(project.id)!;
     return {
       ...project,
-      included: { membership: toMembershipBase(membership), counts: { ...counts, taskStatusCounts: defaultTaskStatusCounts } },
+      included: { membership: toMembershipBase(membership), counts: { ...counts, taskStatusCounts: zeroTaskStatusCounts } },
     };
   });
 

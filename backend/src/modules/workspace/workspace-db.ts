@@ -3,7 +3,6 @@ import { channelColumns } from '#/db/utils/channel-columns';
 import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
 
 /**
- * Workspaces table is a personal channel entity table.
  * Each workspace belongs to exactly one organization and inherits its tenant (RLS isolation boundary),
  * and is owned by a single user (not shared with others).
  */

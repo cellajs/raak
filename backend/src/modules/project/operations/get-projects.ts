@@ -60,12 +60,11 @@ export async function getProjectsOp(ctx: UserContext, input: z.infer<typeof proj
     ? await findMemberPreviewsByChannels(ctx, {
         channelType: 'project',
         channelIds: projectResults.map((project) => project.id),
-        role: hierarchy.getRoles('project')[0],
+        role: hierarchy.getMostPrivilegedRole('project'),
         limit: 3,
       })
     : null;
 
-  // Build response with included wrapper for optional data
   const items = (await withActorRefs(ctx, projectResults)).map((row) => {
     const { membership: listedMembership, counts, ...project } = row;
     // The row joins the listed user's membership; the response carries the caller's own, or none

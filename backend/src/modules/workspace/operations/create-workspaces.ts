@@ -1,4 +1,5 @@
 import type { z } from '@hono/zod-openapi';
+import { hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { userActorRef, withActorRefs } from '#/modules/actors/actor-refs';
@@ -23,6 +24,7 @@ import { createRejectionState } from '#/utils/rejection-utils';
 export async function createWorkspacesOp(ctx: UserContext, rawItems: z.infer<typeof workspaceContract.createItemSchema>[]) {
   const itemsToCreate = rawItems.map((item) => workspaceContract.normalizeBody(item));
   const { user, organization } = ctx.var;
+  const creatorRole = hierarchy.getMostPrivilegedRole('workspace');
 
   const currentWorkspaces = await countTenantEntityRows(ctx, { entityType: 'workspace' });
   assertTenantQuota(ctx, 'workspace', currentWorkspaces, itemsToCreate.length);
@@ -50,8 +52,8 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: z.infer<typ
     const membershipInserts = workspaceRecords.map((workspace) => ({
       userId: user.id,
       createdBy: user.id,
-      role: 'admin' as const,
-      entity: { ...workspace, tenantId: organization.tenantId },
+      role: creatorRole,
+      entity: workspace,
     }));
     const createdMemberships = await insertMemberships(txCtx, { items: membershipInserts });
     return { workspaceRecords, createdMemberships };
@@ -62,13 +64,13 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: z.infer<typ
   // The caller's next request reads the new memberships
   invalidateCache.user(user.id);
 
-  const counts = buildZeroCounts('workspace', 'admin');
-  const membershipByWsId = new Map(createdMemberships.map((membership) => [membership.workspaceId, membership]));
+  const counts = buildZeroCounts('workspace', creatorRole);
+  const membershipByWorkspaceId = new Map(createdMemberships.map((membership) => [membership.workspaceId, membership]));
   const workspacesWithAudit = await withActorRefs(ctx, workspaceRecords, [userActorRef(user)]);
 
-  const workspaceResponses = workspacesWithAudit.map((ws) => {
-    const membership = membershipByWsId.get(ws.id)!;
-    return { ...ws, included: { membership: toMembershipBase(membership), counts } };
+  const workspaceResponses = workspacesWithAudit.map((workspace) => {
+    const membership = membershipByWorkspaceId.get(workspace.id)!;
+    return { ...workspace, included: { membership: toMembershipBase(membership), counts } };
   });
 
   return { data: workspaceResponses, ...createRejectionState() };
