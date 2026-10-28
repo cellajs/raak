@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.23](https://github.com/cellajs/raak/compare/0.1.22...0.1.23) (2026-10-28)
+
+
+### 🐞 Bug fixes
+
+* **project,workspace:** backend consistency sweep, group B ([#226](https://github.com/cellajs/raak/issues/226)) ([#228](https://github.com/cellajs/raak/issues/228)) ([382c18d](https://github.com/cellajs/raak/commit/382c18dc0e02b001a381ac836cc8233ca76c831f))
+
+
+### 🧹 Chores
+
+* **infra:** raak's runner deploys production, and the stack file carries the rotated passphrase's salt ([#227](https://github.com/cellajs/raak/issues/227)) ([0f17669](https://github.com/cellajs/raak/commit/0f1766972e8cf343a33f38bb4b856f1545c1dfc0))
+* sync upstream cella v0.25.0 (dced2e68e) ([#225](https://github.com/cellajs/raak/issues/225)) ([73a44f8](https://github.com/cellajs/raak/commit/73a44f84bf96230d452e737e2a9664560a391f48))
+* sync upstream cella v0.25.0 (e6ece1291) ([#223](https://github.com/cellajs/raak/issues/223)) ([82ef936](https://github.com/cellajs/raak/commit/82ef936d930d1ca1e6c789da78fe9d7e0304e8b9))
+* upgrade cella to v0.27.0 (83213503c) ([#230](https://github.com/cellajs/raak/issues/230)) ([e8a6011](https://github.com/cellajs/raak/commit/e8a6011a9216df5c8fa12634bcf29bf9dd167b2a))
+
 ## [0.1.22](https://github.com/cellajs/raak/compare/0.1.21...0.1.22) (2026-10-27)
 
 
