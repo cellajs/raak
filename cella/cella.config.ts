@@ -1,21 +1,21 @@
 import { defineConfig } from '@cellajs/cli/config';
 
 /**
- * Cella sync config: run with `pnpm cella` to interact with cella upstream or forks.
+ * Cella CLI config: run with `pnpm cella` to interact with cella upstream or forks.
  */
 export default defineConfig({
   settings: {
     upstreamUrl: 'git@github.com:cellajs/cella.git',
     upstreamBranch: 'main',
     upstreamTrack: 'branch',
-    syncWithPackages: true,
-    packageJsonSync: ['dependencies', 'devDependencies', 'scripts', 'overrides', 'exports', 'engines', 'packageManager'],
+    mergePackageJson: true,
+    packageJsonKeys: ['dependencies', 'devDependencies', 'scripts', 'overrides', 'exports', 'engines', 'packageManager'],
     fileLinkMode: 'file',
   },
 
   // File overrides
   overrides: {
-    // Paths the fork fully owns: never synced (existing or new)
+    // Paths the fork fully owns: never merged (existing or new)
     // NOTE: package.jsons, lockfiles, this file are always ignored
     // NOTE: Modules with `app` owner are also ignored, including their public static asset folder
     ignored: [
