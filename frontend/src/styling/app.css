@@ -1,6 +1,6 @@
 /* The app's own styles: brand tokens, fonts, @theme values. tailwind.css imports this file into the `app` layer, the last
    layer, so a rule here wins over every layered template rule and utility whatever its specificity. cella ships it empty
-   and never syncs it. */
+   and never merges it. */
 
 /* Viewport offsets for full-height board surfaces (consumed via calc(100vh - var(...))).
    One place to update when app chrome heights change; breakpoint switching stays in the

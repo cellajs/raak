@@ -25,8 +25,6 @@ export const workspaceSchema = z
   .object({
     ...createSelectSchema(workspacesTable).shape,
     ...auditShape,
-    createdAt: z.string(),
-    updatedAt: z.string().nullable(),
     toolsConfig: toolsConfigSchema,
     included: workspaceIncludedSchema,
   })

@@ -13,7 +13,7 @@ export function DescriptionEditButton({ onClick, className }: DescriptionEditBut
   return (
     <button
       type="button"
-      aria-label={t('c:edit_resource', { resource: t('c:description').toLowerCase() })}
+      aria-label={t('c:edit_resource', { resource: t('c:description') })}
       onClick={onClick}
       className={cn('focus-effect focus-inset pointer-events-none absolute rounded-md', className)}
     />

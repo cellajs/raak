@@ -16,13 +16,7 @@ import type { InsertWorkspaceModel, WorkspaceModel } from '#/modules/workspace/w
 
 const workspaceName = mockUniqueEnforcer();
 
-/**
- * Generates base workspace fields shared between insert and response mocks.
- * @param id - Workspace ID
- * @param name - Workspace name
- * @param createdAt - Creation timestamp
- * @param organizationId - Parent organization ID
- */
+/** Base workspace fields shared between insert and response mocks. */
 const generateWorkspaceBase = (id: string, name: string, createdAt: string, organizationId: string, tenantId: string) => {
   return {
     ...mockChannelColumns('workspace', { id, name, createdAt, updatedAt: createdAt, tenantId, channelIds: { organizationId } }),
@@ -53,11 +47,9 @@ export const mockWorkspaceResponse = (
     const workspaceId = mockUuid();
     const organizationId = mockUuid();
 
-    // Generate base workspace fields
     const tenantId = mockTenantId();
     const base = generateWorkspaceBase(workspaceId, faker.company.buzzNoun(), createdAt, organizationId, tenantId);
 
-    // Generate membership base with the workspace ID
     const membership = mockMembershipBase(`${key}:membership`, {
       channelType: 'workspace',
       channelId: workspaceId,

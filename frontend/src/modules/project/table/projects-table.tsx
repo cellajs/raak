@@ -54,9 +54,7 @@ export function ProjectsTable({ organization }: ProjectsTableProps) {
           onSelectedRowsChange,
           sortColumns,
           onSortColumnsChange,
-          NoRowsComponent: (
-            <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:project_other').toLowerCase() }} />
-          ),
+          NoRowsComponent: <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:project_other') }} />,
         }}
       />
     </>

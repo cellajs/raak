@@ -65,7 +65,7 @@ export function UpdateProjectForm({ project }: UpdateProjectFormProps) {
           entityType="project"
           tenantId={project.tenantId}
           label={t('c:resource_handle', { resource: t('c:project') })}
-          description={t('c:resource_handle.text', { resource: t('c:project').toLowerCase() })}
+          description={t('c:resource_handle.text')}
           previousSlug={project.slug}
         />
         <FormField

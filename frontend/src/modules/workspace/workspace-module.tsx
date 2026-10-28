@@ -29,7 +29,7 @@ const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>, 
     getRouter().navigate(getCreatedChannelRoute('workspace', workspace));
   };
 
-  const title = i18n.t('c:create_resource', { resource: i18n.t('c:workspace').toLowerCase() });
+  const title = i18n.t('c:create_resource', { resource: i18n.t('c:workspace') });
 
   return dialoger.getState().create(<CreateWorkspaceForm organizationId={organizationId} callback={handleCreated} />, {
     className: 'md:max-w-2xl',

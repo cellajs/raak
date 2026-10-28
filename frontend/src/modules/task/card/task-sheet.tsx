@@ -51,7 +51,7 @@ export function TaskSheet({ id, organizationId }: TaskSheetProps) {
       <ContentPlaceholder
         icon={isOnline ? FlameKindlingIcon : WifiOffIcon}
         title={isOnline ? 'c:no_resource_found' : 'c:offline.text'}
-        titleOptions={isOnline ? { resource: t('c:task').toLowerCase() } : undefined}
+        titleOptions={isOnline ? { resource: t('c:task') } : undefined}
       />
     );
   }

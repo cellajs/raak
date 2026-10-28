@@ -1,12 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Env } from '#/core/context';
-import { AppError } from '#/core/error';
-import { getAdminDb } from '#/db/db';
-import { withActorRef } from '#/modules/actors/actor-refs';
-import { resolveEntity } from '#/modules/entities/entities-queries';
+import { getPublicProjectOp } from '#/modules/project/operations/get-public-project';
 import { publicProjectRoutes } from '#/modules/project/public-routes';
-import { checkAccess } from '#/permissions';
-import { buildSubject } from '#/permissions/build-subject';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });
@@ -14,22 +9,8 @@ const app = new OpenAPIHono<Env>({ defaultHook });
 app.openapi(publicProjectRoutes.getPublicProject, async (ctx) => {
   const { id } = ctx.req.valid('param');
   const { slug: bySlug } = ctx.req.valid('query');
-  const entityType = 'project';
-
-  const project = await resolveEntity({ var: { db: getAdminDb('public project reads') } }, { entityType, identifier: id, bySlug });
-  if (!project) throw new AppError(404, 'not_found', 'warn', { entityType });
-
-  // Anonymous engine check: readable only via the declared public read grant
-  // (publicRead() in permissions-config, matches when project.public is set).
-  const subject = buildSubject(entityType, project, { id: project.id, row: project });
-  if (!checkAccess({ anonymous: true }, 'read', subject).allowed) {
-    throw new AppError(403, 'forbidden', 'warn', { entityType, meta: { organizationId: project.organizationId } });
-  }
-
-  const projectWithAudit = await withActorRef(ctx, project);
-  const projectResponse = { ...projectWithAudit, membership: null, included: {} };
-
-  return ctx.json(projectResponse, 200);
+  const data = await getPublicProjectOp(ctx, id, bySlug);
+  return ctx.json(data, 200);
 });
 
 export const publicProjectHandlers = app;

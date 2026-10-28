@@ -1,5 +1,4 @@
 import { z } from '@hono/zod-openapi';
-import { t } from 'i18next';
 import { roles } from 'shared';
 import { schemaTags } from '#/core/openapi-helpers';
 import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
@@ -13,6 +12,7 @@ import {
   includeQuerySchema,
   noDuplicateSlugsRefine,
   paginationQuerySchema,
+  translatedError,
   validCDNUrlSchema,
   validIdSchema,
   validNameSchema,
@@ -43,8 +43,6 @@ export const projectSchema = z
   .object({
     ...createSelectSchema(projectsTable).shape,
     ...auditShape,
-    createdAt: z.string(),
-    updatedAt: z.string().nullable(),
     toolsConfig: toolsConfigSchema,
     included: projectIncludedSchema,
   })
@@ -74,7 +72,7 @@ export const projectCreateBodySchema = projectContract.createItemSchema
   .array()
   .min(1)
   .max(10)
-  .refine(noDuplicateSlugsRefine, t('error:duplicate_slugs'));
+  .refine(noDuplicateSlugsRefine, translatedError('error:duplicate_slugs'));
 
 export const projectCreateResponseSchema = batchResponseSchema(projectWithMembershipSchema);
 

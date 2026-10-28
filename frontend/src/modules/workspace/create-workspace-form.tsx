@@ -60,7 +60,7 @@ export function CreateWorkspaceForm({ organizationId, callback }: CreateWorkspac
         <AlertDescription className="pr-8">
           <p className="mb-2">{t('c:organization_required.text')}</p>
           <Button onClick={() => openCreateOrganizationDialog({ current: null }, setCreatedOrganization)}>
-            <span>{t('c:create_resource', { resource: t('c:organization').toLowerCase() })}</span>
+            <span>{t('c:create_resource', { resource: t('c:organization') })}</span>
           </Button>
         </AlertDescription>
       </Alert>

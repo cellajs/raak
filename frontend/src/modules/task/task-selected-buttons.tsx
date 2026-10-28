@@ -60,7 +60,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
     else openTaskDropdown({ ...base, dropdownType, projectId, ...bulk.assignedTo });
   };
 
-  const resourceOf = (count: number) => (count > 1 ? t('c:task_other') : t('c:task')).toLowerCase();
+  const resourceOf = (count: number) => (count > 1 ? t('c:task_other') : t('c:task'));
 
   const confirmDelete = (currentTarget: HTMLButtonElement) => {
     const tasks = resolveSelected();
@@ -78,8 +78,8 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
   const deleteLabel = t('c:delete_resource', { resource: resourceOf(selectedTaskIds.length) });
 
   const pickers = [
-    { type: 'status', icon: CircleDotDashedIcon, label: t('c:set_resource', { resource: t('c:status').toLowerCase() }) },
-    { type: 'labels', icon: TagIcon, label: t('c:set_resource', { resource: t('c:label_other').toLowerCase() }) },
+    { type: 'status', icon: CircleDotDashedIcon, label: t('c:set_resource', { resource: t('c:status') }) },
+    { type: 'labels', icon: TagIcon, label: t('c:set_resource', { resource: t('c:label_other') }) },
     { type: 'assignedTo', icon: UserRoundPlusIcon, label: t('c:assign_to') },
   ] as const;
 

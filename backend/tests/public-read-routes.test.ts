@@ -68,8 +68,10 @@ describe('Public read routes (engine-resolved grants, anonymous actor)', async (
     const publicResult = await call(getPublicProject, { path: { id: publicProjectId }, headers: defaultHeaders });
     expect(publicResult.response.status).toBe(200);
 
+    // A private project reads as missing, so the answer names neither the project nor its organization
     const privateResult = await call(getPublicProject, { path: { id: privateProjectId }, headers: defaultHeaders });
-    expect(privateResult.response.status).toBe(403);
+    expect(privateResult.response.status).toBe(404);
+    expect(privateResult.error).not.toHaveProperty('meta');
   });
 
   it("Q2: public task GET follows the task's own `public`, independent of the project", async () => {

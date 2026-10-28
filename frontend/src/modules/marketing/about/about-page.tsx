@@ -1,7 +1,6 @@
 import { ArrowDownIcon, CheckIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { appConfig } from 'shared';
 import { scrollToSectionById } from '~/hooks/scroll-spy-store';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollSpy } from '~/hooks/use-scroll-spy';
@@ -33,7 +32,7 @@ export function AboutPage() {
           {joinedToWaitlist ? (
             <span className="flex items-center justify-between gap-2 rounded-full border-2 border-success px-4 py-3.5 ring-4 ring-primary/5">
               <CheckIcon className="size-8 text-success" />
-              <span className="p-2">{t('c:in_waitlist', { appName: appConfig.name })}</span>
+              <span className="p-2">{t('c:in_waitlist')}</span>
             </span>
           ) : (
             <WaitlistForm

@@ -1,145 +1,75 @@
+import { defaultOrder, orderGap } from 'shared/utils/display-order';
 import type { DbContext, UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
-import { deleteProjectMembership, findMaxDisplayOrder, insertProjectMembership } from '#/modules/project/project-queries';
+import { insertMembershipRows } from '#/modules/memberships/memberships-queries';
+import { deleteProjectMembership, findMaxDisplayOrder } from '#/modules/project/project-queries';
 import { getValidChannel } from '#/permissions';
-
-type ProjectMembershipTarget = { id: string; entityType: 'project' };
 
 type ProjectMembership = UserContext['var']['memberships'][number] & { channelType: 'project'; projectId: string };
 
-type SetProjectMembershipWorkspaceInput = { membership: ProjectMembership; workspaceId: string | null; role?: ProjectMembership['role'] };
-
-type ReplaceProjectMembershipWorkspaceInput = SetProjectMembershipWorkspaceInput & { createdBy: string };
-
-type UpsertProjectMembershipWorkspaceInput = { project: ProjectMembershipTarget; workspaceId: string | null };
-
-function isProjectMembershipTarget(
-  membership: UserContext['var']['memberships'][number],
-  project: ProjectMembershipTarget,
-): membership is ProjectMembership {
-  return membership.projectId === project.id && membership.channelType === project.entityType;
-}
-
+/**
+ * The id of a workspace the caller may read; `getValidChannel` limits it to the request's organization.
+ * @throws The refusals of `getValidChannel` for `read`.
+ */
 export async function resolveProjectWorkspaceId(ctx: UserContext, workspaceId: string): Promise<string> {
   const { entity } = await getValidChannel(ctx, workspaceId, 'workspace', 'read');
-  // A project may only be assigned to a workspace in the same organization as the request context.
-  // Without this guard a user with cross-org read access could link a project into a foreign-org
-  // workspace, producing a membership whose organizationId (the project's org) mismatches the
-  // workspace's org and later fails org-scoped reads (e.g. labels) with a spurious 404.
-  if (entity.organizationId !== ctx.var.organization.id) {
-    throw new AppError(409, 'workspace_in_other_organization', 'warn', { entityType: 'workspace' });
-  }
   return entity.id;
 }
 
-function findCurrentUserProjectMembership(ctx: UserContext, project: ProjectMembershipTarget) {
-  return ctx.var.memberships.find((membership) => isProjectMembershipTarget(membership, project));
-}
-
-export function requireCurrentUserProjectMembership(ctx: UserContext, project: ProjectMembershipTarget) {
-  const membership = findCurrentUserProjectMembership(ctx, project);
+/**
+ * The caller's membership of the project.
+ * @throws AppError 404 `not_found` when the caller holds none.
+ */
+export function requireProjectMembership(ctx: UserContext, project: { id: string }) {
+  const membership = ctx.var.memberships.find(
+    (candidate): candidate is ProjectMembership => candidate.channelType === 'project' && candidate.projectId === project.id,
+  );
 
   if (!membership) {
-    throw new AppError(404, 'not_found', 'warn', { entityType: project.entityType, meta: { membership: 'current_user', projectId: project.id } });
+    throw new AppError(404, 'not_found', 'warn', { entityType: 'project', meta: { membership: 'current_user', projectId: project.id } });
   }
 
   return membership;
 }
 
-async function replaceProjectMembershipWorkspace(
-  ctx: DbContext,
-  { membership, workspaceId, createdBy, role }: ReplaceProjectMembershipWorkspaceInput,
-) {
-  const { db } = ctx.var;
-
-  return db.transaction(async (tx) => {
+/**
+ * Files the caller's project membership under a workspace, at the end of the caller's order there, or with a null
+ * `workspaceId` takes it out of its workspace. The membership keeps its role.
+ */
+export async function setProjectMembershipWorkspace(ctx: UserContext, membership: ProjectMembership, workspaceId: string | null) {
+  const updatedMembership = await ctx.var.db.transaction(async (tx) => {
     const txCtx: DbContext = { var: { db: tx } };
     const maxOrder = workspaceId
       ? await findMaxDisplayOrder(txCtx, { userId: membership.userId, channelType: membership.channelType, workspaceId })
       : null;
 
-    const displayOrder = workspaceId ? (maxOrder ? maxOrder + 1 : 1) : membership.displayOrder;
+    const displayOrder = workspaceId ? (maxOrder === null ? defaultOrder : maxOrder + orderGap) : membership.displayOrder;
 
-    await deleteProjectMembership(txCtx, {
-      membershipId: membership.id,
-      userId: membership.userId,
-      channelId: membership.channelId,
-      projectId: membership.projectId,
-    });
+    await deleteProjectMembership(txCtx, { membershipId: membership.id, userId: membership.userId });
 
-    return insertProjectMembership(txCtx, {
-      values: {
-        tenantId: membership.tenantId,
-        userId: membership.userId,
-        channelType: membership.channelType,
-        channelId: membership.channelId,
-        organizationId: membership.organizationId,
-        workspaceId,
-        projectId: membership.projectId,
-        role: role ?? membership.role,
-        archived: membership.archived,
-        muted: membership.muted,
-        displayOrder,
-        createdBy,
-      },
+    const [insertedMembership] = await insertMembershipRows(txCtx, {
+      values: [
+        {
+          tenantId: membership.tenantId,
+          userId: membership.userId,
+          channelType: membership.channelType,
+          channelId: membership.channelId,
+          organizationId: membership.organizationId,
+          workspaceId,
+          projectId: membership.projectId,
+          role: membership.role,
+          archived: membership.archived,
+          muted: membership.muted,
+          displayOrder,
+          createdBy: ctx.var.user.id,
+        },
+      ],
     });
+    return insertedMembership;
   });
-}
-
-export async function setCurrentUserProjectMembershipWorkspace(
-  ctx: UserContext,
-  { membership, workspaceId, role }: SetProjectMembershipWorkspaceInput,
-) {
-  const updatedMembership = await replaceProjectMembershipWorkspace(ctx, { membership, workspaceId, createdBy: ctx.var.user.id, role });
 
   invalidateCache.user(updatedMembership.userId);
 
   return updatedMembership;
-}
-
-async function createCurrentUserProjectMembershipInWorkspace(
-  ctx: UserContext,
-  { project, workspaceId }: { project: ProjectMembershipTarget; workspaceId: string },
-) {
-  const { user, organization } = ctx.var;
-
-  const maxOrder = await findMaxDisplayOrder(ctx, { userId: user.id, channelType: project.entityType, workspaceId });
-
-  const membership = await insertProjectMembership(ctx, {
-    values: {
-      tenantId: organization.tenantId,
-      userId: user.id,
-      channelType: project.entityType,
-      channelId: project.id,
-      organizationId: organization.id,
-      workspaceId,
-      projectId: project.id,
-      role: organization.membership?.role ?? 'member',
-      createdBy: user.id,
-      displayOrder: maxOrder ? maxOrder + 1 : 1,
-    },
-  });
-
-  invalidateCache.user(membership.userId);
-
-  return membership;
-}
-
-export async function upsertCurrentUserProjectMembershipWorkspace(ctx: UserContext, { project, workspaceId }: UpsertProjectMembershipWorkspaceInput) {
-  const existingMembership = findCurrentUserProjectMembership(ctx, project);
-
-  if (!existingMembership) {
-    if (workspaceId) {
-      return createCurrentUserProjectMembershipInWorkspace(ctx, { project, workspaceId });
-    }
-
-    throw new AppError(409, 'project_not_in_workspace', 'warn', { entityType: 'project' });
-  }
-
-  return setCurrentUserProjectMembershipWorkspace(ctx, {
-    membership: existingMembership,
-    workspaceId,
-    role: existingMembership.role === 'guest' ? (ctx.var.organization.membership?.role ?? 'member') : existingMembership.role,
-  });
 }

@@ -21,7 +21,7 @@ export function TaskPanelEmpty({ projectId }: TaskPanelEmptyProps) {
         className="group/empty min-h-[60vh] group-data-[search=true]/panel:hidden"
         icon={PalmtreeIcon}
         title="c:no_resource_yet"
-        titleOptions={{ resource: t('c:task_other').toLowerCase() }}
+        titleOptions={{ resource: t('c:task_other') }}
       >
         {isInWorkspace && (
           <>
@@ -46,7 +46,7 @@ export function TaskPanelEmpty({ projectId }: TaskPanelEmptyProps) {
         className="group-data-[search=false]/panel:hidden"
         icon={SearchIcon}
         title="c:no_resource_found"
-        titleOptions={{ resource: t('c:task_other').toLowerCase() }}
+        titleOptions={{ resource: t('c:task_other') }}
       />
     </>
   );

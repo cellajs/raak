@@ -1,0 +1,13 @@
+{
+  "projectId": "4a4f6b2c-0ccd-4306-8adb-6e7d0e1cd54e",
+  "release": "73a44f84bf96230d452e737e2a9664560a391f48",
+  "environments": [
+    {
+      "environment": "production",
+      "projectId": "e2e322db-51db-4141-8b2b-1602966a9ca0",
+      "region": "nl-ams",
+      "definition": "raak-main",
+      "repository": "https://github.com/cellajs/raak.git"
+    }
+  ]
+}

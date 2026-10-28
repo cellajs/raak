@@ -39,7 +39,7 @@ export function WorkspaceActionButtons() {
     {
       key: 'add',
       icon: PlusIcon,
-      label: t('c:add_resource', { resource: t('c:project').toLowerCase() }),
+      label: t('c:add_resource', { resource: t('c:project') }),
       onClick: createNewProject,
       ref: refs.add,
       variant: 'secondary' as const,
