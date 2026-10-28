@@ -47,13 +47,15 @@ describe('Filing projects under workspaces', async () => {
     const { admin, path, headersOf } = await orgWithUsers();
     const workspaceId = await createWorkspace(path, headersOf(admin));
     const projectId = await createProject(path, headersOf(admin), workspaceId);
+    const [filed] = await projectMembershipsOf(admin.id, projectId);
 
     const { response } = await call(deleteWorkspaces, { path, body: { ids: [workspaceId] }, headers: headersOf(admin) });
 
     expect(response.status).toBe(200);
     const memberships = await projectMembershipsOf(admin.id, projectId);
     expect(memberships).toHaveLength(1);
-    expect(memberships[0]).toMatchObject({ role: 'admin', workspaceId: null });
+    const { role, displayOrder, archived, muted, createdAt, createdBy } = filed;
+    expect(memberships[0]).toMatchObject({ role, displayOrder, archived, muted, createdAt, createdBy, workspaceId: null, updatedBy: admin.id });
   });
 
   it('refuses to file a project under a workspace for an organization member who is no project member', async () => {

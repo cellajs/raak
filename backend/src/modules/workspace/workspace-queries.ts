@@ -60,15 +60,13 @@ interface UnfileWorkspaceMembershipsOpts {
  * of the workspaces themselves. `workspace_id` is immutable (`memberships_immutable_keys`), so a copy replaces each row.
  * @returns The users holding any membership under the workspaces, the workspaces' members included.
  */
-export const unfileWorkspaceMemberships = async (ctx: DbContext, { ids, updatedBy }: UnfileWorkspaceMembershipsOpts) => {
+export const unfileWorkspaceMemberships = async (ctx: ActorContext, { ids, updatedBy }: UnfileWorkspaceMembershipsOpts) => {
   const { db } = ctx.var;
-  const holders = await db
-    .selectDistinct({ userId: membershipsTable.userId })
-    .from(membershipsTable)
-    .where(inArray(membershipsTable.workspaceId, ids));
+  const underWorkspaces = and(inArray(membershipsTable.workspaceId, ids), requestScopeWhere(ctx, membershipsTable));
+  const holders = await db.selectDistinct({ userId: membershipsTable.userId }).from(membershipsTable).where(underWorkspaces);
   const filed = await db
     .delete(membershipsTable)
-    .where(and(inArray(membershipsTable.workspaceId, ids), ne(membershipsTable.channelType, 'workspace')))
+    .where(and(underWorkspaces, ne(membershipsTable.channelType, 'workspace')))
     .returning();
   if (filed.length) {
     await db
