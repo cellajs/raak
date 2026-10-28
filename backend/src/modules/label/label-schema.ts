@@ -32,7 +32,7 @@ export const labelSchema = z
     stx: stxBaseSchema,
   })
   .openapi('Label', {
-    description: 'A label used to categorize and filter tasks within a project or workspace.',
+    description: 'A label used to categorize and filter tasks within a project.',
     example: mockLabelResponse(),
     'x-tags': schemaTags('data', 'labels', 'app'),
   });
@@ -49,8 +49,7 @@ export const labelEmbeddedSchema = z.object({
 });
 
 /** Drizzle select object for fetching only embedded label columns */
-type LabelEmbeddedKeys = keyof typeof labelEmbeddedSchema.shape;
-export const labelEmbeddedSelect = pick(getColumns(labelsTable), Object.keys(labelEmbeddedSchema.shape) as LabelEmbeddedKeys[]);
+export const labelEmbeddedSelect = pick(getColumns(labelsTable), labelEmbeddedSchema.keyof().options);
 
 /** Wire registration: lens-widened schemas bound to the label entity at runtime. */
 export const labelContract = evolutionContract.product('label', {
@@ -63,7 +62,7 @@ export const labelContract = evolutionContract.product('label', {
     displayOrder: z.number(),
     /** Epic documentation; the update op rejects description edits on other modes. */
     description: z.string().max(maxLength.html).nullable(),
-    /** Tag and epic transitions (admin-gated in the op); primary rows never change mode. */
+    /** Tag and epic transitions, open to any project member; primary rows never change mode. */
     mode: z.enum(['secondary', 'epic']),
     /** Setting true relinks a primary label to its setupConfig entry (the server re-syncs its fields). */
     organizationTracked: z.boolean(),
@@ -71,7 +70,6 @@ export const labelContract = evolutionContract.product('label', {
   blockFields: ['description'],
 });
 
-/** Update body using fields pattern for single or multi-field updates with conflict detection */
 export const labelUpdateStxBodySchema = labelContract.updateBodySchema;
 
 export const labelListQuerySchema = productListQuerySchema({
@@ -82,7 +80,7 @@ export const labelListQuerySchema = productListQuerySchema({
     .string()
     .optional()
     .transform((val) => (val ? val.split(',').map((s) => s.trim()) : undefined))
-    .pipe(z.array(z.enum(labelModes)).optional()),
+    .pipe(z.array(z.enum(labelModes)).max(labelModes.length).optional()),
   projectId: validIdSchema.optional(),
   workspaceId: validIdSchema.optional(),
 }).refine((data) => !data.projectId || !data.workspaceId, { message: 'Only one of projectId or workspaceId can be provided' });
@@ -94,7 +92,7 @@ export const labelCreateManyStxBodySchema = labelContract.createItemSchema
   .superRefine((items, ctx) => {
     items.forEach((item, index) => {
       const issue = validatePlacement('label', item);
-      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message });
+      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message, params: { type: issue.type } });
     });
   });
 export const labelCreateResponseSchema = batchResponseSchema(labelSchema);

@@ -2351,7 +2351,7 @@ export const sendNewsletter = <ThrowOnError extends boolean = true>(
 /**
  * Get public task
  *
- * Retrieves a task by its ID. For publicly shared.
+ * Retrieves a public task by its ID.
  *
  * **GET /public/tasks/{id}** ·· [getPublicTask](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/public/tasks/{id}) ·· _tasks · app · product_
  *

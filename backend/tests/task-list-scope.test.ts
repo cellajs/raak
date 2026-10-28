@@ -98,6 +98,31 @@ describe('Task list read scope without a project', async () => {
     expect(result.ids).toEqual([taskA]);
   });
 
+  it('the accepted cut-off goes by when a task was accepted, not by its last edit', async () => {
+    const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+    const accepted = (statusChangedAt: string, updatedAt: string) => ({
+      tenantId: tenant.tenantId,
+      organizationId: tenant.organization.id,
+      projectId: projectA,
+      id: generateId(),
+      name: 'accepted',
+      summary: '',
+      primaryLabelId: crypto.randomUUID(),
+      displayOrder: 1,
+      status: TaskStatus.Accepted,
+      statusChangedAt,
+      updatedAt,
+      stx: mockStxBase(),
+      createdBy: tenant.user.id,
+    });
+    const longAgo = accepted(daysAgo(30), daysAgo(1));
+    const lately = accepted(daysAgo(1), daysAgo(1));
+    await db.insert(tasksTable).values([longAgo, lately]);
+
+    const result = await listTasks(tenant.sessionCookie, { projectId: projectA, acceptedCutOff: 14 });
+    expect(result.ids).toEqual([taskA, lately.id].sort());
+  });
+
   it('an unknown project still answers 404 for tasks and labels', async () => {
     const unknown = generateId();
     expect((await listTasks(tenant.sessionCookie, { projectId: unknown })).status).toBe(404);

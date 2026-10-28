@@ -2,13 +2,13 @@ import type { z } from '@hono/zod-openapi';
 import type { ChannelEntityType } from 'shared';
 import { labelName, labelSlug } from 'shared/config/labels-config';
 import type { OrgContext } from '#/core/context';
-import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { countTenantEntityRows } from '#/modules/entities/entities-queries';
+import { normalizeLabelName } from '#/modules/label/helpers/label-name';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
-import { findLabelsByOrg, insertLabels } from '#/modules/label/label-queries';
+import { findLabelColorsByName, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
 import { assertTenantQuota } from '#/modules/tenants/tenant-restrictions';
 import { getValidChannel } from '#/permissions';
@@ -34,7 +34,6 @@ export async function createLabelsOp(
   const input = rawInput.map((item) => labelContract.normalizeCreateItem(item));
   const { organization } = ctx.var;
 
-  // Rows an earlier attempt of this create wrote come back as they are; only the other items are created.
   const replayed = await checkIdempotency(
     ctx,
     labelsTable,
@@ -50,16 +49,12 @@ export async function createLabelsOp(
   // Creating primary/epic labels requires project-admin authority (project update permission)
   const managedHome = async (homeCtx: OrgContext, id: string, type: ChannelEntityType) => (await getValidChannel(homeCtx, id, type, 'update')).entity;
 
-  // Fetch existing labels in org for duplicate check and color matching
-  const existingLabels = await tenantRead(ctx, (readCtx) => findLabelsByOrg(readCtx));
+  const names = fresh.flatMap(({ name, mode }) => (name ? labelName(name, mode) : []));
+  const existingLabels = await tenantRead(ctx, (readCtx) => findLabelColorsByName(readCtx, { names }));
 
   const labelsToInsert: InsertLabelModel[] = [];
   for (const { stx, ...labelInfo } of fresh) {
-    if (labelInfo.name) {
-      labelInfo.name = labelName(labelInfo.name, labelInfo.mode);
-      if (!labelInfo.name)
-        throw new AppError(400, 'invalid_request', 'warn', { entityType: 'label', meta: { reason: 'Label name is empty as a slug' } });
-    }
+    if (labelInfo.name !== undefined) labelInfo.name = normalizeLabelName(labelInfo.name, labelInfo.mode);
 
     // Maintain same color for labels already in organization
     const sameLabelInOrg = existingLabels.find(({ name }) => name === labelInfo.name);

@@ -3,7 +3,6 @@ import type { ActorContext, DbContext } from '#/core/context';
 import type { DbOrTx } from '#/db/db';
 import type { ActorId } from '#/db/utils/ids';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
-import { publishedRowsPredicate } from '#/db/utils/published-predicate';
 import { requestScope, requestScopeWhere } from '#/db/utils/request-scope';
 import { deleteStamps, updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
@@ -59,21 +58,23 @@ export const deleteTasksByIds = async (ctx: ActorContext, { ids, actorId }: Dele
 };
 
 interface FindProjectMemberUserIdsOpts {
-  projectId: string;
+  projectIds: string[];
   userIds: string[];
 }
 
-export const findProjectMemberUserIds = async (ctx: ActorContext, { projectId, userIds }: FindProjectMemberUserIdsOpts) => {
+/** The project memberships of `userIds` in `projectIds`, as user and project id pairs. */
+export const findProjectMemberUserIds = async (ctx: ActorContext, { projectIds, userIds }: FindProjectMemberUserIdsOpts) => {
+  if (userIds.length === 0) return [];
   const { db } = ctx.var;
   const { organizationId } = requestScope(ctx);
   return db
-    .select({ userId: membershipsTable.userId })
+    .select({ userId: membershipsTable.userId, projectId: membershipsTable.projectId })
     .from(membershipsTable)
     .where(
       and(
         inArray(membershipsTable.userId, userIds),
         eq(membershipsTable.channelType, 'project'),
-        eq(membershipsTable.projectId, projectId),
+        inArray(membershipsTable.projectId, projectIds),
         eq(membershipsTable.organizationId, organizationId),
       ),
     );
@@ -202,10 +203,6 @@ export const reassignTasksFromDeletedPrimaries = async (
         WHERE l.project_id = ${tasksTable.projectId}
           AND l.mode = 'primary'
           AND l.deleted_at IS NULL
-          AND l.id NOT IN (${sql.join(
-            deletedPrimaryIds.map((id) => sql`${id}::uuid`),
-            sql`, `,
-          )})
         ORDER BY l.display_order ASC NULLS LAST
         LIMIT 1
       )`,
@@ -215,7 +212,7 @@ export const reassignTasksFromDeletedPrimaries = async (
     .where(and(inArray(tasksTable.primaryLabelId, deletedPrimaryIds), requestScopeWhere(ctx, tasksTable, 'task')));
 };
 
-const liveTasks = (ids: string[]) => and(inArray(tasksTable.id, ids), isNull(tasksTable.deletedAt), publishedRowsPredicate(tasksTable));
+const liveTasks = (ids: string[]) => and(inArray(tasksTable.id, ids), isNull(tasksTable.deletedAt));
 
 /** A live task's title columns and body, for an instant notification email. */
 export const findTaskNotificationPreview = async (tx: DbOrTx, id: string) => {
@@ -241,7 +238,7 @@ export const findLiveTaskById = async (ctx: DbContext, { id }: { id: string }) =
   return task;
 };
 
-/** Where a task's project lives, with no request scope; `organizationSlug` is null when the organization row is gone. */
+/** Where a task's project lives, with no request scope. */
 export const findTaskLinkTarget = async (ctx: DbContext, { projectId }: { projectId: string }) => {
   const [target] = await ctx.var.db
     .select({
@@ -253,7 +250,7 @@ export const findTaskLinkTarget = async (ctx: DbContext, { projectId }: { projec
       organizationSlug: organizationsTable.slug,
     })
     .from(projectsTable)
-    .leftJoin(organizationsTable, eq(organizationsTable.id, projectsTable.organizationId))
+    .innerJoin(organizationsTable, eq(organizationsTable.id, projectsTable.organizationId))
     .where(eq(projectsTable.id, projectId))
     .limit(1);
   return target;

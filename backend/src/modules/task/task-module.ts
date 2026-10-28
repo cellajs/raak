@@ -1,15 +1,11 @@
-import { textFromDocument, titleFromDocument } from 'shared/blocknote';
+import { textFromDocument } from 'shared/blocknote';
 import { defineBackendModule } from '#/lib/module';
-import { htmlToExcerpt } from '#/modules/notification/helpers/render-digest-html';
+import { taskTitle } from '#/modules/task/helpers/task-title';
 import { updateTaskOp } from '#/modules/task/operations/update-task';
 import { publicTaskHandlers } from '#/modules/task/public-handlers';
 import { taskRedirectHandlers } from '#/modules/task/redirect-handlers';
 import { taskHandlers } from '#/modules/task/task-handlers';
 import { findTaskNotificationPreview, findTaskNotificationTitles } from '#/modules/task/task-queries';
-import { maxLength } from '#/schemas';
-
-// A task's title is its summary block: `name` is empty for a task made in the app, and older rows hold it as HTML.
-const taskTitle = ({ summary, name }: { summary: string; name: string }) => titleFromDocument(summary) || htmlToExcerpt(name, maxLength.field);
 
 defineBackendModule({
   name: 'tasks',

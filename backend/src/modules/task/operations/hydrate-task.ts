@@ -6,36 +6,32 @@ import type { labelEmbeddedSchema } from '#/modules/label/label-schema';
 import type { TaskModel } from '#/modules/task/task-db';
 import type { taskSchema } from '#/modules/task/task-schema';
 import type { UserMinimalBase } from '#/modules/user/helpers/user-minimal';
-import type { userMinimalBaseSchema } from '#/schemas/minimal-base';
 
-type UserMinimalBaseSchemas = z.infer<typeof userMinimalBaseSchema>;
-type Labels = z.infer<typeof labelEmbeddedSchema>;
+type EmbeddedLabel = z.infer<typeof labelEmbeddedSchema>;
 
-type ReturnTask = z.infer<typeof taskSchema>;
+/** A task as it reads on the wire, with embedded assignees and labels. */
+export type TaskResponse = z.infer<typeof taskSchema>;
 
 /** Map task DB models to tasks with embedded assignees and labels; the writer ids stay ids. */
-const mapTask = (task: TaskModel, userMap: Map<string, UserMinimalBaseSchemas>, labelMap: Map<string, Labels>) => {
-  const taskLabels = task.labels as string[];
-  const taskAssignedTo = [...new Set(task.assignedTo as string[])];
+const mapTask = (task: TaskModel, userMap: Map<string, UserMinimalBase>, labelMap: Map<string, EmbeddedLabel>) => {
+  const labels = task.labels.flatMap((id) => labelMap.get(id) ?? []);
+  const assignedTo = [...new Set(task.assignedTo)]
+    .flatMap((id) => userMap.get(id) ?? [])
+    .sort((a, b) => a.name.localeCompare(b.name, appConfig.defaultLanguage));
 
-  const labels = taskLabels.map((id) => labelMap.get(id)).filter(Boolean) as Labels[];
-  const assignedTo = (taskAssignedTo.map((id) => userMap.get(id)).filter(Boolean) as UserMinimalBaseSchemas[]).sort((a, b) =>
-    a.name.localeCompare(b.name, appConfig.defaultLanguage),
-  );
-
-  return { ...task, stx: task.stx, assignedTo, labels, primaryLabel: labelMap.get(task.primaryLabelId) ?? null };
+  return { ...task, assignedTo, labels, primaryLabel: labelMap.get(task.primaryLabelId) ?? null };
 };
 
 /**
- * Hydrate a list of tasks with user and label data using O(1) Map lookups. Writers resolve through `withActorRefs`, the
- * members handed in as known references, so a creator who left the project still shows.
+ * Hydrate tasks with their assignees and labels. Writers resolve through `withActorRefs`, the members handed in as known
+ * references, so a creator who left the project still shows.
  */
 export const hydrateTasks = async (
   ctx: DbContext,
   tasks: TaskModel[],
-  members: UserMinimalBaseSchemas[],
-  labels: Labels[],
-): Promise<ReturnTask[]> => {
+  members: UserMinimalBase[],
+  labels: EmbeddedLabel[],
+): Promise<TaskResponse[]> => {
   const userMap = new Map(members.map((m) => [m.id, m]));
   const labelMap = new Map(labels.map((l) => [l.id, l]));
   return withActorRefs(
@@ -45,8 +41,8 @@ export const hydrateTasks = async (
   );
 };
 
-/** Hydrate a single task. Convenience wrapper around hydrateTasks. */
-export const hydrateTask = async (ctx: DbContext, task: TaskModel, members: UserMinimalBaseSchemas[], labels: Labels[]): Promise<ReturnTask> => {
+/** `hydrateTasks` for one task. */
+export const hydrateTask = async (ctx: DbContext, task: TaskModel, members: UserMinimalBase[], labels: EmbeddedLabel[]): Promise<TaskResponse> => {
   const [hydrated] = await hydrateTasks(ctx, [task], members, labels);
   return hydrated;
 };
@@ -58,9 +54,8 @@ export const hydrateTask = async (ctx: DbContext, task: TaskModel, members: User
 export const hydrateTaskLite = (
   task: TaskModel,
   currentUser: Pick<UserMinimalBase, 'id' | 'name' | 'slug' | 'thumbnailUrl'> | undefined,
-): ReturnTask => ({
+): TaskResponse => ({
   ...task,
-  stx: task.stx,
   labels: [],
   assignedTo: [],
   primaryLabel: null,

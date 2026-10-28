@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray, isNull, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull, not, or, type SQL } from 'drizzle-orm';
 import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
@@ -10,17 +10,19 @@ import { deleteStamps, updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
+import { projectsTable } from '#/modules/project/project-db';
 import { getOrderColumns } from '#/utils/order-column';
 import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
-import { textSearchFilter } from '#/utils/sql';
+import { keywordSearchFilter, textSearchFilter } from '#/utils/sql';
 
-/** Find all labels in an organization (used for duplicate/color matching). */
-export const findLabelsByOrg = async (ctx: ActorContext) => {
+/** Name and color of the organization's labels named one of `names`, any mode or project. */
+export const findLabelColorsByName = async (ctx: ActorContext, { names }: { names: string[] }) => {
+  if (names.length === 0) return [];
   const { db } = ctx.var;
   return db
-    .select()
+    .select({ name: labelsTable.name, color: labelsTable.color })
     .from(labelsTable)
-    .where(requestScopeWhere(ctx, labelsTable, 'label'));
+    .where(and(requestScopeWhere(ctx, labelsTable, 'label'), inArray(labelsTable.name, names)));
 };
 
 interface InsertLabelsOpts {
@@ -102,6 +104,36 @@ export const findLabelNameById = async (ctx: DbContext, id: string): Promise<str
   return row?.name ?? null;
 };
 
+/** The live labels among `ids` in `projectIds`, with their project. */
+export const findLiveLabelProjects = async (ctx: ActorContext, { ids, projectIds }: { ids: string[]; projectIds: string[] }) => {
+  if (ids.length === 0) return [];
+  const { db } = ctx.var;
+  return db
+    .select({ id: labelsTable.id, projectId: labelsTable.projectId })
+    .from(labelsTable)
+    .where(
+      and(
+        inArray(labelsTable.id, ids),
+        inArray(labelsTable.projectId, projectIds),
+        requestScopeWhere(ctx, labelsTable, 'label'),
+        isNull(labelsTable.deletedAt),
+      ),
+    );
+};
+
+/**
+ * Locks the project row so the primary-label deletes of one project, which keep it a live primary label, run one at a
+ * time. `FOR NO KEY UPDATE` leaves the foreign-key checks of rows inserted into the project (`KEY SHARE`) unblocked.
+ */
+export const lockProjectForPrimaryLabels = async (ctx: ActorContext, { projectId }: { projectId: string }) => {
+  const { db } = ctx.var;
+  await db
+    .select({ id: projectsTable.id })
+    .from(projectsTable)
+    .where(and(eq(projectsTable.id, projectId), requestScopeWhere(ctx, projectsTable, 'project')))
+    .for('no key update');
+};
+
 /** Mode and project of the live labels among `ids`. */
 export const findLiveLabelModes = async (ctx: ActorContext, { ids }: { ids: string[] }) => {
   const { db } = ctx.var;
@@ -109,23 +141,6 @@ export const findLiveLabelModes = async (ctx: ActorContext, { ids }: { ids: stri
     .select({ id: labelsTable.id, mode: labelsTable.mode, projectId: labelsTable.projectId })
     .from(labelsTable)
     .where(and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)));
-};
-
-/** How many live primary labels a project has. */
-export const countLivePrimaryLabels = async (ctx: ActorContext, { projectId }: { projectId: string }): Promise<number> => {
-  const { db } = ctx.var;
-  const [{ liveCount }] = await db
-    .select({ liveCount: count() })
-    .from(labelsTable)
-    .where(
-      and(
-        eq(labelsTable.projectId, projectId),
-        requestScopeWhere(ctx, labelsTable, 'label'),
-        eq(labelsTable.mode, 'primary'),
-        isNull(labelsTable.deletedAt),
-      ),
-    );
-  return liveCount;
 };
 
 interface PropagateSetupConfigLabelsOpts {
@@ -191,9 +206,16 @@ export const findLabelsPaginated = async (ctx: ActorContext, opts: FindLabelsPag
 
   // Tokenized search over name and description-derived keywords, as task keyword matching does: every word must hit
   // (AND across words, OR across columns per word). parseSearchQuery strips the '=' highlight marker.
-  for (const word of parseSearchQuery(q).terms) {
+  const { terms, excludeTerms } = parseSearchQuery(q);
+  for (const word of terms) {
     const wordFilter = or(textSearchFilter(labelsTable.name, word), textSearchFilter(labelsTable.keywords, word));
     if (wordFilter) filters.push(wordFilter);
+  }
+  // An excluded word leaves a label out only as a whole word, as in the task search: '-api' spares "rapid"
+  for (const word of excludeTerms) {
+    const wordFilter = or(keywordSearchFilter(labelsTable.name, word), keywordSearchFilter(labelsTable.keywords, word));
+    const excluded = wordFilter && not(wordFilter);
+    if (excluded) filters.push(excluded);
   }
   if (modes?.length) filters.push(inArray(labelsTable.mode, modes));
 

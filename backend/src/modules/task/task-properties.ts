@@ -7,3 +7,6 @@ export enum TaskStatus {
   Reviewed = 1,
   Accepted = 0,
 }
+
+/** Every status, in declaration order. */
+export const taskStatuses = Object.values(TaskStatus).filter((status): status is TaskStatus => typeof status === 'number');

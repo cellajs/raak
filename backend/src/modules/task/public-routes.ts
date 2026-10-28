@@ -2,8 +2,8 @@ import { z } from '@hono/zod-openapi';
 import { createXRoutes, errors, json, xRoute } from '#/core/x-routes';
 import { publicGuard } from '#/middlewares/guard';
 import { mockTasksResponse } from '#/modules/task/task-mocks';
-import { taskListQueryBaseSchema, taskSchema } from '#/modules/task/task-schema';
-import { maxLength, paginationSchema, validIdSchema } from '#/schemas';
+import { publicTaskListQuerySchema, taskSchema } from '#/modules/task/task-schema';
+import { paginationSchema, validIdSchema } from '#/schemas';
 
 const publicTaskRoutes = createXRoutes(['tasks', 'app', 'product'], {
   getPublicTask: xRoute({
@@ -11,7 +11,7 @@ const publicTaskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     path: '/{id}',
     xGuard: [publicGuard],
     summary: 'Get public task',
-    description: 'Retrieves a task by its ID. For publicly shared.',
+    description: 'Retrieves a public task by its ID.',
     request: { params: z.object({ id: validIdSchema }) },
     responses: { 200: json('Task', taskSchema), ...errors(403, 404) },
   }),
@@ -21,7 +21,7 @@ const publicTaskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     xGuard: [publicGuard],
     summary: 'Get public tasks',
     description: 'Returns a list of public tasks associated with a specific project. For publicly shared boards.',
-    request: { query: taskListQueryBaseSchema.omit({ workspaceId: true }).extend({ projectId: z.string().max(maxLength.id) }) },
+    request: { query: publicTaskListQuerySchema },
     responses: { 200: json('Tasks', paginationSchema(taskSchema), mockTasksResponse()), ...errors(404) },
   }),
 });

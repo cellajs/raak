@@ -4,10 +4,8 @@ import { mockLabel } from '#/modules/label/label-mocks';
 import { mockOrganizationResponse } from '#/modules/organization/organization-mocks';
 import { mockProjectResponse } from '#/modules/project/project-mocks';
 import type { TaskModel } from '#/modules/task/task-db';
-import { TaskStatus } from '#/modules/task/task-properties';
+import { taskStatuses } from '#/modules/task/task-properties';
 import { mockActorRefs, mockUserMinimalBase } from '#/schemas/entity-base-mocks';
-
-const taskStatuses = Object.values(TaskStatus).filter((status): status is TaskStatus => typeof status === 'number');
 
 /**
  * Generates a mock task with all fields populated.

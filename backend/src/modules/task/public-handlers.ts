@@ -1,63 +1,21 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { isUnpublishedDraft } from 'shared';
-import type { ActorContext, Env } from '#/core/context';
-import { AppError } from '#/core/error';
-import { getAdminDb } from '#/db/db';
-import { resolveEntity } from '#/modules/entities/entities-queries';
-import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
-import { hydrateTask } from '#/modules/task/operations/hydrate-task';
-import { getTasks } from '#/modules/task/operations/list-tasks';
+import type { Env } from '#/core/context';
+import { getPublicTaskOp } from '#/modules/task/operations/get-public-task';
+import { getPublicTasksOp } from '#/modules/task/operations/get-public-tasks';
 import { publicTaskRoutes } from '#/modules/task/public-routes';
-import { checkAccess } from '#/permissions';
-import { buildSubject } from '#/permissions/build-subject';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });
 
 app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
-  const id = ctx.req.param('id');
-
-  // Validate request
-  if (!id) throw new AppError(404, 'not_found', 'warn');
-
-  const mainTask = await resolveEntity({ var: { db: getAdminDb('public task reads') } }, { entityType: 'task', identifier: id });
-  if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
-
-  // Drafts are never publicly readable: they read as absent to non-authors (the anonymous caller).
-  if (isUnpublishedDraft(mainTask)) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
-
-  // Public reads intentionally bypass tenant status checks from tenantGuard.
-  // Anonymous engine check: publicRead() makes the task readable once its own `public` is set
-  // (inherited from the parent project at create time, then row-local; no cascade).
-  const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask });
-  if (!checkAccess({ anonymous: true }, 'read', subject).allowed) {
-    throw new AppError(403, 'forbidden', 'warn', { entityType: 'task' });
-  }
-
-  // Relation reads are request-scoped, so carry the task's own tenant and organization.
-  const publicCtx = {
-    var: { db: getAdminDb('public task reads'), tenantId: mainTask.tenantId, organizationId: mainTask.organizationId },
-  } as ActorContext;
-  const [users, labels] = await getTaskRelations(publicCtx, { tasks: [mainTask] });
-
-  const taskResponse = await hydrateTask(publicCtx, mainTask, users, labels);
-
-  return ctx.json(taskResponse, 200);
+  const { id } = ctx.req.valid('param');
+  const result = await getPublicTaskOp(ctx, id);
+  return ctx.json(result, 200);
 });
 
 app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
-  const { projectId, ...queryInfo } = ctx.req.valid('query');
-
-  // Public reads intentionally bypass tenant status checks from tenantGuard. Resolve the project
-  // for org scoping only; the project's own `public` does not gate the list.
-  const project = await resolveEntity({ var: { db: getAdminDb('public task reads') } }, { entityType: 'project', identifier: projectId });
-  if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-
-  const publicCtx = {
-    var: { db: getAdminDb('public task reads'), tenantId: project.tenantId, organizationId: project.organizationId },
-  } as ActorContext;
-  const response = await getTasks(publicCtx, [project.id], queryInfo, { publicOnly: true });
-  return ctx.json(response, 200);
+  const result = await getPublicTasksOp(ctx.req.valid('query'));
+  return ctx.json(result, 200);
 });
 
 export const publicTaskHandlers = app;

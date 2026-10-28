@@ -933,7 +933,7 @@ export type Attachment = {
 };
 
 /**
- * A label used to categorize and filter tasks within a project or workspace.
+ * A label used to categorize and filter tasks within a project.
  */
 export type Label = {
   id: string;
@@ -8131,7 +8131,7 @@ export type GetTaskError = GetTaskErrors[keyof GetTaskErrors];
 
 export type GetTaskResponses = {
   /**
-   * Tasks
+   * Task
    */
   200: Task;
 };

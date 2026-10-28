@@ -8,7 +8,8 @@ import { countTenantEntityRows } from '#/modules/entities/entities-queries';
 import { findLivePrimaryLabels } from '#/modules/label/label-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
-import { hydrateTasks } from '#/modules/task/operations/hydrate-task';
+import { hydrateTasks, type TaskResponse } from '#/modules/task/operations/hydrate-task';
+import { projectRelationFilter } from '#/modules/task/operations/project-relations';
 import { type TaskModel, tasksTable } from '#/modules/task/task-db';
 import { insertTasks } from '#/modules/task/task-queries';
 import { taskContract, type taskCreateManyStxBodySchema } from '#/modules/task/task-schema';
@@ -21,7 +22,6 @@ import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
 type CreateTasksInput = z.infer<typeof taskCreateManyStxBodySchema>;
-type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
 
 /**
  * Creates the tasks of a batch, each placed in its project with a primary label. An item an earlier attempt of this
@@ -32,7 +32,7 @@ type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
 export async function createTasksOp(
   ctx: OrgContext,
   rawInput: CreateTasksInput,
-): Promise<{ data: ReturnTask[]; rejectedIds: string[]; created: boolean }> {
+): Promise<{ data: TaskResponse[]; rejectedIds: string[]; created: boolean }> {
   const input = rawInput.map((item) => taskContract.normalizeCreateItem(item));
   const organization = ctx.var.organization;
 
@@ -41,7 +41,6 @@ export async function createTasksOp(
     return hydrateTasks(ctx, tasks, users, labels);
   };
 
-  // Rows an earlier attempt of this create wrote come back as they are; only the other items are created.
   const replayed = await checkIdempotency(
     ctx,
     tasksTable,
@@ -62,27 +61,25 @@ export async function createTasksOp(
     homes.push(home);
   }
 
-  // Resolve primary labels per project: validate provided ids, default to first by displayOrder
   const projectIds = [...new Set(placements.map(({ projectId }) => projectId))];
-  const primaryLabelRows = await tenantRead(ctx, (readCtx) => findLivePrimaryLabels(readCtx, { projectIds }));
-  const primariesByProject = new Map<string, typeof primaryLabelRows>();
-  for (const row of primaryLabelRows) {
-    primariesByProject.set(row.projectId, [...(primariesByProject.get(row.projectId) ?? []), row]);
-  }
+  const userIds = fresh.flatMap((item) => item.assignedTo ?? []);
+  const labelIds = fresh.flatMap((item) => item.labels ?? []);
+  const [primaryLabelRows, allows] = await tenantRead(ctx, (readCtx) =>
+    Promise.all([findLivePrimaryLabels(readCtx, { projectIds }), projectRelationFilter(readCtx, { projectIds, userIds, labelIds })]),
+  );
+  const primariesByProject = Map.groupBy(primaryLabelRows, (row) => row.projectId);
 
   const tasksToInsert = fresh.map(({ stx, id, ...taskInfo }, index) => {
     const placement = placements[index];
     // Derived attachments are UUID-shape-checked only: attachment rows created in the
     // same client batch may not be committed yet, so existence is not enforced here.
     taskContract.assertBlockFields(taskInfo, organization.id);
-    const descriptionText = String(taskInfo.description ?? '');
+    const descriptionText = taskInfo.description ?? '';
     const derived = deriveDescriptionProps(descriptionText);
 
     const projectPrimaries = primariesByProject.get(placement.projectId) ?? [];
     // Unknown/missing ids fall back to the project default (graceful for offline replays)
-    const primaryLabelId = projectPrimaries.some((l) => l.id === taskInfo.primaryLabelId)
-      ? (taskInfo.primaryLabelId as string)
-      : projectPrimaries[0]?.id;
+    const primaryLabelId = (projectPrimaries.find((l) => l.id === taskInfo.primaryLabelId) ?? projectPrimaries[0])?.id;
     if (!primaryLabelId) {
       throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId: placement.projectId } });
     }
@@ -91,6 +88,8 @@ export async function createTasksOp(
       ...taskInfo,
       id,
       primaryLabelId,
+      assignedTo: (taskInfo.assignedTo ?? []).filter((userId) => allows('assignedTo', placement.projectId, userId)),
+      labels: (taskInfo.labels ?? []).filter((labelId) => allows('labels', placement.projectId, labelId)),
       entityType: 'task' as const,
       description: descriptionText,
       ...derived,

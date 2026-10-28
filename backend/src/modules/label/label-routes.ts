@@ -12,7 +12,7 @@ import {
 } from '#/modules/label/label-schema';
 import { batchResponseSchema, idInTenantOrgParamSchema, idsWithStxBodySchema, paginationSchema, tenantOrgParamSchema } from '#/schemas';
 
-const labelsRoutes = createXRoutes(['labels', 'app', 'product'], {
+const labelRoutes = createXRoutes(['labels', 'app', 'product'], {
   createLabels: xRoute({
     method: 'post',
     path: '/',
@@ -36,7 +36,6 @@ const labelsRoutes = createXRoutes(['labels', 'app', 'product'], {
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xScope: 'label:read',
-    // Sync-driven read backpressure on the delta path (template pattern for app product lists)
     xRateLimiter: [syncReadLimiter],
     summary: 'Get list of labels',
     description: 'Returns a list of labels for a given project or workspace.',
@@ -78,4 +77,4 @@ const labelsRoutes = createXRoutes(['labels', 'app', 'product'], {
   }),
 });
 
-export { labelsRoutes };
+export { labelRoutes };

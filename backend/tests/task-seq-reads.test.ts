@@ -62,7 +62,7 @@ describe('Task seq reads', async () => {
     };
     const rows = [
       { ...baseTask, id: taskIds.seq50, name: 'seq 50', seq: 50 },
-      { ...baseTask, id: taskIds.seq40OldAccepted, name: 'seq 40 old accepted', seq: 40, status: TaskStatus.Accepted, updatedAt: daysAgo(30) },
+      { ...baseTask, id: taskIds.seq40OldAccepted, name: 'seq 40 old accepted', seq: 40, status: TaskStatus.Accepted, statusChangedAt: daysAgo(30) },
       { ...baseTask, id: taskIds.seq30Deleted, name: 'seq 30 tombstone', seq: 30, deletedAt: daysAgo(1) },
       { ...baseTask, id: taskIds.seq20, name: 'seq 20', seq: 20 },
       { ...baseTask, id: taskIds.seq10, name: 'seq 10', seq: 10 },
@@ -123,7 +123,7 @@ describe('Task seq reads', async () => {
     const result = await listTasks({ afterSeq: 0, untilSeq: 999999, acceptedCutOff: 14, limit: 100 });
 
     expect(result.status).toBe(200);
-    // seq 40 is Accepted with updatedAt 30 days ago, outside the 14-day window.
+    // seq 40 was accepted 30 days ago, outside the 14-day window.
     // The tombstone (30) still flows: a range read includes deleted rows.
     expect(result.items.map((t) => t.seq)).toEqual([10, 20, 30, 50]);
   });

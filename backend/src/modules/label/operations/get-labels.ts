@@ -39,7 +39,6 @@ export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promi
   // Restrict to the caller's readable scope unless org-wide (kind 'all').
   const filters: SQL[] = scopeWhere.kind === 'where' ? [scopeWhere.where] : [];
 
-  // A range read returns deleted rows too, so caches drop them.
   const read = range ? tenantReadIncludingDeleted : tenantRead;
   return read(ctx, (readCtx) =>
     findLabelsPaginated(readCtx, { organizationId, filters, orgWide: scopeWhere.kind === 'all', q, modes, sort, order, limit, offset, range }),

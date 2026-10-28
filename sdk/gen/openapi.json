@@ -4354,7 +4354,7 @@
           "organizationId",
           "stx"
         ],
-        "description": "A label used to categorize and filter tasks within a project or workspace.",
+        "description": "A label used to categorize and filter tasks within a project.",
         "example": {
           "createdAt": "2024-03-09T03:49:59.043Z",
           "id": "4776a712-aa20-44ed-b050-f29164735a9a",
@@ -10109,7 +10109,7 @@
         "operationId": "getPublicTask",
         "tags": ["tasks", "app", "product"],
         "summary": "Get public task",
-        "description": "Retrieves a task by its ID. For publicly shared.",
+        "description": "Retrieves a public task by its ID.",
         "x-guard": ["publicGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -21399,7 +21399,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Tasks",
+            "description": "Task",
             "content": {
               "application/json": {
                 "schema": {

@@ -30,7 +30,7 @@ export const taskSchema = z
   .object({
     ...taskSelectSchema.omit({ labels: true, assignedTo: true, stx: true }).shape,
     labels: z.array(labelEmbeddedSchema),
-    // Hydrated from primaryLabelId; null only when the referenced row is missing from the relation set
+    // Hydrated from primaryLabelId; null in a lite update response and when the relation set lacks the row
     primaryLabel: labelEmbeddedSchema.nullable(),
     status: z.enum(TaskStatus),
     assignedTo: z.array(userMinimalBaseSchema),
@@ -72,7 +72,6 @@ export const taskContract = evolutionContract.product('task', {
   blockFields: ['description'],
 });
 
-/** Update body using fields pattern for single or multi-field updates with conflict detection */
 export const taskUpdateStxBodySchema = taskContract.updateBodySchema;
 
 const taskListQueryShape = {
@@ -91,6 +90,8 @@ export const taskListQuerySchema = productListQuerySchema(taskListQueryShape).re
   message: 'Only one of projectId or workspaceId can be provided',
 });
 
+export const publicTaskListQuerySchema = taskListQueryBaseSchema.omit({ workspaceId: true }).extend({ projectId: validIdSchema });
+
 // Stx-wrapped schemas for product entity mutations (items lens-widened via the wire)
 export const taskCreateManyStxBodySchema = taskContract.createItemSchema
   .array()
@@ -99,7 +100,7 @@ export const taskCreateManyStxBodySchema = taskContract.createItemSchema
   .superRefine((items, ctx) => {
     items.forEach((item, index) => {
       const issue = validatePlacement('task', item);
-      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message });
+      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message, params: { type: issue.type } });
     });
   });
 export const taskCreateResponseSchema = batchResponseSchema(taskSchema);

@@ -3,10 +3,9 @@ import { html, raw } from 'hono/html';
 import { appConfig } from 'shared';
 import type { DbContext, Env } from '#/core/context';
 import { getAdminDb } from '#/db/db';
-import { generateCover } from '#/modules/task/helpers/canvas';
-import { getTaskCoverSource } from '#/modules/task/operations/get-task-cover-source';
-import { getTaskPreview } from '#/modules/task/operations/get-task-preview';
-import { resolveTaskLink } from '#/modules/task/operations/resolve-task-link';
+import { getTaskCoverOp } from '#/modules/task/operations/get-task-cover';
+import { getTaskPreviewOp } from '#/modules/task/operations/get-task-preview';
+import { resolveTaskLinkOp } from '#/modules/task/operations/resolve-task-link';
 import { taskRedirectRoutes } from '#/modules/task/redirect-routes';
 import { defaultHook } from '#/utils/default-hook';
 
@@ -21,12 +20,12 @@ const app = new OpenAPIHono<Env>({ defaultHook });
 
 app.openapi(taskRedirectRoutes.resolveTaskLink, async (ctx) => {
   const { id } = ctx.req.valid('param');
-  return ctx.json(await resolveTaskLink(adminCtx(), id), 200);
+  return ctx.json(await resolveTaskLinkOp(adminCtx(), id), 200);
 });
 
 app.openapi(taskRedirectRoutes.getTaskCover, async (ctx) => {
   const { id } = ctx.req.valid('param');
-  const png = await generateCover(await getTaskCoverSource(adminCtx(), id));
+  const png = await getTaskCoverOp(adminCtx(), id);
 
   return new Response(Buffer.from(png), {
     headers: { 'Content-Type': 'image/png', 'Content-Length': String(png.byteLength), 'Cache-Control': 'public, max-age=3600, immutable' },
@@ -35,24 +34,22 @@ app.openapi(taskRedirectRoutes.getTaskCover, async (ctx) => {
 
 app.openapi(taskRedirectRoutes.redirectToTask, async (ctx) => {
   const { id } = ctx.req.valid('param');
-  const { taskType, title: taskTitle, description: taskDescription, redirectUrl } = await getTaskPreview(adminCtx(), id);
+  const { taskType, title, description, redirectUrl } = await getTaskPreviewOp(adminCtx(), id);
 
-  // <meta name="twitter:image" content="${config.backendUrl}/${task.organizationId}/tasks/${id}/cover"/>
-  // <meta property="og:image" content="${config.backendUrl}/${task.organizationId}/tasks/${id}/cover"/>
   return ctx.html(html`
       <!DOCTYPE html>
-      <html lang="en">
+      <html lang="${appConfig.defaultLanguage}">
         <head>
           <meta charset="utf-8" />
-          <title>${taskTitle}</title>
+          <title>${title}</title>
 
           <!-- Open Graph -->
           <meta property="og:title" content="${taskType}" />
-          <meta property="og:description" content="${taskDescription}" />
+          <meta property="og:description" content="${description}" />
           <meta property="og:image" content="${appConfig.frontendUrl}/static/images/thumbnail.png" />
           <meta property="og:url" content="${raw(redirectUrl)}" />
           <meta property="og:type" content="website" />
-          <meta property="og:site_name" content="Raak" />
+          <meta property="og:site_name" content="${appConfig.name}" />
           <meta property="og:locale" content="en_US" />
 
           <meta name="robots" content="index,follow" />
