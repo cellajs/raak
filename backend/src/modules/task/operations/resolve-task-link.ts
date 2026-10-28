@@ -9,7 +9,6 @@ export const resolveTaskLink = async (ctx: DbContext, id: string) => {
 
   const target = await findTaskLinkTarget(ctx, { projectId: task.projectId });
   if (!target) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-  if (!target.organizationSlug) throw new AppError(404, 'not_found', 'warn', { entityType: 'organization' });
 
   return {
     taskId: id,

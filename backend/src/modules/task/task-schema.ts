@@ -91,6 +91,8 @@ export const taskListQuerySchema = productListQuerySchema(taskListQueryShape).re
   message: 'Only one of projectId or workspaceId can be provided',
 });
 
+export const publicTaskListQuerySchema = taskListQueryBaseSchema.omit({ workspaceId: true }).extend({ projectId: validIdSchema });
+
 // Stx-wrapped schemas for product entity mutations (items lens-widened via the wire)
 export const taskCreateManyStxBodySchema = taskContract.createItemSchema
   .array()
@@ -99,7 +101,7 @@ export const taskCreateManyStxBodySchema = taskContract.createItemSchema
   .superRefine((items, ctx) => {
     items.forEach((item, index) => {
       const issue = validatePlacement('task', item);
-      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message });
+      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message, params: { type: issue.type } });
     });
   });
 export const taskCreateResponseSchema = batchResponseSchema(taskSchema);

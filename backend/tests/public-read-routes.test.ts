@@ -77,7 +77,7 @@ describe('Public read routes (engine-resolved grants, anonymous actor)', async (
     expect(publicResult.response.status).toBe(200);
 
     const privateResult = await call(getPublicTask, { path: { id: privateTaskId }, headers: defaultHeaders });
-    expect(privateResult.response.status).toBe(403);
+    expect(privateResult.response.status).toBe(404);
 
     // Decoupled: a public task in a private project is readable
     const decoupledResult = await call(getPublicTask, { path: { id: publicTaskInPrivateProjectId }, headers: defaultHeaders });

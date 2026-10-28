@@ -1,11 +1,11 @@
 import type { z } from '@hono/zod-openapi';
-import { labelName } from 'shared/config/labels-config';
 import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
 import { updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { dispatchMutation } from '#/lib/mutation-bus';
+import { normalizeLabelName } from '#/modules/label/helpers/label-name';
 import { type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { type UpdateLabelValues, updateLabel } from '#/modules/label/label-queries';
 import { labelContract, type labelUpdateStxBodySchema } from '#/modules/label/label-schema';
@@ -41,15 +41,14 @@ export async function updateLabelOp(
     // Epic documentation and secondary <-> epic transitions are member-level: any project
     // member may document an epic or toggle a label's epic mode. Ops limited to those fields
     // skip the project-admin gate below. Only epics accept a description.
-    const opsKeys = Object.keys(rawOps ?? {});
-    const memberLevelOnly = opsKeys.length > 0 && opsKeys.every((key) => key === 'description' || key === 'mode');
-    if ('description' in (rawOps ?? {}) && before.mode !== 'epic') {
+    const memberLevelOnly = Object.keys(rawOps).every((key) => key === 'description' || key === 'mode');
+    if ('description' in rawOps && before.mode !== 'epic') {
       throw new AppError(409, 'label_description_epic_only', 'warn', { entityType: 'label' });
     }
 
     // Primary rows are the org's task types; their mode never changes (the schema already
     // limits transitions to secondary <-> epic)
-    const modeChange = 'mode' in (rawOps ?? {});
+    const modeChange = 'mode' in rawOps;
     if (modeChange && before.mode === 'primary') {
       throw new AppError(409, 'primary_label_mode_fixed', 'warn', { entityType: 'label' });
     }
@@ -70,11 +69,7 @@ export async function updateLabelOp(
       // The yjs handler and CDC read the stx as the fields this write wrote: a write that changes none drops the earlier set.
       stx: resolved.changed ? resolved.stx : stripChangedFields(labelsTable.stx),
     };
-    if (typeof values.name === 'string') {
-      values.name = labelName(values.name, before.mode);
-      if (!values.name)
-        throw new AppError(400, 'invalid_request', 'warn', { entityType: 'label', meta: { reason: 'Label name is empty as a slug' } });
-    }
+    if (typeof values.name === 'string') values.name = normalizeLabelName(values.name, before.mode);
 
     if (resolved.changed && 'description' in resolved.values) {
       const description = resolved.values.description;

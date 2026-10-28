@@ -1,27 +1,13 @@
 import type { ActorContext } from '#/core/context';
-import { TaskStatus } from '#/modules/task/task-properties';
+import { tenantRead } from '#/db/tenant-context';
+import { TaskStatus, taskStatuses } from '#/modules/task/task-properties';
 import { countTasksByStatus } from '#/modules/task/task-queries';
 
 type TaskStatusCounts = Record<Lowercase<keyof typeof TaskStatus>, number>;
 
-const statusNames = Object.entries(TaskStatus)
-  .filter(([key]) => Number.isNaN(Number(key)))
-  .map(([name, value]) => ({ name: name.toLowerCase(), value: value as number }));
-
-/**
- * Get task counts grouped by status for a single project.
- * Used in getProject (single entity) handler.
- */
+/** How many tasks of a project hold each status, every status present, for the project response's `counts`. */
 export const getTaskStatusCounts = async (ctx: ActorContext, projectId: string): Promise<TaskStatusCounts> => {
-  const rows = await countTasksByStatus(ctx, { projectId });
-
-  // Build object with all statuses defaulting to 0
-  const result: Record<string, number> = {};
-  for (const { name } of statusNames) result[name] = 0;
-  for (const row of rows) {
-    const entry = statusNames.find((s) => s.value === row.status);
-    if (entry) result[entry.name] = row.count;
-  }
-
-  return result as TaskStatusCounts;
+  const rows = await tenantRead(ctx, (readCtx) => countTasksByStatus(readCtx, { projectId }));
+  const countByStatus = new Map(rows.map(({ status, count }) => [status, count]));
+  return Object.fromEntries(taskStatuses.map((status) => [TaskStatus[status].toLowerCase(), countByStatus.get(status) ?? 0])) as TaskStatusCounts;
 };

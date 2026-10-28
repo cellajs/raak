@@ -14,10 +14,6 @@ const logoW = 100;
 const logoH = 80;
 const space = 40;
 
-// Create canvas and get its context
-const canvas = createCanvas(1200, 630);
-const ctx = canvas.getContext('2d');
-
 function wrapText(context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
   const words = text.split(' ');
   let line = '';
@@ -46,7 +42,11 @@ interface Options {
 export async function generateCover({ title, avatarUrl, name }: Options) {
   // Load images
   const logo = await loadImage('https://d2fltix0v2e0sb.cloudfront.net/dev-black.png');
-  const avatar = await loadImage(avatarUrl);
+  const avatar = avatarUrl ? await loadImage(avatarUrl) : null;
+
+  // One canvas per cover: encoding runs off the thread, so a shared one could be drawn over before it is encoded
+  const canvas = createCanvas(1200, 630);
+  const ctx = canvas.getContext('2d');
 
   // Background
   ctx.fillStyle = colors.base;
@@ -67,22 +67,18 @@ export async function generateCover({ title, avatarUrl, name }: Options) {
   ctx.fill();
   ctx.closePath();
 
-  // Clip image before draw
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(avatarSize / 2 + avatarLeft, avatarSize / 2 + avatarTop, avatarSize / 2, 0, 2 * Math.PI);
-  ctx.closePath();
-  ctx.clip();
+  if (avatar) {
+    // Clip image before draw
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarSize / 2 + avatarLeft, avatarSize / 2 + avatarTop, avatarSize / 2, 0, 2 * Math.PI);
+    ctx.closePath();
+    ctx.clip();
 
-  // Put avatar
-  ctx.drawImage(avatar, avatarLeft, avatarTop, avatarSize, avatarSize);
-
-  // Unclip all around avatar
-  ctx.beginPath();
-  ctx.arc(0, 0, avatarSize / 2, 0, Math.PI * 2, true);
-  ctx.clip();
-  ctx.closePath();
-  ctx.restore();
+    // Put avatar
+    ctx.drawImage(avatar, avatarLeft, avatarTop, avatarSize, avatarSize);
+    ctx.restore();
+  }
 
   // Author name
   ctx.fillStyle = colors.secondary;

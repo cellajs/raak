@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import type { ActorContext, UserContext } from '#/core/context';
+import type { OrgContext, UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
 import { updateStamps } from '#/db/utils/stamps';
@@ -8,19 +8,21 @@ import { filterExistingProductIds } from '#/modules/entities/embedding-queries';
 import { findLabelSlugById, findLivePrimaryLabels } from '#/modules/label/label-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
-import { hydrateTask, hydrateTaskLite } from '#/modules/task/operations/hydrate-task';
+import { hydrateTask, hydrateTaskLite, type TaskResponse } from '#/modules/task/operations/hydrate-task';
+import { projectRelationFilter } from '#/modules/task/operations/project-relations';
 import type { InsertTaskModel } from '#/modules/task/task-db';
-import { findProjectMemberUserIds, updateTask } from '#/modules/task/task-queries';
+import { updateTask } from '#/modules/task/task-queries';
 import { taskContract, type taskUpdateStxBodySchema } from '#/modules/task/task-schema';
+import { buildSubject } from '#/permissions/build-subject';
+import { canCreateEntity } from '#/permissions/can-create';
 import { getValidProduct } from '#/permissions/get-valid-product';
+import { resolvePlacement } from '#/permissions/product-placement';
 import { getIsoDate } from '#/utils/iso-date';
 
 type UpdateTaskInput = z.infer<typeof taskUpdateStxBodySchema>;
 
-type ReturnTask = Awaited<ReturnType<typeof hydrateTask>>;
-
 /** A session or a user token carries the editor's row; a service account's call only its actor. */
-type UpdateTaskContext = { var: ActorContext['var'] & Partial<Pick<UserContext['var'], 'user'>> };
+type UpdateTaskContext = { var: OrgContext['var'] & Partial<Pick<UserContext['var'], 'user'>> };
 
 /**
  * Also the task's Yjs materializer: `materializeDescriptionOp` calls it with `materialized` for a collaborative
@@ -32,8 +34,8 @@ export async function updateTaskOp(
   id: string,
   input: UpdateTaskInput,
   opts: { fullResponse?: boolean; serverOrigin?: boolean; materialized?: boolean },
-): Promise<ReturnTask> {
-  const { ops: rawOps = {}, stx } = input;
+): Promise<TaskResponse> {
+  const { ops: rawOps, stx } = input;
   const { fullResponse, serverOrigin, materialized } = opts;
   const user = ctx.var.user;
 
@@ -65,28 +67,26 @@ export async function updateTaskOp(
       updateValues.statusChangedAt = getIsoDate();
     }
 
-    // When projectId changes, validate membership and clean up project-scoped fields
-    if ('projectId' in resolved.values && resolved.values.projectId !== entity.projectId) {
-      const newProjectId = resolved.values.projectId as string;
-      const userIdsToCheck = (entity.assignedTo as string[]).filter(Boolean);
-      const projectMembers = await findProjectMemberUserIds(txCtx, { projectId: newProjectId, userIds: userIdsToCheck });
-      const memberSet = new Set(projectMembers.map(({ userId }) => userId));
+    const isProjectMove = 'projectId' in resolved.values && resolved.values.projectId !== entity.projectId;
+    let projectId = entity.projectId;
 
-      // Remove assignees not in the target project
-      updateValues.assignedTo = (entity.assignedTo as string[]).filter((uid) => memberSet.has(uid));
+    if (isProjectMove) {
+      // A move places the task as a create does, so the actor needs the create grant in the target project.
+      const { columns } = await resolvePlacement({ var: { ...ctx.var, db: txCtx.var.db } }, 'task', resolved.values);
+      canCreateEntity(txCtx, buildSubject('task', { ...entity, ...columns }));
+      Object.assign(updateValues, columns);
+      projectId = columns.projectId;
       // createdBy is an org-level audit field, not project-scoped, and is immutable at the DB level.
       // Leave it on the original creator across a move.
-      // Strip labels because they are project-scoped.
-      updateValues.labels = [];
 
       // Remap the primary label into the target project: explicit op first, then matching
       // slug, then the target's default (first live primary by displayOrder).
-      const targetPrimaries = await findLivePrimaryLabels(txCtx, { projectIds: [newProjectId] });
+      const targetPrimaries = await findLivePrimaryLabels(txCtx, { projectIds: [projectId] });
       const requestedId = resolved.values.primaryLabelId as string | undefined;
       const currentSlug = await findLabelSlugById(txCtx, entity.primaryLabelId);
       const target = targetPrimaries.find((l) => l.id === requestedId) ?? targetPrimaries.find((l) => l.slug === currentSlug) ?? targetPrimaries[0];
       if (!target) {
-        throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId: newProjectId } });
+        throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId } });
       }
       updateValues.primaryLabelId = target.id;
     } else if ('primaryLabelId' in resolved.values) {
@@ -100,6 +100,22 @@ export async function updateTaskOp(
       }
     }
 
+    // Assignees and labels belong to the task's project: an id the row holds there stays, any other must name a member
+    // or a live label of it. After a move the row holds none there.
+    if (isProjectMove || resolved.values.assignedTo || resolved.values.labels) {
+      const held = (column: 'assignedTo' | 'labels', relationId: string) => !isProjectMove && entity[column].includes(relationId);
+      const proposed = { assignedTo: resolved.values.assignedTo ?? entity.assignedTo, labels: resolved.values.labels ?? entity.labels };
+      const allows = await projectRelationFilter(txCtx, {
+        projectIds: [projectId],
+        userIds: proposed.assignedTo.filter((userId) => !held('assignedTo', userId)),
+        labelIds: proposed.labels.filter((labelId) => !held('labels', labelId)),
+      });
+      for (const column of ['assignedTo', 'labels'] as const) {
+        if (!isProjectMove && !resolved.values[column]) continue;
+        updateValues[column] = proposed[column].filter((relationId) => held(column, relationId) || allows(column, projectId, relationId));
+      }
+    }
+
     if (resolved.values.description !== undefined && derivedDescription) {
       // Drop ids that don't resolve to a live in-org attachment row (doctored or stale
       // block props must never enter the owned-embedding host array).
@@ -110,15 +126,12 @@ export async function updateTaskOp(
     const updatedTaskRecord = await updateTask(txCtx, { id, values: updateValues });
     await dispatchMutation(txCtx, 'task.updated', { before: [entity], after: [updatedTaskRecord], materialized });
 
-    const isProjectMove = 'projectId' in resolved.values && resolved.values.projectId !== entity.projectId;
-
     // Lite path: skip relation DB queries because the frontend uses optimistic cache.
     // Project moves always need full hydration because assignedTo/labels change server-side
     if (!fullResponse && !isProjectMove) return hydrateTaskLite(updatedTaskRecord, user);
 
     // Full path: hydrate relations from DB (for 3rd-party consumers)
-    const relationSource = 'assignedTo' in resolved.values || 'labels' in resolved.values ? updatedTaskRecord : entity;
-    const [users, labels] = await getTaskRelations(txCtx, { tasks: [relationSource] });
+    const [users, labels] = await getTaskRelations(txCtx, { tasks: [updatedTaskRecord] });
     return hydrateTask(txCtx, updatedTaskRecord, users, labels);
   });
 

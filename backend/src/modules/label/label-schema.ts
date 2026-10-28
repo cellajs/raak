@@ -82,7 +82,7 @@ export const labelListQuerySchema = productListQuerySchema({
     .string()
     .optional()
     .transform((val) => (val ? val.split(',').map((s) => s.trim()) : undefined))
-    .pipe(z.array(z.enum(labelModes)).optional()),
+    .pipe(z.array(z.enum(labelModes)).max(labelModes.length).optional()),
   projectId: validIdSchema.optional(),
   workspaceId: validIdSchema.optional(),
 }).refine((data) => !data.projectId || !data.workspaceId, { message: 'Only one of projectId or workspaceId can be provided' });
@@ -94,7 +94,7 @@ export const labelCreateManyStxBodySchema = labelContract.createItemSchema
   .superRefine((items, ctx) => {
     items.forEach((item, index) => {
       const issue = validatePlacement('label', item);
-      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message });
+      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message, params: { type: issue.type } });
     });
   });
 export const labelCreateResponseSchema = batchResponseSchema(labelSchema);

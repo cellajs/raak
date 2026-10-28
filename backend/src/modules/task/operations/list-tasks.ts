@@ -3,18 +3,18 @@ import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { containsWord, foldText } from 'shared/utils/text-match';
 import type { z } from 'zod';
 import type { ActorContext } from '#/core/context';
-import { publishedRowsPredicate } from '#/db/utils/published-predicate';
 import { requestScopeWhere } from '#/db/utils/request-scope';
-import { getDateFromToday } from '#/modules/task/helpers/utils';
 import { hydrateTasks } from '#/modules/task/operations/hydrate-task';
 import { tasksTable } from '#/modules/task/task-db';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { findLabelsByProjects, findProjectMembers, findTasksPaginated } from '#/modules/task/task-queries';
 import { taskListQueryBaseSchema } from '#/modules/task/task-schema';
+import { isoDateAgo } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
 import { pick } from '#/utils/pick';
 import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
 import { keywordSearchFilter, textSearchFilter } from '#/utils/sql';
+import { TimeSpan } from '#/utils/time-span';
 
 const queryInfoSchema = taskListQueryBaseSchema.omit({ projectId: true, workspaceId: true });
 type QueryInfo = z.infer<typeof queryInfoSchema>;
@@ -77,7 +77,7 @@ export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInf
 
   // Exclude accepted tasks older than cutoff directly in WHERE (avoids separate query + notInArray)
   const acceptedCutOffFilter = acceptedCutOff
-    ? sql`NOT (${tasksTable.status} = ${TaskStatus.Accepted} AND coalesce(${tasksTable.updatedAt}, ${tasksTable.createdAt}) <= ${getDateFromToday(acceptedCutOff)})`
+    ? sql`NOT (${tasksTable.status} = ${TaskStatus.Accepted} AND ${tasksTable.statusChangedAt} <= ${isoDateAgo(new TimeSpan(acceptedCutOff, 'd'))})`
     : undefined;
 
   const filters = and(
@@ -87,7 +87,7 @@ export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInf
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,
     ...exclusionFilters,
-    opts?.publicOnly ? and(eq(tasksTable.public, true), publishedRowsPredicate(tasksTable)) : undefined,
+    opts?.publicOnly ? eq(tasksTable.public, true) : undefined,
   );
 
   // Normal reads fetch the page and its exact COUNT(*) in parallel; range reads skip the count.

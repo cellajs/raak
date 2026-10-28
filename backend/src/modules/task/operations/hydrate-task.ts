@@ -11,7 +11,8 @@ import type { userMinimalBaseSchema } from '#/schemas/minimal-base';
 type UserMinimalBaseSchemas = z.infer<typeof userMinimalBaseSchema>;
 type Labels = z.infer<typeof labelEmbeddedSchema>;
 
-type ReturnTask = z.infer<typeof taskSchema>;
+/** A task as it reads on the wire, with embedded assignees and labels. */
+export type TaskResponse = z.infer<typeof taskSchema>;
 
 /** Map task DB models to tasks with embedded assignees and labels; the writer ids stay ids. */
 const mapTask = (task: TaskModel, userMap: Map<string, UserMinimalBaseSchemas>, labelMap: Map<string, Labels>) => {
@@ -23,7 +24,7 @@ const mapTask = (task: TaskModel, userMap: Map<string, UserMinimalBaseSchemas>, 
     a.name.localeCompare(b.name, appConfig.defaultLanguage),
   );
 
-  return { ...task, stx: task.stx, assignedTo, labels, primaryLabel: labelMap.get(task.primaryLabelId) ?? null };
+  return { ...task, assignedTo, labels, primaryLabel: labelMap.get(task.primaryLabelId) ?? null };
 };
 
 /**
@@ -35,7 +36,7 @@ export const hydrateTasks = async (
   tasks: TaskModel[],
   members: UserMinimalBaseSchemas[],
   labels: Labels[],
-): Promise<ReturnTask[]> => {
+): Promise<TaskResponse[]> => {
   const userMap = new Map(members.map((m) => [m.id, m]));
   const labelMap = new Map(labels.map((l) => [l.id, l]));
   return withActorRefs(
@@ -46,7 +47,7 @@ export const hydrateTasks = async (
 };
 
 /** Hydrate a single task. Convenience wrapper around hydrateTasks. */
-export const hydrateTask = async (ctx: DbContext, task: TaskModel, members: UserMinimalBaseSchemas[], labels: Labels[]): Promise<ReturnTask> => {
+export const hydrateTask = async (ctx: DbContext, task: TaskModel, members: UserMinimalBaseSchemas[], labels: Labels[]): Promise<TaskResponse> => {
   const [hydrated] = await hydrateTasks(ctx, [task], members, labels);
   return hydrated;
 };
@@ -58,9 +59,8 @@ export const hydrateTask = async (ctx: DbContext, task: TaskModel, members: User
 export const hydrateTaskLite = (
   task: TaskModel,
   currentUser: Pick<UserMinimalBase, 'id' | 'name' | 'slug' | 'thumbnailUrl'> | undefined,
-): ReturnTask => ({
+): TaskResponse => ({
   ...task,
-  stx: task.stx,
   labels: [],
   assignedTo: [],
   primaryLabel: null,

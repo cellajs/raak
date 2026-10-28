@@ -122,6 +122,16 @@ describe('Task link previews of a private task', async () => {
     expect(cover.calls).toEqual([expect.objectContaining({ name: 'Sync bot' })]);
   });
 
+  it('unfurls a task stored without a description', async () => {
+    const bareTaskId = generateId();
+    await db.insert(tasksTable).values({ ...taskRow(bareTaskId, tenant.user.id), description: '' });
+
+    const response = await anonymous(`/t/${bareTaskId}`);
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('<meta property="og:description" content="" />');
+  });
+
   it('answers 404 for a task that does not exist', async () => {
     const response = await anonymous(`/t/${generateId()}/resolve`);
 

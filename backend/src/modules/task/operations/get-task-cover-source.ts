@@ -1,7 +1,7 @@
-import { titleFromDocument } from 'shared/blocknote';
 import type { DbContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { withActorRef } from '#/modules/actors/actor-refs';
+import { taskTitle } from '#/modules/task/helpers/task-title';
 import { findLiveTaskById } from '#/modules/task/task-queries';
 
 /** What the cover image of a task draws: its title and its author, a service account included. */
@@ -11,7 +11,7 @@ export const getTaskCoverSource = async (ctx: DbContext, id: string) => {
 
   const task = await withActorRef(ctx, found);
   return {
-    title: titleFromDocument(task.summary),
+    title: taskTitle(task),
     avatarUrl: task.createdBy?.thumbnailUrl || '',
     name: task.createdBy?.name || '',
   };
