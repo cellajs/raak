@@ -1,4 +1,4 @@
-import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
+import { createXRoutes, errors, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
@@ -40,6 +40,7 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
         mockBatchTasksResponse(),
       ),
       201: json('Tasks created', taskCreateResponseSchema, mockBatchTasksResponse()),
+      ...errors(409),
     },
   }),
   getTasks: xRoute({
@@ -82,7 +83,7 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     summary: 'Update task',
     description: 'Updates a task by ID.',
     request: { params: idInTenantOrgParamSchema, query: fullResponseQuerySchema, body: jsonBody(taskUpdateStxBodySchema) },
-    responses: { 200: json('Task updated', taskSchema) },
+    responses: { 200: json('Task updated', taskSchema), ...errors(409) },
   }),
   deleteTasks: xRoute({
     method: 'delete',

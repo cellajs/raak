@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi';
-import { createXRoutes, json, xRoute } from '#/core/x-routes';
+import { createXRoutes, errors, json, xRoute } from '#/core/x-routes';
 import { publicGuard } from '#/middlewares/guard';
 import { mockProjectResponse } from '#/modules/project/project-mocks';
 import { projectSchema } from '#/modules/project/project-schema';
@@ -15,6 +15,7 @@ const publicProjectRoutes = createXRoutes(['projects', 'app', 'channel'], {
     request: { params: z.object({ id: validIdSchema }), query: slugIncludeQuerySchema.pick({ slug: true }) },
     responses: {
       200: json('Public project', projectSchema.extend({ membership: z.null() }), { ...mockProjectResponse(), membership: null }),
+      ...errors(404),
     },
   }),
 });

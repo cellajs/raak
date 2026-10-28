@@ -60,7 +60,7 @@ export function CreateProjectForm() {
           entityType="project"
           tenantId={workspace.tenantId}
           label={t('c:resource_handle', { resource: t('c:project') })}
-          description={t('c:resource_handle.text', { resource: t('c:project').toLowerCase() })}
+          description={t('c:resource_handle.text')}
           nameValue={name}
         />
         <FormField

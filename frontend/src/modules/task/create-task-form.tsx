@@ -272,7 +272,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                   <FormControl>
                     <button
                       type="button"
-                      aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
+                      aria-label={t('c:set_resource', { resource: t('c:label_other') })}
                       id={`labels-${formId}`}
                       className="focus-effect absolute inset-0 rounded-md"
                       onClick={({ currentTarget }) =>
@@ -302,7 +302,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                     ) : (
                       <>
                         <TagIcon className="text-faint-foreground" />
-                        <span className="ml-1 text-faint-foreground">{t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}</span>
+                        <span className="ml-1 text-faint-foreground">{t('c:select_resource', { resource: t('c:label_other') })}</span>
                       </>
                     )}
                   </div>
@@ -393,7 +393,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
                       <Button
                         type="button"
                         disabled={!isDirty}
-                        aria-label={t('c:set_resource', { resource: t('c:status').toLowerCase() })}
+                        aria-label={t('c:set_resource', { resource: t('c:status') })}
                         press={false}
                         className="rounded-none rounded-r border-l-background/25"
                         id={`status-${formId}`}

@@ -119,7 +119,7 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
 
   if (isLoading) return <Spinner className="my-8" />;
   if (!rows.length) {
-    return <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:label_other').toLowerCase() }} />;
+    return <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:label_other') }} />;
   }
 
   const list = (

@@ -57,7 +57,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
           value={searchValue}
           wrapClassName="max-sm:hidden"
           className="leading-normal"
-          placeholder={t('c:select_resource', { resource: t('c:type').toLowerCase() })}
+          placeholder={t('c:select_resource', { resource: t('c:type') })}
         />
         <ComboboxHotkeyHint searching={isSearching}>T</ComboboxHotkeyHint>
         <ComboboxList>
@@ -72,7 +72,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
             );
           }}
         </ComboboxList>
-        <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:type').toLowerCase() })}</ComboboxEmpty>
+        <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:type') })}</ComboboxEmpty>
       </div>
     </Combobox>
   );

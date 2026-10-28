@@ -22,7 +22,7 @@ export function TaskPrimaryLabelButton({ task, isSheet = false }: TaskPrimaryLab
     <Button
       id={taskFieldTriggerId('primaryLabel', task.id, isSheet)}
       onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'primaryLabel', handlers, currentTarget)}
-      aria-label={t('c:set_resource', { resource: t('c:type').toLowerCase() })}
+      aria-label={t('c:set_resource', { resource: t('c:type') })}
       variant="ghost"
       size="xs"
       className={cn(taskCardDimClass, 'focus-inset -ml-0.5 group-data-[sheet=true]/task:opacity-100')}

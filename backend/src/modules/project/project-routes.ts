@@ -1,4 +1,4 @@
-import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
+import { createXRoutes, errors, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, relatableGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
 import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
@@ -70,7 +70,7 @@ const projectRoutes = createXRoutes(['projects', 'app', 'channel'], {
     summary: 'Update project',
     description: 'Updates a project by ID.',
     request: { params: idInTenantOrgParamSchema, body: jsonBody(projectUpdateBodySchema) },
-    responses: { 200: json('Project updated', projectSchema) },
+    responses: { 200: json('Project updated', projectSchema), ...errors(409) },
   }),
   assignProjectWorkspace: xRoute({
     method: 'put',

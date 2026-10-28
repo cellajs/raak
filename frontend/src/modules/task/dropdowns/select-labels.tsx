@@ -275,11 +275,11 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     handleCreateClick(name);
   };
 
-  const newLabelText = t('c:new_resource', { resource: t('c:label').toLowerCase() });
+  const newLabelText = t('c:new_resource', { resource: t('c:label') });
 
   const createItem = searchValue.trim() !== '' && !projectLabels.some((label) => label.slug === labelSlug(searchValue)) && (
     <ComboboxItem value={`${createSentinelPrefix}${searchValue}`} className={cn(comboboxActionButtonClass, 'mt-1')}>
-      {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
+      {t('c:create_resource', { resource: t('c:label') })}
       <Badge className="ml-2 px-2 py-0" soft>
         {searchValue}
       </Badge>
@@ -303,7 +303,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
         />
         <p className="mt-2 text-muted-foreground text-sm">{t('c:label_name.text')}</p>
         <Button type="submit" size="lg" className="mt-4" disabled={!newLabelName.trim()}>
-          {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
+          {t('c:create_resource', { resource: t('c:label') })}
         </Button>
         <Button type="button" variant="secondary" size="lg" className="mt-2" onClick={() => setNewLabelName(null)}>
           {t('c:cancel')}
@@ -348,9 +348,9 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             className="min-h-10 leading-normal"
             placeholder={
               isMobile
-                ? t('c:search_resource', { resource: t('c:label_other').toLowerCase() })
+                ? t('c:search_resource', { resource: t('c:label_other') })
                 : visibleLabels.length
-                  ? t('c:select_or_create_resource', { resource: t('c:label').toLowerCase() })
+                  ? t('c:select_or_create_resource', { resource: t('c:label') })
                   : projectLabels.length
                     ? t('c:create_label.text')
                     : t('c:create_first_label.text')
@@ -399,14 +399,12 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
                 </ComboboxGroup>
               ) : (
                 <>
-                  <div className="p-1.5 text-center text-faint-foreground text-sm">
-                    {t('c:no_resource_found', { resource: t('c:label_other').toLowerCase() })}
-                  </div>
+                  <div className="p-1.5 text-center text-faint-foreground text-sm">{t('c:no_resource_found', { resource: t('c:label_other') })}</div>
                   {inDrawer && (
                     <DrawerRowGroup className="mt-1.5">
                       <Button variant="row" onClick={() => handleCreateClick(searchValue)}>
                         <PlusIcon />
-                        {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
+                        {t('c:create_resource', { resource: t('c:label') })}
                         <Badge className="px-2 py-0" soft>
                           {searchValue}
                         </Badge>
@@ -432,7 +430,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
           </ComboboxList>
           {visibleLabels.length === 0 && searchValue.trim() === '' && (
             <div className="flex items-center justify-center p-1.5 text-faint-foreground text-sm">
-              {t('c:no_resource_yet', { resource: t('c:label_other').toLowerCase() })}
+              {t('c:no_resource_yet', { resource: t('c:label_other') })}
             </div>
           )}
         </ScrollArea>

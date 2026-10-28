@@ -19,7 +19,7 @@ export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
   const createProjectAction = isTablet ? (
     <Button variant="secondary" onClick={createNewProject}>
       <PlusIcon />
-      <span>{t('c:add_resource', { resource: t('c:project').toLowerCase() })}</span>
+      <span>{t('c:add_resource', { resource: t('c:project') })}</span>
     </Button>
   ) : (
     <>
@@ -30,7 +30,7 @@ export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
       <p className="inline-flex gap-1 opacity-0 transition-opacity duration-500 group-hover/workspace:opacity-100">
         <span>{t('c:click')}</span>
         <span className="text-primary max-md:hidden xl:hidden">{`+ ${t('c:add')}`}</span>
-        <span className="text-primary max-xl:hidden">{`+ ${t('c:add_resource', { resource: t('c:project').toLowerCase() })}`}</span>
+        <span className="text-primary max-xl:hidden">{`+ ${t('c:add_resource', { resource: t('c:project') })}`}</span>
         <span>{t('c:no_projects.text')}</span>
       </p>
     </>
@@ -42,7 +42,7 @@ export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
         className="h-[calc(100vh-var(--board-mobile-offset))] md:h-[calc(100vh-var(--board-offset-md))]"
         icon={BirdIcon}
         title="c:no_resource_yet"
-        titleOptions={{ resource: t('c:project_other').toLowerCase() }}
+        titleOptions={{ resource: t('c:project_other') }}
       >
         <div className="max-md:mt-4">
           {workspace && !publicView ? <AvailableProjectsEmptyAction workspace={workspace} fallback={createProjectAction} /> : createProjectAction}

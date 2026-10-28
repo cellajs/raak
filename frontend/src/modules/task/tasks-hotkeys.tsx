@@ -1,8 +1,10 @@
 import { useSearch } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useHotkeys } from '~/hooks/use-hotkeys';
 import type { HotkeyItem } from '~/hooks/use-hotkeys-helpers';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
+import { announce } from '~/modules/common/announce';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
@@ -29,6 +31,7 @@ interface TasksHotkeysProps {
 
 /** Registers task actions for task views, and the board's arrow-key navigation while no task sheet is open. */
 export function TasksHotkeys({ projects }: TasksHotkeysProps) {
+  const { t } = useTranslation();
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const user = useCurrentUser();
   const taskMutation = useTaskUpdateMutation(tenantId, organizationId);
@@ -39,6 +42,14 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
   const currentDraft = () => {
     const { currentItemId } = useBoardFocusStore.getState();
     return Object.values(taskInteractionStore.getState().draftTasks).find((draft) => draft.id === currentItemId);
+  };
+
+  // useHotkeys prevents every Escape it matches, so the selection bar never sees one: an Escape no task takes clears it here
+  const clearSelection = () => {
+    const { selectedTaskIds, setSelectedTaskIds } = taskInteractionStore.getState();
+    if (!selectedTaskIds.length) return;
+    setSelectedTaskIds([]);
+    announce(document.body, t('c:success.clear_selection'));
   };
 
   const handleEscape = () => {
@@ -59,13 +70,13 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     }
 
     const task = currentActiveTask(taskSheetId);
-    if (!task) return;
+    if (!task) return clearSelection();
 
     if (isSheetOpen) return sheeter.getState().remove(`${taskSheetParam}-${task.id}`);
 
     const taskCard = document.getElementById(task.id);
     const state = taskCard?.dataset.state;
-    if (state === 'collapsed') return;
+    if (state === 'collapsed') return clearSelection();
     return taskCardStore.getState().setTaskState(task.id, state === 'editing' ? 'expanded' : 'collapsed');
   };
 

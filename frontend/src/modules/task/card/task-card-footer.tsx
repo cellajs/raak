@@ -55,7 +55,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
     <Button
       id={taskFieldTriggerId('labels', task.id, isSheet)}
       onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'labels', handlers, currentTarget, !isMobile || isExpandedMobile)}
-      aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
+      aria-label={t('c:set_resource', { resource: t('c:label_other') })}
       variant="ghost"
       size="xs"
       className={cn('h-auto min-h-8 min-w-8 p-0.5', labelsHide)}
@@ -149,7 +149,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             <Button
               id={taskFieldTriggerId('status', task.id, isSheet)}
               onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'status', handlers, currentTarget)}
-              aria-label={t('c:set_resource', { resource: t('c:status').toLowerCase() })}
+              aria-label={t('c:set_resource', { resource: t('c:status') })}
               variant="outline-ghost"
               size="xs"
               press={false}

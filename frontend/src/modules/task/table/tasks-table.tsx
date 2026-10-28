@@ -111,9 +111,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   const isRowSelectionDisabled = (row: Task) => isProjectReadOnly(row.projectId) || (!!selectedProjectId && row.projectId !== selectedProjectId);
 
-  const noRowsComponent = (
-    <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:task_other').toLowerCase() }} />
-  );
+  const noRowsComponent = <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:task_other') }} />;
 
   return (
     <TaskSearchScope>
