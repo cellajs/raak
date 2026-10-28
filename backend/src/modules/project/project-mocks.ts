@@ -15,13 +15,7 @@ import type { InsertProjectModel, ProjectModel } from '#/modules/project/project
 
 const projectName = mockUniqueEnforcer();
 
-/**
- * Generates base project fields shared between insert and response mocks.
- * @param id - Project ID
- * @param name - Project name
- * @param createdAt - Creation timestamp
- * @param organizationId - Parent organization ID
- */
+/** Base project fields shared between insert and response mocks. */
 const generateProjectBase = (id: string, name: string, createdAt: string, organizationId: string, tenantId: string) => {
   return {
     ...mockChannelColumns('project', {
@@ -50,7 +44,7 @@ export const mockProject = (suffix?: string): InsertProjectModel => {
 
 /**
  * Generates a mock project API response with deterministic seeding.
- * Adds API-only fields (membership, counts) to the base mock.
+ * Adds the caller's membership in `included` to the base mock.
  */
 export const mockProjectResponse = (key = 'project:default'): ProjectModel & { included: { membership: MembershipBaseModel } } =>
   withFakerSeed(key, () => {
@@ -59,10 +53,8 @@ export const mockProjectResponse = (key = 'project:default'): ProjectModel & { i
     const organizationId = mockUuid();
     const tenantId = mockTenantId();
 
-    // Generate base project fields
     const base = generateProjectBase(projectId, faker.commerce.productName(), createdAt, organizationId, tenantId);
 
-    // Generate membership base with the project ID
     const membership = mockMembershipBase(`${key}:membership`, {
       channelType: 'project',
       channelId: projectId,

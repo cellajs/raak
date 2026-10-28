@@ -1,8 +1,10 @@
-import { and, count, eq, getColumns, inArray, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, getColumns, inArray, ne, type SQL, sql } from 'drizzle-orm';
 import type { EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
+import type { UserId } from '#/db/utils/ids';
 import { resolveListTotal } from '#/db/utils/list-total';
 import { requestScopeWhere } from '#/db/utils/request-scope';
+import { updateStamps } from '#/db/utils/stamps';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
@@ -42,9 +44,38 @@ interface DeleteWorkspacesByIdsOpts {
   ids: string[];
 }
 
+/** Deletes the workspaces of the request's organization by id. */
 export const deleteWorkspacesByIds = async (ctx: ActorContext, { ids }: DeleteWorkspacesByIdsOpts) => {
   const { db } = ctx.var;
   return db.delete(workspacesTable).where(and(inArray(workspacesTable.id, ids), requestScopeWhere(ctx, workspacesTable, 'workspace')));
+};
+
+interface UnfileWorkspaceMembershipsOpts {
+  ids: string[];
+  updatedBy: UserId;
+}
+
+/**
+ * Takes the memberships filed under the workspaces out of them, so a workspace delete cascades only to the memberships
+ * of the workspaces themselves. `workspace_id` is immutable (`memberships_immutable_keys`), so a copy replaces each row.
+ * @returns The users holding any membership under the workspaces, the workspaces' members included.
+ */
+export const unfileWorkspaceMemberships = async (ctx: DbContext, { ids, updatedBy }: UnfileWorkspaceMembershipsOpts) => {
+  const { db } = ctx.var;
+  const holders = await db
+    .selectDistinct({ userId: membershipsTable.userId })
+    .from(membershipsTable)
+    .where(inArray(membershipsTable.workspaceId, ids));
+  const filed = await db
+    .delete(membershipsTable)
+    .where(and(inArray(membershipsTable.workspaceId, ids), ne(membershipsTable.channelType, 'workspace')))
+    .returning();
+  if (filed.length) {
+    await db
+      .insert(membershipsTable)
+      .values(filed.map(({ id, ...membership }) => ({ ...membership, workspaceId: null, ...updateStamps(updatedBy) })));
+  }
+  return holders.map(({ userId }) => userId);
 };
 
 interface FindWorkspacesPaginatedOpts {
@@ -69,14 +100,12 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
 
   const entityType = 'workspace';
 
-  // Base membership join key (attach membership for current user)
   const membershipKeyOn = and(
     eq(membershipsTable.workspaceId, workspacesTable.id),
     eq(membershipsTable.userId, userId),
     eq(membershipsTable.channelType, entityType),
   );
 
-  // Membership filters (role/archived) in JOIN ON
   const membershipFilterOn = and(
     ...(excludeArchived ? [eq(membershipsTable.archived, false)] : []),
     ...(role ? [eq(membershipsTable.role, role)] : []),
@@ -123,7 +152,6 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
     ...(countData && { counts: countData.countsSelect }),
   } as const;
 
-  // Build query - only join count subqueries when includeCounts is true
   let query = db.select(selectShape).from(workspacesTable).innerJoin(membershipsTable, membershipOn).$dynamic();
 
   if (countData) {

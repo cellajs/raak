@@ -27,18 +27,18 @@ export async function getWorkspacesOp(ctx: UserContext, input: z.infer<typeof wo
   const memberPreviews = includeMembers
     ? await findMemberPreviewsByChannels(ctx, {
         channelType: 'workspace',
-        channelIds: workspaceResults.map((ws) => ws.id),
-        role: hierarchy.getRoles('workspace')[0],
+        channelIds: workspaceResults.map((workspace) => workspace.id),
+        role: hierarchy.getMostPrivilegedRole('workspace'),
         limit: 3,
       })
     : null;
 
-  const items = (await withActorRefs(ctx, workspaceResults)).map((ws) => {
-    const { membership, counts, ...workspace } = ws;
+  const items = (await withActorRefs(ctx, workspaceResults)).map((row) => {
+    const { membership, counts, ...workspace } = row;
     const included: { membership?: ReturnType<typeof toMembershipBase>; counts?: typeof counts; members?: UserMinimalBase[] } = {};
     if (includeMembership && membership) included.membership = toMembershipBase(membership);
     if (includeCounts && counts) included.counts = counts;
-    if (memberPreviews) included.members = memberPreviews.get(ws.id) ?? [];
+    if (memberPreviews) included.members = memberPreviews.get(workspace.id) ?? [];
     return { ...workspace, included };
   });
 

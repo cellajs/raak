@@ -1,6 +1,6 @@
 import type { ActorContext } from '#/core/context';
 import { toWorkspaceResponse } from '#/modules/workspace/operations/to-workspace-response';
-import { getValidChannel } from '#/permissions/get-valid-channel';
+import { getValidChannel } from '#/permissions';
 
 /**
  * A workspace by id, or by slug with `bySlug`, with the counts and the caller's membership `include` asks for.

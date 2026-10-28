@@ -1,19 +1,23 @@
 import type { UserContext } from '#/core/context';
 import { withActorRef } from '#/modules/actors/actor-refs';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
-import { resolveProjectWorkspaceId, upsertCurrentUserProjectMembershipWorkspace } from '#/modules/project/operations/project-workspace-membership';
+import {
+  requireProjectMembership,
+  resolveProjectWorkspaceId,
+  setProjectMembershipWorkspace,
+} from '#/modules/project/operations/project-workspace-membership';
 import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
 /**
- * Files a project the caller may read under one of their workspaces, creating the caller's project membership when they
- * hold none.
- * @throws The refusals of `getValidChannel` for `read`; 409 `workspace_in_other_organization`.
+ * Files the caller's membership of a project they may read under one of their workspaces, at the end of its order.
+ * @throws The refusals of `getValidChannel` for `read`; 404 without a membership.
  */
 export async function assignProjectWorkspaceOp(ctx: UserContext, id: string, workspaceId: string) {
   const { entity: project } = await getValidChannel(ctx, id, 'project', 'read');
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
-  const updatedMembership = await upsertCurrentUserProjectMembershipWorkspace(ctx, { project, workspaceId: resolvedWorkspaceId });
+  const membership = requireProjectMembership(ctx, project);
+  const updatedMembership = await setProjectMembershipWorkspace(ctx, membership, resolvedWorkspaceId);
 
   log.info('Project workspace assigned', { projectId: project.id, workspaceId: resolvedWorkspaceId });
 

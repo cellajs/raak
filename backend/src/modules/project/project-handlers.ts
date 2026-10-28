@@ -5,7 +5,7 @@ import { createProjectsOp } from '#/modules/project/operations/create-projects';
 import { deleteProjectsOp } from '#/modules/project/operations/delete-projects';
 import { getProjectOp } from '#/modules/project/operations/get-project';
 import { getProjectsOp } from '#/modules/project/operations/get-projects';
-import { moveProjectToWorkspaceOp } from '#/modules/project/operations/move-project-workspace';
+import { moveProjectToWorkspaceOp } from '#/modules/project/operations/move-project-to-workspace';
 import { removeProjectWorkspaceOp } from '#/modules/project/operations/remove-project-workspace';
 import { updateProjectOp } from '#/modules/project/operations/update-project';
 import { projectRoutes } from '#/modules/project/project-routes';

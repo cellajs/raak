@@ -3,7 +3,7 @@ import type { ChannelEntityType, EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { resolveListTotal } from '#/db/utils/list-total';
-import { requestScope, requestScopeWhere } from '#/db/utils/request-scope';
+import { requestScopeWhere } from '#/db/utils/request-scope';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
@@ -44,6 +44,7 @@ interface DeleteProjectsByIdsOpts {
   ids: string[];
 }
 
+/** Deletes the projects of the request's organization by id. */
 export const deleteProjectsByIds = async (ctx: ActorContext, { ids }: DeleteProjectsByIdsOpts) => {
   const { db } = ctx.var;
   return db.delete(projectsTable).where(and(inArray(projectsTable.id, ids), requestScopeWhere(ctx, projectsTable, 'project')));
@@ -68,47 +69,25 @@ export const findMaxDisplayOrder = async (ctx: DbContext, { userId, channelType,
 interface DeleteProjectMembershipOpts {
   membershipId: string;
   userId: string;
-  channelId: string;
-  projectId: string;
 }
 
-export const deleteProjectMembership = async (ctx: DbContext, { membershipId, userId, channelId, projectId }: DeleteProjectMembershipOpts) => {
+/** Deletes a membership by id, only when it is the user's. */
+export const deleteProjectMembership = async (ctx: DbContext, { membershipId, userId }: DeleteProjectMembershipOpts) => {
   const { db } = ctx.var;
-  return db
-    .delete(membershipsTable)
-    .where(
-      and(
-        eq(membershipsTable.id, membershipId),
-        eq(membershipsTable.userId, userId),
-        eq(membershipsTable.channelType, 'project'),
-        eq(membershipsTable.channelId, channelId),
-        eq(membershipsTable.projectId, projectId),
-      ),
-    );
+  return db.delete(membershipsTable).where(and(eq(membershipsTable.id, membershipId), eq(membershipsTable.userId, userId)));
 };
 
-interface InsertProjectMembershipOpts {
-  values: typeof membershipsTable.$inferInsert;
-}
-
-/** Insert a new project membership and return with base select. */
-export const insertProjectMembership = async (ctx: DbContext, { values }: InsertProjectMembershipOpts) => {
-  const { db } = ctx.var;
-  const [membership] = await db.insert(membershipsTable).values(values).returning(membershipBaseSelect);
-  return membership;
-};
-
-interface FindProjectsByWorkspaceOpts {
+interface FindActorProjectsInWorkspaceOpts {
   workspaceId: string;
 }
 
-const findProjectsByWorkspace = async (ctx: ActorContext, { workspaceId }: FindProjectsByWorkspaceOpts) => {
+/** The projects whose membership of the actor is filed under the workspace, archived memberships left out. */
+const findActorProjectsInWorkspace = async (ctx: ActorContext, { workspaceId }: FindActorProjectsInWorkspaceOpts) => {
   const { db, actor } = ctx.var;
-  // Workspaces group a user's own project memberships; a service account has none.
+  // Workspaces group a user's project memberships; a service account has none.
   if (actor.kind !== 'user') return [];
-  const { organizationId } = requestScope(ctx, 'project');
   return db
-    .select({ ...getColumns(projectsTable) })
+    .select({ id: projectsTable.id })
     .from(projectsTable)
     .innerJoin(
       membershipsTable,
@@ -120,7 +99,7 @@ const findProjectsByWorkspace = async (ctx: ActorContext, { workspaceId }: FindP
         eq(membershipsTable.archived, false),
       ),
     )
-    .where(eq(projectsTable.organizationId, organizationId));
+    .where(requestScopeWhere(ctx, projectsTable, 'project'));
 };
 
 interface FindProjectByIdOpts {
@@ -129,11 +108,10 @@ interface FindProjectByIdOpts {
 
 const findProjectById = async (ctx: ActorContext, { projectId }: FindProjectByIdOpts) => {
   const { db } = ctx.var;
-  const { organizationId } = requestScope(ctx);
   const [project] = await db
-    .select()
+    .select({ id: projectsTable.id })
     .from(projectsTable)
-    .where(and(eq(projectsTable.id, projectId), eq(projectsTable.organizationId, organizationId)))
+    .where(and(eq(projectsTable.id, projectId), requestScopeWhere(ctx, projectsTable)))
     .limit(1);
   return project;
 };
@@ -141,8 +119,7 @@ const findProjectById = async (ctx: ActorContext, { projectId }: FindProjectById
 /** Ids of every project in the request's organization. */
 export const findOrganizationProjectIds = async (ctx: ActorContext): Promise<string[]> => {
   const { db } = ctx.var;
-  const { organizationId } = requestScope(ctx);
-  const rows = await db.select({ id: projectsTable.id }).from(projectsTable).where(eq(projectsTable.organizationId, organizationId));
+  const rows = await db.select({ id: projectsTable.id }).from(projectsTable).where(requestScopeWhere(ctx, projectsTable));
   return rows.map(({ id }) => id);
 };
 
@@ -151,7 +128,7 @@ export type ProjectNarrowing = { homeChannelId?: string; homeChannelIds?: string
 
 /**
  * Resolves `?projectId` / `?workspaceId` of a project-homed product list into the narrowing that
- * `resolveCollectionReadFilter` intersects with the caller's read scope. A project id wins over a workspace id.
+ * `resolveCollectionReadFilter` intersects with the caller's read scope.
  */
 export const resolveProjectNarrowing = async (
   ctx: ActorContext,
@@ -163,7 +140,7 @@ export const resolveProjectNarrowing = async (
     return { homeChannelId: projectId };
   }
   if (workspaceId) {
-    const workspaceProjects = await findProjectsByWorkspace(ctx, { workspaceId });
+    const workspaceProjects = await findActorProjectsInWorkspace(ctx, { workspaceId });
     return { homeChannelIds: workspaceProjects.map(({ id }) => id) };
   }
   return undefined;
@@ -211,14 +188,13 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
 
   const entityType = 'project';
 
-  // Base membership join key (attach membership for current user)
   const membershipKeyOn = and(
     eq(membershipsTable.projectId, projectsTable.id),
     eq(membershipsTable.userId, userId),
     eq(membershipsTable.channelType, entityType),
   );
 
-  // Membership filters (role/archived) in JOIN ON
+  // In JOIN ON: under a read scope's LEFT JOIN they decide only whether the membership row is present.
   const membershipFilterOn = and(
     ...(excludeArchived ? [eq(membershipsTable.archived, false)] : []),
     ...(role ? [eq(membershipsTable.role, role)] : []),
@@ -271,7 +247,6 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
     ...(countData && { counts: countData.countsSelect }),
   } as const;
 
-  // Build query - only join count subqueries when includeCounts is true
   const itemsSelect = db.select(selectShape).from(projectsTable);
   let query = readScope
     ? itemsSelect.leftJoin(membershipsTable, membershipOn).$dynamic()

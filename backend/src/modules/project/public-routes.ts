@@ -14,7 +14,7 @@ const publicProjectRoutes = createXRoutes(['projects', 'app', 'channel'], {
     description: 'Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.',
     request: { params: z.object({ id: validIdSchema }), query: slugIncludeQuerySchema.pick({ slug: true }) },
     responses: {
-      200: json('Project without membership public', projectSchema.extend({ membership: z.null() }), { ...mockProjectResponse(), membership: null }),
+      200: json('Public project', projectSchema.extend({ membership: z.null() }), { ...mockProjectResponse(), membership: null }),
     },
   }),
 });

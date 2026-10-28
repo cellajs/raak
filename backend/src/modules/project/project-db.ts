@@ -2,10 +2,7 @@ import { index, snakeCase, unique, uuid } from 'drizzle-orm/pg-core';
 import { channelColumns } from '#/db/utils/channel-columns';
 import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
 
-/**
- * Projects table is a channel entity table.
- * Each project belongs to exactly one organization and inherits its tenant (RLS isolation boundary).
- */
+/** Each project belongs to exactly one organization and inherits its tenant (RLS isolation boundary). */
 export const projectsTable = snakeCase.table('projects', { ...channelColumns('project'), organizationId: uuid().notNull() }, (table) => [
   index('projects_name_index').on(table.name.desc()),
   index('projects_created_at_index').on(table.createdAt.desc()),

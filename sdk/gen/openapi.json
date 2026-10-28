@@ -9465,7 +9465,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Project without membership public",
+            "description": "Public project",
             "content": {
               "application/json": {
                 "example": {
