@@ -41,20 +41,15 @@ export async function updateTaskOp(
 
   // A cleared description derives empty counts and an empty attachments array, so the
   // CDC worker garbage-collects attachments the description no longer references.
-  const derivedDescription = 'description' in rawOps ? deriveDescriptionProps(rawOps.description as string | null) : undefined;
+  const derivedDescription = 'description' in rawOps ? deriveDescriptionProps(rawOps.description) : undefined;
 
-  // Single tenantContext wraps permission check + write to avoid double-transaction pool pressure
-  const taskResponse = await tenantContext(ctx, async (txCtx) => {
-    // Locked: the merge below starts from this row, so no other write may land between the read and the update.
+  return tenantContext(ctx, async (txCtx) => {
     const { entity } = await getValidProduct(txCtx, id, 'task', 'update', { forUpdate: true });
 
     taskContract.assertBlockFields(rawOps, entity.organizationId);
 
-    // Server-origin writes (Yjs description materialization) carry no client field
-    // timestamps, so every changed scalar gets a fresh server HLC.
     const resolved = serverOrigin ? taskContract.resolveServerUpdateOps(entity, rawOps) : taskContract.resolveUpdateOps(entity, rawOps, stx);
 
-    // Skip DB update if nothing changed
     if (!resolved.changed) {
       if (!fullResponse) return hydrateTaskLite(entity, user);
       const [users, labels] = await getTaskRelations(txCtx, { tasks: [entity] });
@@ -74,23 +69,21 @@ export async function updateTaskOp(
       // A move places the task as a create does, so the actor needs the create grant in the target project.
       const { columns } = await resolvePlacement({ var: { ...ctx.var, db: txCtx.var.db } }, 'task', resolved.values);
       canCreateEntity(txCtx, buildSubject('task', { ...entity, ...columns }));
+      // createdBy stays the original creator: an organization-level audit field, immutable in the database.
       Object.assign(updateValues, columns);
       projectId = columns.projectId;
-      // createdBy is an org-level audit field, not project-scoped, and is immutable at the DB level.
-      // Leave it on the original creator across a move.
 
-      // Remap the primary label into the target project: explicit op first, then matching
-      // slug, then the target's default (first live primary by displayOrder).
       const targetPrimaries = await findLivePrimaryLabels(txCtx, { projectIds: [projectId] });
-      const requestedId = resolved.values.primaryLabelId as string | undefined;
       const currentSlug = await findLabelSlugById(txCtx, entity.primaryLabelId);
-      const target = targetPrimaries.find((l) => l.id === requestedId) ?? targetPrimaries.find((l) => l.slug === currentSlug) ?? targetPrimaries[0];
+      const target =
+        targetPrimaries.find((l) => l.id === resolved.values.primaryLabelId) ??
+        targetPrimaries.find((l) => l.slug === currentSlug) ??
+        targetPrimaries[0];
       if (!target) {
         throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId } });
       }
       updateValues.primaryLabelId = target.id;
     } else if ('primaryLabelId' in resolved.values) {
-      // Validate the new primary label is a live primary of the task's project
       const projectPrimaries = await findLivePrimaryLabels(txCtx, { projectIds: [entity.projectId] });
       if (!projectPrimaries.some((l) => l.id === resolved.values.primaryLabelId)) {
         throw new AppError(400, 'invalid_request', 'warn', {
@@ -117,8 +110,7 @@ export async function updateTaskOp(
     }
 
     if (resolved.values.description !== undefined && derivedDescription) {
-      // Drop ids that don't resolve to a live in-org attachment row (doctored or stale
-      // block props must never enter the owned-embedding host array).
+      // Doctored or stale block props must never enter the owned-embedding host array
       derivedDescription.attachments = await filterExistingProductIds(txCtx, { entityType: 'attachment', ids: derivedDescription.attachments });
       Object.assign(updateValues, derivedDescription);
     }
@@ -126,14 +118,10 @@ export async function updateTaskOp(
     const updatedTaskRecord = await updateTask(txCtx, { id, values: updateValues });
     await dispatchMutation(txCtx, 'task.updated', { before: [entity], after: [updatedTaskRecord], materialized });
 
-    // Lite path: skip relation DB queries because the frontend uses optimistic cache.
-    // Project moves always need full hydration because assignedTo/labels change server-side
+    // The lite response serves the client's optimistic cache; a move rewrites relations server-side, so it hydrates them
     if (!fullResponse && !isProjectMove) return hydrateTaskLite(updatedTaskRecord, user);
 
-    // Full path: hydrate relations from DB (for 3rd-party consumers)
     const [users, labels] = await getTaskRelations(txCtx, { tasks: [updatedTaskRecord] });
     return hydrateTask(txCtx, updatedTaskRecord, users, labels);
   });
-
-  return taskResponse;
 }

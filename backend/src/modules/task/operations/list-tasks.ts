@@ -19,17 +19,14 @@ import { TimeSpan } from '#/utils/time-span';
 const queryInfoSchema = taskListQueryBaseSchema.omit({ projectId: true, workspaceId: true });
 type QueryInfo = z.infer<typeof queryInfoSchema>;
 
-/**
- * Get list of tasks for a project, with filtering, sorting, and pagination.
- */
-export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean; range?: SeqRange }) => {
+/** A page of the tasks in `projectIds` that match the list query, hydrated with their projects' members and labels. */
+export const listTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean; range?: SeqRange }) => {
   const { q, sort, order, acceptedCutOff, matchMode, limit, offset } = queryInfo;
   const rangeRead = seqRangeRead(tasksTable, opts?.range);
   // Highlight-mode clients ('=' prefix) fetch with their exclusions only; stripping here keeps stray marked
   // queries behaving like their plain form.
   const { terms, excludeTerms } = parseSearchQuery(q);
 
-  // Get users and labels data in parallel
   const [tasksUsers, tasksLabels] = await Promise.all([findProjectMembers(ctx, { projectIds }), findLabelsByProjects(ctx, { projectIds })]);
 
   const tasksSearchFilters: SQL[] = [];
@@ -75,7 +72,6 @@ export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInf
       append: [desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number)), asc(tasksTable.id)],
     });
 
-  // Exclude accepted tasks older than cutoff directly in WHERE (avoids separate query + notInArray)
   const acceptedCutOffFilter = acceptedCutOff
     ? sql`NOT (${tasksTable.status} = ${TaskStatus.Accepted} AND ${tasksTable.statusChangedAt} <= ${isoDateAgo(new TimeSpan(acceptedCutOff, 'd'))})`
     : undefined;
@@ -90,7 +86,6 @@ export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInf
     opts?.publicOnly ? eq(tasksTable.public, true) : undefined,
   );
 
-  // Normal reads fetch the page and its exact COUNT(*) in parallel; range reads skip the count.
   const { items: tasks, total } = await findTasksPaginated(ctx, { filters, orderBy, limit, offset, isDelta: !!opts?.range });
 
   const items = await hydrateTasks(ctx, tasks, tasksUsers, tasksLabels);

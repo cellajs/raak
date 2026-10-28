@@ -34,7 +34,6 @@ export async function createLabelsOp(
   const input = rawInput.map((item) => labelContract.normalizeCreateItem(item));
   const { organization } = ctx.var;
 
-  // Rows an earlier attempt of this create wrote come back as they are; only the other items are created.
   const replayed = await checkIdempotency(
     ctx,
     labelsTable,
@@ -50,7 +49,6 @@ export async function createLabelsOp(
   // Creating primary/epic labels requires project-admin authority (project update permission)
   const managedHome = async (homeCtx: OrgContext, id: string, type: ChannelEntityType) => (await getValidChannel(homeCtx, id, type, 'update')).entity;
 
-  // Fetch existing labels in org of the same names for color matching
   const names = fresh.flatMap(({ name, mode }) => (name ? labelName(name, mode) : []));
   const existingLabels = await tenantRead(ctx, (readCtx) => findLabelColorsByName(readCtx, { names }));
 

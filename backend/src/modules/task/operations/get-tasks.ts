@@ -2,7 +2,7 @@ import type { z } from '@hono/zod-openapi';
 import type { OrgContext } from '#/core/context';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { findOrganizationProjectIds, resolveProjectNarrowing } from '#/modules/project/project-queries';
-import { getTasks } from '#/modules/task/operations/list-tasks';
+import { listTasks } from '#/modules/task/operations/list-tasks';
 import type { taskListQuerySchema } from '#/modules/task/task-schema';
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
@@ -14,7 +14,7 @@ type GetTasksInput = z.infer<typeof taskListQuerySchema>;
  * A page of the tasks the caller may read in the organization; `projectId` or `workspaceId` narrows it. A range read
  * (`afterSeq`, `untilSeq`) includes deleted rows.
  */
-export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise<Awaited<ReturnType<typeof getTasks>>> {
+export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise<Awaited<ReturnType<typeof listTasks>>> {
   const { projectId, workspaceId, ...queryInfo } = input;
   const range = seqRangeOf(input);
   const organizationId = ctx.var.organization.id;
@@ -27,10 +27,7 @@ export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise
   const scopedProjectIds = homeChannelIds ?? (await findOrganizationProjectIds(ctx));
   if (scopedProjectIds.length === 0) return { items: [], total: 0 };
 
-  // A range read returns deleted rows too, so caches drop them.
   const read = range ? tenantReadIncludingDeleted : tenantRead;
 
-  return read(ctx, async (readCtx) => {
-    return getTasks(readCtx, scopedProjectIds, queryInfo, { range });
-  });
+  return read(ctx, (readCtx) => listTasks(readCtx, scopedProjectIds, queryInfo, { range }));
 }

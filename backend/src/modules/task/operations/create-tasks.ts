@@ -41,7 +41,6 @@ export async function createTasksOp(
     return hydrateTasks(ctx, tasks, users, labels);
   };
 
-  // Rows an earlier attempt of this create wrote come back as they are; only the other items are created.
   const replayed = await checkIdempotency(
     ctx,
     tasksTable,
@@ -62,7 +61,6 @@ export async function createTasksOp(
     homes.push(home);
   }
 
-  // Resolve primary labels per project: validate provided ids, default to first by displayOrder
   const projectIds = [...new Set(placements.map(({ projectId }) => projectId))];
   const userIds = fresh.flatMap((item) => item.assignedTo ?? []);
   const labelIds = fresh.flatMap((item) => item.labels ?? []);
@@ -76,14 +74,12 @@ export async function createTasksOp(
     // Derived attachments are UUID-shape-checked only: attachment rows created in the
     // same client batch may not be committed yet, so existence is not enforced here.
     taskContract.assertBlockFields(taskInfo, organization.id);
-    const descriptionText = String(taskInfo.description ?? '');
+    const descriptionText = taskInfo.description ?? '';
     const derived = deriveDescriptionProps(descriptionText);
 
     const projectPrimaries = primariesByProject.get(placement.projectId) ?? [];
     // Unknown/missing ids fall back to the project default (graceful for offline replays)
-    const primaryLabelId = projectPrimaries.some((l) => l.id === taskInfo.primaryLabelId)
-      ? (taskInfo.primaryLabelId as string)
-      : projectPrimaries[0]?.id;
+    const primaryLabelId = (projectPrimaries.find((l) => l.id === taskInfo.primaryLabelId) ?? projectPrimaries[0])?.id;
     if (!primaryLabelId) {
       throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId: placement.projectId } });
     }

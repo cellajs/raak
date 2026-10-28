@@ -1,8 +1,7 @@
 /**
- * Label mode taxonomy. `secondary` is the classic free-form tag. `primary` rows replace the
- * former task variant: a small per-project set (provisioned from the organization's
- * setupConfig) of which every task references exactly one. `epic` rows group tasks for
- * dedicated UI treatment.
+ * Label mode taxonomy. `secondary` is the classic free-form tag. `primary` rows are the task
+ * types: a small per-project set (provisioned from the organization's setupConfig) of which
+ * every task references exactly one. `epic` rows group tasks for dedicated UI treatment.
  */
 export const labelModes = ['primary', 'secondary', 'epic'] as const;
 

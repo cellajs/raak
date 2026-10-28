@@ -30,7 +30,7 @@ export const taskSchema = z
   .object({
     ...taskSelectSchema.omit({ labels: true, assignedTo: true, stx: true }).shape,
     labels: z.array(labelEmbeddedSchema),
-    // Hydrated from primaryLabelId; null only when the referenced row is missing from the relation set
+    // Hydrated from primaryLabelId; null in a lite update response and when the relation set lacks the row
     primaryLabel: labelEmbeddedSchema.nullable(),
     status: z.enum(TaskStatus),
     assignedTo: z.array(userMinimalBaseSchema),
@@ -72,7 +72,6 @@ export const taskContract = evolutionContract.product('task', {
   blockFields: ['description'],
 });
 
-/** Update body using fields pattern for single or multi-field updates with conflict detection */
 export const taskUpdateStxBodySchema = taskContract.updateBodySchema;
 
 const taskListQueryShape = {

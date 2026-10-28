@@ -7,7 +7,7 @@ import { findLabelNameById } from '#/modules/label/label-queries';
 import { findLiveTaskById, findTaskLinkTarget } from '#/modules/task/task-queries';
 
 /** The unfurl of a task link: page title, type and description, plus the frontend url the page sends the visitor to. */
-export const getTaskPreview = async (ctx: DbContext, id: string) => {
+export async function getTaskPreviewOp(ctx: DbContext, id: string) {
   const found = await findLiveTaskById(ctx, { id });
   if (!found) throw new AppError(404, 'not_found', 'warn', { entityType: 'task', willRedirect: true });
 
@@ -29,4 +29,4 @@ export const getTaskPreview = async (ctx: DbContext, id: string) => {
     description: fullText.length > 200 ? `${fullText.slice(0, 197)}...` : fullText,
     redirectUrl: new URL(`${appConfig.frontendUrl}/t/${id}`).toString(),
   };
-};
+}

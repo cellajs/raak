@@ -884,7 +884,7 @@ export const zAttachment = z.object({
 });
 
 /**
- * A label used to categorize and filter tasks within a project or workspace.
+ * A label used to categorize and filter tasks within a project.
  */
 export const zLabel = z.object({
   id: z.uuid(),
@@ -3766,7 +3766,7 @@ export const zGetTaskPath = z.object({
 });
 
 /**
- * Tasks
+ * Task
  */
 export const zGetTaskResponse = zTask;
 

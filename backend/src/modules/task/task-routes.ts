@@ -46,7 +46,6 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     method: 'get',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
-    // Sync-driven read backpressure on the delta path (template pattern for app product lists)
     xRateLimiter: [syncReadLimiter],
     xTool: {
       description: 'Search tasks by keyword, status, label, or project. Returns matching task summaries with status and assignees.',
@@ -67,7 +66,7 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     summary: 'Get task',
     description: 'Retrieves a task by its ID.',
     request: { params: idInTenantOrgParamSchema },
-    responses: { 200: json('Tasks', taskSchema) },
+    responses: { 200: json('Task', taskSchema) },
   }),
   updateTask: xRoute({
     method: 'put',

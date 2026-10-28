@@ -4,7 +4,7 @@ const fontFamily = 'Lucida Sans Unicode';
 
 const fontSizes = { heading: 80, author: 40 };
 
-const fontStyles = { heading: `900 ${fontSizes.heading}px  ${fontFamily}`, author: `700 ${fontSizes.author}px ${fontFamily}` };
+const fontStyles = { heading: `900 ${fontSizes.heading}px ${fontFamily}`, author: `700 ${fontSizes.author}px ${fontFamily}` };
 
 const colors = { primary: '#ffd166', secondary: 'white', base: '#560bad' };
 
@@ -39,8 +39,9 @@ interface Options {
   avatarUrl: string;
   name: string;
 }
+
+/** The 1200x630 PNG cover of a task link: the title, the author's avatar and name, and the logo. */
 export async function generateCover({ title, avatarUrl, name }: Options) {
-  // Load images
   const logo = await loadImage('https://d2fltix0v2e0sb.cloudfront.net/dev-black.png');
   const avatar = avatarUrl ? await loadImage(avatarUrl) : null;
 
@@ -48,11 +49,9 @@ export async function generateCover({ title, avatarUrl, name }: Options) {
   const canvas = createCanvas(1200, 630);
   const ctx = canvas.getContext('2d');
 
-  // Background
   ctx.fillStyle = colors.base;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Heading text
   ctx.fillStyle = colors.secondary;
   ctx.font = fontStyles.heading;
   wrapText(ctx, title, space, fontSizes.heading + space, canvas.width - space * 2, fontSizes.heading);
@@ -60,7 +59,6 @@ export async function generateCover({ title, avatarUrl, name }: Options) {
   const avatarTop = canvas.height - avatarSize - avatarSize / 2;
   const avatarLeft = space;
 
-  // Border around avatar
   ctx.fillStyle = colors.primary;
   ctx.beginPath();
   ctx.arc(avatarSize / 2 + avatarLeft, avatarSize / 2 + avatarTop, avatarSize / 2 + avatarBorder, 0, 2 * Math.PI);
@@ -68,26 +66,21 @@ export async function generateCover({ title, avatarUrl, name }: Options) {
   ctx.closePath();
 
   if (avatar) {
-    // Clip image before draw
     ctx.save();
     ctx.beginPath();
     ctx.arc(avatarSize / 2 + avatarLeft, avatarSize / 2 + avatarTop, avatarSize / 2, 0, 2 * Math.PI);
     ctx.closePath();
     ctx.clip();
 
-    // Put avatar
     ctx.drawImage(avatar, avatarLeft, avatarTop, avatarSize, avatarSize);
     ctx.restore();
   }
 
-  // Author name
   ctx.fillStyle = colors.secondary;
   ctx.font = fontStyles.author;
   ctx.fillText(name, avatarLeft + avatarSize + space / 2, avatarTop + fontSizes.author - 4);
 
-  // Add logo
   ctx.drawImage(logo, canvas.width - logoH - 60, canvas.height - logoH - logoH / 2 + space / 4, logoW, logoH);
 
-  // Encode to PNG bytes (Uint8Array)
-  return await canvas.encode('png');
+  return canvas.encode('png');
 }

@@ -33,9 +33,7 @@ export async function updateLabelOp(
   const { ops: rawOps, stx } = input;
   const { serverOrigin, materialized } = opts;
 
-  // Single tenantContext wraps permission check + write to avoid double-transaction pool pressure
-  const updated = await tenantContext(ctx, async (txCtx) => {
-    // Locked: the merge below starts from this row, so no other write may land between the read and the update.
+  return tenantContext(ctx, async (txCtx) => {
     const { entity: before } = await getValidProduct(txCtx, id, 'label', 'update', { forUpdate: true });
 
     // Epic documentation and secondary <-> epic transitions are member-level: any project
@@ -59,8 +57,6 @@ export async function updateLabelOp(
       await getValidChannel(txCtx, before.projectId, 'project', 'update');
     }
 
-    // Server-origin writes (Yjs description materialization) carry no client field timestamps,
-    // so each changed scalar gets a fresh server HLC.
     const resolved = serverOrigin ? labelContract.resolveServerUpdateOps(before, rawOps) : labelContract.resolveUpdateOps(before, rawOps, stx);
 
     const values: UpdateLabelValues = {
@@ -95,7 +91,6 @@ export async function updateLabelOp(
         }
         Object.assign(values, { name: entry.name, color: entry.color, icon: entry.icon });
       } else if (before.organizationTracked && trackedFields.some((field) => field in resolved.values)) {
-        // Any identity or appearance edit unlinks the row from organization tracking
         values.organizationTracked = false;
       }
     }
@@ -105,6 +100,4 @@ export async function updateLabelOp(
     await dispatchMutation(txCtx, 'label.updated', { before: [before], after: [updatedLabel], materialized });
     return updatedLabel;
   });
-
-  return updated;
 }

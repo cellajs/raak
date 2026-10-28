@@ -11,7 +11,7 @@ const publicTaskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     path: '/{id}',
     xGuard: [publicGuard],
     summary: 'Get public task',
-    description: 'Retrieves a task by its ID. For publicly shared.',
+    description: 'Retrieves a public task by its ID.',
     request: { params: z.object({ id: validIdSchema }) },
     responses: { 200: json('Task', taskSchema) },
   }),

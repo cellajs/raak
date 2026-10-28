@@ -9,11 +9,11 @@ import { getValidProduct } from '#/permissions/get-valid-product';
  * @throws The refusals of `getValidProduct` for `read`.
  */
 export async function getTaskOp(ctx: ActorContext, id: string): Promise<TaskResponse> {
-  const { mainTask, users, labels } = await tenantRead(ctx, async (readCtx) => {
-    const { entity: mainTask } = await getValidProduct(readCtx, id, 'task', 'read');
-    const [users, labels] = await getTaskRelations(readCtx, { tasks: [mainTask] });
-    return { mainTask, users, labels };
+  const { task, users, labels } = await tenantRead(ctx, async (readCtx) => {
+    const { entity: task } = await getValidProduct(readCtx, id, 'task', 'read');
+    const [users, labels] = await getTaskRelations(readCtx, { tasks: [task] });
+    return { task, users, labels };
   });
 
-  return hydrateTask(ctx, mainTask, users, labels);
+  return hydrateTask(ctx, task, users, labels);
 }
