@@ -6,9 +6,13 @@ import { type BuildEffects, type BuildReleaseOptions, buildRelease } from './bui
 
 const epoch = '0123456789ab';
 
-function fake(opts: { present?: boolean; result?: string; never?: boolean; step?: string; epochOnFiles?: string } = {}) {
+/** `earlier`: the result an earlier build of the commit left under its prefix an hour before, served with its step and log for two polls. */
+function fake(
+  opts: { present?: boolean; result?: string; never?: boolean; step?: string; epochOnFiles?: string; outOfStock?: string; earlier?: string } = {},
+) {
   const ops: string[] = [];
   let built = false;
+  let polls = 0;
   const fx: BuildEffects = {
     imagePresent: async () => opts.present === true || built,
     entryFile: async (name) => {
@@ -23,17 +27,29 @@ function fake(opts: { present?: boolean; result?: string; never?: boolean; step?
       ops.push('remove');
       return [];
     },
-    startBuilder: async (name) => {
-      ops.push(`start:${name}`);
+    startBuilder: async (zone, name) => {
+      ops.push(`start:${name}@${zone}`);
+      if (zone === opts.outOfStock) {
+        throw new Error(
+          `Scaleway POST https://api.scaleway.com/instance/v1/zones/${zone}/servers/0b1d/action → 412: {"type": "out_of_stock", "message": "resource is out of stock", "resource": "POP2-HC-8C-16G"}`,
+        );
+      }
     },
     report: async (name) => {
       if (opts.never) return undefined;
-      if (name === 'step') return opts.step ?? 'images';
-      if (name === 'log') return 'the end of the log';
+      if (opts.earlier && polls <= 2) {
+        const body = name === 'result' ? opts.earlier : name === 'step' ? 'files' : 'the earlier log';
+        return { body, modified: new Date(Date.now() - 3_600_000) };
+      }
+      const modified = new Date();
+      if (name === 'step') return { body: opts.step ?? 'images', modified };
+      if (name === 'log') return { body: 'the end of the log', modified };
       built = opts.result !== 'failed';
-      return opts.result ?? 'ok';
+      return { body: opts.result ?? 'ok', modified };
     },
-    sleep: async () => {},
+    sleep: async () => {
+      polls++;
+    },
   };
   return { fx, ops };
 }
@@ -42,6 +58,7 @@ const options = (overrides: Partial<BuildReleaseOptions> = {}): BuildReleaseOpti
   sha: 'c'.repeat(40),
   epoch,
   builderName: 'app-builder-cccccccccc',
+  zones: ['nl-ams-1', 'nl-ams-2', 'nl-ams-3'],
   images: ['backend', 'infra-boot'],
   withFrontend: true,
   distDir: mkdtempSync(join(tmpdir(), 'release-')),
@@ -62,13 +79,21 @@ describe('buildRelease', () => {
   it('must not trust frontend files pushed before the last rotation: their epoch differs, so the release is built again', async () => {
     const { fx, ops } = fake({ present: true, epochOnFiles: 'before-rotation' });
     expect(await buildRelease(options(), fx)).toBe('built');
-    expect(ops).toContain('start:app-builder-cccccccccc');
+    expect(ops).toContain('start:app-builder-cccccccccc@nl-ams-1');
   });
 
   it('builds a missing release on a builder it deletes afterwards, a leftover one deleted first', async () => {
     const { fx, ops } = fake();
     expect(await buildRelease(options(), fx)).toBe('built');
-    expect(ops).toEqual(['remove', 'keys', 'start:app-builder-cccccccccc', 'remove']);
+    expect(ops).toEqual(['remove', 'keys', 'start:app-builder-cccccccccc@nl-ams-1', 'remove']);
+  });
+
+  it('builds in the next zone of the region when Scaleway has the type out of stock, the machine it made in the first deleted', async () => {
+    const { fx, ops } = fake({ outOfStock: 'nl-ams-1' });
+    const lines: string[] = [];
+    expect(await buildRelease(options({ log: (line) => lines.push(line) }), fx)).toBe('built');
+    expect(ops).toEqual(['remove', 'keys', 'start:app-builder-cccccccccc@nl-ams-1', 'remove', 'start:app-builder-cccccccccc@nl-ams-2', 'remove']);
+    expect(lines).toContain('  ~ nl-ams-1 has no POP2-HC-8C-16G in stock: trying nl-ams-2');
   });
 
   it('fails with the end of the log when the build fails, and deletes the builder all the same', async () => {
@@ -81,6 +106,13 @@ describe('buildRelease', () => {
     const { fx } = fake({ result: 'failed', step: 'clone' });
     await expect(buildRelease(options(), fx)).rejects.toThrow(/failed at 'clone'[\s\S]*pnpm infra repository-key/);
     await expect(buildRelease(options(), fake({ result: 'failed' }).fx)).rejects.not.toThrow(/repository-key/);
+  });
+
+  it("reads only its own builder's reports: an earlier build of the commit left its result under the same prefix", async () => {
+    // Staging, 2026-10-28: every retry of a failed build read that build's result 15 s in, while its own builder was still booting.
+    expect(await buildRelease(options(), fake({ earlier: 'failed' }).fx)).toBe('built');
+    // After a rotation a commit built before builds again under the new epoch: its earlier `ok` must not end the wait.
+    await expect(buildRelease(options(), fake({ earlier: 'ok', result: 'failed' }).fx)).rejects.toThrow(/failed at 'images'/);
   });
 
   it('stops waiting at its time limit, and deletes the builder', async () => {

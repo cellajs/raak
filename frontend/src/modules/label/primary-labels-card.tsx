@@ -189,8 +189,8 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
       name: t('c:name'),
       minWidth: 140,
       renderCell: ({ row }) => <span className="truncate">{row.name}</span>,
-      renderEditCell: ({ row, onRowChange }) => (
-        <EditCellInput value={row.name} onChange={(event) => onRowChange({ ...row, name: event.target.value })} autoFocus />
+      renderEditCell: ({ row, column, onRowChange }) => (
+        <EditCellInput name={column.key} value={row.name} onChange={(event) => onRowChange({ ...row, name: event.target.value })} autoFocus />
       ),
     },
     {

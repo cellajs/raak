@@ -40,7 +40,7 @@ export const OPERATOR_ACTIONS = {
     label: 'Rotate keys',
     key: 'owner',
     description:
-      'Replace the CI deploy key, the observer key and every standing machine key with fresh ones (the observer key is rewritten in every infra/.env.<mode> on this machine that holds it).',
+      'Replace the CI deploy key, the observer key, every standing machine key and, where the runner serves this environment, the runner key and machine (the observer key is rewritten in every infra/.env.<mode> on this machine that holds it).',
   },
   'rotate-secrets': {
     label: 'Rotate secrets',
@@ -69,13 +69,13 @@ export const OPERATOR_ACTIONS = {
     label: 'Start a deploy',
     key: 'operator',
     description:
-      "Start one run of the environment's main job for its target (the environments file's line, or its branch or newest release) and follow it until it is deployed, blocked or failed.",
+      "Start one run of the environment's main job for its target (the environments file's line, or production's newest release) and follow it until it is deployed, blocked or failed.",
   },
   'runner-identity': {
     label: 'Set up the runner',
     key: 'owner',
     description:
-      "Make the app's runner (its project, reserved address, application and key), let the operator reach it, and add this environment to the ones it starts deploys for in infra/runner.json. With --rotate-key it replaces the runner's key; Replace the runner then gives it to the machine.",
+      "Make the app's runner (its project, reserved address, application and key), let the operator reach it, and add this environment to the ones it starts deploys for in infra/runner.json. Rotate keys replaces its key.",
   },
   'runner-replace': {
     label: 'Replace the runner',

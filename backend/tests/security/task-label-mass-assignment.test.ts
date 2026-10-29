@@ -12,7 +12,8 @@ import { adminRole, defaultHeaders, memberRole } from '../fixtures';
 import { adminDb, createTestOrganization } from '../helpers';
 import { createAppClient, type TestResult } from '../test-client';
 import { setTestConfig } from '../test-utils';
-import { clearSecurityTestData, createApiProject, createOrgUser } from './helpers';
+import { clearSecurityTestData, createOrgUser } from './helpers';
+import { createApiProject } from './helpers-app';
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 

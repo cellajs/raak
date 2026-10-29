@@ -1,9 +1,11 @@
 interface MorphAnimationProps {
-  variant?: 'single' | 'colony';
+  variant?: 'single' | 'colony' | 'database';
   grid?: number;
   speed?: number;
   overscan?: number;
   stamp?: 'square' | 'plus';
+  still?: number;
+  fizz?: number;
   className?: string;
 }
 
