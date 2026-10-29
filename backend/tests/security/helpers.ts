@@ -1,7 +1,6 @@
 import { eq, sql } from 'drizzle-orm';
-import { createProjects, createWorkspaces, generatePasskeyChallenge, signInWithPasskey } from 'sdk';
+import { generatePasskeyChallenge, signInWithPasskey } from 'sdk';
 import type { EntityRole } from 'shared';
-import { nanoid } from 'shared/utils/nanoid';
 import { expect } from 'vitest';
 import { baseDb as db, getAdminDb } from '#/db/db';
 import { passkeysTable } from '#/modules/auth/passkeys/passkeys-db';
@@ -62,31 +61,6 @@ export async function createFactorOrgUser(...args: Parameters<typeof createOrgUs
   const user = await createOrgUser(...args);
   await insertPasskey(user);
   return user;
-}
-
-/**
- * A project `as` creates through the API in a workspace of its own, so it carries its primary labels and its creator
- * is its admin. Resolves to the workspace and project ids.
- */
-export async function createApiProject(
-  call: Call,
-  path: { tenantId: string; organizationId: string },
-  as: { sessionCookie: string },
-  isPublic = false,
-) {
-  const headers = { ...defaultHeaders, Cookie: as.sessionCookie };
-  const firstId = ({ data }: TestResult) => String((data as { data: { id: string }[] } | undefined)?.data[0]?.id);
-  const workspace = await call(createWorkspaces, { path, body: [{ id: `temp-${nanoid()}`, name: 'Home' }], headers });
-  expect(workspace.response.status).toBe(201);
-  const workspaceId = firstId(workspace);
-  const project = await call(createProjects, {
-    path,
-    query: { workspaceId },
-    body: [{ id: `temp-${nanoid()}`, name: 'Project', slug: `project-${nanoid(8).toLowerCase()}`, public: isPublic }],
-    headers,
-  });
-  expect(project.response.status).toBe(201);
-  return { workspaceId, projectId: firstId(project) };
 }
 
 /** Empties tenant-scoped and auth tables and everything that references them. */
