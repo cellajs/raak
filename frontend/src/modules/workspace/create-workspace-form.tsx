@@ -8,6 +8,7 @@ import { generateId } from 'shared/utils/entity-id';
 import { z } from 'zod';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
+import { FormActions } from '~/modules/common/form-fields/form-actions';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
@@ -129,10 +130,10 @@ function WorkspaceForm({ organization, organizations, callback }: WorkspaceFormP
 
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
 
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <FormActions>
           <SubmitButton loading={isPending}>{t('c:create')}</SubmitButton>
           <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
-        </div>
+        </FormActions>
       </form>
     </Form>
   );

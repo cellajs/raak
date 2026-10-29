@@ -11,5 +11,5 @@ export function DeleteTasks({ tasks, ...props }: DeleteTasksProps) {
   const mutation = useTaskDeleteMutation(tasks[0].tenantId, tasks[0].organizationId);
 
   // The delete is optimistic and queues offline, so the form does not wait for the server.
-  return <DeleteItems items={tasks} mutation={mutation} toVariables={(items) => items} optimistic {...props} />;
+  return <DeleteItems items={tasks} mutation={mutation} toVariables={(items) => items} resource="c:task" optimistic {...props} />;
 }

@@ -6,6 +6,7 @@ import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-co
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { NamedText } from '~/modules/common/named-text';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
@@ -115,6 +116,7 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
         triggerRef,
         align: 'end',
         kind: 'menu',
+        lead: <NamedText i18nKey="c:resource_named" name={project.name} values={{ resource: t('c:project') }} />,
         popupClassName: 'min-w-48',
       },
     );

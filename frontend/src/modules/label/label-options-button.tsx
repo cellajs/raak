@@ -6,6 +6,7 @@ import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { NamedText } from '~/modules/common/named-text';
 import { DeleteQuestion } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteLabels } from '~/modules/label/delete-labels';
@@ -67,6 +68,7 @@ export function LabelOptionsButton({ row, canManage, className }: LabelOptionsBu
         triggerRef: { current: currentTarget },
         align: 'end',
         kind: 'menu',
+        lead: <NamedText i18nKey="c:resource_named" name={row.name} values={{ resource: t('c:label') }} />,
         popupClassName: 'min-w-48',
       },
     );
