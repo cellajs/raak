@@ -283,7 +283,7 @@ function PanelHeaderSkeleton({ boardId, panelId, projectPage, project, sectionFi
         !projectPage && (
           <>
             {isPrimary && (
-              <Button variant="ghost" className="h-8 px-2 max-sm:hidden" aria-label={t('c:resource_options', { resource: t('c:project') })}>
+              <Button variant="ghost" className="h-8 px-1.5 max-sm:hidden" aria-label={t('c:resource_options', { resource: t('c:project') })}>
                 <EllipsisVerticalIcon />
               </Button>
             )}

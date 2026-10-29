@@ -202,6 +202,8 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
             : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-muted/50 hover:via-40%',
           // A search match or a selected card keeps full strength, so it stands out among the resting ones
           !isSheet && effectiveState === 'collapsed' && !isCurrent && !task.isMatchingSearch && !isSelected && 'resting-text',
+          // A touch long-press on a collapsed card must start a drag, never a text selection or the iOS callout
+          !isSheet && effectiveState === 'collapsed' && 'pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]',
           taskCardVariants({ status: task.status }),
           task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30' : 'bg-green-300/20 hover:bg-green-300/30'),
         )}

@@ -120,7 +120,7 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   return (
     <div className="contents" onFocus={handleFocus} onBlur={handleBlur}>
       <InputGroup className="border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
-        <InputGroupAddon className="pl-1.5">
+        <InputGroupAddon className="pl-1.5 max-sm:[&_svg]:size-5">
           <SearchSpinner value={inputValue} isSearching={false} />
         </InputGroupAddon>
 

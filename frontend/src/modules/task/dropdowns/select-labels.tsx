@@ -367,7 +367,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
                   className="shrink-0 overflow-hidden"
                 >
                   <Button type="button" variant="ghost" size="icon" className="rounded-full" aria-label={newLabelText} onClick={startCreate}>
-                    <PlusIcon />
+                    <PlusIcon className="size-5" />
                   </Button>
                 </motion.div>
               )}

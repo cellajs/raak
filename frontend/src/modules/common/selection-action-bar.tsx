@@ -1,4 +1,4 @@
-import { SquareXIcon } from 'lucide-react';
+import { XIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -79,7 +79,7 @@ export function SelectionActionBar({ count, onClear, children }: SelectionAction
 
               <TooltipButton toolTipContent={t('c:clear_selection')} side="top">
                 <Button variant="ghost" onClick={clearSelection}>
-                  <SquareXIcon />
+                  <XIcon />
                   <span className="max-lg:hidden">{t('c:clear')}</span>
                 </Button>
               </TooltipButton>

@@ -58,7 +58,7 @@ export const taskCardActionsRevealClass = tw(
 export const panelHandleClass = tw('flex h-auto items-center justify-start gap-2 p-0 hover:bg-transparent');
 
 /** Shared by the panel header's "+ Task" button and the board skeleton's stand-in. */
-export const newTaskButtonClass = tw('relative hidden rounded sm:inline-flex');
+export const newTaskButtonClass = tw('relative -ml-1 hidden rounded sm:inline-flex');
 
 export const taskBarClass = tw('z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2');
 

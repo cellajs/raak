@@ -28,5 +28,5 @@ export const openCreateTaskDialog = (projectId: string, organizationId: string) 
     drawerOnMobile: false,
     className: createTaskDialogClassName,
     triggerRef: { current: null },
-    title: i18n.t('c:create_resource', { resource: i18n.t('c:task') }),
+    title: i18n.t('c:new_resource', { resource: i18n.t('c:task') }),
   });

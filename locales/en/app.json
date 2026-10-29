@@ -17,7 +17,7 @@
   "create_project.text": "Set up a new project",
   "create_project_first": "Create project first.",
   "create_workspace.text": "A workspace is where you spend most time: a personal board for projects.",
-  "delete_workspace_notice.text": "You can only delete your workspace if you have another workspace in the same organization. After deleting, you can then optionally add the projects to another workspace. The projects and project data remain available to all project members.",
+  "delete_workspace_notice.text": "Deleting <strong>{{name}}</strong> removes only the workspace: its projects and their data stay available to project members.",
   "delete_workspace_restricted.text": "Delete disabled because this is your only workspace in the organization.",
   "deliver": "Deliver",
   "delivered": "Delivered",
