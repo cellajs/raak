@@ -224,7 +224,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
           />
           {effectiveState !== 'collapsed' && (
             <StickyBox
-              className="z-10 data-[sticky=true]:-mx-2 data-[sticky=true]:bg-background/60 data-[sticky=true]:px-2 data-[sticky=true]:backdrop-blur-sm"
+              className="z-10 data-[sticky=true]:-mx-2 data-[sticky=true]:bg-background data-[sticky=true]:px-2"
               enabled={!isSheet}
               offsetBottom={52}
             >
