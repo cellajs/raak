@@ -86,6 +86,7 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
         triggerRef,
         align: 'end',
         kind: 'menu',
+        lead: title ? <NamedText i18nKey="c:resource_named" name={title} values={{ resource: t('c:task') }} /> : undefined,
         popupClassName: 'min-w-48',
       },
     );

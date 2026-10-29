@@ -8,6 +8,7 @@ import { useBeforeUnload } from '~/hooks/use-before-unload';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { AvatarFormField } from '~/modules/common/form-fields/avatar';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
+import { FormActions } from '~/modules/common/form-fields/form-actions';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
@@ -85,12 +86,12 @@ export function UpdateProjectForm({ project }: UpdateProjectFormProps) {
             </FormItem>
           )}
         />
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <FormActions>
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:save_changes')}
           </SubmitButton>
           <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
-        </div>
+        </FormActions>
       </form>
     </Form>
   );

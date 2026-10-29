@@ -162,7 +162,7 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
     <div className={taskBarClass} aria-hidden="true" inert>
       <BoardSearch isInWorkspace={isInWorkspace} toggleFocus={() => {}} />
 
-      <TableCount count={hasProjects ? 0 : null} label="c:task" className="mr-3" />
+      <TableCount count={hasProjects ? 0 : null} label="c:task" className="mr-3 max-sm:hidden" />
 
       {isInWorkspace ? (
         <>

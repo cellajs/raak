@@ -6,6 +6,7 @@ import type { z } from 'zod';
 import { useBeforeUnload } from '~/hooks/use-before-unload';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
+import { FormActions } from '~/modules/common/form-fields/form-actions';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { sheeter } from '~/modules/common/sheeter/use-sheeter';
@@ -51,12 +52,12 @@ export function UpdateWorkspaceForm({ workspace, callback }: UpdateWorkspaceForm
     <Form {...form}>
       <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <FormActions>
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:save_changes')}
           </SubmitButton>
           <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
-        </div>
+        </FormActions>
       </form>
     </Form>
   );

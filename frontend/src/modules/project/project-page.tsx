@@ -50,7 +50,7 @@ export function ProjectPage({ project, organization, children }: ProjectPageProp
           project.membership && (
             <Suspense>
               <div className="flex items-center p-2">
-                <JoinedButton channel={project} role={project.membership.role} />
+                <JoinedButton channel={project} role={project.membership.role} iconOnlyOnPhone />
               </div>
             </Suspense>
           )

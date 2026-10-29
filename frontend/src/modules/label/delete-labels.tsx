@@ -11,5 +11,5 @@ export function DeleteLabels({ labels, ...props }: DeleteLabelsProps) {
   const mutation = useLabelDeleteMutation(labels[0].tenantId, labels[0].organizationId);
 
   // The delete is optimistic and queues offline, so the form does not wait for the server.
-  return <DeleteItems items={labels} mutation={mutation} toVariables={(items) => items} optimistic {...props} />;
+  return <DeleteItems items={labels} mutation={mutation} toVariables={(items) => items} resource="c:label" optimistic {...props} />;
 }

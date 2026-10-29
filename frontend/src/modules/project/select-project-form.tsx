@@ -5,6 +5,7 @@ import { zChannelBase } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
+import { FormActions } from '~/modules/common/form-fields/form-actions';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useOverlayClose } from '~/modules/common/overlay-close';
 import { toaster } from '~/modules/common/toaster/toaster';
@@ -86,14 +87,14 @@ export function SelectProjectForm() {
             </FormItem>
           )}
         />
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <FormActions>
           <SubmitButton disabled={selectedCount === 0} loading={form.formState.isSubmitting}>
             {selectedCount > 0
               ? t('c:add_resource', { resource: t('c:resource_count', { count: selectedCount, resource: t('c:project', { count: selectedCount }) }) })
               : t('c:select')}
           </SubmitButton>
           <CancelButton dirty={selectedCount > 0} onClick={() => form.reset()} />
-        </div>
+        </FormActions>
       </form>
     </Form>
   );

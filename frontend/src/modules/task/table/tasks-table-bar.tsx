@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ColumnsView } from '~/modules/common/data-table/columns-view';
-import { Export } from '~/modules/common/data-table/export';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
+import { ViewMenu } from '~/modules/common/data-table/view-menu';
+import { DropdownToggleItem } from '~/modules/common/dropdowner/dropdown-toggle-item';
 import { FocusView } from '~/modules/common/focus-view';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { BoardSearch } from '~/modules/task/board-search';
@@ -13,7 +13,6 @@ import type { ResolvedTasksTableProps } from '~/modules/task/table/tasks-table';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
 import { taskBarClass } from '~/modules/task/task-styles';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
-import { DropdownMenuCheckboxItem } from '~/modules/ui/dropdown-menu';
 
 interface TasksTableBarProps
   extends Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'>,
@@ -73,19 +72,16 @@ export function TasksTableBar({
         )}
       </BoardSearch>
 
-      {!isSearchFocused && !hasQuery && <TableCount count={total} label="c:task" className="mr-3" />}
-      <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns}>
-        <DropdownMenuCheckboxItem className="min-h-8" checked={isCompact} onCheckedChange={() => setIsCompact(!isCompact)}>
-          {t('c:compact_view')}
-        </DropdownMenuCheckboxItem>
-      </ColumnsView>
-      <Export
-        className="max-lg:hidden"
-        filename={t('c:task_other')}
+      {!isSearchFocused && !hasQuery && <TableCount count={total} label="c:task" className="mr-3 max-sm:hidden" />}
+      <ViewMenu
         columns={columns}
-        selectedRows={configureForExport(selected, projects)}
-        fetchRows={fetchExport}
-      />
+        setColumns={setColumns}
+        export={{ filename: t('c:task_other'), selectedRows: configureForExport(selected, projects), fetchRows: fetchExport }}
+      >
+        <DropdownToggleItem checked={isCompact} onCheckedChange={setIsCompact}>
+          {t('c:compact_view')}
+        </DropdownToggleItem>
+      </ViewMenu>
 
       <DisplayOptions className="max-sm:hidden" />
       <FocusView iconOnly />

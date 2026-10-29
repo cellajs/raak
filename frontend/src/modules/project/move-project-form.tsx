@@ -5,6 +5,7 @@ import { zMoveProjectToWorkspaceQuery } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { CancelButton } from '~/modules/common/form-fields/cancel-button';
+import { FormActions } from '~/modules/common/form-fields/form-actions';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
@@ -58,12 +59,12 @@ export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectF
     <Form {...form}>
       <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <SelectParentFormField parentType="workspace" control={form.control} label={t('c:workspace')} options={options} name="workspaceId" required />
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <FormActions>
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:move')}
           </SubmitButton>
           <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
-        </div>
+        </FormActions>
       </form>
     </Form>
   );

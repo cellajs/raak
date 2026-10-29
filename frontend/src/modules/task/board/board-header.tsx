@@ -68,7 +68,7 @@ export function BoardHeader({
         )}
       </BoardSearch>
 
-      {!searchQuery && !isSearchFocused && <TableCount count={total} label="c:task" className="mr-3" />}
+      {!searchQuery && !isSearchFocused && <TableCount count={total} label="c:task" className="mr-3 max-sm:hidden" />}
 
       {isInWorkspace && <WorkspaceActionButtons />}
       {!isInWorkspace && !publicView && projects[0] && (
