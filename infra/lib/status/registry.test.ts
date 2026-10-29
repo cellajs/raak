@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ComponentsFact } from './providers/components';
 import type { DbEndpointFacts } from './providers/database';
+import type { EnvironmentsFacts } from './providers/environments';
 import type { InventoryFacts } from './providers/inventory';
 import { expectedRelease, type LiveServiceFact } from './providers/live';
 import type { RunsFacts } from './providers/runs';
@@ -26,6 +27,7 @@ interface Facts {
   dns?: { host: string; resolvedIps?: string[]; loadBalancerIps?: string[] };
   stores?: StoreValidationFact[];
   db?: DbEndpointFacts;
+  environments?: EnvironmentsFacts;
 }
 
 /** A fully-healthy bootstrapped staging stack; override per test. */
@@ -33,7 +35,7 @@ function base(overrides: Partial<Facts> = {}): Facts {
   return {
     identity: { observerAppId: 'app-1', keyAges: [] },
     runs: { last: { id: 'r1', state: 'succeeded', environment_variables: { TARGET_SHA: 'abc123def456' } } },
-    inventory: { applications: [], groups: [], apiKeys: [], policies: [], machines: [], activeGenerations: {} },
+    inventory: { applications: [], groups: [], apiKeys: [], policies: [], machines: [], activeGenerations: {}, organizationId: 'org-1' },
     state: {
       stateBucketExists: true,
       lock: { held: false },
@@ -52,6 +54,7 @@ function base(overrides: Partial<Facts> = {}): Facts {
     dns: { host: 'app.example.com', resolvedIps: ['1.2.3.4'] },
     stores: [{ id: 'primary', kind: 'postgres-managed' }],
     db: { instance: 'cella-postgres', found: true, endpoints: [] },
+    environments: { text: 'staging branch:main', stacks: ['staging'] },
     ...overrides,
   };
 }
@@ -83,6 +86,7 @@ function reportFor(facts: Facts, sessionOverrides: Partial<ProbeSession> = {}) {
     dns: facts.dns,
     stores: facts.stores,
     db: facts.db,
+    environments: facts.environments,
   };
   const checks = statusProviders.flatMap((provider) => provider.evaluate(factsByDomain[provider.domain] as never, s));
   return assembleReport(s, checks);
@@ -147,13 +151,13 @@ describe('DNS', () => {
 });
 
 describe('the last deploy', () => {
-  it('points a blocked run at the apply, and a failed one at Show runs', () => {
+  it('points a blocked run and a failed one at Show runs: a blocked run’s record names the apply or the secret it waits for', () => {
     const blocked = find(
       reportFor(base({ runs: { last: { id: 'r2', state: 'failed', exit_code: 2, environment_variables: { TARGET_SHA: 'abc' } } } })).checks,
       'runs.last',
     );
     expect(blocked?.status).toBe('warn');
-    expect(blocked?.nextAction?.command).toContain('apply');
+    expect(blocked?.nextAction?.command).toContain('runs');
     const failed = find(reportFor(base({ runs: { last: { id: 'r3', state: 'failed', exit_code: 1 } } })).checks, 'runs.last');
     expect(failed?.status).toBe('error');
     expect(failed?.nextAction?.command).toContain('runs');
