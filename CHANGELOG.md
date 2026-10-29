@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.24](https://github.com/cellajs/raak/compare/0.1.23...0.1.24) (2026-10-29)
+
+
+### 🐞 Bug fixes
+
+* **task,label:** backend consistency sweep, group A ([#226](https://github.com/cellajs/raak/issues/226)) ([#229](https://github.com/cellajs/raak/issues/229)) ([572c64f](https://github.com/cellajs/raak/commit/572c64fd2bb0617fceec125f879b1fb452e084a3))
+
+
+### 🧹 Chores
+
+* upgrade cella to v0.29.0 (264154a32) ([#232](https://github.com/cellajs/raak/issues/232)) ([3dfcf96](https://github.com/cellajs/raak/commit/3dfcf968030deb9956066e5a7d36c0f1c94b6705))
+
 ## [0.1.23](https://github.com/cellajs/raak/compare/0.1.22...0.1.23) (2026-10-28)
 
 
