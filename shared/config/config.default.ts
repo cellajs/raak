@@ -106,8 +106,14 @@ export const config = {
       serviceAccount: 20,
       apiKey: 100,
     },
-    rateLimits: { apiPointsPerHour: 1000 },
+    rateLimits: { apiPointsPerHour: 1000, invitationMailsPerDay: 250 },
   } as const,
+
+  /**
+   * Tenants one user may create through onboarding (`selfCreateTenant`); a tenant reused while it holds no organization
+   * counts once, and system admins have no cap. `0` turns self-service creation off, where a quota's `0` means unlimited.
+   */
+  selfServiceTenantsPerUser: 10,
 
   /** How long data lives, in days: `apply_retention()` and the jobs apply it, the privacy page states it. */
   retention: {
@@ -121,6 +127,7 @@ export const config = {
     oidcPayloadDaysAfterUse: 30,
     requestDays: 365,
     invitationDays: 120,
+    declinedInvitationHoldDays: 30,
     rateLimitDaysAfterWindow: 1,
     pushSubscriptionDaysUnseen: 400,
   },
@@ -219,7 +226,7 @@ export const config = {
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
   cookieVersion: 'v3',
-  clientCacheVersion: 'v26-country-codes',
+  clientCacheVersion: 'v27-range-read-tombstones',
 
   // Authentication
 
@@ -237,7 +244,8 @@ export const config = {
    */
   maxSessionsPerUser: 10,
 
-  totp: { intervalInSeconds: 30, gracePeriodInSeconds: 60, digits: 6 },
+  // A code verifies one step either side of now (RFC 6238 §5.2): each step more is one more code a guess can hit.
+  totp: { intervalInSeconds: 30, gracePeriodInSeconds: 30, digits: 6 },
 
   // API configuration
 
@@ -265,8 +273,6 @@ export const config = {
   },
 
   jsonBodyLimit: 1 * 1024 * 1024,
-  fileUploadLimit: 20 * 1024 * 1024,
-  defaultBodyLimit: 1 * 1024 * 1024,
 
   // Storage & uploads (S3)
 

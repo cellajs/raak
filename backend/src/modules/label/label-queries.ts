@@ -1,7 +1,6 @@
-import { and, asc, count, eq, inArray, isNull, not, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull, type SQL } from 'drizzle-orm';
 import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
-import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { ActorContext, DbContext } from '#/core/context';
 import type { ActorId } from '#/db/utils/ids';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
@@ -11,9 +10,10 @@ import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { projectsTable } from '#/modules/project/project-db';
+import type { StxBase } from '#/schemas/sync-transaction-schemas';
 import { getOrderColumns } from '#/utils/order-column';
 import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
-import { keywordSearchFilter, textSearchFilter } from '#/utils/sql';
+import { searchFilter } from '#/utils/sql';
 
 /** Name and color of the organization's labels named one of `names`, any mode or project. */
 export const findLabelColorsByName = async (ctx: ActorContext, { names }: { names: string[] }) => {
@@ -57,14 +57,15 @@ interface DeleteLabelsByIdsOpts {
   ids: string[];
   /** Who deletes: stamped as the tombstone and as the row's last write. */
   actorId: ActorId;
+  stx: Pick<StxBase, 'mutationId' | 'sourceId'>;
 }
 
 /** Soft-delete labels by IDs. */
-export const deleteLabelsByIds = async (ctx: ActorContext, { ids, actorId }: DeleteLabelsByIdsOpts) => {
+export const deleteLabelsByIds = async (ctx: ActorContext, { ids, actorId, stx }: DeleteLabelsByIdsOpts) => {
   const { db } = ctx.var;
   return db
     .update(labelsTable)
-    .set(deleteStamps(actorId))
+    .set({ ...deleteStamps(actorId), stx: stripChangedFields(labelsTable.stx, stx) })
     .where(and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)))
     .returning();
 };
@@ -204,19 +205,8 @@ export const findLabelsPaginated = async (ctx: ActorContext, opts: FindLabelsPag
   const rangeRead = seqRangeRead(labelsTable, range);
   const filters = [...opts.filters, ...rangeRead.where];
 
-  // Tokenized search over name and description-derived keywords, as task keyword matching does: every word must hit
-  // (AND across words, OR across columns per word). parseSearchQuery strips the '=' highlight marker.
-  const { terms, excludeTerms } = parseSearchQuery(q);
-  for (const word of terms) {
-    const wordFilter = or(textSearchFilter(labelsTable.name, word), textSearchFilter(labelsTable.keywords, word));
-    if (wordFilter) filters.push(wordFilter);
-  }
-  // An excluded word leaves a label out only as a whole word, as in the task search: '-api' spares "rapid"
-  for (const word of excludeTerms) {
-    const wordFilter = or(keywordSearchFilter(labelsTable.name, word), keywordSearchFilter(labelsTable.keywords, word));
-    const excluded = wordFilter && not(wordFilter);
-    if (excluded) filters.push(excluded);
-  }
+  const search = searchFilter([labelsTable.name, labelsTable.keywords], q);
+  if (search) filters.push(search);
   if (modes?.length) filters.push(inArray(labelsTable.mode, modes));
 
   const whereClause = and(requestScopeWhere(ctx, labelsTable, 'label'), ...filters);

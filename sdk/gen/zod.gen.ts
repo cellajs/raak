@@ -92,7 +92,7 @@ export const zMembershipBase = z.object({
 export const zStxBase = z.object({
   mutationId: z.string().max(36),
   sourceId: z.string().max(64),
-  fieldTimestamps: z.record(z.string(), z.string()),
+  fieldTimestamps: z.record(z.string(), z.string().max(33)),
   replayed: z.boolean().optional(),
 });
 
@@ -109,6 +109,7 @@ export const zStreamChange = z.object({
   seq: z.int().nullable(),
   channelId: z.string().nullable(),
   stx: zStxBase.nullable(),
+  actorId: z.string().nullable(),
   batchUntilSeq: z.int().nullable(),
   count: z.int().nullable(),
   spreadWindow: z.int().nullable(),
@@ -446,38 +447,38 @@ export const zProject = z.object({
   toolsConfig: z.object({
     'organization.settings': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'organization.tabs': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'workspace.settings': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'workspace.tabs': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'project.settings': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'project.tabs': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
   }),
@@ -615,6 +616,7 @@ export const zTenant = z.object({
     quotas: z.record(z.string(), z.int().gte(0)),
     rateLimits: z.object({
       apiPointsPerHour: z.int().gte(0),
+      invitationMailsPerDay: z.int().gte(0),
     }),
     allowUnregisteredClients: z.boolean(),
   }),
@@ -668,38 +670,38 @@ export const zOrganization = z.object({
   toolsConfig: z.object({
     'organization.settings': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'organization.tabs': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'workspace.settings': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'workspace.tabs': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'project.settings': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'project.tabs': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
   }),
@@ -798,38 +800,38 @@ export const zWorkspace = z.object({
   toolsConfig: z.object({
     'organization.settings': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'organization.tabs': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'workspace.settings': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'workspace.tabs': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'project.settings': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
     'project.tabs': z
       .object({
-        order: z.array(z.string()).max(100).optional(),
-        hidden: z.array(z.string()).max(100).optional(),
+        order: z.array(z.string().max(255)).max(100).optional(),
+        hidden: z.array(z.string().max(255)).max(100).optional(),
       })
       .optional(),
   }),
@@ -882,10 +884,10 @@ export const zAttachment = z.object({
   convertedContentType: z.string().max(255).nullable(),
   size: z.string().max(255),
   keys: z.object({
-    original: z.string(),
-    preview: z.string().optional(),
-    thumbnail: z.string().optional(),
-    converted: z.string().optional(),
+    original: z.string().max(2048),
+    preview: z.string().max(2048).optional(),
+    thumbnail: z.string().max(2048).optional(),
+    converted: z.string().max(2048).optional(),
   }),
   projectId: z.uuid(),
   organizationId: z.uuid(),
@@ -1023,7 +1025,7 @@ export const zGetPendingMfaResponse = z.object({
 
 export const zInvokeTokenPath = z.object({
   type: z.enum(['oauth-verification', 'invitation', 'magic']),
-  token: z.string(),
+  token: z.string().max(255),
 });
 
 export const zGetTokenDataPath = z.object({
@@ -1089,7 +1091,7 @@ export const zSignOutResponse = z.void();
 
 export const zSendMagicLinkBody = z.object({
   email: z.email().min(4).max(255),
-  redirect: z.string().optional(),
+  redirect: z.string().max(2048).optional(),
 });
 
 /**
@@ -1118,11 +1120,17 @@ export const zGenerateTotpKeyResponse = z.object({
 export const zDeleteTotpResponse = z.void();
 
 export const zCreateTotpBody = z.object({
-  code: z.string().regex(/^\d{6}$/),
+  code: z
+    .string()
+    .max(6)
+    .regex(/^\d{6}$/),
 });
 
 export const zSignInWithTotpBody = z.object({
-  code: z.string().regex(/^\d{6}$/),
+  code: z
+    .string()
+    .max(6)
+    .regex(/^\d{6}$/),
 });
 
 /**
@@ -1132,15 +1140,15 @@ export const zSignInWithTotpResponse = z.void();
 
 export const zCreatePasskeyBody = z.object({
   attestation: z.object({
-    id: z.string(),
-    rawId: z.string(),
+    id: z.string().max(2048),
+    rawId: z.string().max(2048),
     response: z.object({
-      clientDataJSON: z.string(),
-      attestationObject: z.string(),
-      authenticatorData: z.string().optional(),
-      transports: z.array(z.string()).max(10).optional(),
+      clientDataJSON: z.string().max(2048),
+      attestationObject: z.string().max(16384),
+      authenticatorData: z.string().max(2048).optional(),
+      transports: z.array(z.string().max(255)).max(10).optional(),
       publicKeyAlgorithm: z.number().optional(),
-      publicKey: z.string().optional(),
+      publicKey: z.string().max(16384).optional(),
     }),
     authenticatorAttachment: z.enum(['cross-platform', 'platform']).optional(),
     clientExtensionResults: z.unknown().optional(),
@@ -1186,13 +1194,13 @@ export const zGeneratePasskeyChallengeResponse = z.object({
 
 export const zSignInWithPasskeyBody = z.object({
   assertion: z.object({
-    id: z.string(),
-    rawId: z.string(),
+    id: z.string().max(2048),
+    rawId: z.string().max(2048),
     response: z.object({
-      clientDataJSON: z.string(),
-      authenticatorData: z.string(),
-      signature: z.string(),
-      userHandle: z.string().optional(),
+      clientDataJSON: z.string().max(2048),
+      authenticatorData: z.string().max(2048),
+      signature: z.string().max(2048),
+      userHandle: z.string().max(2048).optional(),
     }),
     authenticatorAttachment: z.enum(['cross-platform', 'platform']).optional(),
     clientExtensionResults: z.unknown().optional(),
@@ -1213,41 +1221,41 @@ export const zStartOAuthConnectResponse = z.void();
 
 export const zGithubQuery = z.object({
   type: z.enum(['auth', 'connect', 'invite', 'verify']).optional().default('auth'),
-  redirectAfter: z.string().optional(),
+  redirectAfter: z.string().max(2048).optional(),
 });
 
 export const zGoogleQuery = z.object({
   type: z.enum(['auth', 'connect', 'invite', 'verify']).optional().default('auth'),
-  redirectAfter: z.string().optional(),
+  redirectAfter: z.string().max(2048).optional(),
 });
 
 export const zMicrosoftQuery = z.object({
   type: z.enum(['auth', 'connect', 'invite', 'verify']).optional().default('auth'),
-  redirectAfter: z.string().optional(),
+  redirectAfter: z.string().max(2048).optional(),
 });
 
 export const zGithubCallbackQuery = z.object({
-  code: z.string().optional(),
-  state: z.string(),
-  error: z.string().optional(),
-  error_description: z.string().optional(),
-  error_uri: z.string().optional(),
+  code: z.string().max(2048).optional(),
+  state: z.string().max(255),
+  error: z.string().max(255).optional(),
+  error_description: z.string().max(2048).optional(),
+  error_uri: z.string().max(2048).optional(),
 });
 
 export const zGoogleCallbackQuery = z.object({
-  code: z.string().optional(),
-  state: z.string(),
-  error: z.string().optional(),
-  error_description: z.string().optional(),
-  error_uri: z.string().optional(),
+  code: z.string().max(2048).optional(),
+  state: z.string().max(255),
+  error: z.string().max(255).optional(),
+  error_description: z.string().max(2048).optional(),
+  error_uri: z.string().max(2048).optional(),
 });
 
 export const zMicrosoftCallbackQuery = z.object({
-  code: z.string().optional(),
-  state: z.string(),
-  error: z.string().optional(),
-  error_description: z.string().optional(),
-  error_uri: z.string().optional(),
+  code: z.string().max(2048).optional(),
+  state: z.string().max(255),
+  error: z.string().max(255).optional(),
+  error_description: z.string().max(2048).optional(),
+  error_uri: z.string().max(2048).optional(),
 });
 
 export const zGetSsoEntryPath = z.object({
@@ -1265,7 +1273,7 @@ export const zStartSsoPath = z.object({
 
 export const zStartSsoQuery = z.object({
   type: z.enum(['auth', 'connect', 'invite', 'verify']).optional().default('auth'),
-  redirectAfter: z.string().optional(),
+  redirectAfter: z.string().max(2048).optional(),
 });
 
 export const zStartSsoFederationPath = z.object({
@@ -1274,15 +1282,15 @@ export const zStartSsoFederationPath = z.object({
 
 export const zStartSsoFederationQuery = z.object({
   type: z.enum(['auth', 'connect', 'invite', 'verify']).optional().default('auth'),
-  redirectAfter: z.string().optional(),
+  redirectAfter: z.string().max(2048).optional(),
 });
 
 export const zSsoCallbackQuery = z.object({
-  code: z.string().optional(),
-  state: z.string(),
-  error: z.string().optional(),
-  error_description: z.string().optional(),
-  error_uri: z.string().optional(),
+  code: z.string().max(2048).optional(),
+  state: z.string().max(255),
+  error: z.string().max(255).optional(),
+  error_description: z.string().max(2048).optional(),
+  error_uri: z.string().max(2048).optional(),
 });
 
 /**
@@ -1307,13 +1315,13 @@ export const zGetStepUpResponse = z.object({
 export const zStepUpBody = z.object({
   passkeyData: z
     .object({
-      id: z.string(),
-      rawId: z.string(),
+      id: z.string().max(2048),
+      rawId: z.string().max(2048),
       response: z.object({
-        clientDataJSON: z.string(),
-        authenticatorData: z.string(),
-        signature: z.string(),
-        userHandle: z.string().optional(),
+        clientDataJSON: z.string().max(2048),
+        authenticatorData: z.string().max(2048),
+        signature: z.string().max(2048),
+        userHandle: z.string().max(2048).optional(),
       }),
       authenticatorAttachment: z.enum(['cross-platform', 'platform']).optional(),
       clientExtensionResults: z.unknown().optional(),
@@ -1322,10 +1330,12 @@ export const zStepUpBody = z.object({
     .optional(),
   totpCode: z
     .string()
+    .max(6)
     .regex(/^\d{6}$/)
     .optional(),
   emailCode: z
     .string()
+    .max(6)
     .regex(/^\d{6}$/)
     .optional(),
 });
@@ -1452,12 +1462,12 @@ export const zCheckSlugPath = z.object({
 export const zCheckSlugResponse = z.void();
 
 export const zPostAppCatchupBody = z.object({
-  cursor: z.string().optional(),
+  cursor: z.string().max(50).optional(),
   views: z
     .array(
       z.object({
         key: z.string().max(512),
-        organizationId: z.string(),
+        organizationId: z.string().max(50),
         prefixes: z.array(z.string().max(512)).min(1).max(64),
         entityTypes: z
           .array(z.enum(['task', 'label', 'attachment']))
@@ -1581,7 +1591,7 @@ export const zGetMyInvitationsResponse = z.object({
 });
 
 export const zRevokeMySessionsBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z.array(z.string().max(50)).min(1).max(50),
 });
 
 /**
@@ -1749,13 +1759,13 @@ export const zUpdateNotificationPreferencesResponse = z.object({
 export const zOpenUnsubscribeLinkQuery = z.object({
   user: z.string().max(50),
   category: z.enum(['digest', 'mention', 'comment', 'newsletter']),
-  token: z.string(),
+  token: z.string().max(255),
 });
 
 export const zUnsubscribeNotificationsQuery = z.object({
   user: z.string().max(50),
   category: z.enum(['digest', 'mention', 'comment', 'newsletter']),
-  token: z.string(),
+  token: z.string().max(255),
 });
 
 /**
@@ -1766,7 +1776,7 @@ export const zUnsubscribeNotificationsResponse = z.void();
 export const zResubscribeNotificationsQuery = z.object({
   user: z.string().max(50),
   category: z.enum(['digest', 'mention', 'comment', 'newsletter']),
-  token: z.string(),
+  token: z.string().max(255),
 });
 
 /**
@@ -1830,7 +1840,7 @@ export const zCreatePushSubscriptionResponse = z.object({
 });
 
 export const zDeleteRequestsBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z.array(z.string().max(50)).min(1).max(50),
 });
 
 /**
@@ -1889,7 +1899,7 @@ export const zSystemInviteResponse = z.object({
 });
 
 export const zDeleteUsersBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z.array(z.string().max(50)).min(1).max(50),
 });
 
 /**
@@ -2075,6 +2085,7 @@ export const zUpdateTenantBody = z.object({
       rateLimits: z
         .object({
           apiPointsPerHour: z.int().gte(0).optional(),
+          invitationMailsPerDay: z.int().gte(0).optional(),
         })
         .optional(),
     })
@@ -2123,7 +2134,7 @@ export const zGetUserQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().optional(),
+  include: z.string().max(255).optional(),
 });
 
 /**
@@ -2146,7 +2157,7 @@ export const zGetApiProtectedResourceMetadataPath = z.object({
 export const zGetApiProtectedResourceMetadataResponse = zProtectedResourceMetadata;
 
 export const zDeleteOrganizationsBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z.array(z.string().max(50)).min(1).max(50),
 });
 
 export const zDeleteOrganizationsPath = z.object({
@@ -2260,7 +2271,7 @@ export const zGetOrganizationsQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().optional(),
+  include: z.string().max(255).optional(),
 });
 
 /**
@@ -2281,7 +2292,7 @@ export const zGetOrganizationQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().optional(),
+  include: z.string().max(255).optional(),
 });
 
 /**
@@ -2310,6 +2321,7 @@ export const zUpdateOrganizationBody = z.object({
     .nullish(),
   country: z
     .string()
+    .max(2)
     .regex(/^[A-Z]{2}$/)
     .nullish(),
   timezone: z.string().max(255).nullish(),
@@ -2352,38 +2364,38 @@ export const zUpdateOrganizationBody = z.object({
     .object({
       'organization.settings': z
         .object({
-          order: z.array(z.string()).max(100).optional(),
-          hidden: z.array(z.string()).max(100).optional(),
+          order: z.array(z.string().max(255)).max(100).optional(),
+          hidden: z.array(z.string().max(255)).max(100).optional(),
         })
         .optional(),
       'organization.tabs': z
         .object({
-          order: z.array(z.string()).max(100).optional(),
-          hidden: z.array(z.string()).max(100).optional(),
+          order: z.array(z.string().max(255)).max(100).optional(),
+          hidden: z.array(z.string().max(255)).max(100).optional(),
         })
         .optional(),
       'workspace.settings': z
         .object({
-          order: z.array(z.string()).max(100).optional(),
-          hidden: z.array(z.string()).max(100).optional(),
+          order: z.array(z.string().max(255)).max(100).optional(),
+          hidden: z.array(z.string().max(255)).max(100).optional(),
         })
         .optional(),
       'workspace.tabs': z
         .object({
-          order: z.array(z.string()).max(100).optional(),
-          hidden: z.array(z.string()).max(100).optional(),
+          order: z.array(z.string().max(255)).max(100).optional(),
+          hidden: z.array(z.string().max(255)).max(100).optional(),
         })
         .optional(),
       'project.settings': z
         .object({
-          order: z.array(z.string()).max(100).optional(),
-          hidden: z.array(z.string()).max(100).optional(),
+          order: z.array(z.string().max(255)).max(100).optional(),
+          hidden: z.array(z.string().max(255)).max(100).optional(),
         })
         .optional(),
       'project.tabs': z
         .object({
-          order: z.array(z.string()).max(100).optional(),
-          hidden: z.array(z.string()).max(100).optional(),
+          order: z.array(z.string().max(255)).max(100).optional(),
+          hidden: z.array(z.string().max(255)).max(100).optional(),
         })
         .optional(),
     })
@@ -2414,7 +2426,7 @@ export const zPublishOrganizationResponse = z.object({
 });
 
 export const zDeleteProjectsBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z.array(z.string().max(50)).min(1).max(50),
 });
 
 export const zDeleteProjectsPath = z.object({
@@ -2544,7 +2556,7 @@ export const zGetProjectsQuery = z.object({
     .optional()
     .default('false'),
   scope: z.enum(['memberships', 'organization']).optional().default('memberships'),
-  include: z.string().optional(),
+  include: z.string().max(255).optional(),
 });
 
 /**
@@ -2566,7 +2578,7 @@ export const zGetProjectQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().optional(),
+  include: z.string().max(255).optional(),
 });
 
 /**
@@ -2810,7 +2822,7 @@ export const zMoveProjectToWorkspaceResponse = zProject.and(
 );
 
 export const zDeleteWorkspacesBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z.array(z.string().max(50)).min(1).max(50),
 });
 
 export const zDeleteWorkspacesPath = z.object({
@@ -2895,7 +2907,7 @@ export const zGetWorkspacesQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().optional(),
+  include: z.string().max(255).optional(),
 });
 
 /**
@@ -2917,7 +2929,7 @@ export const zGetWorkspaceQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().optional(),
+  include: z.string().max(255).optional(),
 });
 
 /**
@@ -2946,11 +2958,11 @@ export const zUpdateWorkspacePath = z.object({
 export const zUpdateWorkspaceResponse = zWorkspace;
 
 export const zDeleteAttachmentsBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z.array(z.string().max(50)).min(1).max(50),
   stx: z
     .object({
-      mutationId: z.string(),
-      sourceId: z.string(),
+      mutationId: z.string().max(255),
+      sourceId: z.string().max(255),
     })
     .optional(),
 });
@@ -2989,7 +3001,19 @@ export const zGetAttachmentsQuery = z.object({
  * Attachments
  */
 export const zGetAttachmentsResponse = z.object({
-  items: z.array(zAttachment),
+  items: z.array(
+    z.union([
+      zAttachment,
+      z.object({
+        id: z.uuid(),
+        createdAt: z.string(),
+        seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+        projectId: z.uuid(),
+        organizationId: z.uuid(),
+        deletedAt: z.string(),
+      }),
+    ]),
+  ),
   total: z.number(),
 });
 
@@ -3002,10 +3026,10 @@ export const zCreateAttachmentsBody = z
       contentType: z.string().max(255),
       size: z.string().max(255),
       keys: z.object({
-        original: z.string(),
-        preview: z.string().optional(),
-        thumbnail: z.string().optional(),
-        converted: z.string().optional(),
+        original: z.string().max(2048),
+        preview: z.string().max(2048).optional(),
+        thumbnail: z.string().max(2048).optional(),
+        converted: z.string().max(2048).optional(),
       }),
       groupId: z.uuid().nullish(),
       convertedContentType: z.string().max(255).nullish(),
@@ -3098,10 +3122,10 @@ export const zUpdateAttachmentResponse = zAttachment;
 
 export const zLinkAttachmentKeysBody = z.object({
   keys: z.object({
-    original: z.string(),
-    preview: z.string().optional(),
-    thumbnail: z.string().optional(),
-    converted: z.string().optional(),
+    original: z.string().max(2048),
+    preview: z.string().max(2048).optional(),
+    thumbnail: z.string().max(2048).optional(),
+    converted: z.string().max(2048).optional(),
   }),
   convertedContentType: z.string().max(255).nullish(),
 });
@@ -3118,11 +3142,11 @@ export const zLinkAttachmentKeysPath = z.object({
 export const zLinkAttachmentKeysResponse = zAttachment;
 
 export const zDeleteLabelsBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z.array(z.string().max(50)).min(1).max(50),
   stx: z
     .object({
-      mutationId: z.string(),
-      sourceId: z.string(),
+      mutationId: z.string().max(255),
+      sourceId: z.string().max(255),
     })
     .optional(),
 });
@@ -3154,7 +3178,7 @@ export const zGetLabelsQuery = z.object({
   limit: z.int().gte(1).lte(1000).optional().default(40),
   afterSeq: z.int().gte(0).optional(),
   untilSeq: z.int().gte(0).optional(),
-  modes: z.string().optional(),
+  modes: z.string().max(255).optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
 });
@@ -3163,7 +3187,19 @@ export const zGetLabelsQuery = z.object({
  * Label list
  */
 export const zGetLabelsResponse = z.object({
-  items: z.array(zLabel),
+  items: z.array(
+    z.union([
+      zLabel,
+      z.object({
+        id: z.uuid(),
+        createdAt: z.string(),
+        seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+        projectId: z.uuid(),
+        organizationId: z.uuid(),
+        deletedAt: z.string(),
+      }),
+    ]),
+  ),
   total: z.number(),
 });
 
@@ -3248,7 +3284,7 @@ export const zGetMcpProtectedResourceMetadataPath = z.object({
  */
 export const zGetMcpProtectedResourceMetadataResponse = zProtectedResourceMetadata;
 
-export const zHandleMcpBody = z.unknown();
+export const zHandleMcpBody = z.union([z.array(z.unknown()).max(20), z.unknown()]).nullable();
 
 export const zHandleMcpPath = z.object({
   tenantId: z.string().max(50),
@@ -3256,7 +3292,7 @@ export const zHandleMcpPath = z.object({
 });
 
 export const zDeleteMembershipsBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z.array(z.string().max(50)).min(1).max(50),
 });
 
 export const zDeleteMembershipsPath = z.object({
@@ -3397,8 +3433,8 @@ export const zGetMembersQuery = z.object({
   entityId: z.string().max(50),
   entityType: z.enum(['organization', 'workspace', 'project']),
   role: z.enum(['admin', 'member', 'guest']).optional(),
-  include: z.string().optional(),
-  userIds: z.string().optional(),
+  include: z.string().max(255).optional(),
+  userIds: z.string().max(2048).optional(),
 });
 
 /**
@@ -3685,11 +3721,11 @@ export const zRevokeApiKeyPath = z.object({
 export const zRevokeApiKeyResponse = zApiKey;
 
 export const zDeleteTasksBody = z.object({
-  ids: z.array(z.string()).min(1).max(100),
+  ids: z.array(z.string().max(50)).min(1).max(100),
   stx: z
     .object({
-      mutationId: z.string(),
-      sourceId: z.string(),
+      mutationId: z.string().max(255),
+      sourceId: z.string().max(255),
     })
     .optional(),
 });
@@ -3731,7 +3767,19 @@ export const zGetTasksQuery = z.object({
  * Tasks
  */
 export const zGetTasksResponse = z.object({
-  items: z.array(zTask),
+  items: z.array(
+    z.union([
+      zTask,
+      z.object({
+        id: z.uuid(),
+        createdAt: z.string(),
+        seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+        projectId: z.uuid(),
+        organizationId: z.uuid(),
+        deletedAt: z.string(),
+      }),
+    ]),
+  ),
   total: z.number(),
 });
 

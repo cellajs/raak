@@ -13,7 +13,7 @@ import { isoDateAgo } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
 import { pick } from '#/utils/pick';
 import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
-import { keywordSearchFilter, textSearchFilter } from '#/utils/sql';
+import { textSearchFilter, wordSearchFilter } from '#/utils/sql';
 import { TimeSpan } from '#/utils/time-span';
 
 const queryInfoSchema = taskListQueryBaseSchema.omit({ projectId: true, workspaceId: true });
@@ -50,7 +50,7 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
 
   // An excluded word leaves a task out in any mode, and only as a whole word: '-api' spares "rapid"
   const exclusionFilters = excludeTerms.map((word) => {
-    const wordFilters: SQL[] = [keywordSearchFilter(tasksTable.keywords, word)];
+    const wordFilters: SQL[] = [wordSearchFilter(tasksTable.keywords, word)];
 
     const excludedLabels = tasksLabels.filter(({ name }) => containsWord(foldText(name), word)).map(({ id }) => id);
     if (excludedLabels.length > 0) wordFilters.push(arrayOverlaps(tasksTable.labels, excludedLabels));

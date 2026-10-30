@@ -35,8 +35,8 @@ app.openapi(taskRoutes.updateTask, async (ctx) => {
 });
 
 app.openapi(taskRoutes.deleteTasks, async (ctx) => {
-  const { ids } = ctx.req.valid('json');
-  const result = await deleteTasksOp(ctx, ids);
+  const { ids, stx } = ctx.req.valid('json');
+  const result = await deleteTasksOp(ctx, ids, stx);
   return ctx.json(result, 200);
 });
 

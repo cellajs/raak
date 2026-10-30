@@ -6,7 +6,7 @@
 
 The EU has great cloud providers; what it lacks is an easy way to deploy within them.
 
-Infra CLI sets up a full-stack app on European cloud provider [Scaleway](https://www.scaleway.com/), then deploys every release with zero downtime through one CI-agnostic command.
+Infra CLI sets up a full-stack app on European cloud provider [Scaleway](https://www.scaleway.com/), then deploys every release with zero downtime from a runner in that same account.
 
 ## Key features
 
@@ -18,7 +18,7 @@ Infra CLI sets up a full-stack app on European cloud provider [Scaleway](https:/
 
 **Releases can't break what is running.** Fresh servers per release.
 
-**Secure by default.** No machine logins, one key per job.
+**Secure by default.** No machine logins, and each key does one kind of work.
 
 **Observable.** One record per deploy, read with a read-only key; an OpenTelemetry trace too when a sink key is set.
 
@@ -48,15 +48,15 @@ Three rules:
 
 ## Security boundaries
 
-- **The deploy path reads; it does not rule.** A deploy reads its environment's runtime secrets, and writes no IAM, database instance, VPC, DNS, bucket policy or secret of the app's.
+- **The deploy path reads; it does not rule.** A deploy reads its environment's runtime secrets, and writes no IAM, database instance, VPC, DNS, bucket policy or secret of the app's. Its walls stand at the edges of its [zone](../cella/deployment/KEYS.md#zones), none inside.
 - **A person writes identities.** IAM changes only at an Owner moment, with an Owner API key that ends within a day: a durable one is refused. Every other privileged run takes the operator key.
-- **Each machine reads its own secrets.** A service's folder holds its own copy of every secret it consumes, only its machine key reads it, and the key reaches the machine in a bundle that can be read once.
+- **Each machine reads its own secrets.** A service's folder holds its own copy of every secret it consumes, only its machine key reads it, and the deploy writes that key into the cloud-init of the machines that run the service.
 - **Buckets deny by default**, the Owner's key included, and a leaked deploy key cannot delete a versioned bucket's history.
 - **Builds hold no key where the app's code runs.**
 
 ## Observability
 
-Every deploy writes a run record. With a telemetry sink, a deploy also exports an OpenTelemetry trace: every pipeline step is a span, and each machine's boot joins it. Seeding the sink's ingest key (`maple-secret-ingest-key`, sink in [config/telemetry.config.ts](config/telemetry.config.ts)) in **Manage runtime secrets** turns export on for deploys and machines alike; `OTEL_EXPORTER_OTLP_*` variables reach no deploy. The boot runner replaces every secret value it handled, and any URL userinfo, in its output, its telemetry and every upload.
+Every deploy writes a run record. With a telemetry sink, a deploy also exports an OpenTelemetry trace: every pipeline step is a span, and each machine's boot joins it. Seeding the sink's ingest key (`maple-secret-ingest-key`, sink in [config/telemetry.config.ts](config/telemetry.config.ts)) in **Manage runtime secrets** turns export on for deploys and for the machines whose services consume it ([config/runtime-secrets.config.ts](config/runtime-secrets.config.ts)); `OTEL_EXPORTER_OTLP_*` variables reach no deploy. The boot runner replaces every secret value it handled, and any URL userinfo, in its output, its telemetry and every upload.
 
 ## Status command
 
@@ -66,11 +66,11 @@ Every deploy writes a run record. With a telemetry sink, a deploy also exports a
 pnpm --filter infra status [--mode <production|staging>] [--json]
 ```
 
-`--mode` defaults to `INFRA_MODE`. `--json` emits the versioned contract below; a breaking shape change bumps `schemaVersion`.
+Without `--mode` it reads `INFRA_MODE`, else the first stack file it finds, production first. `--json` emits the versioned contract below; a breaking shape change bumps `schemaVersion`.
 
 Each check reports `ok | warn | missing | error | unknown`. `unknown` means "could not be evaluated", never a failure: a check that needs a Scaleway key degrades without one, so the command always completes. `nextAction` is the highest-priority pending step with an exact command.
 
-The **inventory** checks compare what exists with what the environment declares, as an Owner checks after a suspected break-in: undeclared applications, keys and policies, a person's key without an end date, a machine that is no active generation, a main job whose image, command, env or secret references changed. It reads the active generations from the control object, which the deploy key writes, so it finds what an intruder did not disguise. The observer key reads no machine, so the machines are listed with the operator key once a session holds it, and `inventory.machines` is `unknown` without it. **Rotate keys** replaces the environment's keys, the runner's included, deletes the others and prints the inventory; **Set up operator key** replaces the operator's; **Update identities** deletes a policy, or a machine key, beside the declared one. Remove anything else in the console once you know who made it.
+The **inventory** checks compare what exists with what the environment declares, as an Owner checks after a suspected break-in: undeclared applications, keys and policies, a person's key without an end date, a machine that is no active generation, a main job whose image, command, env or secret references changed. It reads the active generations from the control object, which the deploy key writes, so it finds what an intruder did not disguise. The observer key reads no machine or stack checkpoint, so `inventory.machines` and `state.pendingOperations` read with the operator key once a session holds it, and are `unknown` without it. **Rotate keys** replaces the environment's keys, the runner's included, deletes the others and prints the inventory; **Set up operator key** replaces the operator's; **Update identities** deletes a policy, or a machine key, beside the declared one. Remove anything else in the console once you know who made it.
 
 ```jsonc
 {
@@ -104,11 +104,25 @@ The CLI reads no privileged key and no passphrase from a file or the environment
 
 ## Extending
 
-The engine is plain Pulumi plus the Scaleway SDK; no plugin framework. An app changes it through the registries in [config/](config/): services with their strategies and routes, sizing, backing stores, runtime secrets, managed keys, health, the frontend CSP and telemetry. [config/engine-config.ts](config/engine-config.ts) injects the app description, decoupling the engine from any one workspace. A status check is a provider in [lib/status/providers/](lib/status/providers/); a registered store adds its own through `validate()`.
+The engine is plain Pulumi plus the Scaleway SDK; no plugin framework. An app changes it through the registries in [config/](config/): services with their strategies and routes, sizing, the machine image, database and asset retention (`general.config.ts`), backing stores, runtime secrets, managed keys, app-wide env values (`env-suppliers.config.ts`), health, the frontend CSP and telemetry. [config/engine-config.ts](config/engine-config.ts) injects the app description, decoupling the engine from any one workspace. A status check is a provider in [lib/status/providers/](lib/status/providers/); a registered store adds its own through `validate()`.
 
 An app is deployable with a Docker image per service, a `/health` endpoint reporting the `X-App-Version` release SHA, and a one-shot `migrate` companion.
 
-[cli/](cli/) holds the menu and its actions, [resources/](resources/) the Pulumi program, [tasks/](tasks/README.md) the deploy's steps and the operator tasks, [lib/](lib/) what they share, [boot/](boot/) the boot runner and [runner/](runner/) the runner's program.
+| Path | Holds |
+| --- | --- |
+| [config/](config/) | The app-owned registries above |
+| [cli/](cli/) | The menu and its actions |
+| [resources/](resources/) | The Pulumi program |
+| [tasks/](tasks/README.md) | The deploy's steps and the operator tasks |
+| [lib/](lib/) | What they share |
+| [compose/](compose/) | The Compose model, assembled from the service registry into `compose.gen.yml` |
+| [boot/](boot/) | The boot runner |
+| [caddy/](caddy/) | The frontend's Caddy image and its Caddyfile |
+| [runner/](runner/) | The runner's program |
+| [scripts/](scripts/) | The gate that keeps app knowledge out of the engine's code |
+| [tests/](tests/README.md) | Tests that span modules, and their helpers |
+| [environments](environments) | What each environment deploys |
+| [runner.json](runner.json) | The runner's project, release and environments |
 
 ## Vocabulary
 
@@ -119,6 +133,7 @@ One name per concept across code and docs:
 | **mode** | `production` or `staging`; also the Pulumi stack name. |
 | **release** | One git SHA baked into images and generations. |
 | **deploy** | One run of the deploy command. |
+| **blocked** | How a run ends when an operator owes something first: an identity update, an apply or a required secret. |
 | **runner** | The app's small machine that starts a deploy when an environment's target moves. |
 | **main job** | An environment's Serverless Jobs definition; each of its runs is one deploy. |
 | **run record** | A deploy's record and log in the boot-diag bucket, read by `pnpm infra runs`. |

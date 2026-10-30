@@ -12,7 +12,7 @@ import { type InsertProjectModel, projectsTable } from '#/modules/project/projec
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { buildChannelListReadWhere, type ChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 import { getOrderColumns } from '#/utils/order-column';
-import { textSearchFilter } from '#/utils/sql';
+import { searchFilter } from '#/utils/sql';
 
 interface InsertProjectsOpts {
   projects: InsertProjectModel[];
@@ -203,13 +203,14 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 
   // An archived tenant's projects list for system admins only, as its organization does
+  const search = searchFilter([projectsTable.name], q);
   const projectWhere: SQL[] = [
     ...(isSystemAdmin
       ? []
       : [
           sql`NOT EXISTS (SELECT 1 FROM ${tenantsTable} WHERE ${tenantsTable.id} = ${projectsTable.tenantId} AND ${tenantsTable.status} = 'archived')`,
         ]),
-    ...(q ? [textSearchFilter(projectsTable.name, q)] : []),
+    ...(search ? [search] : []),
     ...(organizationId ? [eq(projectsTable.organizationId, organizationId)] : []),
     ...(organizationIds ? [inArray(projectsTable.organizationId, organizationIds)] : []),
     ...(workspaceId ? [eq(membershipsTable.workspaceId, workspaceId)] : []),

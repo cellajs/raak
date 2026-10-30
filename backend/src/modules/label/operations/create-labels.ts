@@ -5,12 +5,11 @@ import type { OrgContext } from '#/core/context';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
-import { countTenantEntityRows } from '#/modules/entities/entities-queries';
 import { normalizeLabelName } from '#/modules/label/helpers/label-name';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { findLabelColorsByName, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
-import { assertTenantQuota } from '#/modules/tenants/tenant-restrictions';
+import { insertWithinTenantQuota } from '#/modules/tenants/quota-lock';
 import { getValidChannel } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
@@ -42,9 +41,6 @@ export async function createLabelsOp(
   const replayedIds = new Set(replayed.map((row) => row.id));
   const fresh = input.filter((item) => !replayedIds.has(item.id));
   if (fresh.length === 0) return { data: replayed, rejectedIds: [], created: false };
-
-  const currentLabels = await countTenantEntityRows(ctx, { entityType: 'label' });
-  assertTenantQuota(ctx, 'label', currentLabels, fresh.length);
 
   // Creating primary/epic labels requires project-admin authority (project update permission)
   const managedHome = async (homeCtx: OrgContext, id: string, type: ChannelEntityType) => (await getValidChannel(homeCtx, id, type, 'update')).entity;
@@ -84,7 +80,7 @@ export async function createLabelsOp(
   }
 
   const labelRecords = await tenantContext(ctx, async (txCtx) => {
-    const rows = await insertLabels(txCtx, { labels: labelsToInsert });
+    const rows = await insertWithinTenantQuota(txCtx, 'label', () => insertLabels(txCtx, { labels: labelsToInsert }));
     // Inside the transaction, so mutation handlers join the write.
     await dispatchMutation(txCtx, 'label.created', { after: rows });
     return rows;

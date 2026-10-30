@@ -78,6 +78,7 @@ export const labelListQuerySchema = productListQuerySchema({
   /** Comma-separated label modes, e.g. `?modes=secondary,epic`. */
   modes: z
     .string()
+    .max(maxLength.field)
     .optional()
     .transform((val) => (val ? val.split(',').map((s) => s.trim()) : undefined))
     .pipe(z.array(z.enum(labelModes)).max(labelModes.length).optional()),

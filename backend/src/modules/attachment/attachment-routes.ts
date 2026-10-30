@@ -22,7 +22,7 @@ import {
   attachmentSchema,
   attachmentUpdateStxBodySchema,
 } from '#/modules/attachment/attachment-schema';
-import { batchResponseSchema, idInTenantOrgParamSchema, idsWithStxBodySchema, paginationSchema, tenantOrgParamSchema } from '#/schemas';
+import { batchResponseSchema, idInTenantOrgParamSchema, idsWithStxBodySchema, productListResponseSchema, tenantOrgParamSchema } from '#/schemas';
 
 const attachmentRoutes = createXRoutes(['attachments', 'cella', 'product'], {
   getAttachments: xRoute({
@@ -39,7 +39,7 @@ const attachmentRoutes = createXRoutes(['attachments', 'cella', 'product'], {
     summary: 'Get attachments',
     description: 'Returns a paginated list of attachments for the organization.',
     request: { params: tenantOrgParamSchema, query: attachmentListQuerySchema },
-    responses: { 200: json('Attachments', paginationSchema(attachmentSchema), mockPaginatedAttachmentsResponse()) },
+    responses: { 200: json('Attachments', productListResponseSchema('attachment', attachmentSchema), mockPaginatedAttachmentsResponse()) },
   }),
   createAttachments: xRoute({
     method: 'post',
@@ -71,7 +71,8 @@ const attachmentRoutes = createXRoutes(['attachments', 'cella', 'product'], {
       entity: 'attachment',
     },
     summary: 'Get attachment',
-    description: 'Returns a single attachment by ID. Served from the entity detail cache, which every write to the row drops.',
+    description:
+      'Returns a single attachment by ID, from the entity detail cache. A write drops the row from it; a server process the drop does not reach answers from its cached row for up to 10 seconds.',
     request: { params: idInTenantOrgParamSchema },
     responses: { 200: json('Attachment', attachmentSchema) },
   }),

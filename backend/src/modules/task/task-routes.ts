@@ -15,7 +15,7 @@ import {
   fullResponseQuerySchema,
   idInTenantOrgParamSchema,
   idsWithStxBodySchema,
-  paginationSchema,
+  productListResponseSchema,
   tenantOrgParamSchema,
 } from '#/schemas';
 
@@ -56,7 +56,7 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     summary: 'Get list of tasks',
     description: 'Returns a list of tasks within one or more specified projects.',
     request: { params: tenantOrgParamSchema, query: taskListQuerySchema },
-    responses: { 200: json('Tasks', paginationSchema(taskSchema), mockTasksResponse()) },
+    responses: { 200: json('Tasks', productListResponseSchema('task', taskSchema), mockTasksResponse()) },
   }),
   getTask: xRoute({
     method: 'get',

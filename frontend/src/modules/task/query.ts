@@ -21,7 +21,7 @@ import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
+import { liveItems, offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
 import { addMutationRegistrar } from '~/query/mutation-registry';
@@ -246,7 +246,9 @@ export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: {
       const completeRead = carryUnansweredCreates(client, projectId);
       const read = await fetchAllPages(
         ({ limit, offset }) =>
-          getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOffDays } }),
+          getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOffDays } }).then(
+            liveItems,
+          ),
         appConfig.requestLimits.tasks,
       );
       return completeRead(read);
@@ -285,7 +287,7 @@ export const tasksTableQueryOptions = ({
   return infiniteQueryOptions({
     queryKey: tasksTableQueryKey({ q, sort, order, matchMode, projectId, workspaceId, organizationId }),
     ...offsetPaging(limit, (offset, signal) =>
-      getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }),
+      getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }).then(liveItems),
     ),
     refetchOnWindowFocus: false,
     meta: { persist: false },
@@ -415,8 +417,16 @@ const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteD
   },
   onSuccess: (result, variables) => {
     const rejectedIds = result?.rejectedIds ?? [];
-    if (rejectedIds.length === 0) return;
     const rejectedSet = new Set(rejectedIds);
+    // A replayed create or a list read may have put a row back while the delete waited, and its own echo fetches nothing.
+    const deleted = variables.rows.filter((row) => !rejectedSet.has(row.id));
+    cacheRemove(taskKeys.list.org(variables.organizationId), deleted);
+    removeDetailQueriesById(
+      queryClient,
+      taskKeys.detail.base,
+      deleted.map(({ id }) => id),
+    );
+    if (rejectedIds.length === 0) return;
     const rejectedTasks = variables.rows.filter((row) => rejectedSet.has(row.id));
     insertEntitiesIntoHome(queryClient, rejectedTasks);
     toaster.info(i18n.t('c:resources_delete_denied', { count: rejectedIds.length, total: variables.rows.length }));
@@ -515,6 +525,6 @@ export const fetchTasksForExport = async (params: {
   query: Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset' | 'afterSeq' | 'untilSeq'>;
 }) => {
   const { limit, offset = 0, organizationId, tenantId, query } = params;
-  const { items } = await getTasks({ query: { ...query, limit, offset }, path: { organizationId, tenantId } });
+  const { items } = await getTasks({ query: { ...query, limit, offset }, path: { organizationId, tenantId } }).then(liveItems);
   return items;
 };

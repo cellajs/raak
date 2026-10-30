@@ -20,7 +20,7 @@ import { createFetchProbe, pollForVersion } from './wait-for-version';
 
 /**
  * The whole deploy after image builds, in order: preflights, stack lock, base stack update, waved rollout, public version verification,
- * atomic frontend entry publish, smoke checks, the reap, the keys out of user data, and boot diagnostics on failure.
+ * atomic frontend entry publish, smoke checks, the reap, and boot diagnostics on failure.
  * The main job runs this with the deploy key in `SCW_*`, the one key it needs.
  */
 export interface DeployOptions {
@@ -38,13 +38,11 @@ export type TaskName =
   | 'preflight-privileged'
   | 'build-release'
   | 'sync-rollout-config'
-  | 'stage-generation-keys'
-  | 'assert-grants'
-  | 'assert-deploy-policy'
+  | 'generation-keys'
+  | 'identity-plan'
   | 'assert-secrets-deliverable'
   | 'geoip-refresh'
-  | 'smoke'
-  | 'scrub-user-data';
+  | 'smoke';
 
 /** One executed step. Steps run in-process via `task`; `exec` is for external binaries (pulumi login/select, docker login). */
 export interface DeployEffects {
@@ -175,6 +173,15 @@ export async function runDeploy(
   let outcome: 'ok' | 'error' = 'ok';
   let failure: unknown;
   try {
+    // Identities are IAM, which only an Owner moment writes: one that differs from the declared ones ends the run blocked before it starts.
+    await step('Check identities', () =>
+      fx.task('identity-plan', [
+        '--project-id',
+        process.env.SCW_DEFAULT_PROJECT_ID ?? '',
+        '--organization-id',
+        process.env.SCW_DEFAULT_ORGANIZATION_ID ?? '',
+      ]),
+    );
     await step('Check Pulumi state bucket', () => fx.task('ensure-state-bucket', ['--check']));
     await step('Login to S3 state backend', () => fx.exec('pulumi', ['login', stateBackendUrl(env.state_bucket, env.region)]));
     await step('Select stack', () => fx.exec('pulumi', ['stack', 'select', stack]));
@@ -193,14 +200,6 @@ export async function runDeploy(
     // The machine policies are written at Owner moments: a state that still holds them would have this update delete them.
     await step('Take retired resources out of the state', () => fx.task('forget-retired-resources', ['--stack', stack]));
     await step('Preflight privileged changes', () => fx.task('preflight-privileged', ['--stack', stack, '--mode', opts.mode]));
-    await step("Check the deploy key's policy", () =>
-      fx.task('assert-deploy-policy', [
-        '--project-id',
-        process.env.SCW_DEFAULT_PROJECT_ID ?? '',
-        '--organization-id',
-        process.env.SCW_DEFAULT_ORGANIZATION_ID ?? '',
-      ]),
-    );
     // The deploy reads no value of the app's: the apply makes and moves values (ensure-secrets, ensure-database, copy-shared-secrets), and
     // this step checks from metadata that every copy a machine reads has one. Secret containers are privileged, so nothing after this step
     // makes a copy: a missing one ends the run blocked before any machine exists, and storing it starts the target again.
@@ -212,8 +211,6 @@ export async function runDeploy(
         process.env.SCW_DEFAULT_PROJECT_ID ?? '',
         '--services-json',
         env.enabled_services_json,
-        '--mode',
-        opts.mode,
       ]),
     );
 
@@ -252,35 +249,14 @@ export async function runDeploy(
     // A stack that never had a machine plans its first generation in the base update below, before the rollout names one: it is this release.
     process.env.INFRA_RELEASE_SHA = opts.sha;
 
-    // Stage the standing machine keys in hand-over bundles BEFORE the stack update bakes their references into cloud-init. No IAM write.
-    await step('Stage machine keys', async () => {
-      const { tmpdir } = await import('node:os');
+    await step('Read machine keys', async () => {
       const outFile = resolve(tmpdir(), `generation-keys-${stack}-${opts.sha.slice(0, 10)}.json`);
-      await fx.task('stage-generation-keys', ['--sha', opts.sha, '--out', outFile]);
-      // The pulumi child (fx.update) inherits this env and bakes the boot key and handoff ids into the new generation's cloud-init.
+      await fx.task('generation-keys', ['--out', outFile]);
+      // The pulumi child (fx.update) inherits this env and writes each service's key into the cloud-init of the machines it makes.
       process.env.INFRA_GENERATION_KEYS_FILE = outFile;
     });
 
     await step('Base stack update', () => fx.update(stack));
-    await step('Verify identity grants', async () => {
-      // One assertion per principal: exact sets AND exact path condition. Their keys were checked when they were staged.
-      const rows = JSON.parse(env.grant_rows_json) as Array<{ app: string; sets: string[]; condition: string }>;
-      for (const row of rows) {
-        await fx.task('assert-grants', [
-          '--application-name',
-          row.app,
-          '--required-sets',
-          row.sets.join(','),
-          '--secret-condition',
-          row.condition,
-          '--project-id',
-          process.env.SCW_DEFAULT_PROJECT_ID ?? '',
-          '--organization-id',
-          process.env.SCW_DEFAULT_ORGANIZATION_ID ?? '',
-          ...(row.condition ? ['--project-scope'] : []),
-        ]);
-      }
-    });
     try {
       await step('Waved rollout', () =>
         fx.rollout([
@@ -343,17 +319,14 @@ export async function runDeploy(
       ]),
     );
     await step('Reap displaced generations', () => fx.update(stack));
-    // Every machine left runs this release; the Instance API serves its user data to every key that reads machines, the deploy key's among them.
-    await step('Take the keys out of user data', () =>
-      fx.task('scrub-user-data', ['--sha', opts.sha, '--project-id', process.env.SCW_DEFAULT_PROJECT_ID ?? '']),
-    );
   } catch (err) {
     outcome = 'error';
     failure = err;
     throw err;
   } finally {
     await lease?.release().catch((err) => say(`[deploy] lock release failed: ${errorMessage(err)}`));
-    // A step that found a privileged change or a required secret owed ends the run blocked, not failed: the operator settles it, then the same target.
+    // A step that found identities, a privileged change or a required secret owed ends the run blocked, not failed: the operator settles it,
+    // then the same target.
     const blocked = failure instanceof ExitCodeError && failure.exitCode === 2;
     recorder.finish(outcome === 'ok' ? 'deployed' : blocked ? 'blocked' : 'failed', outcome === 'ok' ? undefined : errorMessage(failure));
     const run = recorder.record().run;
@@ -427,14 +400,12 @@ const taskRunners: Record<TaskName, (argv: string[]) => Promise<void>> = {
   'forget-retired-resources': async (argv) => (await import('./forget-retired-resources')).main(argv),
   'preflight-privileged': async (argv) => (await import('./preflight-privileged')).main(argv),
   'sync-rollout-config': async (argv) => (await import('./sync-rollout-config')).syncRolloutConfig(argv),
-  'stage-generation-keys': async (argv) => (await import('./stage-generation-keys')).main(argv),
+  'generation-keys': async (argv) => (await import('./generation-keys')).main(argv),
   'build-release': async (argv) => (await import('./build-release')).main(argv),
-  'assert-grants': async (argv) => (await import('./assert-grants')).main(argv),
-  'assert-deploy-policy': async (argv) => (await import('./assert-deploy-policy')).main(argv),
+  'identity-plan': async (argv) => (await import('./identity-plan')).main(argv),
   'assert-secrets-deliverable': async (argv) => (await import('./assert-secrets-deliverable')).main(argv),
   'geoip-refresh': async (argv) => (await import('./geoip-refresh')).main(argv),
   smoke: async (argv) => (await import('./smoke')).main(argv),
-  'scrub-user-data': async (argv) => (await import('./scrub-user-data')).main(argv),
 };
 
 function createRealEffects(): DeployEffects {

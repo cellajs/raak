@@ -1,4 +1,4 @@
-import { and, count, eq, getColumns, getTableName, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, getColumns, getTableName, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import { appConfig, entityIdColumnName } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
@@ -9,13 +9,15 @@ import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { publishedRowsPredicate } from '#/db/utils/published-predicate';
 import { requestScopeWhere } from '#/db/utils/request-scope';
 import { deleteStamps } from '#/db/utils/stamps';
+import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { attachmentsTable, type InsertAttachmentModel } from '#/modules/attachment/attachment-db';
 import { getOrganizationEntityCount, productViewCountJoin, productViewCountSelect } from '#/modules/entities/entities-queries';
 import { productCountersTable } from '#/modules/entities/product-counters-db';
 import { usersTable } from '#/modules/user/user-db';
+import type { StxBase } from '#/schemas/sync-transaction-schemas';
 import { getOrderColumns } from '#/utils/order-column';
 import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
-import { textSearchFilter } from '#/utils/sql';
+import { searchFilter } from '#/utils/sql';
 
 // Every attachment read and write below carries the request's tenant + organization predicate, so the result is the
 // same with RLS bypassed; the RLS transaction wrappers stay the backstop.
@@ -50,14 +52,16 @@ interface DeleteAttachmentsByIdsOpts {
   ids: string[];
   /** Who deletes: stamped as the tombstone and as the row's last write. */
   actorId: ActorId;
+  /** The delete's own mutation and source ids, stored in place of the last edit's. */
+  stx: Pick<StxBase, 'mutationId' | 'sourceId'>;
 }
 
 /** Soft-deletes the rows and returns them, for the `attachment.deleted` event. */
-export const deleteAttachmentsByIds = async (ctx: ActorContext, { ids, actorId }: DeleteAttachmentsByIdsOpts) => {
+export const deleteAttachmentsByIds = async (ctx: ActorContext, { ids, actorId, stx }: DeleteAttachmentsByIdsOpts) => {
   const { db } = ctx.var;
   return db
     .update(attachmentsTable)
-    .set(deleteStamps(actorId))
+    .set({ ...deleteStamps(actorId), stx: stripChangedFields(attachmentsTable.stx, stx) })
     .where(and(inArray(attachmentsTable.id, ids), requestScopeWhere(ctx, attachmentsTable), isNull(attachmentsTable.deletedAt)))
     .returning();
 };
@@ -105,17 +109,8 @@ export const findAttachmentsPaginated = async (ctx: ActorContext, opts: FindAtta
   const publishedOnly = publishedRowsPredicate(attachmentsTable);
   if (publishedOnly) filters.push(publishedOnly);
 
-  const search = q?.trim();
-  if (search) {
-    filters.push(
-      or(
-        textSearchFilter(attachmentsTable.name, search),
-        textSearchFilter(attachmentsTable.filename, search),
-        textSearchFilter(attachmentsTable.contentType, search),
-        textSearchFilter(attachmentsTable.keywords, search),
-      ) as SQL,
-    );
-  }
+  const search = searchFilter([attachmentsTable.name, attachmentsTable.filename, attachmentsTable.contentType, attachmentsTable.keywords], q);
+  if (search) filters.push(search);
 
   const orderBy =
     rangeRead.orderBy ??

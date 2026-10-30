@@ -15,6 +15,7 @@ import { errorMessage } from '../../lib/utils/errors';
 import { ensureMachineIdentities } from '../../tasks/machine-identities';
 import { planMachineKeys, writeMachineKeys } from '../../tasks/machine-keys';
 import { writeMachinePolicies } from '../../tasks/machine-policies';
+import { assertSecretsUnprefixed } from '../../tasks/move-secret-paths';
 import { setupCiKey } from '../../tasks/setup-ci-key';
 import { forgetOwnerKey } from '../session';
 import type { CliMode, InfraContext } from '../shared';
@@ -43,7 +44,7 @@ export interface OwnerMomentResult {
   runnerKeyRotated: boolean;
 }
 
-/** Mint (or rotate) the CI deploy key, retrying on operator confirm. */
+/** Mint (or rotate) the deploy key, retrying on operator confirm. */
 async function mintCiKey(
   ownerSecretKey: string,
   opts: { projectId: string; organizationId: string; appConfig: InfraContext['appConfig']; mode: string },
@@ -71,10 +72,12 @@ function printSummary(opts: { rotated: boolean; ciAccessKey: string; names: Prin
   console.info(`\n${divider}`);
   if (ciAccessKey) {
     console.info(
-      `${checkMark} ${pc.bold(pc.greenBright(opts.rotated ? 'Keys rotated.' : 'Identities written.'))} CI deploy key ('${names.ciDeploy}'): ${pc.cyanBright(ciAccessKey)}`,
+      `${checkMark} ${pc.bold(pc.greenBright(opts.rotated ? 'Keys rotated.' : 'Identities written.'))} Deploy key ('${names.ciDeploy}'): ${pc.cyanBright(ciAccessKey)}`,
     );
   } else {
-    console.info(`${warningMark} ${pc.bold(pc.yellowBright('Done, but CI key was not created.'))} Run ${pc.cyan(actionCommand('rotate-keys'))}.`);
+    console.info(
+      `${warningMark} ${pc.bold(pc.yellowBright('Done, but the deploy key was not created.'))} Run ${pc.cyan(actionCommand('rotate-keys'))}.`,
+    );
   }
   console.info(divider);
 }
@@ -136,9 +139,9 @@ async function ensureProjectId(opts: { slug: string; mode: Environment; secretKe
 /**
  * The Owner moment of a setup: the project and every identity, written with an Owner API key typed at the prompt and checked as every Owner
  * action checks one, and nothing else runs on it (no Pulumi, no state, no value of the app's). The machine identities with their policies and
- * standing keys (in the deploy folder), the CI deploy key (its copy for the main job), and the app's operator and observer: created when the
+ * standing keys (in the deploy folder), the deploy key (its copy for the main job), and the app's operator and observer: created when the
  * app has none, else given this environment's project in place; the observer's key goes to this machine's env files. A rotation replaces
- * every key, the runner's too when the runner serves this environment. Undefined when declined.
+ * the deploy key and every machine key, the runner's too when the runner serves this environment. Undefined when declined.
  */
 export async function runOwnerMoment(context: InfraContext, mode: SetupMode): Promise<OwnerMomentResult | undefined> {
   const { appConfig } = context;
@@ -157,16 +160,28 @@ export async function runOwnerMoment(context: InfraContext, mode: SetupMode): Pr
   const pair: KeyPair = { accessKey: ownerKey.accessKey, secretKey: ownerKey.secretKey };
   const projectId =
     context.projectId || (await ensureProjectId({ slug: appConfig.slug, mode: environment, secretKey: pair.secretKey, organizationId }));
+  // The standing keys are planned from the deploy folder: one still under the environment's prefix would have every key made anew.
+  if (context.projectId) {
+    const secrets = createSecretManagerClient({ secretKey: pair.secretKey, region: appConfig.s3.region, projectId });
+    const refusal = await assertSecretsUnprefixed(secrets, appConfig.slug, environment).then(
+      () => undefined,
+      (error: unknown) => errorMessage(error),
+    );
+    if (refusal) {
+      console.error(`${warningMark} ${refusal}.`);
+      return undefined;
+    }
+  }
   const proceedWith = mode === 'rotate-keys' ? actionLabel('rotate-keys') : `the identities of ${environment}`;
   if (!(await confirmOrDefault({ message: `Proceed with ${proceedWith}?`, default: true }))) return undefined;
 
-  console.info('\n→ Machine identities (one application per registry service, and the boot fetcher, each with a standing key)');
+  console.info('\n→ Machine identities (one application per registry service, and the builder, each with a standing key)');
   try {
     const registry = { slug: appConfig.slug, mode: environment };
     await ensureMachineIdentities({ ...registry, callerSecretKey: pair.secretKey, projectId, organizationId });
     console.info('\n→ Machine policies');
     await writeMachinePolicies({ secretKey: pair.secretKey }, organizationId, machinePolicies(appConfig, projectId));
-    // The standing keys go to the deploy folder, which a deploy hands over from; a rotation makes every one anew.
+    // The standing keys go to the deploy folder, where a deploy reads them; a rotation makes every one anew.
     console.info('\n→ Standing machine keys');
     const auth = { secretKey: pair.secretKey };
     const secrets = createSecretManagerClient({ secretKey: pair.secretKey, region: appConfig.s3.region, projectId });
@@ -177,14 +192,14 @@ export async function runOwnerMoment(context: InfraContext, mode: SetupMode): Pr
     console.warn(`${warningMark} Machine identities incomplete: ${errorMessage(error)}. Run \`${actionCommand('identity')}\`.`);
   }
 
-  console.info('\n→ CI deploy key');
+  console.info('\n→ Deploy key');
   const ciKey = await mintCiKey(pair.secretKey, { projectId, organizationId, appConfig, mode: environment });
   console.info('\n→ Operator');
   const operatorKey = await ensureOperatorForEnvironment({ ...context, projectId }, ownerKey, projectId);
 
   // A new observer reaches the projects the operator does, so it follows the operator.
   console.info('\n→ Observer');
-  await ensureObserverForEnvironment({ ...context, projectId }, ownerKey, projectId, { rotate: mode === 'rotate-keys' }).catch((error) =>
+  await ensureObserverForEnvironment({ ...context, projectId }, ownerKey, projectId).catch((error) =>
     console.warn(`${warningMark} Observer incomplete: ${errorMessage(error)}. Run \`${actionCommand('identity')}\`.`),
   );
 

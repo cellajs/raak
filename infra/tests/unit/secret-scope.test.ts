@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { runtimeSecrets } from '../../lib/runtime-secrets';
-import { buildGrantRows } from '../../lib/scaleway/grant-rows';
+import { machinePolicies } from '../../lib/scaleway/machine-policies';
 import { principalNames } from '../../lib/scaleway/principals';
-import { engineSecretPath, handoffFolderPath, secretCopies } from '../../lib/scaleway/secret-paths';
+import { DEPLOY_FOLDER, ENGINE_FOLDER, secretCopies } from '../../lib/scaleway/secret-paths';
 import { principalServices, serviceNames } from '../../lib/services';
 import { fakeConfig } from '../helpers/fake-config';
 
@@ -25,10 +25,17 @@ const covers = (condition: string, name: string) => grantedPrefixes(condition).s
 
 /** The full Secret Manager name of each copy of a secret, with the consumer it serves. */
 const copyNames = (secret: (typeof runtimeSecrets)[number]) =>
-  secretCopies(secret, slug, mode).map((copy) => ({ service: copy.service, name: `${copy.path}${secret.secretName}` }));
+  secretCopies(secret).map((copy) => ({ service: copy.service, name: `${copy.path}${secret.secretName}` }));
 
 /** The full name of the copy a given consumer reads. */
 const copyFor = (secret: (typeof runtimeSecrets)[number], service: string) => copyNames(secret).find((copy) => copy.service === service)?.name ?? '';
+
+/** Each machine identity with the secret-read condition its policy's rules carry together. */
+const rowsFor = (singleVM: boolean) =>
+  machinePolicies(appConfigFor(singleVM), 'project').map((policy) => ({
+    app: policy.applicationName,
+    condition: policy.rules.flatMap((rule) => (rule.condition ? [rule.condition] : [])).join(' || '),
+  }));
 
 /**
  * A VM principal's grant is conditioned on secret folders, so where a secret lives decides who reads it. Every consumer has its own copy in
@@ -36,7 +43,7 @@ const copyFor = (secret: (typeof runtimeSecrets)[number], service: string) => co
  */
 describe('secret scope per principal', () => {
   for (const singleVM of [false, true]) {
-    const rows = buildGrantRows(appConfigFor(singleVM));
+    const rows = rowsFor(singleVM);
     const names = principalNames(slug, mode);
 
     it(`must not let a principal read a secret none of its services consume (singleVM: ${singleVM})`, () => {
@@ -53,25 +60,20 @@ describe('secret scope per principal', () => {
       }
     });
 
-    it(`must not let the boot key or any VM key read the engine folder (singleVM: ${singleVM})`, () => {
-      const boot = rows.find((row) => row.app === names.boot);
-      if (!boot) throw new Error('no assertion row for the boot principal');
-      for (const secret of runtimeSecrets) for (const copy of copyNames(secret)) expect(covers(boot.condition, copy.name)).toBe(false);
-      // Positive control: the boot key reads the handoff bundles.
-      expect(covers(boot.condition, `${handoffFolderPath(slug, mode)}backend/bundle`)).toBe(true);
-
-      for (const row of rows.filter((candidate) => candidate.app.includes('-vm-'))) {
-        expect(covers(row.condition, `${engineSecretPath(slug, mode)}pulumi-passphrase`), row.app).toBe(false);
+    it(`must not let a machine key read the engine or the deploy folder (singleVM: ${singleVM})`, () => {
+      for (const row of rows) {
+        expect(covers(row.condition, `${ENGINE_FOLDER}pulumi-passphrase`), row.app).toBe(false);
+        expect(covers(row.condition, `${DEPLOY_FOLDER}machine-key-backend`), row.app).toBe(false);
       }
     });
   }
 
   it("must not name a service after a reserved folder, which its own folder's grant would cover", () => {
-    for (const reserved of ['shared', 'engine', 'handoff']) expect(serviceNames).not.toContain(reserved);
+    for (const reserved of ['shared', 'engine', 'deploy']) expect(serviceNames).not.toContain(reserved);
   });
 
   it('must not give the Yjs relay the key that signs editor tokens, under split-VM', () => {
-    const yjsRow = buildGrantRows(appConfigFor(false)).find((row) => row.app === principalNames(slug, mode).vmService('yjs'));
+    const yjsRow = rowsFor(false).find((row) => row.app === principalNames(slug, mode).vmService('yjs'));
     const signingKey = runtimeSecrets.find((secret) => secret.envVar === 'YJS_TOKEN_PRIVATE_KEY');
     const publicKey = runtimeSecrets.find((secret) => secret.envVar === 'YJS_TOKEN_PUBLIC_KEY');
     if (!yjsRow || !signingKey || !publicKey) throw new Error('fixture missing');

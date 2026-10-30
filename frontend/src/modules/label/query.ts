@@ -24,6 +24,7 @@ import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
+import { liveItems } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
 import { addMutationRegistrar } from '~/query/mutation-registry';
@@ -90,7 +91,7 @@ export const labelsCanonicalOptions = ({ organizationId, tenantId, projectId }: 
     queryKey: keys.list.home(organizationId, projectId),
     queryFn: () => {
       return fetchAllPages(
-        ({ limit, offset }) => getLabels({ path: { organizationId, tenantId }, query: { projectId, limit, offset } }),
+        ({ limit, offset }) => getLabels({ path: { organizationId, tenantId }, query: { projectId, limit, offset } }).then(liveItems),
         appConfig.requestLimits.labels,
       );
     },
@@ -130,11 +131,11 @@ const labelCreateOptions = (queryClient: QueryClient): UseMutationOptions<Create
   scope: { id: 'label' },
   mutationFn: createLabelMutationFn,
   meta: { suppressGlobalErrorToast: true },
-  onMutate: async ({ organizationId, data }) => {
+  onMutate: async ({ tenantId, organizationId, data }) => {
     await queryClient.cancelQueries({ queryKey: keys.list.org(organizationId) });
-    // organizationId lives on the request path, not the create body, so carry it onto the row: cache
-    // placement resolves the canonical home list from the entity itself.
-    const optimisticLabels = data.map((row) => createOptimisticEntity(zLabel, { ...row, organizationId }));
+    // The ids live on the request path, not the create body, so carry them onto the row: cache placement resolves the
+    // canonical home list from the entity itself, and a delete takes its path from it.
+    const optimisticLabels = data.map((row) => createOptimisticEntity(zLabel, { ...row, tenantId, organizationId }));
     insertEntitiesIntoHome(queryClient, optimisticLabels);
     return { optimisticLabels };
   },
@@ -216,8 +217,16 @@ const labelDeleteOptions = (queryClient: QueryClient): UseMutationOptions<Delete
   },
   onSuccess: (result, variables) => {
     const rejectedIds = result?.rejectedIds ?? [];
-    if (rejectedIds.length === 0) return;
     const rejectedSet = new Set(rejectedIds);
+    // A replayed create or a list read may have put a row back while the delete waited, and its own echo fetches nothing.
+    const deleted = variables.rows.filter((row) => !rejectedSet.has(row.id));
+    cacheRemove(keys.list.org(variables.organizationId), deleted);
+    removeDetailQueriesById(
+      queryClient,
+      keys.detail.base,
+      deleted.map(({ id }) => id),
+    );
+    if (rejectedIds.length === 0) return;
     const rejectedLabels = variables.rows.filter((row) => rejectedSet.has(row.id));
     insertEntitiesIntoHome(queryClient, rejectedLabels);
     toaster.info(i18n.t('c:resources_delete_denied', { count: rejectedIds.length, total: variables.rows.length }));

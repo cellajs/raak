@@ -2,7 +2,6 @@ import type { z } from '@hono/zod-openapi';
 import type { SQL } from 'drizzle-orm';
 import type { OrgContext } from '#/core/context';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
-import type { LabelModel } from '#/modules/label/label-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { findLabelsPaginated } from '#/modules/label/label-queries';
 import type { labelListQuerySchema } from '#/modules/label/label-schema';
@@ -10,15 +9,15 @@ import { resolveProjectNarrowing } from '#/modules/project/project-queries';
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
-import { seqRangeOf } from '#/utils/seq-range';
+import { projectTombstones, seqRangeOf } from '#/utils/seq-range';
 
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
 
 /**
  * A page of the labels the caller may read in the organization; `projectId` or `workspaceId` narrows it. A range read
- * (`afterSeq`, `untilSeq`) includes deleted rows.
+ * (`afterSeq`, `untilSeq`) includes deleted rows, as tombstones.
  */
-export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promise<{ items: LabelModel[]; total: number }> {
+export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput) {
   const { projectId, workspaceId, ...queryInfo } = input;
   const { q, sort, order, offset, limit, modes } = queryInfo;
   const range = seqRangeOf(queryInfo);
@@ -40,7 +39,8 @@ export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promi
   const filters: SQL[] = scopeWhere.kind === 'where' ? [scopeWhere.where] : [];
 
   const read = range ? tenantReadIncludingDeleted : tenantRead;
-  return read(ctx, (readCtx) =>
+  const { items, total } = await read(ctx, (readCtx) =>
     findLabelsPaginated(readCtx, { organizationId, filters, orgWide: scopeWhere.kind === 'all', q, modes, sort, order, limit, offset, range }),
   );
+  return { items: projectTombstones('label', items), total };
 }

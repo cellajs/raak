@@ -12,7 +12,6 @@ import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { useInDropdownerDrawer } from '~/modules/common/dropdowner/drawer';
-import { getScrollParent } from '~/modules/common/sticky-box';
 import { deduplicateLabels } from '~/modules/label/group-labels';
 import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
@@ -43,6 +42,7 @@ import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { coalescedResult } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
 import { isTouchInteraction } from '~/utils/input-modality';
+import { getScrollParent } from '~/utils/scroll-parent';
 
 // Prefix of the create row's value, so it cannot collide with a real label name in onValueChange.
 const createSentinelPrefix = '__create__';

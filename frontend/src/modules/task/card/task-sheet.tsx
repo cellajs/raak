@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from '@tanstack/react-router';
+import { useParams, useSearch } from '@tanstack/react-router';
 import { FlameKindlingIcon, ServerCrashIcon, WifiOffIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
+import { SearchScope } from '~/modules/common/match-highlight/match-scope';
 import { Spinner } from '~/modules/common/spinner';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { TaskCard } from '~/modules/task/card/task-card';
 import { publicTaskQueryOptions } from '~/modules/task/public-query';
 import { taskQueryOptions } from '~/modules/task/query';
-import { TaskSearchScope } from '~/modules/task/task-search-scope';
 import { isTouchInteraction } from '~/utils/input-modality';
 
 interface TaskSheetProps {
@@ -21,6 +21,7 @@ interface TaskSheetProps {
 export function TaskSheet({ id, organizationId }: TaskSheetProps) {
   const isOnline = useOnlineManager();
   const tenantId = useParams({ strict: false, select: (params) => params.tenantId });
+  const q = useSearch({ strict: false, select: (search) => search.q });
   const { t } = useTranslation();
 
   // Select public or authenticated options before the unconditional hook call.
@@ -57,10 +58,10 @@ export function TaskSheet({ id, organizationId }: TaskSheetProps) {
   }
 
   return (
-    <TaskSearchScope>
+    <SearchScope q={q}>
       <div>
         <TaskCard task={task} state={taskState} isSelected={false} isFocused isSheet onEdit={() => setIsEditing(true)} />
       </div>
-    </TaskSearchScope>
+    </SearchScope>
   );
 }

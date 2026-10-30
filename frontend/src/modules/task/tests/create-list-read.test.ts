@@ -23,7 +23,8 @@ const projectId = 'proj-1';
 const homeKey = tasksCanonicalOptions({ ...ctx, projectId }).queryKey;
 
 /** Only the fields the list and the mutation callbacks read. */
-const task = (id: string) => ({ id, entityType: 'task', name: id, projectId, status: 5, labels: [], assignedTo: [], ...ctx }) as unknown as Task;
+const task = (id: string) =>
+  ({ id, entityType: 'task', name: id, projectId, status: 5, labels: [], assignedTo: [], deletedAt: null, ...ctx }) as unknown as Task;
 const createInput = (id: string) => ({
   id,
   name: id,

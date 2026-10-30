@@ -1,6 +1,5 @@
 import { useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
 import { LabelsDrawerButton } from '~/modules/label/labels-drawer';
@@ -26,7 +25,6 @@ export function BoardHeader({
   workspace,
   publicView,
 }: Pick<ResolvedBoardProps, 'boardId' | 'projects' | 'workspace' | 'publicView'>) {
-  const { t } = useTranslation();
   const isInWorkspace = !!workspace;
 
   const searchQuery = useSearch({ strict: false, select: (search) => search.q }) ?? '';
@@ -60,13 +58,7 @@ export function BoardHeader({
         isInWorkspace={isInWorkspace}
         toggleFocus={toggleSearchFocus}
         matches={{ ids: matchIds, onStep: revealItem, currentId: currentItemId }}
-      >
-        {typeof total === 'number' && searchQuery && (
-          <div className="mr-1 flex items-center text-muted-foreground text-sm">
-            {t('c:resource_count_found', { count: matchIds.length, resource: t('c:task', { count: matchIds.length }) })}
-          </div>
-        )}
-      </BoardSearch>
+      />
 
       {!searchQuery && !isSearchFocused && <TableCount count={total} label="c:task" className="mr-3 max-sm:hidden" />}
 

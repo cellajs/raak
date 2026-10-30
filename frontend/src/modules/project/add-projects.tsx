@@ -7,33 +7,39 @@ import type { IconComponent } from '~/modules/common/icons/types';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { CreateProjectForm } from '~/modules/project/create-project-form';
 import { SelectProjectForm } from '~/modules/project/select-project-form';
-import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
+import { Button } from '~/modules/ui/button';
 
 interface AddProjectsProps {
   mode?: 'create' | 'select';
 }
 
 interface AddProjectsOptionProps {
-  value: 'create' | 'select';
+  onClick: () => void;
   icon: IconComponent;
   label: string;
   ariaLabel: string;
 }
 
-function AddProjectsOption({ value, icon: Icon, label, ariaLabel }: AddProjectsOptionProps) {
+function AddProjectsOption({ onClick, icon: Icon, label, ariaLabel }: AddProjectsOptionProps) {
   const { t } = useTranslation();
 
   return (
-    <ToggleGroupItem size="tile" variant="tile" value={value} aria-label={ariaLabel} className="w-auto grow py-6 sm:py-10">
+    <Button
+      variant="outline"
+      size="auto"
+      aria-label={ariaLabel}
+      className="group/tile grow gap-3 rounded-xl p-3 py-6 text-left sm:py-10"
+      onClick={onClick}
+    >
       <Icon className="size-12" strokeWidth={1} />
-      <div className="flex flex-col truncate pl-3">
+      <div className="flex flex-col truncate">
         <p>{label}</p>
-        <div className="mt-1 flex items-center truncate text-faint-foreground transition-colors group-hover/toggle:text-foreground">
+        <div className="mt-1 flex items-center truncate text-faint-foreground transition-colors group-hover/tile:text-foreground">
           <strong>{t('c:continue')}</strong>
           <ChevronRightIcon className="ml-1" />
         </div>
       </div>
-    </ToggleGroupItem>
+    </Button>
   );
 }
 
@@ -95,20 +101,20 @@ export function AddProjects({ mode: baseMode }: AddProjectsProps) {
             animate={{ x: 0, scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
           >
-            <ToggleGroup type="single" onValueChange={updateMode} className="w-full items-stretch gap-2 py-3 max-sm:flex-col sm:h-40 sm:gap-3">
+            <div className="flex w-full items-stretch gap-2 py-3 max-sm:flex-col sm:h-40 sm:gap-3">
               <AddProjectsOption
-                value="create"
+                onClick={() => updateMode('create')}
                 icon={ShrubIcon}
                 label={t('c:create_project.text')}
                 ariaLabel={t('c:create_resource', { resource: t('c:project') })}
               />
               <AddProjectsOption
-                value="select"
+                onClick={() => updateMode('select')}
                 icon={SquareMousePointerIcon}
                 label={t('c:select_project')}
                 ariaLabel={t('c:select_resource', { resource: t('c:project') })}
               />
-            </ToggleGroup>
+            </div>
           </motion.div>
         )}
         {createMode && (
