@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.26](https://github.com/cellajs/raak/compare/0.1.25...0.1.26) (2026-10-30)
+
+
+### 🧹 Chores
+
+* upgrade cella to v0.31.1 (839c6ad75) ([#236](https://github.com/cellajs/raak/issues/236)) ([1fd74b3](https://github.com/cellajs/raak/commit/1fd74b3ecd59747ec8c64cc7e6fff7a663c4a8e5))
+
 ## [0.1.25](https://github.com/cellajs/raak/compare/0.1.24...0.1.25) (2026-10-30)
 
 
