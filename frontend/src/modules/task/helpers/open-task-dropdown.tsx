@@ -19,7 +19,7 @@ interface TriggerProps {
   triggerRef: RefObject<HTMLButtonElement | null>;
 }
 
-type TaskDropdownProps = TriggerProps &
+export type TaskDropdownProps = TriggerProps &
   (
     | ({ dropdownType: 'labels' } & SelectLabelsProps)
     | ({ dropdownType: 'assignedTo' } & SelectMembersProps)
@@ -27,7 +27,8 @@ type TaskDropdownProps = TriggerProps &
     | ({ dropdownType: 'primaryLabel' } & SelectPrimaryLabelProps)
   );
 
-const dropdownContent = (props: TaskDropdownProps) => {
+/** The picker for a task dropdown, for a menu that shows it in place with `push`. */
+export const taskDropdownContent = (props: TaskDropdownProps) => {
   switch (props.dropdownType) {
     case 'labels':
       return (
@@ -66,7 +67,7 @@ export function openTaskDropdown(props: TaskDropdownProps) {
     align: dropdownType === 'status' || dropdownType === 'assignedTo' ? 'end' : 'start',
   };
 
-  return dropdowner.getState().create(dropdownContent(props), options);
+  return dropdowner.getState().create(taskDropdownContent(props), options);
 }
 
 /** Id of the button that opens a task's field dropdown; the hotkeys query it inside the task card. */

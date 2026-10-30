@@ -16,6 +16,7 @@ import { BoardHeader } from '~/modules/task/board/board-header';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
 import { MobileBoard } from '~/modules/task/board/mobile-board';
 import { ProjectBoard } from '~/modules/task/board/project-board';
+import { UnseenTasksSnapshot } from '~/modules/task/board/unseen-tasks-snapshot';
 import { WorkspaceBoard } from '~/modules/task/board/workspace-board';
 import { WorkspaceBoardSkeleton } from '~/modules/task/board/workspace-board-skeleton';
 import { flattenInfiniteData } from '~/query/basic/flatten';
@@ -70,6 +71,7 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
 
   return (
     <MotionConfig reducedMotion="user">
+      {!publicView && <UnseenTasksSnapshot key={boardId} />}
       <SearchScope q={q}>
         <BoardHeader boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />
         <BoardView boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} isLoading={isLoadingProjects} />

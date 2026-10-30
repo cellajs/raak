@@ -1,5 +1,5 @@
 import i18n from 'i18next';
-import { panelMinWidth } from '~/modules/common/board/board-layout';
+import { collapsedPanelMinWidth, panelMinWidth } from '~/modules/common/board/board-layout';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import type { BoardPanelData, SectionsValue, TogglableStatusType } from '~/modules/task/board/task-board-store';
@@ -9,7 +9,7 @@ import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import type { BoardSearchParams, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
+import type { BoardResizablePanel, BoardSearchParams, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
 
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
@@ -27,26 +27,16 @@ export const prepareBoardTasks = (tasks: Task[], showAccepted: boolean, showIced
     .sort(compareTaskOrder);
 };
 
-/** The split section hosting a project's create-form draft: the one matching its status, else the first. Null for an unsplit project. */
-export const resolveDraftHostSection = (viewSections: SectionsValue[] | undefined, status: Task['status']) => {
-  if (!viewSections?.length) return null;
-  return viewSections.find((section) => section.status.includes(status)) ?? viewSections[0];
-};
-
-/** Whether this panel is the project's primary one: the unsplit panel, or the first split section. */
-export const isPrimarySection = (viewSections: SectionsValue[] | undefined, sectionFilters: SectionsValue | undefined) =>
-  !viewSections?.length || viewSections[0] === sectionFilters;
-
-/** Whether this panel hosts the create-form draft of a status; every panel of an unsplit project does. */
-export const panelHostsDraft = (viewSections: SectionsValue[] | undefined, projectId: string, panelId: string, status: Task['status']) => {
-  const hostSection = resolveDraftHostSection(viewSections, status);
-  return !hostSection || makePanelKey(projectId, hostSection) === panelId;
-};
+/** The split the project menu offers: each status in one section, from work in progress on the left to work not started. */
+export const defaultSplitSections: SectionsValue[] = [
+  { status: [accepted, TaskStatus.Reviewed, TaskStatus.Delivered, TaskStatus.Finished, TaskStatus.Started] },
+  { status: [TaskStatus.Unstarted, iced] },
+];
 
 /** Whether a task's status is one of a split panel's sections. */
 export const inSections = (task: Task, sectionFilters: SectionsValue) => sectionFilters.status.includes(task.status);
 
-export const makePanelKey = (projectId: string, section: SectionsValue) => {
+const makePanelKey = (projectId: string, section: SectionsValue) => {
   const keyParts = Object.entries(section)
     .map(([key, values]) => {
       const normalizedValues = values.map((value) => String(value).toLowerCase()).join('-');
@@ -57,32 +47,27 @@ export const makePanelKey = (projectId: string, section: SectionsValue) => {
   return `${projectId}-${keyParts}`;
 };
 
-// Exact prefixes keep one project's id from matching another that contains it
-const layoutKeyBelongsToProject = (layoutKey: string, projectId: string) => layoutKey === projectId || layoutKey.startsWith(`${projectId}-`);
+/** The panel id of a project, or of one split section of it. */
+export const sectionPanelId = (projectId: string, section?: SectionsValue) => (section ? makePanelKey(projectId, section) : projectId);
 
-/** Panel widths after a project's sections change: a single panel keeps the total width and position, split panels share it evenly. */
-export const computePanelLayoutSplit = (
-  layout: Record<string, number>,
-  projectId: string,
-  sections: SectionsValue[],
-  currentViewSections: SectionsValue[] | undefined,
-): Record<string, number> => {
-  const layoutArray = Object.entries(layout);
+/** The panels a project shows: one per split section, else itself. */
+export const projectPanelIds = (projectId: string, viewSections: SectionsValue[] | undefined) =>
+  viewSections?.length ? viewSections.map((section) => makePanelKey(projectId, section)) : [projectId];
 
-  if (!currentViewSections) {
-    const insertIndex = layoutArray.findIndex(([key]) => layoutKeyBelongsToProject(key, projectId));
-    const totalSize = layoutArray.reduce((sum, [key, size]) => (layoutKeyBelongsToProject(key, projectId) ? sum + size : sum), 0);
-    const filtered = layoutArray.filter(([key]) => !layoutKeyBelongsToProject(key, projectId));
-    filtered.splice(insertIndex, 0, [projectId, totalSize]);
-    return Object.fromEntries(filtered);
-  }
+/** Panel widths after a project splits: its sections share its width evenly. */
+export const splitPanelLayout = (layout: Record<string, number>, projectId: string, panelIds: string[]) => {
+  const { [projectId]: width, ...rest } = layout;
+  if (width === undefined) return rest;
+  const share = Math.max(panelMinWidth, width / panelIds.length);
+  return { ...rest, ...Object.fromEntries(panelIds.map((panelId) => [panelId, share])) };
+};
 
-  const updated = layoutArray.flatMap(([key, size]): [string, number][] => {
-    if (!layoutKeyBelongsToProject(key, projectId)) return [[key, size]];
-    const percentagePart = size / currentViewSections.length;
-    return sections.map((sectionFilters): [string, number] => [makePanelKey(projectId, sectionFilters), percentagePart]);
-  });
-  return Object.fromEntries(updated);
+/** Panel widths after a project merges: it takes the width of its sections together, unless it is collapsed. */
+export const mergePanelLayout = (layout: Record<string, number>, projectId: string, panelIds: string[]) => {
+  const rest = Object.fromEntries(Object.entries(layout).filter(([panelId]) => !panelIds.includes(panelId)));
+  if (layout[projectId] <= collapsedPanelMinWidth) return rest;
+  const width = panelIds.reduce((sum, panelId) => sum + (layout[panelId] ?? 0), 0);
+  return { ...rest, [projectId]: Math.max(panelMinWidth, width) };
 };
 
 export const sortByMembership = (projects: EnrichedProject[]) => {
@@ -108,6 +93,10 @@ export const pickViewSections = (board: BoardPanelData | undefined): BoardViewSe
   return sections;
 };
 
+/** The split sections a board shows. A collapsed project is one panel, known by its stored width, and gets its sections back on expanding. */
+export const openViewSections = (sections: BoardViewSections, layout: Record<string, number> = {}) =>
+  Object.fromEntries(Object.entries(sections).filter(([projectId]) => !(layout[projectId] <= collapsedPanelMinWidth)));
+
 export const prepareBoardPanels = (projects: EnrichedProject[], viewSectionsByProject: BoardViewSections) => {
   const sortedProjects = sortByMembership(projects);
 
@@ -115,11 +104,10 @@ export const prepareBoardPanels = (projects: EnrichedProject[], viewSectionsByPr
     const viewSections = viewSectionsByProject[project.id];
     if (!viewSections?.length) return [{ kind: 'project', project, panelId: project.id }];
 
-    return viewSections.map((sectionCriteria, sectionIndex) => ({
+    return viewSections.map((sectionCriteria) => ({
       kind: 'project',
       project,
       sectionFilters: sectionCriteria,
-      sectionIndex,
       panelId: makePanelKey(project.id, sectionCriteria),
     }));
   });
@@ -135,24 +123,30 @@ export const sectionBarId = (type: TogglableStatusType, projectId: string) => `s
 export const hasSectionBar = (type: TogglableStatusType, counts: TaskCounts) =>
   type === 'iced' ? counts.showIced && !!counts.iced : counts.showAccepted && (!!counts.accepted || counts.acceptedCutOff > 0);
 
-export const formatSectionLabel = (filters: SectionsValue): string => {
-  return Object.entries(filters)
-    .map(([key, values]) => {
-      switch (key) {
-        case 'status':
-          return values.map((status) => i18n.t(`c:${statusOptionsByValue[status].status}`)).join(', ');
-        default:
-          return `${key.charAt(0).toUpperCase() + key.slice(1)}: ${values.join(', ')}`;
-      }
-    })
-    .join('\n');
+// The path a task takes, with iced off the end of it: a run of statuses reads as a stretch of this path
+const statusPath = [TaskStatus.Unstarted, TaskStatus.Started, TaskStatus.Finished, TaskStatus.Delivered, TaskStatus.Reviewed, accepted, iced];
+
+/** A section's name: "Started to accepted" for a run of statuses, "Backlog and iced" for two. */
+export const formatSectionLabel = ({ status }: SectionsValue): string => {
+  const steps = statusPath.filter((step) => status.includes(step));
+  const names = steps.map((step) => i18n.t(`c:${statusOptionsByValue[step].status}`));
+  if (names.length < 2) return names.join();
+
+  const first = names[0];
+  const last = names[names.length - 1].toLowerCase();
+  if (names.length === 2) return i18n.t('c:status_pair', { first, second: last });
+
+  const isRun = statusPath.indexOf(steps[steps.length - 1]) - statusPath.indexOf(steps[0]) === steps.length - 1;
+  return isRun ? i18n.t('c:status_range', { from: first, to: last }) : names.join(', ');
 };
 
-export const normalizePanelWidths = (storedLayout: Record<string, number>, currentProjectIds: string[]) => {
+export const normalizePanelWidths = (storedLayout: Record<string, number>, panels: BoardResizablePanel[]) => {
   const layout: Record<string, number> = {};
 
-  for (const id of currentProjectIds) {
-    layout[id] = storedLayout[id] ?? panelMinWidth;
+  for (const panel of panels) {
+    const width = storedLayout[panel.panelId] ?? panelMinWidth;
+    // A layout stored while sections could collapse may still hold a collapsed width for one
+    layout[panel.panelId] = panel.kind === 'project' && panel.sectionFilters ? Math.max(panelMinWidth, width) : width;
   }
 
   return layout;

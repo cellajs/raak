@@ -18,8 +18,6 @@ export type BoardResizablePanel =
       kind: 'project';
       project: EnrichedProject;
       sectionFilters?: SectionsValue;
-      /** Index within the project's viewSections; seeds a distinct default order per split panel. */
-      sectionIndex?: number;
       panelId: string;
     }
   | { kind: 'explainer'; panelId: string }

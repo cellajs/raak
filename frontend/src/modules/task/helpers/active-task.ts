@@ -9,7 +9,8 @@ import { queryClient } from '~/query/query-client';
 export const subscribeToTaskCache = (onStoreChange: () => void) =>
   queryClient.getQueryCache().subscribe((event) => {
     const key = event.query?.queryKey;
-    if (Array.isArray(key) && key[0] === 'task') onStoreChange();
+    // Deferred: a suspending query notifies the cache while its component renders, when no other component may update
+    if (Array.isArray(key) && key[0] === 'task') queueMicrotask(onStoreChange);
   });
 
 export const cachedTasks = (): Task[] => {

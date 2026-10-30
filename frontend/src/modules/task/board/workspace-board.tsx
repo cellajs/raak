@@ -8,6 +8,7 @@ import { useMemberUpdateMutation } from '~/modules/memberships/query-mutations';
 import { buildBoardExtraPanels, computePanelReorder, useBoardPanels, useExpandLabelsPanel, useShowExplainer } from '~/modules/task/board/board-hooks';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
+import { TaskPanelHeader } from '~/modules/task/panel/task-panel-header';
 
 export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
   const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
@@ -16,7 +17,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
   const showExplainer = useShowExplainer(!!workspace);
 
   const extraPanels = buildBoardExtraPanels({ showExplainer });
-  const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
+  const { panels, layoutPanels, defaultLayout, handleLayoutChanged, handleGroupCollapse } = useBoardPanels(boardId, projects, extraPanels);
   useExpandLabelsPanel(boardLayoutRef);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
@@ -52,6 +53,11 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
     boardLayoutRef.current?.expandAndScrollToPanel(targetPanel.panelId);
   }, [projectSlug, panels, projects]);
 
+  const renderGroupHeader = (projectId: string) => {
+    const project = projects.find(({ id }) => id === projectId);
+    return project && <TaskPanelHeader project={project} spansSections />;
+  };
+
   return (
     <BoardLayout
       ref={boardLayoutRef}
@@ -62,6 +68,8 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
       panelFade="marked"
       reorderable
       onPanelReorder={handlePanelReorder}
+      groupHeader={renderGroupHeader}
+      onGroupCollapse={handleGroupCollapse}
     >
       {(panelId) => {
         const panel = panels.find((candidate) => candidate.panelId === panelId);

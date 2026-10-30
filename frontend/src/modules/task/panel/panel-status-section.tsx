@@ -31,11 +31,19 @@ interface PanelStatusSectionProps {
   suppressed?: boolean;
 }
 
-/** Sticky header of the Accepted or Iced section, with its count and expand toggle; it hides on scroll like the floating nav buttons. */
+/** Sticky header of the Accepted or Iced section, with its count and expand toggle; once pinned it hides on scroll like the floating nav buttons. */
 export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRef, windowMode, suppressed }: PanelStatusSectionProps) {
   const { t } = useTranslation();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const isActive = hasSectionBar(type, counts);
   // Visibility lives here so scroll flips re-render only this header, not the panel
-  const isEdgeVisible = useSectionEdgeVisibility({ edge: type === 'iced' ? 'bottom' : 'top', scrollRef, windowMode });
+  const isEdgeVisible = useSectionEdgeVisibility({
+    edge: type === 'iced' ? 'bottom' : 'top',
+    barRef: wrapperRef,
+    active: isActive,
+    scrollRef,
+    windowMode,
+  });
   // A focused bar stays visible: keyboard focus never rests on a bar slid out of view
   const [hasFocus, setHasFocus] = useState(false);
   const isVisible = isEdgeVisible || hasFocus;
@@ -47,7 +55,6 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
 
   const isIced = type === 'iced';
   const hasOnlyOlderAccepted = !isIced && !counts.accepted && counts.acceptedCutOff > 0;
-  const isActive = hasSectionBar(type, counts);
   const barId = sectionBarId(type, projectId);
   const count = isIced ? counts.iced : counts.accepted;
   const colors = statusSectionColors[type];
@@ -78,7 +85,6 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
 
   // Publishes the accepted bar's pinned height as --sticky-stack-top on the panel content, so card headers (StickyBox)
   // pin below the bar and glide with its transition. Set imperatively to avoid re-rendering the panel's cards.
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (isIced) return;

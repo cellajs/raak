@@ -9,6 +9,9 @@ export const useTaskDescriptionUpdate = (task: Task) => {
 
   return async (description: string, collaborative: boolean) => {
     if (collaborative) {
+      // Leaving a collaborative editor commits even when nothing was edited
+      if (description === task.description) return;
+
       patchCollaborativeDescription('task', task, description);
       // The collaborative path skips the mutation that glows via query.ts; triggerTaskGlow waits until the card leaves editing
       triggerTaskGlow(task.id);

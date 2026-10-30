@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
+import { labelIconColorClass } from '~/modules/label/label-palette';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { useReadOnlyInert } from '~/modules/project/use-read-only';
+import { useShowsUnseenMark } from '~/modules/task/board/unseen-tasks-store';
 import { openTaskFieldDropdown, taskFieldTriggerId } from '~/modules/task/helpers/open-task-dropdown';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { taskCardDimClass } from '~/modules/task/task-styles';
@@ -17,6 +19,7 @@ export function TaskPrimaryLabelButton({ task, isSheet = false }: TaskPrimaryLab
   const { t } = useTranslation();
   const handlers = useTaskFieldHandlers(task);
   const readOnlyInert = useReadOnlyInert(task.projectId);
+  const showsMark = useShowsUnseenMark(task) && !isSheet;
 
   return (
     <Button
@@ -25,10 +28,11 @@ export function TaskPrimaryLabelButton({ task, isSheet = false }: TaskPrimaryLab
       aria-label={t('c:set_resource', { resource: t('c:type') })}
       variant="ghost"
       size="xs"
-      className={cn(taskCardDimClass, 'focus-inset -ml-0.5 group-data-[sheet=true]/task:opacity-100')}
+      className={cn(taskCardDimClass, 'focus-inset -ml-0.5 group-data-[sheet=true]/task:opacity-100', showsMark && 'relative opacity-100')}
       {...readOnlyInert}
     >
-      <PrimaryLabelIcon label={task.primaryLabel} />
+      {showsMark && <span aria-hidden className={cn('task-unseen-halo', labelIconColorClass(task.primaryLabel?.color))} />}
+      <PrimaryLabelIcon label={task.primaryLabel} className={showsMark ? 'relative' : undefined} />
     </Button>
   );
 }

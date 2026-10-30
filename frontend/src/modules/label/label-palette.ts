@@ -45,3 +45,5 @@ export const labelPalette: Record<LabelColorToken, LabelPaletteEntry> = {
 };
 
 export const isLabelColorToken = (color: string | null | undefined): color is LabelColorToken => color != null && color in labelPalette;
+
+export const labelIconColorClass = (color: string | null | undefined) => (isLabelColorToken(color) ? labelPalette[color].icon : undefined);

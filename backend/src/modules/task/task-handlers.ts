@@ -4,6 +4,7 @@ import { createTasksOp } from '#/modules/task/operations/create-tasks';
 import { deleteTasksOp } from '#/modules/task/operations/delete-tasks';
 import { getTaskOp } from '#/modules/task/operations/get-task';
 import { getTasksOp } from '#/modules/task/operations/get-tasks';
+import { getUnseenTaskIdsOp } from '#/modules/task/operations/get-unseen-task-ids';
 import { updateTaskOp } from '#/modules/task/operations/update-task';
 import { taskRoutes } from '#/modules/task/task-routes';
 import { defaultHook } from '#/utils/default-hook';
@@ -17,6 +18,12 @@ app.openapi(taskRoutes.createTasks, async (ctx) => {
 
 app.openapi(taskRoutes.getTasks, async (ctx) => {
   const result = await getTasksOp(ctx, ctx.req.valid('query'));
+  return ctx.json(result, 200);
+});
+
+// Before getTask, whose `/{id}` would take "unseen" for an id.
+app.openapi(taskRoutes.getUnseenTaskIds, async (ctx) => {
+  const result = await getUnseenTaskIdsOp(ctx);
   return ctx.json(result, 200);
 });
 

@@ -97,13 +97,12 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
     <PanelTasksContext.Provider value={tasks}>
       <BoardPanelBody hasSelection={hasSelectedTasks} windowScroll={windowScroll} collapsedCount={collapsedMainCount(counts)}>
         {isMobile || windowScroll ? (
-          <div className="mb-10 flex h-full flex-col" id={`tasks-list-${project.id}`}>
+          <div className="mb-10 flex h-full flex-col">
             {topSlot}
 
             <div className={hintFadeOut}>
               {hasContent ? (
                 <ListFocusScope
-                  id={`panel-tasks-${project.id}`}
                   className={cn(rowHeightGuardClass, cardScrollMargin, raisedRowClass)}
                   itemIds={itemIds}
                   viewportRef={scrollViewportRef}
@@ -126,7 +125,6 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
           // The viewport spans the frame's left line and pads its content back off it: a focused card's bar draws
           // on that line, and the viewport clips whatever lies past its own edge.
           <ScrollArea
-            id={project.id}
             className="-ml-px min-h-0 flex-1"
             viewportRef={scrollViewportRef}
             viewportClassName="[&>div]:flex! [&>div]:flex-col! [&>div]:grow! [&>div]:h-auto! [&>div]:min-h-full! [&>div]:pl-px"
@@ -134,13 +132,9 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
           >
             {topSlot}
 
-            {/* The create task form mounts here */}
-            <div id={`fallback-container-${project.id}`} className={cn('z-104 mx-2', hintFadeOut)} />
-
-            <div className={cn('flex flex-1 flex-col', hintFadeOut)} id={`tasks-list-${project.id}`}>
+            <div className={cn('flex flex-1 flex-col', hintFadeOut)}>
               {hasContent ? (
                 <ListFocusScope
-                  id={`panel-tasks-${project.id}`}
                   className={cn(rowHeightGuardClass, cardScrollMargin, raisedRowClass, 'grow')}
                   itemIds={itemIds}
                   viewportRef={scrollViewportRef}

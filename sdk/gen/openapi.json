@@ -1,7 +1,7 @@
 {
   "servers": [
     {
-      "url": "http://localhost:3010/api"
+      "url": "http://localhost:3001/api"
     }
   ],
   "info": {
@@ -392,9 +392,9 @@
         "description": "Access token from the authorization server, as `Authorization: Bearer`. Users consent through the authorization code flow (PKCE); service accounts use client credentials with a secret key as the client secret. Each route lists the scope it needs; a `write` scope covers `read`.",
         "flows": {
           "authorizationCode": {
-            "authorizationUrl": "http://localhost:3010/oauth/auth",
-            "tokenUrl": "http://localhost:3010/oauth/token",
-            "refreshUrl": "http://localhost:3010/oauth/token",
+            "authorizationUrl": "http://localhost:3001/oauth/auth",
+            "tokenUrl": "http://localhost:3001/oauth/token",
+            "refreshUrl": "http://localhost:3001/oauth/token",
             "scopes": {
               "organization:read": "Read organizations",
               "organization:write": "Create, update and delete organizations",
@@ -411,7 +411,7 @@
             }
           },
           "clientCredentials": {
-            "tokenUrl": "http://localhost:3010/oauth/token",
+            "tokenUrl": "http://localhost:3001/oauth/token",
             "scopes": {
               "organization:read": "Read organizations",
               "organization:write": "Create, update and delete organizations",
@@ -2230,7 +2230,7 @@
           "clientId": "https://vscode.dev/oauth/client-metadata.json",
           "clientName": "Visual Studio Code",
           "scopes": ["attachment:read"],
-          "resources": ["http://localhost:3010/mcp/tenant01/org01/mcp"],
+          "resources": ["http://localhost:3001/mcp/tenant01/org01/mcp"],
           "createdAt": "2026-09-22T10:00:00.000Z",
           "expiresAt": "2026-10-22T10:00:00.000Z"
         },
@@ -3199,8 +3199,8 @@
         "required": ["resource", "authorization_servers", "scopes_supported", "bearer_methods_supported", "resource_documentation"],
         "description": "How an OAuth client gets an access token for this API or an MCP endpoint (RFC 9728): the authorization servers that issue tokens and the scopes accepted. A client finds it through the `WWW-Authenticate` header of a 401 response.",
         "example": {
-          "resource": "http://localhost:3010/api/t/m5jfjs",
-          "authorization_servers": ["http://localhost:3010/oauth"],
+          "resource": "http://localhost:3001/api/t/m5jfjs",
+          "authorization_servers": ["http://localhost:3001/oauth"],
           "scopes_supported": [
             "organization:read",
             "organization:write",
@@ -3216,7 +3216,7 @@
             "attachment:write"
           ],
           "bearer_methods_supported": ["header"],
-          "resource_documentation": "http://localhost:3010/docs"
+          "resource_documentation": "http://localhost:3001/docs"
         },
         "x-tags": ["data", "oauth-server", "cella"]
       },
@@ -8538,7 +8538,7 @@
                       "clientId": "https://vscode.dev/oauth/client-metadata.json",
                       "clientName": "Visual Studio Code",
                       "scopes": ["attachment:read"],
-                      "resources": ["http://localhost:3010/mcp/tenant01/org01/mcp"],
+                      "resources": ["http://localhost:3001/mcp/tenant01/org01/mcp"],
                       "createdAt": "2026-09-22T10:00:00.000Z",
                       "expiresAt": "2026-10-22T10:00:00.000Z"
                     }
@@ -18090,8 +18090,8 @@
             "content": {
               "application/json": {
                 "example": {
-                  "resource": "http://localhost:3010/mcp/5pooo8/8c598ff2-1070-4bfe-af42-de4764db5aba/mcp",
-                  "authorization_servers": ["http://localhost:3010/oauth"],
+                  "resource": "http://localhost:3001/mcp/5pooo8/8c598ff2-1070-4bfe-af42-de4764db5aba/mcp",
+                  "authorization_servers": ["http://localhost:3001/oauth"],
                   "scopes_supported": [
                     "organization:read",
                     "organization:write",
@@ -18107,7 +18107,7 @@
                     "attachment:write"
                   ],
                   "bearer_methods_supported": ["header"],
-                  "resource_documentation": "http://localhost:3010/docs"
+                  "resource_documentation": "http://localhost:3001/docs"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/ProtectedResourceMetadata"
@@ -21678,6 +21678,79 @@
           },
           "413": {
             "$ref": "#/components/responses/PayloadTooLargeError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/{tenantId}/{organizationId}/tasks/unseen": {
+      "get": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "operationId": "getUnseenTaskIds",
+        "tags": ["tasks", "app", "product"],
+        "summary": "Get unseen task ids",
+        "description": "Returns the ids of the newest tasks that are new to the current user: not seen yet, and created after the user joined. Newest first.",
+        "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
+        "x-rate-limiter": ["syncReadLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "tenantId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "organizationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unseen task ids",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 50
+                      }
+                    }
+                  },
+                  "required": ["items"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequestsError"

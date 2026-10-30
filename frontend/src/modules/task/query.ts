@@ -2,7 +2,7 @@ import type { DefaultError, Mutation, QueryClient, UseMutationOptions } from '@t
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import i18n from 'i18next';
 import type { CreateTasksData, GetTasksData, UpdateTaskData, UserMinimalBase } from 'sdk';
-import { createTasks, deleteTasks, getTask, getTasks, updateTask } from 'sdk';
+import { createTasks, deleteTasks, getTask, getTasks, getUnseenTaskIds, updateTask } from 'sdk';
 import { zCreateTasksBody, zTask } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import { isRecord } from 'shared/utils/as-record';
@@ -89,6 +89,15 @@ export const taskKeys = {
   detail: { ...baseKeys.detail, public: (id: string) => ['task', 'detail', 'public', id] as const },
   publicList: { base: ['task', 'public-list'] as const, filtered: (filters: PublicTaskListFilters) => ['task', 'public-list', filters] as const },
 };
+
+/** Every board visit takes its own snapshot, so nothing is kept for the next. */
+export const unseenTaskIdsQueryOptions = (organizationId: string, tenantId: string) =>
+  queryOptions({
+    queryKey: ['task', 'unseen', organizationId],
+    queryFn: () => getUnseenTaskIds({ path: { tenantId, organizationId } }),
+    staleTime: 0,
+    gcTime: 0,
+  });
 
 /** The keys a create row takes. An edit of any other field cannot fold into a queued create. */
 const taskCreateKeys = Object.keys(zCreateTasksBody.element.shape);

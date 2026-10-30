@@ -207,7 +207,7 @@ export const config = {
    * `frontendUrl` carries no port (tunnel mode); otherwise the URL port wins. `internal` is the
    * backend's internal listener, which the cdc and yjs workers dial (`INTERNAL_PORT` overrides it).
    */
-  devPorts: { frontend: 3010, api: 4010, cdcHealth: 4011, yjs: 4012, mcp: 4013, oauth: 4014, internal: 4015, jobs: 4016 },
+  devPorts: { frontend: 3001, api: 4010, cdcHealth: 4011, yjs: 4012, mcp: 4013, oauth: 4014, internal: 4015, jobs: 4016 },
 
   has: {
     pwa: true as boolean,

@@ -2,13 +2,14 @@ import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
-import { computePanelLayoutSplit } from '~/modules/task/helpers/board-helpers';
+import { mergePanelLayout, projectPanelIds, splitPanelLayout } from '~/modules/task/helpers/board-helpers';
 import type { Task } from '~/modules/task/types';
 import { idbKvStorage } from '~/query/idb-kv-storage';
 
 export const defaultPanelPrefs = { expandAccepted: false, expandIced: false };
 
 type PanelPrefs = typeof defaultPanelPrefs;
+/** A split section of a project. Every status belongs to exactly one section, so a task always has one panel. */
 export type SectionsValue = Record<'status', Task['status'][]>;
 export type TogglableStatusType = 'iced' | 'accepted';
 
@@ -46,10 +47,8 @@ export const useTaskBoardStore = create<TaskBoardState>()(
         setPanelSections: (boardId, projectId, viewSections) => {
           // Persist the generic board layout before entering the Immer recipe,
           // since accessing another store during drafting introduces a side effect.
-          const currentViewSections = get().panelData[boardId]?.[projectId]?.viewSections;
           const currentLayout = boardStore.getState().boardLayouts[boardId] ?? {};
-          const nextLayout = computePanelLayoutSplit(currentLayout, projectId, viewSections, currentViewSections);
-          boardStore.getState().updateBoardLayout(boardId, nextLayout);
+          boardStore.getState().updateBoardLayout(boardId, splitPanelLayout(currentLayout, projectId, projectPanelIds(projectId, viewSections)));
 
           set((state) => {
             const board = ensureBoard(state, boardId);
@@ -59,6 +58,10 @@ export const useTaskBoardStore = create<TaskBoardState>()(
         },
 
         dropPanelSections: (boardId, projectId) => {
+          const currentLayout = boardStore.getState().boardLayouts[boardId] ?? {};
+          const viewSections = get().panelData[boardId]?.[projectId]?.viewSections;
+          boardStore.getState().updateBoardLayout(boardId, mergePanelLayout(currentLayout, projectId, projectPanelIds(projectId, viewSections)));
+
           set((state) => {
             const board = ensureBoard(state, boardId);
             const panel = ensurePanel(board, projectId);

@@ -1,5 +1,5 @@
 import { createXRoutes, errors, json, jsonBody, xRoute } from '#/core/x-routes';
-import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
+import { actorGuard, orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchTasksResponse, mockTasksResponse } from '#/modules/task/task-mocks';
@@ -9,6 +9,7 @@ import {
   taskListQuerySchema,
   taskSchema,
   taskUpdateStxBodySchema,
+  unseenTaskIdsResponseSchema,
 } from '#/modules/task/task-schema';
 import {
   batchResponseSchema,
@@ -57,6 +58,17 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     description: 'Returns a list of tasks within one or more specified projects.',
     request: { params: tenantOrgParamSchema, query: taskListQuerySchema },
     responses: { 200: json('Tasks', productListResponseSchema('task', taskSchema), mockTasksResponse()) },
+  }),
+  getUnseenTaskIds: xRoute({
+    method: 'get',
+    path: '/unseen',
+    xGuard: [userGuard, tenantGuard, orgGuard],
+    xRateLimiter: [syncReadLimiter],
+    summary: 'Get unseen task ids',
+    description:
+      'Returns the ids of the newest tasks that are new to the current user: not seen yet, and created after the user joined. Newest first.',
+    request: { params: tenantOrgParamSchema },
+    responses: { 200: json('Unseen task ids', unseenTaskIdsResponseSchema) },
   }),
   getTask: xRoute({
     method: 'get',
