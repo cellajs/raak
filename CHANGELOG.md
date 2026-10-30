@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.25](https://github.com/cellajs/raak/compare/0.1.24...0.1.25) (2026-10-30)
+
+
+### 🐞 Bug fixes
+
+* **task:** small board and mobile polish batch ([b50954b](https://github.com/cellajs/raak/commit/b50954bbe7f2a9ebd27fcd2d7a0862f33df2626d))
+
+
+### 🧹 Chores
+
+* upgrade cella to v0.29.1 (ddf0595aa) ([#234](https://github.com/cellajs/raak/issues/234)) ([6a7cb2b](https://github.com/cellajs/raak/commit/6a7cb2b0f869220152639a94a07a9f6602fae8e2))
+
 ## [0.1.24](https://github.com/cellajs/raak/compare/0.1.23...0.1.24) (2026-10-29)
 
 
