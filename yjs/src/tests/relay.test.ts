@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 import type { YjsDocScope } from '#/modules/yjs/helpers/yjs-log';
+import { yjsAwarenessMaxStateBytes } from '../constants';
 import {
   awarenessClientIds,
   awarenessEntries,
@@ -367,6 +368,22 @@ describe('handleMessage: sync update', () => {
     leaveCollab(collab.scope, peer as never);
   });
 
+  it('must not grow a document past its byte cap: the sender closes with 4400 and the session stays', async () => {
+    const { ctx: c, scope, ws, collab } = session();
+    const peer = mockWebSocket();
+    joinCollab(scope, peer as never);
+    // The fake log keeps no byte count: the append answers as the real one does at the cap.
+    storage.appendUpdate.mockResolvedValueOnce({ status: 'too-large' } as never);
+
+    await handleMessage(c, ws as never, buildSyncUpdate(mapUpdate('k', 1)));
+
+    expect(ws.closed).toEqual({ code: 4400, reason: 'Document too large' });
+    expect(ws.sent).toHaveLength(0);
+    expect(peer.sent).toHaveLength(0);
+    expect(getCollab(scope)).toBe(collab);
+    leaveCollab(collab.scope, peer as never);
+  });
+
   it('must not log an update a socket sent before its session ended under it, into no session or a newer one of its document', async () => {
     // The document was retired while the update waited in the socket's queue: its session ended and it is closing.
     const { ctx: c, scope, key, ws, collab } = session();
@@ -590,7 +607,7 @@ describe('handleMessage: awareness', () => {
     vi.advanceTimersByTime(499);
     expect(peer.sent).toHaveLength(2);
     vi.advanceTimersByTime(1);
-    expect(peer.sent.map(awarenessEntries).at(-1)).toEqual([{ clientId: 1, clock: 3, state: { user: { name: 'client 1' } } }]);
+    expect(peer.sent.map(awarenessEntries).at(-1)).toEqual([{ clientId: 1, clock: 3, state: { user: { name: 'client 1', color: '#3366CC' } } }]);
     expect(peer.sent).toHaveLength(3);
 
     await handleMessage(c, ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 1, clock: 4 })));
@@ -636,9 +653,23 @@ describe('handleMessage: awareness', () => {
 
     // One clock past the last one relayed, which every peer holds.
     expect(peer.sent.map(awarenessEntries)).toEqual([
-      [{ clientId: 1, clock: 1, state: { user: { name: 'client 1' } } }],
+      [{ clientId: 1, clock: 1, state: { user: { name: 'client 1', color: '#3366CC' } } }],
       [{ clientId: 1, clock: 2, state: null }],
     ]);
+    leaveCollab(collab.scope, peer as never);
+  });
+
+  it('must not relay an awareness entry larger than the state cap', async () => {
+    const { ctx: c, scope, ws, collab } = session();
+    const peer = mockWebSocket();
+    joinCollab(scope, peer as never);
+
+    const bloated = { user: { name: 'client 1', color: '#3366CC' }, cursor: 'x'.repeat(yjsAwarenessMaxStateBytes) };
+    await handleMessage(c, ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 1, state: bloated })));
+    expect(peer.sent).toEqual([]);
+
+    await handleMessage(c, ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 1, clock: 2 }, { clientId: 2, state: bloated })));
+    expect(peer.sent.map(awarenessClientIds)).toEqual([[1]]);
     leaveCollab(collab.scope, peer as never);
   });
 
@@ -679,6 +710,25 @@ describe('handleMessage: awareness', () => {
     expect(peer.sent).toHaveLength(1);
     leaveCollab(collab.scope, peer as never);
     leaveCollab(collab.scope, closing as never);
+  });
+
+  it('must not relay a presence entry whose colour is not a hex colour', async () => {
+    const { ctx: c, scope, ws, collab } = session();
+    const peer = mockWebSocket();
+    joinCollab(scope, peer as never);
+
+    // Peers' editors write the colour into a style attribute: this one covers their page and loads the attacker's image
+    const cover = '#000;position:fixed;inset:0;z-index:2147483647;background:url(https://evil.example/c4.png) center/cover;x:';
+    const update = awarenessUpdate(
+      { clientId: 1, state: { user: { name: 'Alice (admin)', color: cover }, cursor: null } },
+      { clientId: 2, state: { user: { name: 'x'.repeat(10 * 1024), color: '#3366CC' } } },
+      { clientId: 3 },
+    );
+    await handleMessage(c, ws as never, buildAwarenessMessage(update));
+
+    expect(peer.sent.map(awarenessEntries)).toEqual([[{ clientId: 3, clock: 1, state: { user: { name: 'client 3', color: '#3366CC' } } }]]);
+    expect([...collab.awarenessOwners.keys()]).toEqual([3]);
+    leaveCollab(collab.scope, peer as never);
   });
 });
 

@@ -11,7 +11,6 @@ import type { KeyPair } from '../../lib/scaleway/operator-identity';
 import { buildProviderEnv } from '../../lib/scaleway/provider-env';
 import { stateKeyOf } from '../../lib/scaleway/s3-client';
 import { createSecretManagerClient } from '../../lib/scaleway/scaleway-secret-manager';
-import { secretManagerPath } from '../../lib/scaleway/secret-paths';
 import { inFirstProvisioning } from '../../lib/stack/bootstrap-stack-state';
 import { controlActor, makeControlClient, stateBucket } from '../../lib/stack/control-store';
 import { operatorSecretImports } from '../../lib/stack/operator-secret-imports';
@@ -63,8 +62,6 @@ interface SetupContext {
   /** The key for the state side (backend login, stack lock): the operator key, naming this project. */
   stateKey: KeyPair;
   stackName: string;
-  /** Secret Manager folder for this stack's runtime secrets. */
-  runtimeSecretPath: string;
   /** Child-process env carrying the provider key + passphrase. */
   childEnv: NodeJS.ProcessEnv;
   must: ReturnType<typeof createStepRunner>['must'];
@@ -80,7 +77,7 @@ interface OperatorSecretValues {
 async function warnOnMissingOperatorSecrets(ctx: SetupContext): Promise<void> {
   try {
     const client = createSecretManagerClient({ secretKey: ctx.secretKey, region: ctx.appConfig.s3.region, projectId: ctx.projectId });
-    const existing = await client.listSecretsUnder(ctx.runtimeSecretPath);
+    const existing = await client.listSecrets();
     const versioned = new Set(existing.filter((secret) => (secret.version_count ?? 0) > 0).map((secret) => secret.name));
     const missing = operatorManagedRuntimeSecrets.filter((secret) => secret.required && !versioned.has(secret.secretName));
     if (missing.length > 0) {
@@ -111,7 +108,7 @@ async function provisionBaseInfra(ctx: SetupContext, operatorSecrets: OperatorSe
     }
   }
 
-  // Lock provisioning against concurrent operators and CI; every exit path releases it, and abandoned locks expire or clear with "Unlock stack".
+  // Lock provisioning against concurrent operators and deploys; every exit path releases it, and abandoned locks expire or clear with "Unlock stack".
   const stackLock = await acquireStackLockOrExit({
     appConfig: ctx.appConfig,
     accessKey: ctx.stateKey.accessKey,
@@ -126,13 +123,9 @@ async function provisionBaseInfra(ctx: SetupContext, operatorSecrets: OperatorSe
   if (firstProvisioning) {
     // A teardown keeps the operator-value containers with their values: the first `up` of the same environment adopts them.
     const listed = await createSecretManagerClient({ secretKey: ctx.secretKey, region: ctx.appConfig.s3.region, projectId: ctx.projectId })
-      .listSecretsUnder(ctx.runtimeSecretPath)
+      .listSecrets()
       .catch(() => []);
-    const imports = operatorSecretImports(listed, operatorManagedRuntimeSecrets, {
-      slug: ctx.appConfig.slug,
-      mode: ctx.context.environment,
-      region: ctx.appConfig.s3.region,
-    });
+    const imports = operatorSecretImports(listed, operatorManagedRuntimeSecrets, { region: ctx.appConfig.s3.region });
     if (imports) {
       ctx.childEnv.OPERATOR_SECRET_IMPORTS = imports;
       console.info(
@@ -147,7 +140,7 @@ async function provisionBaseInfra(ctx: SetupContext, operatorSecrets: OperatorSe
     console.info(
       `${pc.dim('  the first provisioning runs on the operator key (the deploy key is read-only on the VPC and the database and cannot create them)')}`,
     );
-    // Fresh provision: no images exist yet, so compute is deferred until CI pushes them (helpers gate on this marker).
+    // Fresh provision: no images exist yet, so compute is deferred until a deploy builds them (helpers gate on this marker).
     const startedAt = new Date().toISOString();
     spawnSync('pulumi', ['config', 'set', 'bootstrap:computeDeferred', startedAt, '--stack', ctx.stackName], {
       cwd: infraDir,
@@ -176,28 +169,24 @@ async function provisionBaseInfra(ctx: SetupContext, operatorSecrets: OperatorSe
       stdio: 'ignore',
     });
   }
-  console.info(`\n${checkMark} Base infrastructure provisioned (no compute yet). The next deploy, local or CI, brings the VMs up.`);
+  console.info(`\n${checkMark} Base infrastructure provisioned (no compute yet). The first deploy brings the VMs up.`);
 
   // The database roles and connection strings, and the generated values, are made outside the state once the `up` made their containers.
   await ensureDatabaseForStack({
     env: ctx.childEnv,
     stack: ctx.stackName,
-    slug: ctx.appConfig.slug,
-    mode: ctx.context.environment,
     region: ctx.appConfig.s3.region,
     projectId: ctx.projectId,
     secretKey: ctx.secretKey,
   });
   const secrets = createSecretManagerClient({ secretKey: ctx.secretKey, region: ctx.appConfig.s3.region, projectId: ctx.projectId });
-  await ensureSecrets({ client: secrets, slug: ctx.appConfig.slug, mode: ctx.context.environment });
+  await ensureSecrets({ client: secrets });
 
   // Seed prompted values only after Pulumi creates the empty secret containers; skipped values stay available through "Manage runtime secrets".
   await seedOperatorSecrets({
     secretKey: ctx.secretKey,
     projectId: ctx.projectId,
     region: ctx.appConfig.s3.region,
-    slug: ctx.appConfig.slug,
-    mode: ctx.context.environment,
     values: { adminEmail: operatorSecrets.adminEmail || undefined, brevoApiKey: operatorSecrets.brevoApiKey || undefined },
   });
 
@@ -249,7 +238,6 @@ export async function runOperatorPart(context: InfraContext, operatorKey: Operat
     secretKey: operatorKey.secretKey,
     stateKey,
     stackName,
-    runtimeSecretPath: secretManagerPath(appConfig.slug, environment),
     childEnv,
     must,
   };
@@ -274,8 +262,6 @@ export async function runOperatorPart(context: InfraContext, operatorKey: Operat
     secretKey: operatorKey.secretKey,
     region: appConfig.s3.region,
     projectId,
-    slug: appConfig.slug,
-    mode: environment,
     passphrase: pulumiPassphrase,
     stackYaml: existsSync(stackFile) ? readFileSync(stackFile, 'utf8') : undefined,
   }).catch((error) =>
@@ -327,11 +313,7 @@ export async function copyDeployKeyForMainJob(
 ): Promise<void> {
   if (!ciKey?.accessKey || !ciKey.secretKey) return;
   const { appConfig } = context;
-  await storeDeployKeyCopy(createSecretManagerClient({ secretKey: operatorKey.secretKey, region: appConfig.s3.region, projectId }), {
-    slug: appConfig.slug,
-    mode: context.environment,
-    key: ciKey,
-  }).then(
+  await storeDeployKeyCopy(createSecretManagerClient({ secretKey: operatorKey.secretKey, region: appConfig.s3.region, projectId }), ciKey).then(
     () => console.info(`  ${checkMark} The deploy key's copy for the main job is in the engine folder.`),
     (error) =>
       console.warn(

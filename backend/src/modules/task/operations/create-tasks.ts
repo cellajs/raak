@@ -4,7 +4,6 @@ import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
-import { countTenantEntityRows } from '#/modules/entities/entities-queries';
 import { findLivePrimaryLabels } from '#/modules/label/label-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
@@ -13,7 +12,7 @@ import { projectRelationFilter } from '#/modules/task/operations/project-relatio
 import { type TaskModel, tasksTable } from '#/modules/task/task-db';
 import { insertTasks } from '#/modules/task/task-queries';
 import { taskContract, type taskCreateManyStxBodySchema } from '#/modules/task/task-schema';
-import { assertTenantQuota } from '#/modules/tenants/tenant-restrictions';
+import { insertWithinTenantQuota } from '#/modules/tenants/quota-lock';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { type PlacementHome, type ResolvedPlacement, resolvePlacement } from '#/permissions/product-placement';
@@ -49,9 +48,6 @@ export async function createTasksOp(
   const replayedIds = new Set(replayed.map((row) => row.id));
   const fresh = input.filter((item) => !replayedIds.has(item.id));
   if (fresh.length === 0) return { data: await hydrate(replayed), rejectedIds: [], created: false };
-
-  const currentTasks = await countTenantEntityRows(ctx, { entityType: 'task' });
-  assertTenantQuota(ctx, 'task', currentTasks, fresh.length);
 
   const placements: ResolvedPlacement<'task'>[] = [];
   const homes: (PlacementHome | null)[] = [];
@@ -109,7 +105,7 @@ export async function createTasksOp(
   });
 
   const createdTasks = await tenantContext(ctx, async (txCtx) => {
-    const rows = await insertTasks(txCtx, { tasks: tasksToInsert });
+    const rows = await insertWithinTenantQuota(txCtx, 'task', () => insertTasks(txCtx, { tasks: tasksToInsert }));
     await dispatchMutation(txCtx, 'task.created', { after: rows });
     return rows;
   });

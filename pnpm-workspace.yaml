@@ -18,7 +18,8 @@ ignoredOptionalDependencies:
 # A version installs a day after its publish (supply-chain guard), so a release that needs a new create-cella waits for it
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
-  - '@cellajs/cli'
+  # Only the CLI version a release needs before its day is up: the entry is removed, or bumped when a release needs another.
+  - '@cellajs/cli@0.6.0'
 overrides:
   # fork: raak's t.$id.tsx route trips a router-plugin emit bug under newer @babel/traverse
   # 7.29.10 makes @tanstack/router-plugin 1.168.42 emit an undefined export for a route whose split

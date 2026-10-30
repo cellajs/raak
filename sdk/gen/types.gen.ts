@@ -141,6 +141,10 @@ export type StreamChange = {
   channelId: string | null;
   stx: StxBase | null;
   /**
+   * Actor whose write the activity records; a tab takes the change as its own echo only when this is its signed-in user
+   */
+  actorId: string | null;
+  /**
    * Last sequence position for a batched change: client should fetch range
    */
   batchUntilSeq: number | null;
@@ -668,6 +672,10 @@ export type Tenant = {
        * Max API points per hour per actor within this tenant (0 = no tenant limit; the global safety ceiling still applies)
        */
       apiPointsPerHour: number;
+      /**
+       * Max invitation mails per day the tenant sends, new, reminded and reopened alike (0 = no cap)
+       */
+      invitationMailsPerDay: number;
     };
     /**
      * Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)
@@ -968,7 +976,7 @@ export type InviteOutcome = {
    */
   email: string;
   /**
-   * `invite`: a new invitation. `remind`: the channel invited it before, and the invitation goes out again. `add`: a member of the organization, added to the channel at once. `member`: already a member, left out.
+   * `invite`: a new invitation. `remind`: the channel invited it before, and the invitation goes out again unless the tenant mailed the address within the day or its decline still holds. `add`: a member of the organization, added to the channel at once. `member`: already a member, left out.
    */
   outcome: 'invite' | 'remind' | 'add' | 'member';
   invitedAt?: string;
@@ -2490,6 +2498,10 @@ export type SendStepUpCodeErrors = {
    */
   403: ForbiddenError;
   /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
    * Rate limit: too many requests.
    */
   429: TooManyRequestsError;
@@ -3751,6 +3763,10 @@ export type GetPublicProjectErrors = {
    * Not found: resource does not exist.
    */
   404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetPublicProjectError = GetPublicProjectErrors[keyof GetPublicProjectErrors];
@@ -3853,6 +3869,10 @@ export type CreatePushSubscriptionErrors = {
    * Payload too large: the request body exceeds its limit.
    */
   413: PayloadTooLargeError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
 };
 
 export type CreatePushSubscriptionError = CreatePushSubscriptionErrors[keyof CreatePushSubscriptionErrors];
@@ -3928,6 +3948,9 @@ export type GetRequestsData = {
   body?: never;
   path?: never;
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'id' | 'email' | 'type' | 'createdAt';
     order?: 'asc' | 'desc';
@@ -4289,6 +4312,10 @@ export type GetPublicTaskErrors = {
    * Not found: resource does not exist.
    */
   404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetPublicTaskError = GetPublicTaskErrors[keyof GetPublicTaskErrors];
@@ -4306,6 +4333,9 @@ export type GetPublicTasksData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
@@ -4327,6 +4357,10 @@ export type GetPublicTasksErrors = {
    * Not found: resource does not exist.
    */
   404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetPublicTasksError = GetPublicTasksErrors[keyof GetPublicTasksErrors];
@@ -4361,6 +4395,10 @@ export type ResolveTaskLinkErrors = {
    * Not found: resource does not exist.
    */
   404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
 };
 
 export type ResolveTaskLinkError = ResolveTaskLinkErrors[keyof ResolveTaskLinkErrors];
@@ -4400,6 +4438,10 @@ export type GetTaskCoverErrors = {
    * Not found: resource does not exist.
    */
   404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetTaskCoverError = GetTaskCoverErrors[keyof GetTaskCoverErrors];
@@ -4429,6 +4471,10 @@ export type RedirectToTaskErrors = {
    * Not found: resource does not exist.
    */
   404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
 };
 
 export type RedirectToTaskError = RedirectToTaskErrors[keyof RedirectToTaskErrors];
@@ -4444,6 +4490,9 @@ export type GetTenantsData = {
   body?: never;
   path?: never;
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'createdAt' | 'name';
     order?: 'asc' | 'desc';
@@ -4505,6 +4554,10 @@ export type SelfCreateTenantErrors = {
    */
   401: UnauthorizedError;
   /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
    * Payload too large: the request body exceeds its limit.
    */
   413: PayloadTooLargeError;
@@ -4553,7 +4606,14 @@ export type UpdateTenantData = {
       };
       allowUnregisteredClients?: boolean;
       rateLimits?: {
+        /**
+         * Max API points per hour per actor within this tenant (0 = no tenant limit; the global safety ceiling still applies)
+         */
         apiPointsPerHour?: number;
+        /**
+         * Max invitation mails per day the tenant sends, new, reminded and reopened alike (0 = no cap)
+         */
+        invitationMailsPerDay?: number;
       };
     };
   };
@@ -4606,6 +4666,9 @@ export type GetUsersData = {
   body?: never;
   path?: never;
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'id' | 'name' | 'email' | 'role' | 'createdAt' | 'lastSeenAt';
     order?: 'asc' | 'desc';
@@ -4904,6 +4967,9 @@ export type GetOrganizationsData = {
   body?: never;
   path?: never;
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
     order?: 'asc' | 'desc';
@@ -5339,6 +5405,9 @@ export type GetProjectsData = {
   body?: never;
   path?: never;
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
     order?: 'asc' | 'desc';
@@ -5928,6 +5997,9 @@ export type GetWorkspacesData = {
   body?: never;
   path?: never;
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
     order?: 'asc' | 'desc';
@@ -6134,6 +6206,9 @@ export type GetAttachmentsData = {
     organizationId: string;
   };
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'name' | 'createdAt' | 'contentType';
     order?: 'asc' | 'desc';
@@ -6182,7 +6257,17 @@ export type GetAttachmentsResponses = {
    * Attachments
    */
   200: {
-    items: Array<Attachment>;
+    items: Array<
+      | Attachment
+      | {
+          id: string;
+          createdAt: string;
+          seq: number;
+          projectId: string;
+          organizationId: string;
+          deletedAt: string;
+        }
+    >;
     total: number;
   };
 };
@@ -6586,6 +6671,9 @@ export type GetLabelsData = {
     organizationId: string;
   };
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'name';
     order?: 'asc' | 'desc';
@@ -6636,7 +6724,17 @@ export type GetLabelsResponses = {
    * Label list
    */
   200: {
-    items: Array<Label>;
+    items: Array<
+      | Label
+      | {
+          id: string;
+          createdAt: string;
+          seq: number;
+          projectId: string;
+          organizationId: string;
+          deletedAt: string;
+        }
+    >;
     total: number;
   };
 };
@@ -6868,7 +6966,7 @@ export type GetMcpProtectedResourceMetadataResponses = {
 export type GetMcpProtectedResourceMetadataResponse = GetMcpProtectedResourceMetadataResponses[keyof GetMcpProtectedResourceMetadataResponses];
 
 export type HandleMcpData = {
-  body: unknown;
+  body: Array<unknown> | unknown | null;
   path: {
     tenantId: string;
     organizationId: string;
@@ -7246,6 +7344,9 @@ export type GetMembersData = {
     organizationId: string;
   };
   query: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'id' | 'name' | 'email' | 'role' | 'createdAt' | 'lastSeenAt' | 'lastPostedAt';
     order?: 'asc' | 'desc';
@@ -7334,6 +7435,9 @@ export type GetPendingMembershipsData = {
     organizationId: string;
   };
   query: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'createdAt';
     order?: 'asc' | 'desc';
@@ -7547,6 +7651,9 @@ export type GetServiceAccountsData = {
     organizationId: string;
   };
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     offset?: number;
     limit?: number;
@@ -7954,6 +8061,9 @@ export type GetTasksData = {
     organizationId: string;
   };
   query?: {
+    /**
+     * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
+     */
     q?: string;
     sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
@@ -8005,7 +8115,17 @@ export type GetTasksResponses = {
    * Tasks
    */
   200: {
-    items: Array<Task>;
+    items: Array<
+      | Task
+      | {
+          id: string;
+          createdAt: string;
+          seq: number;
+          projectId: string;
+          organizationId: string;
+          deletedAt: string;
+        }
+    >;
     total: number;
   };
 };

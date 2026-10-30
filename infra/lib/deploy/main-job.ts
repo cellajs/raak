@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ENCRYPTION_SALT_SECRET_NAME, PASSPHRASE_SECRET_NAME } from '../../tasks/passphrase-custody';
-import { deployFolderPath, engineSecretPath } from '../scaleway/secret-paths';
+import { DEPLOY_FOLDER, ENGINE_FOLDER } from '../scaleway/secret-paths';
 import { infraDir } from '../utils/paths';
 import { defaultRule } from './target';
 
@@ -15,19 +15,18 @@ import { defaultRule } from './target';
 const DEPLOY_KEY_SECRET_NAME = 'deploy-key';
 
 /** The folder of the secrets the definition references: the engine's, which only the operator reads. */
-function mainJobSecretFolder(slug: string, mode: string): string {
-  return engineSecretPath(slug, mode).replace(/\/$/, '');
-}
+const MAIN_JOB_SECRET_FOLDER = ENGINE_FOLDER.replace(/\/$/, '');
 
-/** How a run ends, as its exit code. The runner starts a target once; a blocked one is started again by the action that clears the block (D21). */
+/** How a run ends, as its exit code. The runner starts a target once; a blocked one waits for the operator (D21). */
 export const MAIN_JOB_EXIT = {
   /** The target is live. */
   deployed: 0,
   /** The deploy failed; the running release is untouched or rolled back. A failed target is not started again by itself. */
   failed: 1,
   /**
-   * Something only the operator makes is owed, and the run's record names it: a privileged change, which the apply makes, or a required secret,
-   * which Manage runtime secrets stores. Either action starts the target again at its end.
+   * Something only the operator makes is owed, and the run's record names it: identities, which Update identities writes, a privileged change,
+   * which the apply makes, or a required secret, which Manage runtime secrets stores. The apply and Manage runtime secrets start the target
+   * again at their end; after Update identities, Start deploy does.
    */
   blocked: 2,
 } as const;
@@ -148,7 +147,6 @@ export interface MainJobDeclaration {
 
 /** The declared definition of an environment's main job, from its names and the checkout's repository and `engines.node`. */
 export function declaredMainJob(opts: {
-  slug: string;
   mode: string;
   projectId: string;
   organizationId: string;
@@ -163,7 +161,7 @@ export function declaredMainJob(opts: {
       MODE: opts.mode,
       REPO: opts.repository,
       REGION: opts.region,
-      DEPLOY_FOLDER: deployFolderPath(opts.slug, opts.mode).replace(/\/$/, ''),
+      DEPLOY_FOLDER: DEPLOY_FOLDER.replace(/\/$/, ''),
       SCW_DEFAULT_PROJECT_ID: opts.projectId,
       SCW_DEFAULT_ORGANIZATION_ID: opts.organizationId,
       ...(defaultRule(opts.mode)?.kind === 'releases' ? { RELEASES_ONLY: '1' } : {}),
@@ -174,7 +172,7 @@ export function declaredMainJob(opts: {
       // A stack set up before the salt was kept beside the passphrase has none yet: its runs read the target's stack file.
       PULUMI_ENCRYPTION_SALT: { name: ENCRYPTION_SALT_SECRET_NAME, optional: true },
     },
-    secretFolder: mainJobSecretFolder(opts.slug, opts.mode),
+    secretFolder: MAIN_JOB_SECRET_FOLDER,
   };
 }
 
@@ -188,18 +186,15 @@ interface DeployKeySecrets {
  * Store the deploy key's copy the main job's definition references, in the engine folder, on the operator key: done when a setup or a
  * rotation of keys makes the key, so a run always starts with the key that is valid. The earlier version is disabled.
  */
-export async function storeDeployKeyCopy(
-  secrets: DeployKeySecrets,
-  opts: { slug: string; mode: string; key: { accessKey: string; secretKey: string } },
-): Promise<void> {
+export async function storeDeployKeyCopy(secrets: DeployKeySecrets, key: { accessKey: string; secretKey: string }): Promise<void> {
   const container = await secrets.ensureSecret({
     name: DEPLOY_KEY_SECRET_NAME,
-    path: mainJobSecretFolder(opts.slug, opts.mode),
+    path: MAIN_JOB_SECRET_FOLDER,
     description: "The deploy key, for the main job's runs (referenced by its definition)",
   });
   await secrets.putSecretValue({
     secretId: container.id,
-    value: JSON.stringify({ accessKey: opts.key.accessKey, secretKey: opts.key.secretKey }),
+    value: JSON.stringify({ accessKey: key.accessKey, secretKey: key.secretKey }),
     description: 'Written when the deploy key was made',
     disablePrevious: true,
   });

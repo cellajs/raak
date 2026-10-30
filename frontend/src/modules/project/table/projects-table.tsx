@@ -6,6 +6,7 @@ import { DataTable, rowKeyById } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { useRowSelection } from '~/modules/common/data-table/use-row-selection';
+import { SearchScope } from '~/modules/common/match-highlight/match-scope';
 import type { EnrichedOrganization } from '~/modules/organization/types';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { ProjectsTableBar } from '~/modules/project/table/projects-bar';
@@ -43,20 +44,22 @@ export function ProjectsTable({ organization }: ProjectsTableProps) {
         setColumns={setColumns}
         clearSelection={clearSelection}
       />
-      <DataTable<EnrichedProject>
-        {...{
-          ...list,
-          rowKeyGetter: rowKeyById,
-          columns,
-          enableVirtualization: true,
-          isFiltered: !!q,
-          selectedRows: selectedRowIds,
-          onSelectedRowsChange,
-          sortColumns,
-          onSortColumnsChange,
-          NoRowsComponent: <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:project_other') }} />,
-        }}
-      />
+      <SearchScope q={q}>
+        <DataTable<EnrichedProject>
+          {...{
+            ...list,
+            rowKeyGetter: rowKeyById,
+            columns,
+            enableVirtualization: true,
+            isFiltered: !!q,
+            selectedRows: selectedRowIds,
+            onSelectedRowsChange,
+            sortColumns,
+            onSortColumnsChange,
+            NoRowsComponent: <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:project_other') }} />,
+          }}
+        />
+      </SearchScope>
     </>
   );
 }

@@ -39,7 +39,7 @@ export const footerSections: FooterSection[] = [
   {
     title: 'c:documentation',
     hideOnMobile: true,
-    links: [{ title: 'c:api_docs', href: '/docs' }],
+    links: [{ title: 'c:docs', href: '/docs' }],
   },
   {
     title: 'c:connect',

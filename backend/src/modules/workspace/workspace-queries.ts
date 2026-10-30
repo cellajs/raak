@@ -12,7 +12,7 @@ import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { type InsertWorkspaceModel, workspacesTable } from '#/modules/workspace/workspace-db';
 import { getOrderColumns } from '#/utils/order-column';
-import { textSearchFilter } from '#/utils/sql';
+import { searchFilter } from '#/utils/sql';
 
 interface InsertWorkspacesOpts {
   workspaces: InsertWorkspaceModel[];
@@ -112,13 +112,14 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 
   // An archived tenant's workspaces list for system admins only, as its organization does
+  const search = searchFilter([workspacesTable.name], q);
   const workspaceWhere: SQL[] = [
     ...(isSystemAdmin
       ? []
       : [
           sql`NOT EXISTS (SELECT 1 FROM ${tenantsTable} WHERE ${tenantsTable.id} = ${workspacesTable.tenantId} AND ${tenantsTable.status} = 'archived')`,
         ]),
-    ...(q ? [textSearchFilter(workspacesTable.name, q)] : []),
+    ...(search ? [search] : []),
     ...(organizationId ? [eq(workspacesTable.organizationId, organizationId)] : []),
   ];
 

@@ -11,6 +11,7 @@ import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { DataTable, rowKeyById } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
+import { SearchScope } from '~/modules/common/match-highlight/match-scope';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
@@ -19,7 +20,6 @@ import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/q
 import { searchHighlightRowClass } from '~/modules/task/search-highlight';
 import { useColumns } from '~/modules/task/table/tasks-columns';
 import { TasksTableBar } from '~/modules/task/table/tasks-table-bar';
-import { TaskSearchScope } from '~/modules/task/task-search-scope';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 import { useListQueryTotal } from '~/query/basic/use-list-query-total';
@@ -114,7 +114,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const noRowsComponent = <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:task_other') }} />;
 
   return (
-    <TaskSearchScope>
+    <SearchScope q={q}>
       <div className="flex h-full flex-col gap-4">
         <TasksTableBar
           total={total}
@@ -156,6 +156,6 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
           }}
         />
       </div>
-    </TaskSearchScope>
+    </SearchScope>
   );
 }

@@ -13,7 +13,7 @@ import { POSTGRES_ROLE_NAMES } from '../../lib/scaleway/db-privileges';
 import { resolveOperatorIdentity } from '../../lib/scaleway/operator-identity';
 import { createRdbClient, type RdbEndpoint } from '../../lib/scaleway/scaleway-rdb';
 import { createSecretManagerClient } from '../../lib/scaleway/scaleway-secret-manager';
-import { engineSecretPath } from '../../lib/scaleway/secret-paths';
+import { ENGINE_FOLDER } from '../../lib/scaleway/secret-paths';
 import { pulumiConfigRm, pulumiConfigSet } from '../../lib/stack/pulumi-up';
 import { readStoreOutputs } from '../../lib/stack/store-outputs';
 import { checkMark, crossMark, pc, warningMark } from '../../lib/utils/cli-output';
@@ -78,7 +78,7 @@ export async function readPublicDsn(
   const databaseName = readPrimaryStoreOutput(env, stack, 'databaseName');
   if (!host || !port || !databaseName) return '';
   const secrets = createSecretManagerClient({ secretKey: convergeSecretKey(env), region: context.appConfig.s3.region, projectId: context.projectId });
-  const kept = await secrets.getSecretByName(rolePasswordSecretName('admin'), engineSecretPath(context.appConfig.slug, context.environment));
+  const kept = await secrets.getSecretByName(rolePasswordSecretName('admin'), ENGINE_FOLDER);
   if (!kept) return '';
   return formatPostgresUrl(POSTGRES_ROLE_NAMES.admin, await secrets.accessLatestValue(kept.id), host, port, databaseName);
 }
@@ -118,6 +118,15 @@ async function readDbExposure(context: InfraContext, secretKey: string): Promise
   const { client, instanceId } = await findDbInstance(context, secretKey);
   const [instance, rules] = await Promise.all([client.getInstance(instanceId), client.listAclRules(instanceId)]);
   return { endpoints: publicEndpoints(instance), aclRules: rules.length };
+}
+
+/** The live public endpoints as `host:port`: none without a managed PostgreSQL store or before its instance exists. */
+export async function openDbEndpoints(context: InfraContext, secretKey: string): Promise<string[]> {
+  if (!Object.values(appStores).some((store) => store.kind === 'postgres-managed')) return [];
+  const { naming, region } = deriveInfra(context.appConfig);
+  const client = createRdbClient({ secretKey, region });
+  const instance = await client.findInstance(naming.resource('postgres'));
+  return instance ? publicEndpoints(await client.getInstance(instance.id)).map(endpointAddress) : [];
 }
 
 /** The live public endpoints, read with the observer key within `budgetMs`. Undefined without that key, without an answer in time and on any error, so the menu falls back to the config. */

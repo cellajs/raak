@@ -10,7 +10,7 @@ import {
   labelSchema,
   labelUpdateStxBodySchema,
 } from '#/modules/label/label-schema';
-import { batchResponseSchema, idInTenantOrgParamSchema, idsWithStxBodySchema, paginationSchema, tenantOrgParamSchema } from '#/schemas';
+import { batchResponseSchema, idInTenantOrgParamSchema, idsWithStxBodySchema, productListResponseSchema, tenantOrgParamSchema } from '#/schemas';
 
 const labelRoutes = createXRoutes(['labels', 'app', 'product'], {
   createLabels: xRoute({
@@ -40,7 +40,7 @@ const labelRoutes = createXRoutes(['labels', 'app', 'product'], {
     summary: 'Get list of labels',
     description: 'Returns a list of labels for a given project or workspace.',
     request: { params: tenantOrgParamSchema, query: labelListQuerySchema },
-    responses: { 200: json('Label list', paginationSchema(labelSchema), mockPaginatedLabelsResponse()) },
+    responses: { 200: json('Label list', productListResponseSchema('label', labelSchema), mockPaginatedLabelsResponse()) },
   }),
   getLabel: xRoute({
     method: 'get',

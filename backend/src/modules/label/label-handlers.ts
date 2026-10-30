@@ -34,8 +34,8 @@ app.openapi(labelRoutes.updateLabel, async (ctx) => {
 });
 
 app.openapi(labelRoutes.deleteLabels, async (ctx) => {
-  const { ids } = ctx.req.valid('json');
-  const result = await deleteLabelsOp(ctx, ids);
+  const { ids, stx } = ctx.req.valid('json');
+  const result = await deleteLabelsOp(ctx, ids, stx);
   return ctx.json(result, 200);
 });
 

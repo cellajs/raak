@@ -6,15 +6,15 @@ import { listTasks } from '#/modules/task/operations/list-tasks';
 import type { taskListQuerySchema } from '#/modules/task/task-schema';
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
-import { seqRangeOf } from '#/utils/seq-range';
+import { projectTombstones, seqRangeOf } from '#/utils/seq-range';
 
 type GetTasksInput = z.infer<typeof taskListQuerySchema>;
 
 /**
  * A page of the tasks the caller may read in the organization; `projectId` or `workspaceId` narrows it. A range read
- * (`afterSeq`, `untilSeq`) includes deleted rows.
+ * (`afterSeq`, `untilSeq`) includes deleted rows, as tombstones.
  */
-export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise<Awaited<ReturnType<typeof listTasks>>> {
+export async function getTasksOp(ctx: OrgContext, input: GetTasksInput) {
   const { projectId, workspaceId, ...queryInfo } = input;
   const range = seqRangeOf(input);
   const organizationId = ctx.var.organization.id;
@@ -29,5 +29,6 @@ export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise
 
   const read = range ? tenantReadIncludingDeleted : tenantRead;
 
-  return read(ctx, (readCtx) => listTasks(readCtx, scopedProjectIds, queryInfo, { range }));
+  const { items, total } = await read(ctx, (readCtx) => listTasks(readCtx, scopedProjectIds, queryInfo, { range }));
+  return { items: projectTombstones('task', items), total };
 }

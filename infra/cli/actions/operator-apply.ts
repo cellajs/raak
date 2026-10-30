@@ -42,7 +42,7 @@ export interface OperatorApplyOptions {
    * question for as long as the state it was computed from stands; a state that changed since is planned and confirmed again under the lock.
    */
   reviewed?: ReviewedPlan;
-  /** After a completed `up`, prove the live IAM grants and database privileges match what the program declares; the outcome lands in `verified`. */
+  /** After a completed `up`, prove the live database privileges match what the program declares; the outcome lands in `verified`. */
   verifyAfter?: boolean;
   /** Capture the engine and provider log of the `up` under infra/.debug/, for an update Pulumi reports but the provider never sent. */
   debugProvider?: boolean;
@@ -53,10 +53,9 @@ export interface OperatorApplyOptions {
 export interface OperatorApplyResult {
   env: NodeJS.ProcessEnv;
   stack: string;
-  /** True when the Owner API key was typed at the prompt, so a revoke reminder is due once the run's output is complete. */
   /** False when the operator declined the retry loop before `up` converged. */
   completed: boolean;
-  /** Set only with `verifyAfter`: false when the live grants or privileges still differ from the program after a completed `up`. */
+  /** Set only with `verifyAfter`: false when the live database privileges still differ from the program after a completed `up`. */
   verified?: boolean;
 }
 
@@ -225,62 +224,47 @@ export async function runOperatorApply(context: InfraContext, opts: OperatorAppl
     // The `up` made each consumer's copy of a secret; operator values still in a shared folder move into them (ledger L3).
     if (completed) {
       const client = createSecretManagerClient({ secretKey: operator.secretKey, region: appConfig.s3.region, projectId });
-      await copySharedSecrets({ client, slug: appConfig.slug, mode: context.environment, log: (message) => console.info(pc.dim(message)) }).catch(
-        (error) =>
-          console.warn(
-            `${warningMark} Could not move the shared operator secrets into their copies (${errorMessage(error)}); the next apply tries again.`,
-          ),
+      await copySharedSecrets({ client, log: (message) => console.info(pc.dim(message)) }).catch((error) =>
+        console.warn(
+          `${warningMark} Could not move the shared operator secrets into their copies (${errorMessage(error)}); the next apply tries again.`,
+        ),
       );
       // The database roles and connection strings, then the generated and derived values: made outside the state, after the `up` made any
       // new secret's containers.
       await ensureDatabaseForStack({
         env,
         stack,
-        slug: appConfig.slug,
-        mode: context.environment,
         region: appConfig.s3.region,
         projectId,
         secretKey: operator.secretKey,
         log: (message) => console.info(pc.dim(message)),
       }).catch((error) => console.warn(`${warningMark} Could not make the database roles and connection strings (${errorMessage(error)}).`));
-      await ensureSecrets({ client, slug: appConfig.slug, mode: context.environment, log: (message) => console.info(pc.dim(message)) }).catch(
-        (error) => console.warn(`${warningMark} Could not make the generated secrets (${errorMessage(error)}); run the apply again.`),
+      await ensureSecrets({ client, log: (message) => console.info(pc.dim(message)) }).catch((error) =>
+        console.warn(`${warningMark} Could not make the generated secrets (${errorMessage(error)}); run the apply again.`),
       );
       // The deploy reads values in the deploy folder only: the telemetry key it exports with is copied there.
-      await syncDeployTelemetryKey({ client, slug: appConfig.slug, mode: context.environment }).catch((error) =>
+      await syncDeployTelemetryKey({ client }).catch((error) =>
         console.warn(`${warningMark} Could not copy the telemetry key into the deploy folder (${errorMessage(error)}).`),
       );
     }
 
     if (completed && opts.verifyAfter) {
-      console.info(pc.dim('\n→ Verifying live IAM grants and database privileges against the program…'));
-      const result = await verifyAfterApply({
-        appConfig,
-        projectId,
-        organizationId,
-        secretKey: operator.secretKey,
-        log: (msg) => console.info(pc.dim(msg)),
-      });
+      console.info(pc.dim('\n→ Verifying live database privileges against the program…'));
+      const result = await verifyAfterApply({ appConfig, secretKey: operator.secretKey, log: (msg) => console.info(pc.dim(msg)) });
       verified = result.ok;
       if (result.errors.length > 0) {
         console.error(
           `\n${warningMark} could not verify the live infrastructure after the up:\n${result.errors.map((error) => `  ✗ ${error}`).join('\n')}`,
         );
-        console.error(
-          pc.dim(`  Nothing is known to be wrong: run \`${actionCommand('preview')}\`, or let the next deploy's Verify identity grants step tell.`),
-        );
+        console.error(pc.dim(`  Nothing is known to be wrong: run \`${actionCommand('preview')}\`.`));
       }
       if (result.problems.length > 0) {
         console.error(
           `\n${warningMark} pulumi reported success, but the live infrastructure still differs from the program:\n${result.problems.map((problem) => `  ✗ ${problem}`).join('\n')}`,
         );
-        console.error(
-          pc.dim(
-            `  A machine policy differs from the declared one: \`${actionCommand('identity')}\` writes it with your Owner API key. A database privilege that differs: re-run with --debug-provider to capture the API calls.`,
-          ),
-        );
+        console.error(pc.dim('  Re-run with --debug-provider to capture the API calls.'));
       } else if (result.errors.length === 0) {
-        console.info(`${checkMark} live grants and privileges match the program`);
+        console.info(`${checkMark} live privileges match the program`);
       }
     }
     if (completed && opts.afterUp) {

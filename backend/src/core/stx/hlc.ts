@@ -1,6 +1,22 @@
 import { hashSourceId } from 'shared/utils/hash-source-id';
 
-const hlcPattern = /^(\d+):(\d{4,}):([0-9a-z]{5})$/;
+/**
+ * `millis:counter:sourceHash`: millis of up to 16 digits, a counter of 4 to 10 and a 5-character hash. `BigInt` parses
+ * the digits, so the bound caps what a request stamp costs and what every later server stamp prints.
+ */
+const hlcPattern = /^(\d{1,16}):(\d{4,10}):([0-9a-z]{5})$/;
+
+/** The longest string hlcPattern takes. */
+export const hlcMaxLength = 33;
+
+/** The largest counter hlcPattern takes: a server stamp at it moves to the next millisecond. */
+const maxCounter = 9_999_999_999n;
+
+/**
+ * How far ahead of the server's wall clock a stamp's millis may lie and still count. A stamp beyond it moves no clock and
+ * loses to the next write of its field, so one request cannot set the order of every later write on the process.
+ */
+export const maxClockSkewMs = 60_000;
 
 interface ParsedHLC {
   timestamp: bigint;
@@ -24,6 +40,14 @@ export function isValidHLC(value: string): boolean {
   return parseHLC(value) !== null;
 }
 
+const beyondClockSkew = ({ timestamp }: ParsedHLC) => timestamp > BigInt(Date.now() + maxClockSkewMs);
+
+/** Whether `value` is an HLC whose millis lie more than `maxClockSkewMs` ahead of the wall clock. */
+export function isBeyondClockSkew(value: string): boolean {
+  const parsed = parseHLC(value);
+  return parsed !== null && beyondClockSkew(parsed);
+}
+
 function requireHLC(value: string): ParsedHLC {
   const parsed = parseHLC(value);
   if (!parsed) throw new TypeError(`Invalid HLC timestamp: "${value}"`);
@@ -36,6 +60,9 @@ function createHLC(now: number, sourceId: string): string {
   const timestamp = BigInt(now);
   if (timestamp > lastTimestamp) {
     lastTimestamp = timestamp;
+    lastCounter = 0n;
+  } else if (lastCounter >= maxCounter) {
+    lastTimestamp++;
     lastCounter = 0n;
   } else {
     lastCounter++;
@@ -55,9 +82,15 @@ export function compareHLC(a: string, b: string): -1 | 0 | 1 {
   return 0;
 }
 
-/** Keeps server-initiated timestamps causally later than the client writes that trigger them. */
+/**
+ * Keeps server-initiated timestamps causally later than the client writes that trigger them. A stamp outside the HLC
+ * form or beyond `maxClockSkewMs` moves nothing: a row may still store one, and the clock it set would reach every later
+ * write on the process.
+ */
 export function advanceClock(receivedHLC: string): void {
-  const { timestamp, counter } = requireHLC(receivedHLC);
+  const parsed = parseHLC(receivedHLC);
+  if (!parsed || beyondClockSkew(parsed)) return;
+  const { timestamp, counter } = parsed;
   if (timestamp > lastTimestamp) {
     lastTimestamp = timestamp;
     lastCounter = counter;

@@ -12,7 +12,6 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import rehypeSlug from 'rehype-slug';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
-import remarkMdxFrontmatter from 'remark-mdx-frontmatter';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, type Plugin, type UserConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
@@ -126,7 +125,8 @@ const repoDocRoutes = {
   'infra/README.md': '/docs/page/guides/deployment/infra-cli',
 } as const;
 
-const repoLinks = { repoRoot: path.resolve(import.meta.dirname, '..'), repoUrl: appConfig.company.githubUrl, docRoutes: repoDocRoutes };
+const repoRoot = path.resolve(import.meta.dirname, '..');
+const repoLinks = { repoRoot, repoUrl: appConfig.company.githubUrl, docRoutes: repoDocRoutes };
 
 // Tunnel mode: frontendUrl is the public ngrok origin (no port); Vite still listens locally.
 const devPort = Number(frontendUrl.port) || appConfig.devPorts.frontend;
@@ -147,7 +147,8 @@ const gitSha = (() => {
 const viteConfig = {
   logLevel: isDev || process.env.DEBUG_MODE ? 'info' : 'warn',
   server: {
-    host: '0.0.0.0',
+    // Loopback unless DEV_HOST names an address: `DEV_HOST=0.0.0.0` opens the dev server to other devices.
+    host: process.env.DEV_HOST || '127.0.0.1',
     port: devPort,
     strictPort: true,
     // Same-origin development: the dev server is the app origin and proxies the
@@ -174,6 +175,9 @@ const viteConfig = {
     // Host header and point HMR websockets back at the public origin.
     ...(isTunneled ? { allowedHosts: [frontendUrl.hostname], hmr: { protocol: 'wss', host: frontendUrl.hostname, clientPort: 443 } } : {}),
     watch: { ignored: ['**/backend/**', '**/sdk/**'] },
+    // The folders the app reads from outside this package; a file it imports, such as a repo doc, is served too. Vite's
+    // default, the workspace root, serves any file in the checkout by path to whoever reaches the server, a tunnel included.
+    fs: { allow: [import.meta.dirname, ...['shared', 'sdk', 'locales', 'json', 'node_modules'].map((dir) => path.join(repoRoot, dir))] },
   },
   preview: { port: devPort },
   build: {
@@ -362,7 +366,7 @@ const viteConfig = {
   plugins: [
     // Generates src/routes/routeTree.gen.ts from file-based routes. Must run before react().
     tanstackRouter(routerOptions),
-    // Compile content and repository Markdown to React plus frontmatter before the React plugin.
+    // Compile content and repository Markdown to React before the React plugin.
     // Thin MDX pages can therefore import canonical repository docs.
     {
       enforce: 'pre' as const,
@@ -377,7 +381,6 @@ const viteConfig = {
         providerImportSource: '@mdx-js/react',
         remarkPlugins: [
           remarkFrontmatter,
-          remarkMdxFrontmatter,
           remarkGfm,
           remarkStripRepoDocH1,
           // Autolink inline code that names a real repo file to its GitHub blob URL.
@@ -411,7 +414,8 @@ const viteConfig = {
     // `*.svg?react` imports become React components (jsx only, no svgo pass). Must run before react(). Cella has no such
     // import; apps do (projectcampus renders its marketing art this way), so the plugin stays.
     svgr({ include: '**/*.svg?react' }),
-    react(),
+    // Docs bodies are Fast Refresh boundaries: a body edit updates in place and stops at its own module.
+    react({ include: /\.(mdx?|[jt]sx?)$/ }),
     // A regex: the plugin matches `include` against absolute module ids, which a relative glob with braces never matches.
     babel({ presets: [reactCompilerPreset({ logger: reactCompilerLogger })], include: [/[\\/]frontend[\\/]src[\\/].*\.[jt]sx?$/] }),
     reactCompilerGuard(),
@@ -468,7 +472,7 @@ const viteConfig = {
     __BACKEND_URL__: JSON.stringify(appConfig.backendUrl),
     // Release identifier for observability (lib/maple.ts serviceVersion)
     __APP_VERSION__: JSON.stringify(gitSha),
-    // Root release version, shown on the docs landing page
+    // Root release version, shown on the docs landing page and in the info panel
     __PKG_VERSION__: JSON.stringify(rootPkg.version),
     // Devtools gate. A literal, so rolldown folds the branch away and the react-scan
     // chunk leaves the production graph; `appConfig.mode` is a property read it cannot fold.

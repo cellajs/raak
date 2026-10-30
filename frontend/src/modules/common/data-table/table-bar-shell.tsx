@@ -1,4 +1,5 @@
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { TKey } from '~/lib/i18n-locales';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { TableFilterBar } from '~/modules/common/data-table/table-filter-bar';
@@ -52,20 +53,22 @@ interface TableBarShellProps<TRow extends object> extends ReturnType<typeof useT
   actions?: ReactNode;
   /** Rendered after the count. */
   countExtra?: ReactNode;
-  /** Filter controls next to the search. */
+  /** Filter controls opening the bar, before the actions. */
   filters?: ReactNode;
   sort?: ViewMenuSort;
   export?: ViewMenuExport<TRow>;
-  /** Controls of the page's own, such as a view toggle, before the view menu. */
+  /** Controls of the page's own, such as a view toggle, after the view menu. */
   controls?: ReactNode;
   /** Shows the focus view toggle from `lg` up. Defaults to true. */
   focusView?: boolean;
+  /** Slides the closed bar back in on a scroll up, for a long page. */
+  sticky?: boolean;
   selection?: { count: number; onClear: () => void; children: ReactNode };
   /** Rendered below the bar. */
   after?: ReactNode;
 }
 
-/** The bar above an entity table: actions and count, search and filters, view controls and focus view. */
+/** The bar above an entity table: filters, actions and count, search, view controls and focus view. */
 export function TableBarShell<TRow extends object>({
   isFiltered,
   onSearch,
@@ -84,15 +87,20 @@ export function TableBarShell<TRow extends object>({
   export: exportOptions,
   controls,
   focusView = true,
+  sticky,
   selection,
   after,
 }: TableBarShellProps<TRow>) {
+  const { t } = useTranslation();
+  const searchLabel = t('c:placeholder.search_resource', { resource: t(label, { count: 2 }) });
+
   return (
     <>
       <TableFilterBar
         searchVars={searchVars}
         isFiltered={isFiltered}
         onResetFilters={onResetFilters}
+        sticky={sticky}
         // Beside a view toggle a phone has room for the actions' icons only
         actions={
           !isFiltered &&
@@ -110,12 +118,15 @@ export function TableBarShell<TRow extends object>({
             {countExtra}
           </TableCount>
         }
-        search={<TableSearch name={searchName} value={searchVars.q} onSearch={onSearch} allowOfflineSearch={allowOfflineSearch} />}
+        search={
+          <TableSearch name={searchName} label={searchLabel} value={searchVars.q} onSearch={onSearch} allowOfflineSearch={allowOfflineSearch} />
+        }
+        searchLabel={searchLabel}
         filters={filters}
         controls={
           <>
-            {controls}
             <ViewMenu sort={sort} columns={columns} setColumns={setColumns} export={exportOptions} />
+            {controls}
             {focusView && <FocusView iconOnly />}
           </>
         }

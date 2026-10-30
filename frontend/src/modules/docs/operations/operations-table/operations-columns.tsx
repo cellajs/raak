@@ -5,6 +5,8 @@ import type { GenExtensionDefinition, GenOperationSummary } from 'sdk/docs-types
 import { cellLinkTextClass } from '~/modules/common/data-table/columns';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
+import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
+import { extensionLabel } from '~/modules/docs/helpers/extension-label';
 import { upperFirst } from '~/modules/docs/helpers/upper-first';
 import { MethodLabel } from '~/modules/docs/operations/method-label';
 import { openOperationSheet } from '~/modules/docs/operations/operation-detail';
@@ -54,7 +56,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
 
   const extensionColumns: ColumnOrColumnGroup<GenOperationSummary>[] = extensions.map((ext) => ({
     key: ext.id,
-    name: upperFirst(ext.key.replace('x-', '').replace(/-/g, ' ')),
+    name: extensionLabel(ext),
     minBreakpoint: 'md',
     resizable: true,
     width: 150,
@@ -130,12 +132,13 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
           size="cell"
           tabIndex={tabIndex}
           title={row.path}
-          className="min-w-0 font-mono text-xs"
+          className="min-w-0 font-mono text-foreground text-xs"
           onClick={(event) => openOperationSheet(row, event.currentTarget)}
         >
           {/* The underline sits on the path alone: on the button it would reach the badge too */}
           <span dir="rtl" className={cn(cellLinkTextClass, 'min-w-0 flex-1 text-left')}>
-            &lrm;{row.path}
+            &lrm;
+            <HighlightText text={row.path} />
           </span>
           <SwitchedOffBadge enabledBy={row.enabledBy} />
         </Button>
@@ -174,7 +177,11 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
       resizable: true,
       width: 200,
       minWidth: 120,
-      renderCell: ({ row }) => <code className="truncate text-muted-foreground text-xs">{row.id}</code>,
+      renderCell: ({ row }) => (
+        <code className="truncate text-muted-foreground text-xs">
+          <HighlightText text={row.id} />
+        </code>
+      ),
     },
     {
       key: 'summary',
@@ -183,7 +190,11 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
       sortable: true,
       resizable: true,
       minWidth: 200,
-      renderCell: ({ row }) => <span className="truncate text-sm">{row.summary || row.id}</span>,
+      renderCell: ({ row }) => (
+        <span className="truncate text-sm">
+          <HighlightText text={row.summary || row.id} />
+        </span>
+      ),
     },
     ...extensionColumns,
     mcpColumn,

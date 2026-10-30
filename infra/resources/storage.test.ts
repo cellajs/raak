@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { engineConfig } from '../config/engine-config';
 import { appPrincipalNames, principalNames } from '../lib/scaleway/principals';
+import { principalServices } from '../lib/services';
 import { installPulumiMocks, type MockHarness } from '../tests/helpers/pulumi-mock';
 
 let h: MockHarness;
@@ -40,7 +41,9 @@ describe('storage module', () => {
           expect(statement.Resource, `${policy.name} ${statement.Sid}`).toEqual([`${bucket}/*`]);
           publicReads.push(policy.name);
         } else {
-          expect(statement.Principal, `${policy.name} ${statement.Sid}`).toEqual({ SCW: expect.stringMatching(/^application_id:.+/) });
+          const { SCW } = statement.Principal as { SCW: string | string[] };
+          expect(SCW, `${policy.name} ${statement.Sid}`).toBeDefined();
+          for (const id of [SCW].flat()) expect(id, `${policy.name} ${statement.Sid}`).toEqual(expect.stringMatching(/^application_id:.+/));
         }
       }
     }
@@ -98,22 +101,22 @@ describe('storage module', () => {
     }
   });
 
-  it('boot diagnostics bucket grants the boot app write to boot-diag/ only, never public read', () => {
-    const policies = h.resources.filter((r) => /bucketPolicy/i.test(r.type));
-    const policy = policies.find((p) => p.name === 'boot-diag-policy');
-    expect(policy).toBeDefined();
-    const policyJson = String(policy?.inputs.policy ?? '');
-    expect(policyJson).not.toMatch(/"Principal"\s*:\s*"\*"/);
-    expect(policyJson).toMatch(/BootWriteBootDiagnostics/);
-    expect(policyJson).toMatch(/application_id:/);
-    expect(policyJson).toMatch(/s3:PutObject/);
-    expect(policyJson).toMatch(/boot-diag\/*/);
-    const parsed = JSON.parse(policyJson) as { Statement: Array<{ Sid: string; Action: string[]; Resource: string[] }> };
-    const bootWrite = parsed.Statement.find((s) => s.Sid === 'BootWriteBootDiagnostics');
-    expect(bootWrite?.Action).toEqual(['s3:PutObject']);
-    // Derive the bucket name from the captured resource so this holds for any app slug.
-    const bootDiagBucketName = String(h.resources.find((r) => r.name === 'boot-diag-bucket')?.inputs.name ?? '');
-    expect(bootWrite?.Resource).toEqual([`${bootDiagBucketName}/boot-diag/*`]);
+  it('keeps the builder reports from service keys, within the 10 statements Scaleway allows a bucket policy', () => {
+    type Statement = { Sid: string; Principal: { SCW: string | string[] }; Action: string[]; Resource: string[] };
+    const bucket = String(h.resources.find((r) => r.name === 'boot-diag-bucket')?.inputs.name);
+    const { Statement } = JSON.parse(String(h.resources.find((r) => r.name === 'boot-diag-policy')?.inputs.policy)) as { Statement: Statement[] };
+    const names = principalNames(engineConfig().slug, 'production');
+    // Beside the deploy key, which writes the run records, and the operator's `s3:*`.
+    const writes = Statement.filter((statement) => statement.Action.includes('s3:PutObject') && statement.Sid !== 'DeployAccess');
+    expect(writes.map((statement) => [statement.Principal.SCW, statement.Action, statement.Resource])).toEqual([
+      [
+        principalServices().map((svc) => `application_id:${names.vmService(svc.slug)}-id`),
+        ['s3:PutObject'],
+        principalServices().map((svc) => `${bucket}/boot-diag/${svc.slug}-*`),
+      ],
+      [`application_id:${names.builder}-id`, ['s3:PutObject'], [`${bucket}/boot-diag/builder/*`]],
+    ]);
+    expect(Statement.length).toBeLessThanOrEqual(10);
   });
 
   it('upload buckets restrict CORS allowedOrigins (no wildcard)', () => {

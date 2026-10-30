@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
+import { SearchScope } from '~/modules/common/match-highlight/match-scope';
 import { BaseEntityGrid, ChannelTile, EntityGridBar } from '~/modules/entities/entity-grid';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { useUserStore } from '~/modules/user/user-store';
@@ -43,17 +44,19 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, viewTogg
         viewToggle={viewToggle}
       />
 
-      <BaseEntityGrid
-        label="c:project"
-        renderTile={(entity) => <ChannelTile entity={entity} hideOwnRole={ofAnotherUser} />}
-        entities={entities}
-        isLoading={isLoading}
-        isFetching={isFetching}
-        error={error}
-        hasNextPage={hasNextPage}
-        fetchMore={fetchMore}
-        isFiltered={isFiltered}
-      />
+      <SearchScope q={search.q}>
+        <BaseEntityGrid
+          label="c:project"
+          renderTile={(entity) => <ChannelTile entity={entity} hideOwnRole={ofAnotherUser} />}
+          entities={entities}
+          isLoading={isLoading}
+          isFetching={isFetching}
+          error={error}
+          hasNextPage={hasNextPage}
+          fetchMore={fetchMore}
+          isFiltered={isFiltered}
+        />
+      </SearchScope>
     </div>
   );
 }

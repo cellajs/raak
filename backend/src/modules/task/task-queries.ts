@@ -14,6 +14,7 @@ import { projectsTable } from '#/modules/project/project-db';
 import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
 import { userMinimalBaseSelect } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
+import type { StxBase } from '#/schemas/sync-transaction-schemas';
 
 interface InsertTasksOpts {
   tasks: InsertTaskModel[];
@@ -45,14 +46,15 @@ interface DeleteTasksByIdsOpts {
   ids: string[];
   /** Who deletes: stamped as the tombstone and as the row's last write. */
   actorId: ActorId;
+  stx: Pick<StxBase, 'mutationId' | 'sourceId'>;
 }
 
 /** Soft-delete tasks by IDs and return the affected rows. */
-export const deleteTasksByIds = async (ctx: ActorContext, { ids, actorId }: DeleteTasksByIdsOpts) => {
+export const deleteTasksByIds = async (ctx: ActorContext, { ids, actorId, stx }: DeleteTasksByIdsOpts) => {
   const { db } = ctx.var;
   return db
     .update(tasksTable)
-    .set(deleteStamps(actorId))
+    .set({ ...deleteStamps(actorId), stx: stripChangedFields(tasksTable.stx, stx) })
     .where(and(inArray(tasksTable.id, ids), requestScopeWhere(ctx, tasksTable, 'task'), isNull(tasksTable.deletedAt)))
     .returning();
 };

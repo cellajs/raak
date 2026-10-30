@@ -41,7 +41,7 @@ import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Chip } from '~/modules/ui/chip';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/field';
-import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
+import { SegmentedControl, SegmentedControlItem } from '~/modules/ui/segmented-control';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { coalescedResult } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
@@ -237,24 +237,14 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
             render={({ field: { value, onChange } }) => (
               <FormItem>
                 <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    variant="merged"
-                    className="w-full gap-0"
-                    value={value}
-                    onValueChange={(newValue: string | string[]) => {
-                      if (typeof newValue === 'string' && newValue) onChange(newValue);
-                    }}
-                  >
+                  <SegmentedControl size="sm" className="w-full" value={value} onValueChange={onChange}>
                     {primaryLabels.map((label) => (
-                      <ToggleGroupItem tabIndex={0} size="sm" value={label.id} className="group flex-1 font-normal" key={label.id}>
+                      <SegmentedControlItem value={label.id} className="flex-1" key={label.id}>
                         <PrimaryLabelIcon label={label} />
-                        <span className="ml-2 min-w-0 truncate text-muted-foreground group-data-pressed:font-medium group-data-pressed:text-foreground">
-                          {label.name}
-                        </span>
-                      </ToggleGroupItem>
+                        <span className="min-w-0 truncate">{label.name}</span>
+                      </SegmentedControlItem>
                     ))}
-                  </ToggleGroup>
+                  </SegmentedControl>
                 </FormControl>
                 <FormMessage />
               </FormItem>

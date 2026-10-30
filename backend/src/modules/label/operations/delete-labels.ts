@@ -1,17 +1,23 @@
 import type { ActorContext } from '#/core/context';
+import { createServerStx } from '#/core/stx/create-server-stx';
 import { tenantContextIncludingDeleted } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { deleteLabelsByIds } from '#/modules/label/label-queries';
 import { filterPrimaryLabelDeletes } from '#/modules/label/operations/filter-primary-label-deletes';
 import { reassignTasksFromDeletedPrimaries } from '#/modules/task/task-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
+import type { StxBase } from '#/schemas/sync-transaction-schemas';
 
 /**
- * Soft-deletes the labels the caller may delete, keeping each project's last primary label, and moves the tasks of a
+ * Soft-deletes the labels the caller may delete, stamping each row with the delete's `stx`, keeping each project's last primary label, and moves the tasks of a
  * deleted primary label to another one.
  * @returns The ids the caller may not delete or the primary-label rules keep, as `rejectedIds`.
  */
-export async function deleteLabelsOp(ctx: ActorContext, ids: string[]): Promise<{ data: []; rejectedIds: string[] }> {
+export async function deleteLabelsOp(
+  ctx: ActorContext,
+  ids: string[],
+  stx: Pick<StxBase, 'mutationId' | 'sourceId'> = createServerStx(),
+): Promise<{ data: []; rejectedIds: string[] }> {
   const { allowedIds: permittedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'label', ids);
   const actorId = ctx.var.actor.id;
   const rejected = new Set(rejectedIds);
@@ -19,7 +25,7 @@ export async function deleteLabelsOp(ctx: ActorContext, ids: string[]): Promise<
   await tenantContextIncludingDeleted(ctx, async (txCtx) => {
     const { allowedIds, deletedPrimaryIds } = await filterPrimaryLabelDeletes(txCtx, permittedIds, rejected);
 
-    const deleted = await deleteLabelsByIds(txCtx, { ids: allowedIds, actorId });
+    const deleted = await deleteLabelsByIds(txCtx, { ids: allowedIds, actorId, stx });
     // Inside the transaction: the collaborative documents of epic descriptions go with them.
     await dispatchMutation(txCtx, 'label.deleted', { before: deleted });
 

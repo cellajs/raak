@@ -96,6 +96,10 @@
             "name": "uploadToken",
             "description": "Upload tokens per user: 300 per hour"
           },
+          "pushSubscriptionLimiter": {
+            "name": "pushSubscription",
+            "description": "Push subscription registrations per user: 30 per hour"
+          },
           "totpVerificationLimiter": {
             "name": "totpVerification",
             "description": "Failed TOTP codes per IP: 5 per hour, then blocked for 30 minutes"
@@ -107,6 +111,10 @@
           "magicLinkLimiter": {
             "name": "magicLink",
             "description": "Magic link emails per address from browsers that never signed in to it: 3 per 30 minutes"
+          },
+          "recognizedMagicLinkLimiter": {
+            "name": "recognizedMagicLink",
+            "description": "Magic link emails per address from browsers that signed in to it: 10 per 30 minutes"
           },
           "passkeyChallengeLimiter": {
             "name": "passkeyChallenge",
@@ -857,7 +865,8 @@
           "fieldTimestamps": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 33
             },
             "maxProperties": 100,
             "description": "Per-field HLC timestamps for scalar fields being changed"
@@ -919,6 +928,10 @@
               }
             ]
           },
+          "actorId": {
+            "type": ["string", "null"],
+            "description": "Actor whose write the activity records; a tab takes the change as its own echo only when this is its signed-in user"
+          },
           "batchUntilSeq": {
             "type": ["integer", "null"],
             "description": "Last sequence position for a batched change: client should fetch range"
@@ -977,6 +990,7 @@
           "seq",
           "channelId",
           "stx",
+          "actorId",
           "batchUntilSeq",
           "count",
           "spreadWindow",
@@ -997,6 +1011,7 @@
             "sourceId": "2244cc73-64fe-4d50-97ee-f520aebf873e",
             "fieldTimestamps": {}
           },
+          "actorId": "173e5353-41f8-45b0-8808-1fcd2c8e83df",
           "batchUntilSeq": null,
           "count": null,
           "spreadWindow": null,
@@ -2293,14 +2308,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -2312,14 +2329,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -2331,14 +2350,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -2350,14 +2371,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -2369,14 +2392,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -2388,14 +2413,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -2992,9 +3019,14 @@
                     "type": "integer",
                     "minimum": 0,
                     "description": "Max API points per hour per actor within this tenant (0 = no tenant limit; the global safety ceiling still applies)"
+                  },
+                  "invitationMailsPerDay": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Max invitation mails per day the tenant sends, new, reminded and reopened alike (0 = no cap)"
                   }
                 },
-                "required": ["apiPointsPerHour"]
+                "required": ["apiPointsPerHour", "invitationMailsPerDay"]
               },
               "allowUnregisteredClients": {
                 "type": "boolean",
@@ -3107,7 +3139,8 @@
               "apiKey": 100
             },
             "rateLimits": {
-              "apiPointsPerHour": 1000
+              "apiPointsPerHour": 1000,
+              "invitationMailsPerDay": 250
             },
             "allowUnregisteredClients": true
           },
@@ -3259,14 +3292,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3278,14 +3313,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3297,14 +3334,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3316,14 +3355,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3335,14 +3376,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3354,14 +3397,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3794,14 +3839,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3813,14 +3860,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3832,14 +3881,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3851,14 +3902,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3870,14 +3923,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -3889,14 +3944,16 @@
                   "order": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   },
                   "hidden": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 255
                     },
                     "maxItems": 100
                   }
@@ -4144,16 +4201,20 @@
             "type": "object",
             "properties": {
               "original": {
-                "type": "string"
+                "type": "string",
+                "maxLength": 2048
               },
               "preview": {
-                "type": "string"
+                "type": "string",
+                "maxLength": 2048
               },
               "thumbnail": {
-                "type": "string"
+                "type": "string",
+                "maxLength": 2048
               },
               "converted": {
-                "type": "string"
+                "type": "string",
+                "maxLength": 2048
               }
             },
             "required": ["original"],
@@ -4395,7 +4456,7 @@
           "outcome": {
             "type": "string",
             "enum": ["invite", "remind", "add", "member"],
-            "description": "`invite`: a new invitation. `remind`: the channel invited it before, and the invitation goes out again. `add`: a member of the organization, added to the channel at once. `member`: already a member, left out."
+            "description": "`invite`: a new invitation. `remind`: the channel invited it before, and the invitation goes out again unless the tenant mailed the address within the day or its decline still holds. `add`: a member of the organization, added to the channel at once. `member`: already a member, left out."
           },
           "invitedAt": {
             "type": "string"
@@ -4811,7 +4872,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": true,
             "name": "token",
@@ -5186,7 +5248,7 @@
           "strategy": "magic"
         },
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["magicLinkLimiter", "spamLimiter"],
+        "x-rate-limiter": ["magicLinkLimiter", "recognizedMagicLinkLimiter", "spamLimiter"],
         "x-cache": [],
         "requestBody": {
           "required": true,
@@ -5202,7 +5264,8 @@
                     "maxLength": 255
                   },
                   "redirect": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 2048
                   }
                 },
                 "required": ["email"]
@@ -5402,6 +5465,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
+                    "maxLength": 6,
                     "pattern": "^\\d{6}$"
                   }
                 },
@@ -5488,6 +5552,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
+                    "maxLength": 6,
                     "pattern": "^\\d{6}$"
                   }
                 },
@@ -5558,27 +5623,33 @@
                     "type": "object",
                     "properties": {
                       "id": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       },
                       "rawId": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       },
                       "response": {
                         "type": "object",
                         "properties": {
                           "clientDataJSON": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           },
                           "attestationObject": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 16384
                           },
                           "authenticatorData": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           },
                           "transports": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 10
                           },
@@ -5586,7 +5657,8 @@
                             "type": "number"
                           },
                           "publicKey": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 16384
                           }
                         },
                         "required": ["clientDataJSON", "attestationObject"]
@@ -5832,25 +5904,31 @@
                     "type": "object",
                     "properties": {
                       "id": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       },
                       "rawId": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       },
                       "response": {
                         "type": "object",
                         "properties": {
                           "clientDataJSON": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           },
                           "authenticatorData": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           },
                           "signature": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           },
                           "userHandle": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           }
                         },
                         "required": ["clientDataJSON", "authenticatorData", "signature"]
@@ -5983,7 +6061,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "redirectAfter",
@@ -6038,7 +6117,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "redirectAfter",
@@ -6093,7 +6173,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "redirectAfter",
@@ -6138,7 +6219,8 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "code",
@@ -6146,7 +6228,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": true,
             "name": "state",
@@ -6154,7 +6237,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "error",
@@ -6162,7 +6246,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "error_description",
@@ -6170,7 +6255,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "error_uri",
@@ -6227,7 +6313,8 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "code",
@@ -6235,7 +6322,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": true,
             "name": "state",
@@ -6243,7 +6331,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "error",
@@ -6251,7 +6340,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "error_description",
@@ -6259,7 +6349,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "error_uri",
@@ -6316,7 +6407,8 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "code",
@@ -6324,7 +6416,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": true,
             "name": "state",
@@ -6332,7 +6425,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "error",
@@ -6340,7 +6434,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "error_description",
@@ -6348,7 +6443,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "error_uri",
@@ -6467,7 +6563,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "redirectAfter",
@@ -6537,7 +6634,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "redirectAfter",
@@ -6584,7 +6682,8 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "code",
@@ -6592,7 +6691,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": true,
             "name": "state",
@@ -6600,7 +6700,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "error",
@@ -6608,7 +6709,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "error_description",
@@ -6616,7 +6718,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "error_uri",
@@ -6662,7 +6765,7 @@
         "operationId": "sendSsoRecoveryLink",
         "tags": ["auth", "cella"],
         "summary": "Send an SSO recovery link",
-        "description": "For a browser whose institution sign-in was refused because an account already holds the asserted address: mails a magic link to that address, which returns to the account page to connect the institution account. Takes no input; the browser holds the offer for ten minutes and spends it by asking.",
+        "description": "For a browser whose institution sign-in was refused because an account already holds the asserted address or the institution does not prove it: mails a magic link to that address, which returns to the account page to connect the institution account. Takes no input; the browser holds the offer for ten minutes and spends it by asking.",
         "x-enabled-by": {
           "strategy": "sso"
         },
@@ -6787,25 +6890,31 @@
                     "type": "object",
                     "properties": {
                       "id": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       },
                       "rawId": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       },
                       "response": {
                         "type": "object",
                         "properties": {
                           "clientDataJSON": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           },
                           "authenticatorData": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           },
                           "signature": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           },
                           "userHandle": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 2048
                           }
                         },
                         "required": ["clientDataJSON", "authenticatorData", "signature"]
@@ -6824,10 +6933,12 @@
                   },
                   "totpCode": {
                     "type": "string",
+                    "maxLength": 6,
                     "pattern": "^\\d{6}$"
                   },
                   "emailCode": {
                     "type": "string",
+                    "maxLength": 6,
                     "pattern": "^\\d{6}$"
                   }
                 }
@@ -6941,6 +7052,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequestsError"
@@ -7463,6 +7577,7 @@
                 "properties": {
                   "cursor": {
                     "type": "string",
+                    "maxLength": 50,
                     "description": "Id of the last activity the client received (its commit position and index). Omit on first sync.",
                     "example": "00000000-016B3748-00000001"
                   },
@@ -7477,7 +7592,8 @@
                           "description": "Client-chosen stable view key, echoed back verbatim to correlate responses"
                         },
                         "organizationId": {
-                          "type": "string"
+                          "type": "string",
+                          "maxLength": 50
                         },
                         "prefixes": {
                           "type": "array",
@@ -8045,7 +8161,7 @@
         "operationId": "revokeMySessions",
         "tags": ["me", "cella"],
         "summary": "Revoke sessions",
-        "description": "Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for the retention period. Revoking the current session signs out.",
+        "description": "Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for the retention period. Revoking the current session signs out; revoking any other needs a recent proof of presence on this session (step-up).",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -8059,7 +8175,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -8302,7 +8419,7 @@
         "operationId": "getUploadToken",
         "tags": ["me", "cella"],
         "summary": "Get upload token",
-        "description": "Generates and returns an upload token for uploading files or images, scoped to the current user and organization. The upload template decides the bucket: avatars, covers and newsletter images are public, attachments private. Only a system admin gets a newsletter image token.",
+        "description": "Generates and returns an upload token for uploading files or images, scoped to the current user and organization. The upload template decides the bucket: avatars, covers and newsletter images are public, attachments private. An attachment token needs an organization the user may create attachments in. Only a system admin gets a newsletter image token.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["uploadTokenLimiter"],
         "x-cache": [],
@@ -8952,7 +9069,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": true,
             "name": "token",
@@ -9009,7 +9127,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": true,
             "name": "token",
@@ -9066,7 +9185,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": true,
             "name": "token",
@@ -9100,7 +9220,7 @@
         "summary": "Fetch public project by ID",
         "description": "Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -9230,6 +9350,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -9281,9 +9404,9 @@
         "operationId": "createPushSubscription",
         "tags": ["push", "cella"],
         "summary": "Register a Web Push subscription",
-        "description": "Stores the browser push subscription for the current user. Upserts by endpoint, so re-subscribing after key rotation reclaims the row. The endpoint must be an https URL of a known browser push service.",
+        "description": "Stores the browser push subscription for the current user. Upserts by endpoint, so re-subscribing after key rotation reclaims the row. The endpoint must be an https URL of a known browser push service. Past the per-user cap, the least recently seen subscriptions are removed.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pushSubscriptionLimiter"],
         "x-cache": [],
         "requestBody": {
           "required": true,
@@ -9350,6 +9473,9 @@
           },
           "413": {
             "$ref": "#/components/responses/PayloadTooLargeError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -9474,9 +9600,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -9600,7 +9728,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -9831,7 +9960,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -10111,7 +10241,7 @@
         "summary": "Get public task",
         "description": "Retrieves a public task by its ID.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -10143,6 +10273,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -10155,15 +10288,17 @@
         "summary": "Get public tasks",
         "description": "Returns a list of public tasks associated with a specific project. For publicly shared boards.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -10382,6 +10517,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -10394,7 +10532,7 @@
         "summary": "Resolve task link",
         "description": "Returns routing metadata for a task link so the frontend can decide where to redirect the user.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -10456,6 +10594,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -10468,7 +10609,7 @@
         "summary": "Get task cover",
         "description": "Retrieves the cover image for a task by ID.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -10490,6 +10631,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -10502,7 +10646,7 @@
         "summary": "Redirect to task",
         "description": "Redirects to the canonical route for a task by ID.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -10524,6 +10668,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -10546,9 +10693,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -10630,7 +10779,8 @@
                           "apiKey": 100
                         },
                         "rateLimits": {
-                          "apiPointsPerHour": 1000
+                          "apiPointsPerHour": 1000,
+                          "invitationMailsPerDay": 250
                         },
                         "allowUnregisteredClients": true
                       },
@@ -10674,7 +10824,8 @@
                           "apiKey": 100
                         },
                         "rateLimits": {
-                          "apiPointsPerHour": 1000
+                          "apiPointsPerHour": 1000,
+                          "invitationMailsPerDay": 250
                         },
                         "allowUnregisteredClients": true
                       },
@@ -10743,7 +10894,7 @@
         "operationId": "selfCreateTenant",
         "tags": ["tenants", "cella"],
         "summary": "Create a tenant for yourself",
-        "description": "Creates a new tenant (workspace) for the authenticated user. A user may own multiple tenants; an org-less tenant from a prior failed attempt is reused, and takes the new name.",
+        "description": "Creates a new tenant (workspace) for the authenticated user. A user may create several, up to the number the app allows; an org-less tenant from a prior failed attempt is reused, and takes the new name.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -10782,6 +10933,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
           },
           "413": {
             "$ref": "#/components/responses/PayloadTooLargeError"
@@ -10907,7 +11061,13 @@
                         "properties": {
                           "apiPointsPerHour": {
                             "type": "integer",
-                            "minimum": 0
+                            "minimum": 0,
+                            "description": "Max API points per hour per actor within this tenant (0 = no tenant limit; the global safety ceiling still applies)"
+                          },
+                          "invitationMailsPerDay": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Max invitation mails per day the tenant sends, new, reminded and reopened alike (0 = no cap)"
                           }
                         }
                       }
@@ -10969,9 +11129,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -11166,7 +11328,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "include",
@@ -11895,7 +12058,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -11977,9 +12141,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -12061,7 +12227,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "include",
@@ -12374,7 +12541,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "include",
@@ -12476,6 +12644,7 @@
                   },
                   "country": {
                     "type": ["string", "null"],
+                    "maxLength": 2,
                     "pattern": "^[A-Z]{2}$",
                     "description": "ISO 3166-1 alpha-2 country code.",
                     "example": "NL"
@@ -12591,14 +12760,16 @@
                           "order": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           }
@@ -12610,14 +12781,16 @@
                           "order": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           }
@@ -12629,14 +12802,16 @@
                           "order": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           }
@@ -12648,14 +12823,16 @@
                           "order": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           }
@@ -12667,14 +12844,16 @@
                           "order": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           }
@@ -12686,14 +12865,16 @@
                           "order": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           },
                           "hidden": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "maxLength": 255
                             },
                             "maxItems": 100
                           }
@@ -13331,7 +13512,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -13416,9 +13598,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -13528,7 +13712,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "include",
@@ -13710,7 +13895,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "include",
@@ -15082,7 +15268,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -15167,9 +15354,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -15251,7 +15440,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "include",
@@ -15454,7 +15644,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "include",
@@ -15631,9 +15822,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -15816,7 +16009,41 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Attachment"
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/Attachment"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              },
+                              "seq": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "projectId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "organizationId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "deletedAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["id", "createdAt", "seq", "projectId", "organizationId", "deletedAt"],
+                            "description": "A soft-deleted row: the fields that place it, without its content."
+                          }
+                        ]
                       }
                     },
                     "total": {
@@ -15936,16 +16163,20 @@
                       "type": "object",
                       "properties": {
                         "original": {
-                          "type": "string"
+                          "type": "string",
+                          "maxLength": 2048
                         },
                         "preview": {
-                          "type": "string"
+                          "type": "string",
+                          "maxLength": 2048
                         },
                         "thumbnail": {
-                          "type": "string"
+                          "type": "string",
+                          "maxLength": 2048
                         },
                         "converted": {
-                          "type": "string"
+                          "type": "string",
+                          "maxLength": 2048
                         }
                       },
                       "required": ["original"]
@@ -16319,7 +16550,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -16328,10 +16560,12 @@
                     "type": "object",
                     "properties": {
                       "mutationId": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 255
                       },
                       "sourceId": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 255
                       }
                     },
                     "required": ["mutationId", "sourceId"]
@@ -16582,7 +16816,7 @@
         "operationId": "getAttachment",
         "tags": ["attachments", "cella", "product"],
         "summary": "Get attachment",
-        "description": "Returns a single attachment by ID. Served from the entity detail cache, which every write to the row drops.",
+        "description": "Returns a single attachment by ID, from the entity detail cache. A write drops the row from it; a server process the drop does not reach answers from its cached row for up to 10 seconds.",
         "x-tool": {
           "description": "Read one attachment: its metadata and the description as text.",
           "approvalRequired": false,
@@ -16838,16 +17072,20 @@
                     "type": "object",
                     "properties": {
                       "original": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       },
                       "preview": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       },
                       "thumbnail": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       },
                       "converted": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 2048
                       }
                     },
                     "required": ["original"]
@@ -17242,9 +17480,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -17313,7 +17553,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "modes",
@@ -17408,7 +17649,41 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Label"
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/Label"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              },
+                              "seq": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "projectId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "organizationId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "deletedAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["id", "createdAt", "seq", "projectId", "organizationId", "deletedAt"],
+                            "description": "A soft-deleted row: the fields that place it, without its content."
+                          }
+                        ]
                       }
                     },
                     "total": {
@@ -17486,7 +17761,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -17495,10 +17771,12 @@
                     "type": "object",
                     "properties": {
                       "mutationId": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 255
                       },
                       "sourceId": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 255
                       }
                     },
                     "required": ["mutationId", "sourceId"]
@@ -17887,7 +18165,19 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {},
+                    "maxItems": 20
+                  },
+                  {},
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
             }
           }
         },
@@ -17971,7 +18261,7 @@
         "operationId": "membershipInvite",
         "tags": ["memberships", "cella"],
         "summary": "Create memberships",
-        "description": "Invites addresses to a channel entity such as an organization and says per address what happened: a new invitation, the earlier one sent again (a declined one opens again, a higher role replaces a lower one), an organization member added at once, or a member left out. Re-adding an address always sends its invitation again. A created membership carries muted, archived and display order only when it is the caller's own.",
+        "description": "Invites addresses to a channel entity such as an organization and says per address what happened: a new invitation, the earlier one sent again (a higher role replaces a lower one), an organization member added at once, or a member left out. A declined invitation stays declined for `retention.declinedInvitationHoldDays` and only then opens again. A tenant mails an address at most once a day: an address it mailed within the day gets no mail and no new link, and the link it holds keeps working. Past the tenant's daily invitation mails (`invitationMailsPerDay`) the request answers 429 and changes nothing. A created membership carries muted, archived and display order only when it is the caller's own.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["spamLimiter", "pointsLimiter"],
         "x-cache": [],
@@ -18224,7 +18514,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -18747,9 +19038,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -18823,7 +19116,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 255
             },
             "required": false,
             "name": "include",
@@ -18831,7 +19125,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 2048
             },
             "required": false,
             "name": "userIds",
@@ -19099,9 +19394,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -19277,7 +19574,7 @@
         "operationId": "resendPendingInvitation",
         "tags": ["memberships", "cella"],
         "summary": "Resend pending invitation",
-        "description": "Re-sends the invitation email for a pending membership, named by its own id; an invitation holding a token gets a fresh one, and one held in a draft channel waits for its publish. Answers 204 alike for every pending invitation. Requires update permission on the invited channel; the public auth resend endpoint stays for invitees holding an expired token.",
+        "description": "Re-sends the invitation email for a pending membership, named by its own id; an invitation holding a token gets a fresh one, and one held in a draft channel waits for its publish. An address the tenant mailed within the day gets nothing, and the link it holds keeps working. Answers 204 alike for every pending invitation, and 429 past the tenant's daily invitation mails. Requires update permission on the invited channel; the public auth resend endpoint stays for invitees holding an expired token.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["spamLimiter", "pointsLimiter"],
         "x-cache": [],
@@ -19342,7 +19639,7 @@
         "operationId": "withdrawPendingInvitation",
         "tags": ["memberships", "cella"],
         "summary": "Withdraw pending invitation",
-        "description": "Withdraws an invitation, named by its own id, with its links, so its seat frees. Requires update permission on the invited channel.",
+        "description": "Withdraws a pending invitation, named by its own id, with its links, so its seat frees. A declined invitation is the invitee's answer and is not withdrawn. Requires update permission on the invited channel.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -19755,9 +20052,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -20273,7 +20572,7 @@
         "operationId": "revokeApiKey",
         "tags": ["service-accounts", "cella"],
         "summary": "Revoke API key",
-        "description": "Revokes an API key immediately. The row stays for the audit trail.",
+        "description": "Revokes an API key: it stops working within 10 seconds in every process. The row stays for the audit trail.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -20955,9 +21254,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 255,
+              "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase."
             },
             "required": false,
+            "description": "Search, case- and accent-insensitive. Every word must appear in a searched field; \"quotes\" keep a phrase together and a leading - leaves out items holding that whole word or phrase.",
             "name": "q",
             "in": "query"
           },
@@ -21190,7 +21491,41 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Task"
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/Task"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              },
+                              "seq": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "projectId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "organizationId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "deletedAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["id", "createdAt", "seq", "projectId", "organizationId", "deletedAt"],
+                            "description": "A soft-deleted row: the fields that place it, without its content."
+                          }
+                        ]
                       }
                     },
                     "total": {
@@ -21268,7 +21603,8 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 50
                     },
                     "minItems": 1,
                     "maxItems": 100
@@ -21277,10 +21613,12 @@
                     "type": "object",
                     "properties": {
                       "mutationId": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 255
                       },
                       "sourceId": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 255
                       }
                     },
                     "required": ["mutationId", "sourceId"]

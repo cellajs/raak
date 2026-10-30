@@ -10,6 +10,7 @@ import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { DeleteQuestion } from '~/modules/common/popconfirm';
 import { openEditSheet } from '~/modules/common/sheeter/open-edit-sheet';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
@@ -50,7 +51,9 @@ export const useColumns = (organization: EnrichedOrganization) => {
           }
         >
           <EntityAvatar type="project" className="size-8" id={row.id} name={row.name} url={row.thumbnailUrl} />
-          <span className={cn(cellLinkTextClass, 'font-medium')}>{row.name || '-'}</span>
+          <span className={cn(cellLinkTextClass, 'font-medium')}>
+            <HighlightText text={row.name || '-'} />
+          </span>
         </Button>
       ),
     },

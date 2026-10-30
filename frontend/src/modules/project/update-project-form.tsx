@@ -59,7 +59,14 @@ export function UpdateProjectForm({ project }: UpdateProjectFormProps) {
   return (
     <Form {...form}>
       <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <AvatarFormField form={form} label={t('c:resource_logo', { resource: t('c:project') })} type="project" name="thumbnailUrl" entity={project} />
+        <AvatarFormField
+          form={form}
+          label={t('c:resource_logo', { resource: t('c:project') })}
+          type="project"
+          name="thumbnailUrl"
+          entity={project}
+          organizationId={project.organizationId}
+        />
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
         <SlugFormField
           control={form.control}
