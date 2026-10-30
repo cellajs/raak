@@ -5,7 +5,6 @@ import { blocknoteHasContent } from '~/modules/common/blocknote/helpers/blocknot
 import { boardStore } from '~/modules/common/board/board-store';
 import { draftStore } from '~/modules/common/form-draft/draft-store';
 import { taskBoardStore } from '~/modules/task/board/task-board-store';
-import { sectionPanelId } from '~/modules/task/helpers/board-helpers';
 import { focusWhenMounted, setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
@@ -19,9 +18,7 @@ export const revealDraftHostPanel = (projectId: string, draftStatus: TaskStatus)
   const boardId = boardStore.getState().activeBoardId;
   if (!boardId) return;
 
-  const viewSections = taskBoardStore.getState().panelData[boardId]?.[projectId]?.viewSections;
-  const hostSection = viewSections?.find((section) => section.status.includes(draftStatus));
-  boardStore.getState().setPanelCollapsed(sectionPanelId(projectId, hostSection), false);
+  boardStore.getState().setPanelCollapsed(projectId, false);
 
   const { setPanelSectionExpanded } = taskBoardStore.getState();
   if (draftStatus === TaskStatus.Accepted) setPanelSectionExpanded(boardId, projectId, 'accepted', true);

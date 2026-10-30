@@ -17,7 +17,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
   const showExplainer = useShowExplainer(!!workspace);
 
   const extraPanels = buildBoardExtraPanels({ showExplainer });
-  const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
+  const { panels, layoutPanels, defaultLayout, handleLayoutChanged, handleGroupCollapse } = useBoardPanels(boardId, projects, extraPanels);
   useExpandLabelsPanel(boardLayoutRef);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
@@ -55,7 +55,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
 
   const renderGroupHeader = (projectId: string) => {
     const project = projects.find(({ id }) => id === projectId);
-    return project && <TaskPanelHeader project={project} />;
+    return project && <TaskPanelHeader project={project} spansSections />;
   };
 
   return (
@@ -69,6 +69,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
       reorderable
       onPanelReorder={handlePanelReorder}
       groupHeader={renderGroupHeader}
+      onGroupCollapse={handleGroupCollapse}
     >
       {(panelId) => {
         const panel = panels.find((candidate) => candidate.panelId === panelId);

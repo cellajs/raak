@@ -380,7 +380,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             type="button"
             aria-expanded={!selectedCollapsed}
             aria-controls="select-labels-selected-group"
-            className="mx-1 mt-1 flex w-[calc(100%-0.5rem)] shrink-0 items-center gap-2 pointer-coarse:px-3 px-2 pointer-coarse:py-2 py-1.5 pointer-coarse:text-sm text-muted-foreground text-xs outline-hidden hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+            className="mx-1 mt-1 flex w-[calc(100%-0.5rem)] shrink-0 items-center gap-2 pointer-coarse:px-3 px-2 pointer-coarse:py-2 py-1.5 text-muted-foreground text-xs outline-hidden hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
             onClick={() => setSelectedCollapsed((collapsed) => !collapsed)}
           >
             {t('c:selected')}

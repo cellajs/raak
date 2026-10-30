@@ -11,7 +11,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
   const extraPanels = buildBoardExtraPanels({ publicView });
-  const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
+  const { panels, layoutPanels, defaultLayout, handleLayoutChanged, handleGroupCollapse } = useBoardPanels(boardId, projects, extraPanels);
   useExpandLabelsPanel(boardLayoutRef);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
@@ -27,7 +27,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
 
   const renderGroupHeader = (projectId: string) => {
     const project = projects.find(({ id }) => id === projectId);
-    return project && <TaskPanelHeader project={project} publicView={publicView} />;
+    return project && <TaskPanelHeader project={project} publicView={publicView} spansSections />;
   };
 
   return (
@@ -42,6 +42,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
       reorderable={!publicView}
       onPanelReorder={handlePanelReorder}
       groupHeader={renderGroupHeader}
+      onGroupCollapse={handleGroupCollapse}
     >
       {(panelId) => {
         const panel = panels.find((candidate) => candidate.panelId === panelId);

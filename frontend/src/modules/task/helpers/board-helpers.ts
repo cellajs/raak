@@ -1,5 +1,5 @@
 import i18n from 'i18next';
-import { panelMinWidth } from '~/modules/common/board/board-layout';
+import { collapsedPanelMinWidth, panelMinWidth } from '~/modules/common/board/board-layout';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import type { BoardPanelData, SectionsValue, TogglableStatusType } from '~/modules/task/board/task-board-store';
@@ -9,7 +9,7 @@ import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import type { BoardSearchParams, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
+import type { BoardResizablePanel, BoardSearchParams, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
 
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
@@ -62,9 +62,10 @@ export const splitPanelLayout = (layout: Record<string, number>, projectId: stri
   return { ...rest, ...Object.fromEntries(panelIds.map((panelId) => [panelId, share])) };
 };
 
-/** Panel widths after a project merges: it takes the width of its sections together. */
+/** Panel widths after a project merges: it takes the width of its sections together, unless it is collapsed. */
 export const mergePanelLayout = (layout: Record<string, number>, projectId: string, panelIds: string[]) => {
   const rest = Object.fromEntries(Object.entries(layout).filter(([panelId]) => !panelIds.includes(panelId)));
+  if (layout[projectId] <= collapsedPanelMinWidth) return rest;
   const width = panelIds.reduce((sum, panelId) => sum + (layout[panelId] ?? 0), 0);
   return { ...rest, [projectId]: Math.max(panelMinWidth, width) };
 };
@@ -91,6 +92,10 @@ export const pickViewSections = (board: BoardPanelData | undefined): BoardViewSe
   }
   return sections;
 };
+
+/** The split sections a board shows. A collapsed project is one panel, known by its stored width, and gets its sections back on expanding. */
+export const openViewSections = (sections: BoardViewSections, layout: Record<string, number> = {}) =>
+  Object.fromEntries(Object.entries(sections).filter(([projectId]) => !(layout[projectId] <= collapsedPanelMinWidth)));
 
 export const prepareBoardPanels = (projects: EnrichedProject[], viewSectionsByProject: BoardViewSections) => {
   const sortedProjects = sortByMembership(projects);
@@ -135,11 +140,13 @@ export const formatSectionLabel = ({ status }: SectionsValue): string => {
   return isRun ? i18n.t('c:status_range', { from: first, to: last }) : names.join(', ');
 };
 
-export const normalizePanelWidths = (storedLayout: Record<string, number>, currentProjectIds: string[]) => {
+export const normalizePanelWidths = (storedLayout: Record<string, number>, panels: BoardResizablePanel[]) => {
   const layout: Record<string, number> = {};
 
-  for (const id of currentProjectIds) {
-    layout[id] = storedLayout[id] ?? panelMinWidth;
+  for (const panel of panels) {
+    const width = storedLayout[panel.panelId] ?? panelMinWidth;
+    // A layout stored while sections could collapse may still hold a collapsed width for one
+    layout[panel.panelId] = panel.kind === 'project' && panel.sectionFilters ? Math.max(panelMinWidth, width) : width;
   }
 
   return layout;

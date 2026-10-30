@@ -3819,6 +3819,18 @@ export const zCreateTasksResponse = z.union([
   }),
 ]);
 
+export const zGetUnseenTaskIdsPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Unseen task ids
+ */
+export const zGetUnseenTaskIdsResponse = z.object({
+  items: z.array(z.string().max(50)),
+});
+
 export const zGetTaskPath = z.object({
   tenantId: z.string().max(50),
   organizationId: z.string().max(50),

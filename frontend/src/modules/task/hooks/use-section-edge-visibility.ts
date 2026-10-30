@@ -2,44 +2,54 @@ import { type RefObject, useEffect, useState } from 'react';
 
 const scrollThreshold = 10; // Minimum accumulated scroll delta counted as a direction signal
 const confirmSignals = 2; // Same-direction scroll events before a flip, so a virtualizer correction does not read as a gesture
-const edgeEpsilon = 4; // Distance from a scroll edge where a header sits at its natural position
 
 interface UseSectionEdgeVisibilityOptions {
   /** Accepted pins to the top, iced to the bottom. */
   edge: 'top' | 'bottom';
+  /** The sticky element itself, next to the list in the flow. */
+  barRef: RefObject<HTMLElement | null>;
+  /** False while the bar is not rendered. */
+  active: boolean;
   scrollRef: RefObject<HTMLElement | null>;
   /** Scrolls the window when true, else the `scrollRef` viewport. */
   windowMode: boolean;
 }
 
-/** Shows a sticky status header while scrolling toward its edge and hides it while leaving. */
-export function useSectionEdgeVisibility({ edge, scrollRef, windowMode }: UseSectionEdgeVisibilityOptions) {
+/** Keeps a sticky status header shown while its own slot is on screen; pinned, it shows while scrolling toward its edge and hides while leaving. */
+export function useSectionEdgeVisibility({ edge, barRef, active, scrollRef, windowMode }: UseSectionEdgeVisibilityOptions) {
   const [visible, setVisible] = useState(edge === 'top');
 
   useEffect(() => {
+    const bar = barRef.current;
+    if (!active || !bar) return;
+
     const viewport = windowMode ? null : scrollRef.current;
     const target: HTMLElement | Window = viewport ?? window;
 
-    const metrics = () =>
-      viewport
-        ? { y: viewport.scrollTop, max: viewport.scrollHeight - viewport.clientHeight }
-        : { y: window.scrollY, max: document.documentElement.scrollHeight - window.innerHeight };
+    const scrollY = () => (viewport ? viewport.scrollTop : window.scrollY);
 
-    const atEdge = (y: number, max: number) => (edge === 'top' ? y <= edgeEpsilon : y >= max - edgeEpsilon);
+    // Hiding the bar leaves its slot empty, so it may only hide once the slot has scrolled away. A sticky element
+    // reports where it is pinned, not where its slot is: the neighbor in the flow marks the slot's far side.
+    const slotShows = () => {
+      const { top, bottom } = bar.getBoundingClientRect();
+      const neighbor = (edge === 'top' ? bar.nextElementSibling : bar.previousElementSibling)?.getBoundingClientRect();
+      if (!neighbor) return true;
+      return edge === 'top' ? neighbor.top - top > 1 : bottom - neighbor.bottom > 1;
+    };
 
-    const initial = metrics();
-    setVisible(atEdge(initial.y, initial.max));
+    setVisible(slotShows());
 
-    let lastY = initial.y;
+    let lastY = scrollY();
     let dir = 0;
     let dirSignals = 0;
     let pendingEvents = 0;
 
     const check = () => {
-      const { y, max } = metrics();
+      const y = scrollY();
       const events = pendingEvents;
       pendingEvents = 0;
-      if (atEdge(y, max)) setVisible(true);
+      const inSlot = slotShows();
+      if (inSlot) setVisible(true);
 
       const delta = y - lastY;
       // Sub-threshold moves keep the stale baseline so small deltas accumulate
@@ -52,8 +62,7 @@ export function useSectionEdgeVisibility({ edge, scrollRef, windowMode }: UseSec
       if (dirSignals < confirmSignals) return;
 
       const towardsEdge = edge === 'top' ? dir === -1 : dir === 1;
-      if (towardsEdge) setVisible(true);
-      else setVisible(atEdge(y, max));
+      setVisible(towardsEdge || inSlot);
     };
 
     // One check per frame; counting the events behind it lets a coalesced gesture still confirm a flip
@@ -67,12 +76,19 @@ export function useSectionEdgeVisibility({ edge, scrollRef, windowMode }: UseSec
       });
     };
 
+    // A shrinking list brings the iced slot on screen without any scroll event
+    const listObserver = new ResizeObserver(() => {
+      if (slotShows()) setVisible(true);
+    });
+    if (edge === 'bottom' && bar.previousElementSibling) listObserver.observe(bar.previousElementSibling);
+
     target.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       target.removeEventListener('scroll', handleScroll);
+      listObserver.disconnect();
       cancelAnimationFrame(raf);
     };
-  }, [edge, scrollRef, windowMode]);
+  }, [edge, barRef, active, scrollRef, windowMode]);
 
   return visible;
 }

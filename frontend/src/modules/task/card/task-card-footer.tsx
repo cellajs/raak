@@ -9,6 +9,7 @@ import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { TaskStartCheck } from '~/modules/task/card/task-start-check';
 import { openTaskFieldDropdown, taskFieldTriggerId } from '~/modules/task/helpers/open-task-dropdown';
 import { setTaskSelected } from '~/modules/task/helpers/task-selection';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
@@ -127,43 +128,47 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             )}
           </Button>
 
-          <TooltipButton toolTipContent={statusTooltip} side="top">
-            <Button
-              onClick={() => handlers.onStatusChange(task.status - 1)}
-              disabled={task.status === TaskStatus.Accepted}
-              variant="outline-ghost"
-              size="xs"
-              press={false}
-              className={cn(
-                'mr-1 font-normal disabled:opacity-100',
-                !readOnlyHide && 'sm:rounded-r-none sm:border-r-0',
-                !readOnlyHide && isExpandedMobile && 'rounded-r-none border-r-0',
-                statusButtonVariants({ status: task.status }),
-              )}
-              {...readOnlyInert}
-            >
-              {t(`c:${readOnlyHide ? statusOptionsByValue[task.status].status : statusOptionsByValue[task.status].action}`)}
-            </Button>
-          </TooltipButton>
-          <TooltipButton toolTipContent={statusTooltip} side="top">
-            <Button
-              id={taskFieldTriggerId('status', task.id, isSheet)}
-              onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'status', handlers, currentTarget)}
-              aria-label={t('c:set_resource', { resource: t('c:status') })}
-              variant="outline-ghost"
-              size="xs"
-              press={false}
-              className={cn(
-                '-ml-1 rounded-none rounded-r px-2 [&>svg]:transition-transform data-dropdowner-active:[&>svg]:rotate-180',
-                !isExpandedMobile && 'max-sm:hidden',
-                statusButtonVariants({ status: task.status }),
-                readOnlyHide,
-              )}
-              {...readOnlyInert}
-            >
-              <ChevronDownIcon className="size-3.5" strokeWidth={2} />
-            </Button>
-          </TooltipButton>
+          <div data-task-status-control={task.id} className="relative flex">
+            <TooltipButton toolTipContent={statusTooltip} side="top">
+              <Button
+                onClick={() => handlers.onStatusChange(task.status - 1)}
+                disabled={task.status === TaskStatus.Accepted}
+                variant="outline-ghost"
+                size="xs"
+                press={false}
+                className={cn(
+                  'mr-1 font-normal disabled:opacity-100',
+                  !readOnlyHide && 'sm:rounded-r-none sm:border-r-0',
+                  !readOnlyHide && isExpandedMobile && 'rounded-r-none border-r-0',
+                  statusButtonVariants({ status: task.status }),
+                )}
+                {...readOnlyInert}
+              >
+                {t(`c:${readOnlyHide ? statusOptionsByValue[task.status].status : statusOptionsByValue[task.status].action}`)}
+              </Button>
+            </TooltipButton>
+            <TooltipButton toolTipContent={statusTooltip} side="top">
+              <Button
+                id={taskFieldTriggerId('status', task.id, isSheet)}
+                onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'status', handlers, currentTarget)}
+                aria-label={t('c:set_resource', { resource: t('c:status') })}
+                variant="outline-ghost"
+                size="xs"
+                press={false}
+                className={cn(
+                  '-ml-1 rounded-none rounded-r px-2 [&>svg]:transition-transform data-dropdowner-active:[&>svg]:rotate-180',
+                  !isExpandedMobile && 'max-sm:hidden',
+                  statusButtonVariants({ status: task.status }),
+                  readOnlyHide,
+                )}
+                {...readOnlyInert}
+              >
+                <ChevronDownIcon className="size-3.5" strokeWidth={2} />
+              </Button>
+            </TooltipButton>
+            {/* Without its chevron the action keeps its mr-1, which the check must not cover */}
+            <TaskStartCheck taskId={task.id} className={cn(!isExpandedMobile && 'max-sm:right-1')} />
+          </div>
         </div>
       </div>
     </div>

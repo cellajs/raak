@@ -4,7 +4,6 @@ import type { Project } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { collapsedPanelMinWidth, panelMinWidth } from '~/modules/common/board/board-layout';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
-import { useBoardStore } from '~/modules/common/board/board-store';
 import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -53,19 +52,18 @@ export function BoardSkeleton({
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
 
-  const panelCollapseState = useBoardStore((state) => state.panelCollapseState);
-
   const showExplainer = useShowExplainer(isInWorkspace);
   const extraPanels = buildBoardExtraPanels({ showExplainer, publicView });
 
   const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, projects, extraPanels);
+  const isCollapsed = (panelId: string) => defaultSizes[panelId] <= collapsedPanelMinWidth;
   const panels: SkeletonColumn[] = isMobile ? [{ kind: 'mobile', panelId: 'mobilePanel' }] : boardPanels;
 
   // The row sizes itself like the live panel group (resizable-panels.md, G6): it fills its parent when every open panel
   // fits at its ideal width, and otherwise scrolls at the ideal or the stored total, whichever is wider.
   const gaps = Math.max(0, panels.length - 1) * columnGap;
   const total = (openWidth: (panelId: string) => number) =>
-    panels.reduce((sum, { panelId }) => sum + (panelCollapseState[panelId] ? collapsedPanelMinWidth : openWidth(panelId)), gaps);
+    panels.reduce((sum, { panelId }) => sum + (isCollapsed(panelId) ? collapsedPanelMinWidth : openWidth(panelId)), gaps);
   const ideal = total(() => idealPanelWidth);
   const stored = total((panelId) => defaultSizes[panelId]);
   // `(ideal - 100%) * 9999` is a switch on the parent's width: far above `stored` while the parent is narrower than `ideal`, negative once it fits.
@@ -73,9 +71,7 @@ export function BoardSkeleton({
 
   // Open columns share the row in proportion to their widths, as the panel group does when it fills its container.
   const columnStyle = (panelId: string) =>
-    panelCollapseState[panelId]
-      ? { flex: 'none', width: collapsedPanelMinWidth }
-      : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: panelMinWidth };
+    isCollapsed(panelId) ? { flex: 'none', width: collapsedPanelMinWidth } : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: panelMinWidth };
 
   const renderColumn = (panel: SkeletonColumn) => {
     switch (panel.kind) {
@@ -102,9 +98,9 @@ export function BoardSkeleton({
         return (
           <>
             {panel.sectionFilters ? (
-              <PanelSectionRow panelId={panel.panelId} sectionFilters={panel.sectionFilters} isCollapsed={!!panelCollapseState[panel.panelId]} />
+              <PanelSectionRow sectionFilters={panel.sectionFilters} />
             ) : (
-              !projectPage && <PanelHeaderSkeleton project={panel.project} projectPage={false} isCollapsed={!!panelCollapseState[panel.panelId]} />
+              !projectPage && <PanelHeaderSkeleton project={panel.project} projectPage={false} isCollapsed={isCollapsed(panel.panelId)} />
             )}
             <PanelBodySkeleton />
           </>
@@ -139,20 +135,13 @@ export function BoardSkeleton({
               const sections = panels.filter(
                 (candidate): candidate is ProjectResizablePanel => candidate.kind === 'project' && candidate.project.id === panel.project.id,
               );
-              const isCollapsed = sections.every((section) => panelCollapseState[section.panelId]);
               const innerGaps = (sections.length - 1) * columnGap;
-              const widthOf = (read: (panelId: string) => number) =>
-                sections.reduce(
-                  (sum, section) => sum + (panelCollapseState[section.panelId] ? collapsedPanelMinWidth : read(section.panelId)),
-                  innerGaps,
-                );
-              const groupStyle = isCollapsed
-                ? { flex: 'none', width: widthOf(() => 0) }
-                : { flex: `${widthOf((id) => defaultSizes[id])} 1 0px`, minWidth: widthOf(() => panelMinWidth) };
+              const widthOf = (read: (panelId: string) => number) => sections.reduce((sum, section) => sum + read(section.panelId), innerGaps);
+              const groupStyle = { flex: `${widthOf((id) => defaultSizes[id])} 1 0px`, minWidth: widthOf(() => panelMinWidth) };
 
               return (
                 <div key={panel.project.id} className="flex h-full flex-col" style={groupStyle}>
-                  <PanelHeaderSkeleton project={panel.project} projectPage={projectPage} isCollapsed={isCollapsed} className="border-b" />
+                  <PanelHeaderSkeleton project={panel.project} projectPage={projectPage} isCollapsed={false} className="border-b" />
                   <div className="flex min-h-0 flex-1" style={{ gap: columnGap }}>
                     {sections.map((section) => (
                       <div key={section.panelId} className="flex h-full flex-col" style={columnStyle(section.panelId)}>

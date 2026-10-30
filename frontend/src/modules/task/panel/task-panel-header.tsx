@@ -8,8 +8,6 @@ import { EntityChip } from '~/modules/common/entity-chip';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
-import { useProjectViewSections } from '~/modules/task/board/task-board-store';
-import { projectPanelIds } from '~/modules/task/helpers/board-helpers';
 import { createTaskFormId, type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -58,14 +56,18 @@ function PanelLeading({ project, isInWorkspace, isCollapsed }: PanelLeadingProps
   );
 }
 
-/** A project's panel header; over a split project it spans the sections, and collapses with the last of them. */
-export function TaskPanelHeader({ project, publicView }: Pick<BoardPanelProps, 'project' | 'publicView'>) {
+interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView'> {
+  /** Over the sections of a split project, which are open by definition. */
+  spansSections?: boolean;
+}
+
+/** A project's panel header. */
+export function TaskPanelHeader({ project, publicView, spansSections }: TaskPanelHeaderProps) {
   const { t } = useTranslation();
 
   const isInWorkspace = useIsWorkspaceRoute();
 
-  const viewSections = useProjectViewSections(project.id);
-  const isCollapsed = useBoardStore((state) => projectPanelIds(project.id, viewSections).every((panelId) => state.panelCollapseState[panelId]));
+  const isCollapsed = useBoardStore((state) => !spansSections && !!state.panelCollapseState[project.id]);
 
   const formId = createTaskFormId(project.id);
   const hasDraft = useDraftStore((state) => {
@@ -99,7 +101,7 @@ export function TaskPanelHeader({ project, publicView }: Pick<BoardPanelProps, '
   return (
     <BoardPanelHeader
       // The separators between sections leave gaps in their top line: this line runs on above them
-      className={cn('bg-card', viewSections?.length && 'border-b')}
+      className={cn('bg-card', spansSections && 'border-b')}
       leading={<PanelLeading project={project} isInWorkspace={isInWorkspace} isCollapsed={isCollapsed} />}
       actions={actionsSlot}
       isCollapsed={isCollapsed}

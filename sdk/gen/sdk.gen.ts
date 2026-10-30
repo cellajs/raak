@@ -238,6 +238,9 @@ import type {
   GetUnseenCountsData,
   GetUnseenCountsErrors,
   GetUnseenCountsResponses,
+  GetUnseenTaskIdsData,
+  GetUnseenTaskIdsErrors,
+  GetUnseenTaskIdsResponses,
   GetUploadTokenData,
   GetUploadTokenErrors,
   GetUploadTokenResponses,
@@ -502,6 +505,7 @@ import {
   zGetTenantsResponse,
   zGetTokenDataResponse,
   zGetUnseenCountsResponse,
+  zGetUnseenTaskIdsResponse,
   zGetUploadTokenResponse,
   zGetUserResponse,
   zGetUsersResponse,
@@ -4030,6 +4034,28 @@ export const createTasks = <ThrowOnError extends boolean = true>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Get unseen task ids
+ *
+ * Returns the ids of the newest tasks that are new to the current user: not seen yet, and created after the user joined. Newest first.
+ *
+ * **GET /{tenantId}/{organizationId}/tasks/unseen** ·· [getUnseenTaskIds](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/{tenantId}/{organizationId}/tasks/unseen) ·· _tasks · app · product_
+ *
+ * @param {getUnseenTaskIdsData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {string} options.path.organizationId - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 429
+ */
+export const getUnseenTaskIds = <ThrowOnError extends boolean = true>(
+  options: Options<GetUnseenTaskIdsData, ThrowOnError>,
+): RequestResult<GetUnseenTaskIdsResponses, GetUnseenTaskIdsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetUnseenTaskIdsResponses, GetUnseenTaskIdsErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zGetUnseenTaskIdsResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/{tenantId}/{organizationId}/tasks/unseen',
+    ...options,
   });
 
 /**

@@ -49,7 +49,7 @@ export const BoardPanel = memo(function BoardPanel({
 
   const { expandIced, expandAccepted } = useProjectPanelPrefs(project.id);
   const panelId = sectionPanelId(project.id, sectionFilters);
-  const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
+  const isCollapsed = useBoardStore((state) => !sectionFilters && !!state.panelCollapseState[panelId]);
 
   // The open create-form draft always stays visible; a highlight search keeps every task but the excluded ones
   const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || matchesBoardSearch({ q, matchMode }, task));
@@ -103,14 +103,10 @@ export const BoardPanel = memo(function BoardPanel({
           ref={panelRef}
           className={cn('relative flex h-full flex-col', sectionFilters && '[--board-panel-offset:var(--board-section-panel-offset)]')}
         >
-          {sectionFilters ? (
-            <PanelSectionRow panelId={panelId} sectionFilters={sectionFilters} isCollapsed={!!isCollapsed} />
-          ) : (
-            <TaskPanelHeader project={project} publicView={publicView} />
-          )}
+          {sectionFilters ? <PanelSectionRow sectionFilters={sectionFilters} /> : <TaskPanelHeader project={project} publicView={publicView} />}
           <div className="flex min-h-0 flex-1 flex-col">
             <BoardPanelContent
-              isCollapsed={!!isCollapsed}
+              isCollapsed={isCollapsed}
               collapsedContent={<TaskPanelCollapsed panelId={panelId} name={projectPanelName(project, sectionFilters)} counts={counts} />}
             >
               <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} windowScroll={windowScroll} />

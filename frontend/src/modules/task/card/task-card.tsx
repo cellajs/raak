@@ -4,6 +4,7 @@ import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/utils/
 import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { type FocusEvent, type MouseEvent, memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { DropIndicator } from '~/modules/common/drop-indicator';
 import { StickyBox } from '~/modules/common/sticky-box';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
@@ -12,6 +13,7 @@ import { SeenMark } from '~/modules/seen/seen-mark';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-task-drag-indicator-store';
 import { useTaskDropLandingStore } from '~/modules/task/board/task-drop-landing-store';
+import { useShowsUnseenMark, useUnseenTasksStore } from '~/modules/task/board/unseen-tasks-store';
 import { TaskCardDescription } from '~/modules/task/card/task-card-description';
 import { TaskCardDragPreview } from '~/modules/task/card/task-card-drag-preview';
 import { TaskCardFooter } from '~/modules/task/card/task-card-footer';
@@ -34,6 +36,7 @@ interface DragPreviewPortal {
 }
 
 export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, isSheet, onEdit }: TaskProps) {
+  const { t } = useTranslation();
   const taskRef = useRef<HTMLDivElement>(null);
   const isReadOnly = useIsProjectReadOnly(task.projectId);
   const mobileClosestEdge = useMobileTaskDragIndicatorStore((state) => (state.indicator?.taskId === task.id ? state.indicator.edge : null));
@@ -49,6 +52,11 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
     setWasOpen(isOpen);
     setHasToggled(true);
   }
+
+  const showsUnseenMark = useShowsUnseenMark(task) && !isSheet;
+  useEffect(() => {
+    if (isOpen) useUnseenTasksStore.getState().remove(task.id);
+  }, [isOpen, task.id]);
 
   const [isDragging, setIsDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
@@ -177,7 +185,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
       <Card
         id={cardId}
         role="article"
-        aria-label={task.name}
+        aria-label={showsUnseenMark ? `${t('c:new')}: ${task.name}` : task.name}
         onClick={handleCardClick}
         onFocus={handleCardFocus}
         onBlur={handleCardBlur}
@@ -202,8 +210,11 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
             : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-muted/50 hover:via-40%',
           // A search match or a selected card keeps full strength, so it stands out among the resting ones
           !isSheet && effectiveState === 'collapsed' && !isCurrent && !task.isMatchingSearch && !isSelected && 'resting-text',
-          // A touch long-press on a collapsed card must start a drag, never a text selection or the iOS callout
-          !isSheet && effectiveState === 'collapsed' && 'pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]',
+          // A touch long-press on a collapsed card must start a drag, never a text selection or the iOS callout.
+          // The summary's static HTML sets select-text itself, so the card's own select-none does not reach it.
+          !isSheet &&
+            effectiveState === 'collapsed' &&
+            'pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none] pointer-coarse:[&_.bn-static-editor]:select-none',
           taskCardVariants({ status: task.status }),
           task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30' : 'bg-green-300/20 hover:bg-green-300/30'),
         )}

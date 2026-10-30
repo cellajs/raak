@@ -105,6 +105,8 @@ export const taskCreateManyStxBodySchema = taskContract.createItemSchema
   });
 export const taskCreateResponseSchema = batchResponseSchema(taskSchema);
 
+export const unseenTaskIdsResponseSchema = z.object({ items: validIdSchema.array() });
+
 export const taskLinkSchema = z.object({
   taskId: z.string(),
   projectId: z.string(),

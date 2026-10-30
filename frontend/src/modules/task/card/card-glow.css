@@ -78,6 +78,49 @@
   mask-composite: exclude;
 }
 
+/* Behind a new task's primary label icon, in the label's color. Only transform and opacity move, so a scrolling list repaints nothing. */
+.task-unseen-halo {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background-color: color-mix(in oklab, currentColor 16%, transparent);
+  pointer-events: none;
+}
+
+.task-unseen-halo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: color-mix(in oklab, currentColor 22%, transparent);
+  animation: task-unseen-pulse 2.8s ease-out infinite;
+}
+
+@keyframes task-unseen-pulse {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.58);
+  }
+  45% {
+    opacity: 0.55;
+    transform: scale(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-unseen-halo::after {
+    display: none;
+  }
+}
+
 /* Suppress glow on board cards while their sheet is open */
 [data-suppress-glow][data-highlight-flash] {
   animation: none;

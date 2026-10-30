@@ -23,10 +23,12 @@ export function CollapsedPanelStrip({ panelId, name, ...viewProps }: CollapsedPa
 
   useEffect(() => {
     if (!canExpand) return;
-    // Collapsed from its handle, the panel keeps the board's place: the current card went with its list
+    // Collapsed from its handle, the panel keeps the board's place: the current card went with its list. A split project's
+    // handle went too, so focus is on the body until the new handle takes it.
     const { currentItemId } = boardFocusStore.getState();
     const panel = document.getElementById(stripId)?.closest('[data-panel]');
-    if (currentItemId && !findItemPanelId(currentItemId) && panel?.contains(document.activeElement)) setCurrentItem(stripId);
+    const hadFocus = document.activeElement === document.body || panel?.contains(document.activeElement);
+    if (currentItemId && !findItemPanelId(currentItemId) && hadFocus) setCurrentItem(stripId);
 
     return registerPanelNav(panelId, { items: () => [{ id: stripId }], scrollTo: () => {}, firstInView: () => stripId });
   }, [panelId, canExpand]);

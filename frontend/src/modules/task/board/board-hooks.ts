@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { getOrderBetween } from 'shared/utils/display-order';
 import { useShallow } from 'zustand/react/shallow';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
-import type { BoardLayoutHandle, BoardLayoutPanel } from '~/modules/common/board/board-layout';
-import { useBoardStore } from '~/modules/common/board/board-store';
+import { type BoardLayoutHandle, type BoardLayoutPanel, collapsedPanelMinWidth } from '~/modules/common/board/board-layout';
+import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
 import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
 import { LABELS_PANEL_ID } from '~/modules/label/types';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { normalizePanelWidths, pickViewSections, prepareBoardPanels, projectPanelName } from '~/modules/task/helpers/board-helpers';
+import { normalizePanelWidths, openViewSections, pickViewSections, prepareBoardPanels, projectPanelName } from '~/modules/task/helpers/board-helpers';
 import type { BoardResizablePanel } from '~/modules/task/types';
 
 // Finite anchors keep the fractional reorder math working when a neighboring panel is dragged against them
@@ -115,11 +115,9 @@ export function usePanelLayout(boardId: string, projects: EnrichedProject[], ext
   const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
   const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);
 
-  const panels = sortPanelsByOrder([...prepareBoardPanels(projects, viewSections), ...(extraPanels ?? [])], localOrders);
-  const defaultLayout = normalizePanelWidths(
-    storedBoardLayout ?? {},
-    panels.map(({ panelId }) => panelId),
-  );
+  const projectPanels = prepareBoardPanels(projects, openViewSections(viewSections, storedBoardLayout));
+  const panels = sortPanelsByOrder([...projectPanels, ...(extraPanels ?? [])], localOrders);
+  const defaultLayout = normalizePanelWidths(storedBoardLayout ?? {}, panels);
 
   return { panels, defaultLayout };
 }
@@ -143,11 +141,16 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
     ...(panel.kind === 'project' && panel.sectionFilters && { group: { id: panel.project.id, label: panel.project.name } }),
   }));
 
+  // A layout holds mounted panels only: the sections of a collapsed project keep their stored widths for its expand
   const handleLayoutChanged = (layout: Record<string, number>) => {
-    updateBoardLayout(boardId, layout);
+    updateBoardLayout(boardId, { ...boardStore.getState().boardLayouts[boardId], ...layout });
   };
 
-  return { panels, layoutPanels, defaultLayout, handleLayoutChanged };
+  const handleGroupCollapse = (projectId: string) => {
+    updateBoardLayout(boardId, { ...boardStore.getState().boardLayouts[boardId], [projectId]: collapsedPanelMinWidth });
+  };
+
+  return { panels, layoutPanels, defaultLayout, handleLayoutChanged, handleGroupCollapse };
 }
 
 /** Whether the board shows the getting-started panel: in a workspace, until its welcome text has been seen. */
