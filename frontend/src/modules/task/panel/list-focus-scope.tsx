@@ -7,7 +7,6 @@ import { firstItemInView } from '~/modules/task/helpers/panel-nav-registry';
 import { cn } from '~/utils/cn';
 
 interface ListFocusScopeProps {
-  id?: string;
   className?: string;
   /** DOM ids of the list's items, in render order. */
   itemIds: string[];
@@ -23,7 +22,7 @@ let keysAnnounced = false;
  * A board list as one Tab stop. A mounted current item holds it; otherwise the list does, and passes focus straight on
  * to its current item, or else to the first item in view, making that one current.
  */
-export function ListFocusScope({ id, className, itemIds, viewportRef, children }: ListFocusScopeProps) {
+export function ListFocusScope({ className, itemIds, viewportRef, children }: ListFocusScopeProps) {
   const { t } = useTranslation();
   const scopeRef = useRef<HTMLDivElement>(null);
   const ids = new Set(itemIds);
@@ -48,7 +47,7 @@ export function ListFocusScope({ id, className, itemIds, viewportRef, children }
   };
 
   return (
-    <div ref={scopeRef} id={id} className={cn('outline-none', className)} tabIndex={itemHoldsStop ? -1 : 0} onFocus={handleFocus}>
+    <div ref={scopeRef} className={cn('outline-none', className)} tabIndex={itemHoldsStop ? -1 : 0} onFocus={handleFocus}>
       {children}
     </div>
   );

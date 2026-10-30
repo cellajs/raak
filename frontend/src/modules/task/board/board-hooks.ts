@@ -17,20 +17,15 @@ import type { BoardResizablePanel } from '~/modules/task/types';
 
 const kindDefaultOrders: Record<BoardResizablePanel['kind'], number> = { explainer: -1_000_000, project: 0, labels: 1_000_000 };
 
-// Small enough to keep a split group at its membership anchor, large enough for `getOrderBetween` to fit drops in between
+// A project's split sections share one place on the board
+const reorderId = (panel: BoardResizablePanel) => (panel.kind === 'project' ? panel.project.id : panel.panelId);
 
-const splitSectionOrderStep = 0.001;
-
-/** A device-local order wins, then the membership order (split panels offset it by sectionIndex), then the kind default. */
+/** A device-local order wins, then the membership order, then the kind default. Split sections tie, and a stable sort keeps them in their own order. */
 export function getPanelDisplayOrder(panel: BoardResizablePanel, localOrders: Record<string, number> = {}): number | undefined {
-  const localOrder = localOrders[panel.panelId];
+  const localOrder = localOrders[reorderId(panel)];
   if (localOrder !== undefined) return localOrder;
 
-  if (panel.kind === 'project') {
-    const anchor = panel.project.membership?.displayOrder ?? kindDefaultOrders.project;
-    if (panel.sectionFilters) return anchor + (panel.sectionIndex ?? 0) * splitSectionOrderStep;
-    return anchor;
-  }
+  if (panel.kind === 'project') return panel.project.membership?.displayOrder ?? kindDefaultOrders.project;
 
   return kindDefaultOrders[panel.kind];
 }
@@ -67,7 +62,7 @@ type PanelReorderResult =
   | { kind: 'local'; panelId: string; displayOrder: number }
   | null;
 
-/** Fractional panel order from the render comparator; unsplit projects persist membership order, split and local panels a local one. */
+/** Fractional panel order from the render comparator; projects persist membership order, local panels a local one. `newOrder` holds reorder ids. */
 export function computePanelReorder(
   panels: BoardResizablePanel[],
   localOrders: Record<string, number> | undefined,
@@ -75,10 +70,10 @@ export function computePanelReorder(
   sourcePanelId: string,
   options?: { persist?: 'auto' | 'local' },
 ): PanelReorderResult {
-  const sourcePanel = panels.find((panel) => panel.panelId === sourcePanelId);
+  const panelById = new Map(panels.map((panel) => [reorderId(panel), panel]));
+  const sourcePanel = panelById.get(sourcePanelId);
   if (!sourcePanel) return null;
 
-  const panelById = new Map(panels.map((panel) => [panel.panelId, panel]));
   const orderAt = (i: number): number | undefined => {
     if (i < 0 || i >= newOrder.length) return undefined;
     const neighbor = panelById.get(newOrder[i]);
@@ -96,7 +91,7 @@ export function computePanelReorder(
   // A float collision requires a future rebalance pass.
   if (newDisplayOrder === null) return null;
 
-  const sourceProject = sourcePanel.kind === 'project' && !sourcePanel.sectionFilters ? sourcePanel.project : undefined;
+  const sourceProject = sourcePanel.kind === 'project' ? sourcePanel.project : undefined;
   if (options?.persist !== 'local' && sourceProject?.membership) {
     if (newDisplayOrder === sourceProject.membership.displayOrder) return null;
     return {
@@ -109,7 +104,7 @@ export function computePanelReorder(
     };
   }
 
-  // Split panels and local-only panels (explainer, labels) persist a device-local order
+  // Local-only panels (explainer, labels) persist a device-local order
   return { kind: 'local', panelId: sourcePanelId, displayOrder: newDisplayOrder };
 }
 
@@ -136,10 +131,7 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
   const updateBoardLayout = useBoardStore((state) => state.updateBoardLayout);
 
   useEffect(() => {
-    prunePanelOrders(
-      boardId,
-      panels.map(({ panelId }) => panelId),
-    );
+    prunePanelOrders(boardId, panels.map(reorderId));
   }, [boardId, panels, prunePanelOrders]);
 
   const layoutPanels: BoardLayoutPanel[] = panels.map((panel) => ({
@@ -148,6 +140,7 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
       panel.kind === 'project'
         ? projectPanelName(panel.project, panel.sectionFilters)
         : t(panel.kind === 'labels' ? 'c:label_other' : 'c:getting_started'),
+    ...(panel.kind === 'project' && panel.sectionFilters && { group: { id: panel.project.id, label: panel.project.name } }),
   }));
 
   const handleLayoutChanged = (layout: Record<string, number>) => {

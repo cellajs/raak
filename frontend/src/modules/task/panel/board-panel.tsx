@@ -10,16 +10,18 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
-import { makePanelKey, prepareBoardTasks, projectPanelName } from '~/modules/task/helpers/board-helpers';
+import { prepareBoardTasks, projectPanelName, sectionPanelId } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { isExcludedBySearch, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
 import { openCreateTaskDialog } from '~/modules/task/mobile-create-task-dialog';
+import { PanelSectionRow } from '~/modules/task/panel/panel-section-row';
 import { TaskPanelCollapsed } from '~/modules/task/panel/task-panel-collapsed';
 import { TaskPanelContent } from '~/modules/task/panel/task-panel-content';
 import { TaskPanelHeader } from '~/modules/task/panel/task-panel-header';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskCounts } from '~/modules/task/types';
+import { cn } from '~/utils/cn';
 
 export interface BoardPanelProps {
   fetchedTasks: Task[];
@@ -46,7 +48,7 @@ export const BoardPanel = memo(function BoardPanel({
   const { isVisible: showFab } = useScrollVisibility(isMobile);
 
   const { expandIced, expandAccepted } = useProjectPanelPrefs(project.id);
-  const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
+  const panelId = sectionPanelId(project.id, sectionFilters);
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
   // The open create-form draft always stays visible; a highlight search keeps every task but the excluded ones
@@ -97,8 +99,15 @@ export const BoardPanel = memo(function BoardPanel({
           />
         </div>
       ) : (
-        <div ref={panelRef} className="relative flex h-full flex-col">
-          <TaskPanelHeader project={project} sectionFilters={sectionFilters} publicView={publicView} />
+        <div
+          ref={panelRef}
+          className={cn('relative flex h-full flex-col', sectionFilters && '[--board-panel-offset:var(--board-section-panel-offset)]')}
+        >
+          {sectionFilters ? (
+            <PanelSectionRow panelId={panelId} sectionFilters={sectionFilters} isCollapsed={!!isCollapsed} />
+          ) : (
+            <TaskPanelHeader project={project} publicView={publicView} />
+          )}
           <div className="flex min-h-0 flex-1 flex-col">
             <BoardPanelContent
               isCollapsed={!!isCollapsed}
@@ -108,7 +117,12 @@ export const BoardPanel = memo(function BoardPanel({
             </BoardPanelContent>
           </div>
           {/* Above the sticky status bars (z-85), which would cover a recoloured border */}
-          {highlightProject && <div aria-hidden className="pointer-events-none absolute inset-0 z-90 rounded-t-lg ring-4 ring-primary ring-inset" />}
+          {highlightProject && (
+            <div
+              aria-hidden
+              className={cn('pointer-events-none absolute inset-0 z-90 ring-4 ring-primary ring-inset', !sectionFilters && 'rounded-t-lg')}
+            />
+          )}
         </div>
       )}
     </div>

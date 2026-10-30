@@ -12,7 +12,7 @@ import { organizationQueryOptions } from '~/modules/organization/query';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useProjectViewSections, useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { TaskStatus } from '~/modules/task/task-properties';
+import { defaultSplitSections } from '~/modules/task/helpers/board-helpers';
 import { Button } from '~/modules/ui/button';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
@@ -97,12 +97,7 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
             <DropdownActionItem
               icon={SquareSplitHorizontalIcon}
               onSelect={closeThen(() =>
-                viewSections
-                  ? dropPanelSections(boardId, project.id)
-                  : setPanelSections(boardId, project.id, [
-                      { status: [TaskStatus.Accepted, TaskStatus.Reviewed, TaskStatus.Delivered, TaskStatus.Finished, TaskStatus.Started] },
-                      { status: [TaskStatus.Unstarted, TaskStatus.Iced] },
-                    ]),
+                viewSections ? dropPanelSections(boardId, project.id) : setPanelSections(boardId, project.id, defaultSplitSections),
               )}
             >
               {viewSections ? t('c:merge') : t('c:split')}

@@ -5,6 +5,7 @@ import { LabelsPanel } from '~/modules/label/labels-panel';
 import { buildBoardExtraPanels, computePanelReorder, useBoardPanels, useExpandLabelsPanel } from '~/modules/task/board/board-hooks';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
+import { TaskPanelHeader } from '~/modules/task/panel/task-panel-header';
 
 export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardProps) {
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
@@ -24,6 +25,11 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
     setPanelOrder(boardId, result.panelId, result.displayOrder);
   };
 
+  const renderGroupHeader = (projectId: string) => {
+    const project = projects.find(({ id }) => id === projectId);
+    return project && <TaskPanelHeader project={project} publicView={publicView} />;
+  };
+
   return (
     <BoardLayout
       ref={boardLayoutRef}
@@ -35,6 +41,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
       autoHeight
       reorderable={!publicView}
       onPanelReorder={handlePanelReorder}
+      groupHeader={renderGroupHeader}
     >
       {(panelId) => {
         const panel = panels.find((candidate) => candidate.panelId === panelId);

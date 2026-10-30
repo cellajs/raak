@@ -1,4 +1,4 @@
-import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, InfoIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
+import { EllipsisVerticalIcon, ExpandIcon, InfoIcon, PlusIcon, SettingsIcon, SquareCheckBigIcon, TagIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -13,13 +13,11 @@ import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import { buildBoardExtraPanels, usePanelLayout, useShowExplainer } from '~/modules/task/board/board-hooks';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { BoardSearch } from '~/modules/task/board-search';
-import { formatSectionLabel, isPrimarySection, panelHostsDraft } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
-import { TaskStatus } from '~/modules/task/task-properties';
+import { PanelSectionRow } from '~/modules/task/panel/panel-section-row';
 import { newTaskButtonClass, panelHandleClass, statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
-import type { BoardResizablePanel } from '~/modules/task/types';
+import type { BoardResizablePanel, ProjectResizablePanel } from '~/modules/task/types';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
 import { cn } from '~/utils/cn';
@@ -73,6 +71,12 @@ export function BoardSkeleton({
   // `(ideal - 100%) * 9999` is a switch on the parent's width: far above `stored` while the parent is narrower than `ideal`, negative once it fits.
   const rowMinWidth = isMobile ? undefined : `max(${ideal}px, min(${stored}px, (${ideal}px - 100%) * 9999))`;
 
+  // Open columns share the row in proportion to their widths, as the panel group does when it fills its container.
+  const columnStyle = (panelId: string) =>
+    panelCollapseState[panelId]
+      ? { flex: 'none', width: collapsedPanelMinWidth }
+      : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: panelMinWidth };
+
   const renderColumn = (panel: SkeletonColumn) => {
     switch (panel.kind) {
       case 'mobile':
@@ -97,14 +101,10 @@ export function BoardSkeleton({
       default:
         return (
           <>
-            {(!projectPage || panel.sectionFilters) && (
-              <PanelHeaderSkeleton
-                boardId={boardId}
-                panelId={panel.panelId}
-                project={panel.project}
-                sectionFilters={panel.sectionFilters}
-                projectPage={projectPage}
-              />
+            {panel.sectionFilters ? (
+              <PanelSectionRow panelId={panel.panelId} sectionFilters={panel.sectionFilters} isCollapsed={!!panelCollapseState[panel.panelId]} />
+            ) : (
+              !projectPage && <PanelHeaderSkeleton project={panel.project} projectPage={false} isCollapsed={!!panelCollapseState[panel.panelId]} />
             )}
             <PanelBodySkeleton />
           </>
@@ -123,7 +123,7 @@ export function BoardSkeleton({
         )}
       >
         <div className="flex h-full" style={{ gap: columnGap, minWidth: rowMinWidth }}>
-          {panels.map((panel) => {
+          {panels.map((panel, index) => {
             const { panelId } = panel;
             if (panel.kind === 'mobile') {
               return (
@@ -132,12 +132,39 @@ export function BoardSkeleton({
                 </div>
               );
             }
-            // Open columns share the row in proportion to their widths, as the panel group does when it fills its container.
-            const columnStyle = panelCollapseState[panelId]
-              ? { flex: 'none', width: collapsedPanelMinWidth }
-              : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: panelMinWidth };
+            if (panel.kind === 'project' && panel.sectionFilters) {
+              const previous = panels[index - 1];
+              if (previous?.kind === 'project' && previous.project.id === panel.project.id) return null;
+
+              const sections = panels.filter(
+                (candidate): candidate is ProjectResizablePanel => candidate.kind === 'project' && candidate.project.id === panel.project.id,
+              );
+              const isCollapsed = sections.every((section) => panelCollapseState[section.panelId]);
+              const innerGaps = (sections.length - 1) * columnGap;
+              const widthOf = (read: (panelId: string) => number) =>
+                sections.reduce(
+                  (sum, section) => sum + (panelCollapseState[section.panelId] ? collapsedPanelMinWidth : read(section.panelId)),
+                  innerGaps,
+                );
+              const groupStyle = isCollapsed
+                ? { flex: 'none', width: widthOf(() => 0) }
+                : { flex: `${widthOf((id) => defaultSizes[id])} 1 0px`, minWidth: widthOf(() => panelMinWidth) };
+
+              return (
+                <div key={panel.project.id} className="flex h-full flex-col" style={groupStyle}>
+                  <PanelHeaderSkeleton project={panel.project} projectPage={projectPage} isCollapsed={isCollapsed} className="border-b" />
+                  <div className="flex min-h-0 flex-1" style={{ gap: columnGap }}>
+                    {sections.map((section) => (
+                      <div key={section.panelId} className="flex h-full flex-col" style={columnStyle(section.panelId)}>
+                        {renderColumn(section)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
             return (
-              <div key={panelId} className="flex h-full flex-col" style={columnStyle}>
+              <div key={panelId} className="flex h-full flex-col" style={columnStyle(panelId)}>
                 {renderColumn(panel)}
               </div>
             );
@@ -242,59 +269,43 @@ function LocalPanelBodySkeleton() {
   );
 }
 
-interface PanelHeaderSkeletonProps extends Pick<BoardPanelProps, 'project' | 'sectionFilters'> {
-  boardId: string;
-  panelId: string;
+interface PanelHeaderSkeletonProps extends Pick<BoardPanelProps, 'project'> {
   projectPage: boolean;
+  isCollapsed: boolean;
+  className?: string;
 }
 
-function PanelHeaderSkeleton({ boardId, panelId, projectPage, project, sectionFilters }: PanelHeaderSkeletonProps) {
+function PanelHeaderSkeleton({ projectPage, project, isCollapsed, className }: PanelHeaderSkeletonProps) {
   const { t } = useTranslation();
-
-  const viewSections = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.viewSections);
-  const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
-
-  const isPrimary = isPrimarySection(viewSections, sectionFilters);
-  const hostsCreateButton = panelHostsDraft(viewSections, project.id, panelId, TaskStatus.Unstarted);
 
   return (
     <BoardPanelHeader
-      className="bg-background"
-      isCollapsed={!!isCollapsed}
+      className={cn('bg-background', className)}
+      isCollapsed={isCollapsed}
       leading={
         <div className={cn(buttonVariants({ variant: 'ghost' }), panelHandleClass, 'truncate', isCollapsed && 'w-full justify-center')}>
-          {!projectPage && isPrimary && <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />}
-          {(projectPage || !isPrimary) && sectionFilters && (
+          {projectPage ? (
             <div className="flex min-w-8 justify-center">
-              <FunnelIcon className="size-4 shrink-0" />
+              <SquareCheckBigIcon className="size-4 shrink-0" />
             </div>
+          ) : (
+            <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
           )}
-          {!isCollapsed && (
-            <div className="truncate font-semibold leading-6">
-              {isPrimary && !projectPage && project.name}
-              {(!isPrimary || projectPage) && sectionFilters && (
-                <span className={!projectPage ? 'pr-1 italic' : undefined}>{formatSectionLabel(sectionFilters)}</span>
-              )}
-            </div>
-          )}
+          {!isCollapsed && <div className="truncate font-semibold leading-6">{projectPage ? t('c:task_other') : project.name}</div>}
         </div>
       }
       actions={
-        !projectPage && (
-          <>
-            {isPrimary && (
-              <Button variant="ghost" className="h-8 px-1.5 max-sm:hidden" aria-label={t('c:resource_options', { resource: t('c:project') })}>
-                <EllipsisVerticalIcon />
-              </Button>
-            )}
-            {hostsCreateButton && (
-              <Button variant="secondary" size="xs" className={newTaskButtonClass}>
-                <PlusIcon className="size-4.5" />
-                <span>{t('c:task')}</span>
-              </Button>
-            )}
-          </>
-        )
+        <>
+          {!projectPage && (
+            <Button variant="ghost" className="h-8 px-1.5 max-sm:hidden" aria-label={t('c:resource_options', { resource: t('c:project') })}>
+              <EllipsisVerticalIcon />
+            </Button>
+          )}
+          <Button variant="secondary" size="xs" className={newTaskButtonClass}>
+            <PlusIcon className="size-4.5" />
+            <span>{t('c:task')}</span>
+          </Button>
+        </>
       }
     />
   );
