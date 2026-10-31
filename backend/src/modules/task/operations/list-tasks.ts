@@ -18,9 +18,21 @@ import { TimeSpan } from '#/utils/time-span';
 const queryInfoSchema = taskListQueryBaseSchema.omit({ projectId: true, workspaceId: true });
 type QueryInfo = z.infer<typeof queryInfoSchema>;
 
+const statusByName: Record<string, TaskStatus> = {
+  accepted: TaskStatus.Accepted,
+  reviewed: TaskStatus.Reviewed,
+  delivered: TaskStatus.Delivered,
+  finished: TaskStatus.Finished,
+  started: TaskStatus.Started,
+  unstarted: TaskStatus.Unstarted,
+  iced: TaskStatus.Iced,
+};
+
+const filterValues = (value?: string) => (value ? value.split(',') : []);
+
 /** A page of the tasks in `projectIds` that match the list query, hydrated with their projects' members and labels. */
 export const listTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean; range?: SeqRange }) => {
-  const { q, sort, order, acceptedCutOff, limit, offset } = queryInfo;
+  const { q, status, type, labels, sort, order, acceptedCutOff, limit, offset } = queryInfo;
   const rangeRead = seqRangeRead(tasksTable, opts?.range);
 
   const [tasksUsers, tasksLabels] = await Promise.all([findProjectMembers(ctx, { projectIds }), findLabelsByProjects(ctx, { projectIds })]);
@@ -36,6 +48,13 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
 
     return or(...wordFilters);
   });
+
+  // Slugs hold across a workspace's projects, where each project has its own label rows
+  const statuses = filterValues(status).flatMap((name) => statusByName[name] ?? []);
+  const typeSlugs = filterValues(type);
+  const typeIds = tasksLabels.filter(({ slug }) => typeSlugs.includes(slug)).map(({ id }) => id);
+  const labelSlugs = filterValues(labels);
+  const labelIds = tasksLabels.filter(({ slug }) => labelSlugs.includes(slug)).map(({ id }) => id);
 
   const orderBy =
     rangeRead.orderBy ??
@@ -54,6 +73,9 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
   const filters = and(
     ...rangeRead.where,
     ...keywordFilters,
+    statuses.length ? inArray(tasksTable.status, statuses) : undefined,
+    typeSlugs.length ? inArray(tasksTable.primaryLabelId, typeIds) : undefined,
+    labelSlugs.length ? (labelIds.length ? arrayOverlaps(tasksTable.labels, labelIds) : sql`false`) : undefined,
     requestScopeWhere(ctx, tasksTable, 'task'),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,

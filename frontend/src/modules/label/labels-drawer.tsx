@@ -36,13 +36,7 @@ function MobileLabelsDrawerButton(props: LabelsScopeProps) {
   useEffect(() => () => sheeter.getState().remove(labelsDrawerId, { isCleanup: true }), []);
 
   return (
-    <Button
-      ref={triggerRef}
-      variant="ghost"
-      aria-label={t('c:label_other')}
-      className="group-data-[search-focused=true]/boardHeader:hidden"
-      onClick={() => openLabelsDrawer(props, triggerRef)}
-    >
+    <Button ref={triggerRef} variant="ghost" aria-label={t('c:label_other')} onClick={() => openLabelsDrawer(props, triggerRef)}>
       <TagIcon />
     </Button>
   );

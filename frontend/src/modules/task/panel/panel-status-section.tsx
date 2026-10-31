@@ -1,4 +1,4 @@
-import { Link, useSearch } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import dayjs from 'dayjs';
 import { ChevronDownIcon, InfoIcon } from 'lucide-react';
 import { type RefObject, useEffect, useRef, useState } from 'react';
@@ -8,7 +8,9 @@ import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels'
 import { type TogglableStatusType, useProjectPanelPrefs, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { hasSectionBar, sectionBarId } from '~/modules/task/helpers/board-helpers';
 import { setCurrentItem } from '~/modules/task/helpers/focus-item';
+import { isBoardSearchActive } from '~/modules/task/helpers/search-filter';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
+import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
 import { useSectionEdgeVisibility } from '~/modules/task/hooks/use-section-edge-visibility';
 import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import { statusSectionColors } from '~/modules/task/task-styles';
@@ -50,7 +52,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   const setPanelSectionExpanded = useTaskBoardStore((state) => state.setPanelSectionExpanded);
   const boardId = useBoardStore((state) => state.activeBoardId)!;
 
-  const q = useSearch({ strict: false, select: (search) => search.q });
+  const search = useBoardSearch();
 
   const isIced = type === 'iced';
   const hasOnlyOlderAccepted = !isIced && !counts.accepted && counts.acceptedCutOff > 0;
@@ -61,7 +63,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   const { expandIced, expandAccepted } = useProjectPanelPrefs(projectId);
   const isExpanded = isIced ? expandIced : expandAccepted;
 
-  const showTotal = !q?.trim();
+  const showTotal = !isBoardSearchActive(search);
 
   // Glow the section button when count increases while collapsed
   const prevCountRef = useRef(count);

@@ -6,7 +6,6 @@ import { labelName } from 'shared/config/labels-config';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { LabelFilterButton } from '~/modules/label/label-filter-button';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
-import { isLabelInSearch } from '~/modules/label/label-search';
 import { LabelTileDetails, labelTileReveal } from '~/modules/label/label-tile-details';
 import { labelTileStore, useLabelTileStore } from '~/modules/label/label-tile-store';
 import { useLabelUpdateMutation } from '~/modules/label/query';
@@ -16,6 +15,7 @@ import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
+import { filterValues } from '~/modules/task/helpers/search-filter';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
 import { itemFocusBarClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
@@ -64,7 +64,7 @@ export function LabelTile({ row, singleExpand, onAction, onBoard }: LabelTilePro
   const { t } = useTranslation();
 
   const expanded = useLabelTileStore((state) => !!state.expandedIds[row.id]);
-  const isInSearch = useSearch({ strict: false, select: (search) => isLabelInSearch(search.q, row.name) });
+  const isInSearch = useSearch({ strict: false, select: (search) => filterValues(search.labels).includes(row.slug) });
 
   // Read-only viewers (guest membership or public access) cannot rename, switch mode or delete
   const isReadOnly = useIsProjectReadOnly(row.projectId);
@@ -114,7 +114,7 @@ export function LabelTile({ row, singleExpand, onAction, onBoard }: LabelTilePro
     // A single key is safe here: it only acts while the tile itself has focus
     if (event.key.toLowerCase() === 'f' && !event.altKey && !event.ctrlKey && !event.metaKey) {
       event.preventDefault();
-      toggleLabelFilter(row.name);
+      toggleLabelFilter(row.slug);
     } else if (event.key === 'Enter') {
       event.preventDefault();
       handleNameClick();
@@ -223,7 +223,7 @@ export function LabelTile({ row, singleExpand, onAction, onBoard }: LabelTilePro
                 />
               )}
             </AnimatePresence>
-            <LabelFilterButton name={row.name} isPressed={isInSearch} onAction={onAction} className={actionClass} />
+            <LabelFilterButton name={row.name} slug={row.slug} isPressed={isInSearch} onAction={onAction} className={actionClass} />
             <LabelOptionsButton row={row} canManage={!isReadOnly} className={actionClass} />
           </div>
         </div>

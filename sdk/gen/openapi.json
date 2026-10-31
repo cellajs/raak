@@ -10345,6 +10345,33 @@
           },
           {
             "schema": {
+              "type": "string",
+              "maxLength": 1000000
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 1000000
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 1000000
+            },
+            "required": false,
+            "name": "labels",
+            "in": "query"
+          },
+          {
+            "schema": {
               "type": "number",
               "exclusiveMinimum": 0
             },
@@ -21313,6 +21340,33 @@
             "required": false,
             "description": "Range read for sync: the last sequence position to return. Requires afterSeq.",
             "name": "untilSeq",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 1000000
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 1000000
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 1000000
+            },
+            "required": false,
+            "name": "labels",
             "in": "query"
           },
           {

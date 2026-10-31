@@ -13,7 +13,7 @@ import { useColumnVisibility } from '~/modules/common/data-table/use-column-visi
 import { SearchScope } from '~/modules/common/match-highlight/match-scope';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
-import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { isBoardSearchActive, matchesBoardSearch, parseBoardSearch } from '~/modules/task/helpers/search-filter';
 import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
 import { useColumns } from '~/modules/task/table/tasks-columns';
@@ -47,6 +47,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
 
   const { q, sort, order } = search;
+  const parsedSearch = parseBoardSearch(search);
 
   const [columns, setColumns] = useColumnVisibility(useColumns({ hideProject: !workspace, organization, tenantId, projects }));
   const [selected, setSelected] = useState<Task[]>([]);
@@ -73,7 +74,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const total = useListQueryTotal(queryOptions.queryKey);
 
   const isOnline = useOnlineManager();
-  const rows = isOnline ? fetchedRows : fetchedRows?.filter((row) => matchesBoardSearch(q, row));
+  const rows = isOnline ? fetchedRows : fetchedRows?.filter((row) => matchesBoardSearch(parsedSearch, row));
 
   // isFetching includes a next-page fetch
   const fetchMore = async () => {
@@ -102,7 +103,6 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
       <div className="flex h-full flex-col gap-4">
         <TasksTableBar
           total={total}
-          hasQuery={!!q?.trim()}
           selected={selected}
           searchVars={search}
           columns={columns}
@@ -126,7 +126,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
             error,
             isLoading,
             isFetching,
-            isFiltered: !!q,
+            isFiltered: isBoardSearchActive(parsedSearch),
             hasNextPage,
             fetchMore,
             selectedRows: selectedRowIds,

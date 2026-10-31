@@ -1,7 +1,7 @@
-import { useSearch } from '@tanstack/react-router';
 import { useSyncExternalStore } from 'react';
 import { subscribeToTaskCache } from '~/modules/task/helpers/active-task';
-import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { isBoardSearchActive, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
 import { type BaseTasksQueryParam, taskKeys } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { isQueryData } from '~/query/basic/mutate-query';
@@ -10,9 +10,8 @@ import type { QueryData } from '~/query/types';
 
 /** Total of the tasks on the board; while a search is active, the matches among the loaded tasks. */
 export const useTasksTotal = (queryParams?: BaseTasksQueryParam) => {
-  const q = useSearch({ strict: false, select: (search) => search.q });
-
-  const isSearching = !!q?.trim();
+  const search = useBoardSearch();
+  const isSearching = isBoardSearchActive(search);
   const queryKey = queryParams ? taskKeys.list.org(queryParams.organizationId) : taskKeys.publicList.base;
 
   return useSyncExternalStore(subscribeToTaskCache, () => {
@@ -22,7 +21,7 @@ export const useTasksTotal = (queryParams?: BaseTasksQueryParam) => {
 
     return queries.reduce((total, [, data]) => {
       if (!isQueryData<Task>(data)) return total;
-      if (isSearching) return total + data.items.filter((task) => matchesBoardSearch(q, task)).length;
+      if (isSearching) return total + data.items.filter((task) => matchesBoardSearch(search, task)).length;
       return total + data.total;
     }, 0);
   });

@@ -1,4 +1,4 @@
-import { toggleLabelSearch } from '~/modules/label/label-search';
+import { toggleFilterValue } from '~/modules/task/helpers/search-filter';
 import { taskSheetParam } from '~/modules/task/search-params-schemas';
 import { getRouter } from '~/routes/-router-instance';
 
@@ -13,11 +13,11 @@ export const selectBoardProject = (projectSlug?: string) => {
 };
 
 /** A label tile's filter toggle, written into the board search. */
-export const toggleLabelFilter = (name: string) => {
+export const toggleLabelFilter = (slug: string) => {
   getRouter().navigate({
     to: '.',
     replace: true,
     resetScroll: false,
-    search: (prev) => ({ ...prev, q: toggleLabelSearch(prev.q, name) || undefined }),
+    search: (prev) => ({ ...prev, labels: toggleFilterValue(prev.labels, slug) }),
   });
 };
