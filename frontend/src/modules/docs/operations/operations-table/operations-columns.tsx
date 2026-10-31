@@ -1,5 +1,4 @@
 import { BirdIcon } from 'lucide-react';
-import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GenExtensionDefinition, GenOperationSummary } from 'sdk/docs-types';
 import { cellLinkTextClass } from '~/modules/common/data-table/columns';
@@ -8,6 +7,7 @@ import { useColumnVisibility } from '~/modules/common/data-table/use-column-visi
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { extensionLabel } from '~/modules/docs/helpers/extension-label';
 import { upperFirst } from '~/modules/docs/helpers/upper-first';
+import { AccessCell, type AccessValue } from '~/modules/docs/operations/access-explanation';
 import { MethodLabel } from '~/modules/docs/operations/method-label';
 import { openOperationSheet } from '~/modules/docs/operations/operation-detail';
 import { openExamplesSheet } from '~/modules/docs/operations/operation-examples';
@@ -19,37 +19,8 @@ import { cn } from '~/utils/cn';
 /** Tag kinds whose columns start hidden, to keep the default table narrow; the columns menu shows them. */
 const hiddenTagKinds = new Set(['owner', 'entity']);
 
-/** Tag kinds shown as plain small text; the other kinds get a badge per value. */
-const plainTagKinds = new Set(['owner']);
-
-interface LabelItem {
-  key: string;
-  label: string;
-  tooltip?: string;
-}
-
-/** Comma-separated labels; one with a tooltip gets a dotted underline that brightens on hover. */
-function LabelList({ items }: { items: LabelItem[] }) {
-  return (
-    <div className="truncate text-muted-foreground text-xs">
-      {items.map(({ key, label, tooltip }, index) => (
-        <Fragment key={key}>
-          {index > 0 && <span className="text-faint-foreground">, </span>}
-          <span
-            className={cn(
-              'cursor-default',
-              tooltip && 'underline decoration-foreground/40 decoration-dotted underline-offset-3 hover:text-foreground hover:decoration-foreground',
-            )}
-            data-tooltip={tooltip ? 'true' : undefined}
-            data-tooltip-content={tooltip}
-          >
-            {label}
-          </span>
-        </Fragment>
-      ))}
-    </div>
-  );
-}
+/** Extensions that decide whether a request gets through: their values read as content, the others as support. */
+const prominentExtensions = new Set(['x-guard', 'x-rate-limiter']);
 
 export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: string[] = []) => {
   const { t } = useTranslation();
@@ -62,15 +33,24 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
     width: 150,
     minWidth: 120,
     placeholderValue: '-',
-    renderCell: ({ row }: { row: GenOperationSummary }) => {
+    renderCell: ({ row, tabIndex }: { row: GenOperationSummary; tabIndex: number }) => {
       const values = row.extensions[ext.id];
       if (!values?.length) return null;
-      const items = values.map((value) => {
-        const meta = ext.values?.[value];
-        const label = meta?.name ?? value;
-        return { key: value, label, tooltip: meta?.description ? `${value}: ${meta.description}` : label !== value ? value : undefined };
-      });
-      return <LabelList items={items} />;
+      const items: AccessValue[] = values.map((value) => ({
+        value,
+        code: value,
+        name: ext.values?.[value]?.name ?? value,
+        description: ext.values?.[value]?.description,
+        isGuard: ext.key === 'x-guard',
+      }));
+      return (
+        <AccessCell
+          label={extensionLabel(ext)}
+          items={items}
+          tabIndex={tabIndex}
+          className={cn(prominentExtensions.has(ext.key) && 'text-foreground')}
+        />
+      );
     },
   }));
 
@@ -83,11 +63,15 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
     width: 120,
     minWidth: 80,
     placeholderValue: '-',
-    renderCell: ({ row }) => {
+    renderCell: ({ row, tabIndex }) => {
       if (!row.tool) return null;
-      const items: LabelItem[] = [{ key: 'tool', label: t('c:docs.tool'), tooltip: row.tool.description }];
-      if (row.tool.approvalRequired) items.push({ key: 'approval', label: t('c:docs.approval'), tooltip: t('c:docs.tool_approval.text') });
-      return <LabelList items={items} />;
+      const items: AccessValue[] = [
+        { value: 'tool', name: t('c:docs.tool'), description: t('c:docs.tool_description.text', { description: row.tool.description }) },
+      ];
+      if (row.tool.approvalRequired) {
+        items.push({ value: 'approval', name: t('c:docs.needs_approval'), description: t('c:docs.tool_approval.text') });
+      }
+      return <AccessCell label="MCP" items={items} tabIndex={tabIndex} />;
     },
   };
 
@@ -100,14 +84,13 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
     minBreakpoint: 'md',
     resizable: true,
     // A set width keeps the spare room for the path column
-    width: plainTagKinds.has(kind) ? 90 : 130,
+    width: kind === 'owner' ? 90 : 130,
     minWidth: 80,
     placeholderValue: '-',
     renderCell: ({ row }: { row: GenOperationSummary }) => {
       const values = row.tagsByKind[kind];
       if (!values?.length) return null;
-      if (plainTagKinds.has(kind)) return <LabelList items={values.map((tag) => ({ key: tag, label: tag }))} />;
-      return <TagBadges values={values} />;
+      return <TagBadges kind={kind} values={values} />;
     },
   }));
 
@@ -150,15 +133,30 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
       minBreakpoint: 'sm',
       width: 50,
       renderCell: ({ row, tabIndex }) => {
-        if (!row.hasResponseBody) return <span className="w-full text-center text-muted-foreground text-xs">{t('c:not_applicable')}</span>;
-        // Has response body but no example yet
-        if (!row.hasExample) return <span className="w-full text-center text-muted-foreground">-</span>;
+        if (!row.hasResponseBody) {
+          return (
+            <span
+              className="w-full text-center text-muted-foreground text-xs"
+              data-tooltip="true"
+              data-tooltip-content={t('c:docs.no_response_body')}
+            >
+              {t('c:not_applicable')}
+            </span>
+          );
+        }
+        if (!row.hasExample) {
+          return (
+            <span className="w-full text-center text-muted-foreground" data-tooltip="true" data-tooltip-content={t('c:docs.no_example_yet')}>
+              -
+            </span>
+          );
+        }
         return (
           <Button
             variant="cell"
             size="cell"
             tabIndex={tabIndex}
-            className="justify-center opacity-60"
+            className="justify-center"
             aria-label={t('c:docs.view_example')}
             data-tooltip="true"
             data-tooltip-content={t('c:docs.view_example')}

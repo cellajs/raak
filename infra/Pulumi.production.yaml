@@ -1,4 +1,5 @@
 encryptionsalt: v1:KpF/+xlCdMo=:v1:I12+whm3QU/0wKtk:YWsrWtdfXyNR/gskpxMhCGnqk67WIw==
 config:
+  infra:projectId: e2e322db-51db-4141-8b2b-1602966a9ca0
   infra:bootstrapComplete: "2026-07-05T07:23:35.901Z"
   infra:iamModel: v2
