@@ -18,7 +18,6 @@ interface TasksTableBarProps
   extends Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'>,
     Omit<ResolvedTasksTableProps, 'organization' | 'tenantId'> {
   total: number | null;
-  /** True in highlight mode too, where `searchVars` (what the table and export fetch) carries no query. */
   hasQuery: boolean;
   isCompact: boolean;
   setIsCompact: (isCompact: boolean) => void;
@@ -64,13 +63,7 @@ export function TasksTableBar({
         />
       )}
 
-      <BoardSearch isInWorkspace={!!workspace} toggleFocus={toggleSearchFocus}>
-        {typeof total === 'number' && hasQuery && (
-          <div className="flex items-center text-muted-foreground text-sm">
-            {t('c:resource_count_found', { count: total, resource: t('c:task', { count: total }) })}
-          </div>
-        )}
-      </BoardSearch>
+      <BoardSearch isInWorkspace={!!workspace} toggleFocus={toggleSearchFocus} total={total} />
 
       {!isSearchFocused && !hasQuery && <TableCount count={total} label="c:task" className="mr-3 max-sm:hidden" />}
       <ViewMenu

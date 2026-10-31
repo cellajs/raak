@@ -29,22 +29,20 @@ const publicTasksTableQueryKey = ({
   q,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
-  matchMode = tasksTableQueryDefaults.matchMode,
   projectId,
-}: PublicTasksTableParams) => taskKeys.publicList.filtered({ q, sort, order, projectId, matchMode, public: true });
+}: PublicTasksTableParams) => taskKeys.publicList.filtered({ q, sort, order, projectId, public: true });
 
 export const publicTasksTableQueryOptions = ({
   q,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
-  matchMode = tasksTableQueryDefaults.matchMode,
   limit = appConfig.requestLimits.tasksTable,
   projectId,
 }: PublicTasksTableParams & { limit?: number }) => {
-  const query = { q, sort, order, projectId, matchMode };
+  const query = { q, sort, order, projectId };
 
   return infiniteQueryOptions({
-    queryKey: publicTasksTableQueryKey({ q, sort, order, matchMode, projectId }),
+    queryKey: publicTasksTableQueryKey({ q, sort, order, projectId }),
     ...offsetPaging(limit, (offset, signal) => getPublicTasks({ query: { ...query, ...pageQuery(limit, offset) }, signal })),
     refetchOnWindowFocus: false,
     gcTime: 0,

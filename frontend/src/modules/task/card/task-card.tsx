@@ -208,15 +208,14 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
           isSheet
             ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]'
             : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-muted/50 hover:via-40%',
-          // A search match or a selected card keeps full strength, so it stands out among the resting ones
-          !isSheet && effectiveState === 'collapsed' && !isCurrent && !task.isMatchingSearch && !isSelected && 'resting-text',
+          // A selected card keeps full strength, so it stands out among the resting ones
+          !isSheet && effectiveState === 'collapsed' && !isCurrent && !isSelected && 'resting-text',
           // A touch long-press on a collapsed card must start a drag, never a text selection or the iOS callout.
           // The summary's static HTML sets select-text itself, so the card's own select-none does not reach it.
           !isSheet &&
             effectiveState === 'collapsed' &&
             'pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none] pointer-coarse:[&_.bn-static-editor]:select-none',
           taskCardVariants({ status: task.status }),
-          task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30' : 'bg-green-300/20 hover:bg-green-300/30'),
         )}
       >
         <CardContent

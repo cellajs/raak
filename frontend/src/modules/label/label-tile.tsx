@@ -4,9 +4,9 @@ import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelName } from 'shared/config/labels-config';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
-import { LabelActions } from '~/modules/label/label-actions';
+import { LabelFilterButton } from '~/modules/label/label-filter-button';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
-import { type LabelAction, labelSearchState } from '~/modules/label/label-search';
+import { isLabelInSearch } from '~/modules/label/label-search';
 import { LabelTileDetails, labelTileReveal } from '~/modules/label/label-tile-details';
 import { labelTileStore, useLabelTileStore } from '~/modules/label/label-tile-store';
 import { useLabelUpdateMutation } from '~/modules/label/query';
@@ -14,10 +14,9 @@ import type { LabelRow, LabelsHostProps } from '~/modules/label/types';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
-import { applyLabelAction } from '~/modules/task/helpers/board-navigation';
+import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
-import { searchHighlightRowClass } from '~/modules/task/search-highlight';
 import { itemFocusBarClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
 import { Input } from '~/modules/ui/input';
@@ -45,26 +44,14 @@ const openActionsReveal = tw(
 const metaHide = tw(
   'transition-opacity group-hover/label-tile:opacity-0 group-focus-visible/label-tile:opacity-0 group-has-[:focus-visible]/label-tile:opacity-0 group-has-data-dropdowner-active/label-tile:opacity-0 group-has-data-dropdowner-done/label-tile:opacity-0 motion-reduce:transition-none',
 );
-// Transparent under the floating filter, highlight, exclude and options buttons (4 × 2rem + 3 × 0.25rem gaps), then a 1.5rem
-// fade. A mask fades the text itself, so it works on every row tint (hover, search highlight) and on the transparent panel.
+// Transparent under the floating filter and options buttons (2 × 2rem + a 0.25rem gap), then a 1.5rem fade. A mask fades the
+// text itself, so it works on the hover tint and on the transparent panel.
 const nameFade = tw(
-  'group-hover/label-tile:[mask-image:linear-gradient(to_left,transparent_8.75rem,black_10.25rem)] group-focus-visible/label-tile:[mask-image:linear-gradient(to_left,transparent_8.75rem,black_10.25rem)] group-has-[:focus-visible]/label-tile:[mask-image:linear-gradient(to_left,transparent_8.75rem,black_10.25rem)]',
+  'group-hover/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-focus-visible/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-has-[:focus-visible]/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)]',
 );
-
-// At rest a collapsed tile parks its pressed toggle in exclude's slot, beside the count in the options slot, so whichever
-// toggle it is sits in one place, and exclude keeps it on hover (one slot is a 2rem button and a 0.25rem gap)
-const restingPressedSlot: Record<LabelAction, string> = {
-  filter: tw('translate-x-18 opacity-100'),
-  highlight: tw('translate-x-9 opacity-100'),
-  exclude: tw('translate-x-0 opacity-100'),
-};
-
-// Single keys are safe here: they only act while the tile itself has focus
-const tileKeyActions: Partial<Record<string, LabelAction>> = { f: 'filter', h: 'highlight', x: 'exclude' };
 
 interface LabelTileProps extends Pick<LabelsHostProps, 'singleExpand' | 'onAction'> {
   row: LabelRow;
-  highlighted: boolean;
   /** A tile in the board panel is a board item: one Tab stop for the list, arrow keys between tiles. */
   onBoard?: boolean;
 }
@@ -73,11 +60,11 @@ interface LabelTileProps extends Pick<LabelsHostProps, 'singleExpand' | 'onActio
 export const labelTileDomId = (labelId: string) => `label-tile-${labelId}`;
 
 /** A click expands the tile in place, like a task card; a click on the expanded name renames it, and on the board Enter does both. */
-export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }: LabelTileProps) {
+export function LabelTile({ row, singleExpand, onAction, onBoard }: LabelTileProps) {
   const { t } = useTranslation();
 
   const expanded = useLabelTileStore((state) => !!state.expandedIds[row.id]);
-  const active = useSearch({ strict: false, select: (search) => labelSearchState(search.q, row.name) });
+  const isInSearch = useSearch({ strict: false, select: (search) => isLabelInSearch(search.q, row.name) });
 
   // Read-only viewers (guest membership or public access) cannot rename, switch mode or delete
   const isReadOnly = useIsProjectReadOnly(row.projectId);
@@ -124,10 +111,10 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
   // The Escape that closes a tooltip stops there (WCAG 1.4.13).
   const handleTileKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!onBoard || event.target !== event.currentTarget) return;
-    const keyAction = event.altKey || event.ctrlKey || event.metaKey ? undefined : tileKeyActions[event.key.toLowerCase()];
-    if (keyAction) {
+    // A single key is safe here: it only acts while the tile itself has focus
+    if (event.key.toLowerCase() === 'f' && !event.altKey && !event.ctrlKey && !event.metaKey) {
       event.preventDefault();
-      applyLabelAction(row.name, keyAction);
+      toggleLabelFilter(row.name);
     } else if (event.key === 'Enter') {
       event.preventDefault();
       handleNameClick();
@@ -172,8 +159,7 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
             'outline-none before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary before:opacity-0',
           onBoard && itemFocusBarClass,
           'focus-within:bg-muted/50 hover:bg-muted/50',
-          !expanded && !(onBoard && isCurrent) && !highlighted && 'resting-text transition-[color]',
-          highlighted && searchHighlightRowClass,
+          !expanded && !(onBoard && isCurrent) && 'resting-text transition-[color]',
         )}
       >
         <div className="flex min-h-11 items-center gap-2 px-4 py-1.5">
@@ -202,7 +188,7 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
                   expanded ? 'font-semibold hover:bg-muted focus-visible:bg-muted' : 'after:absolute after:inset-0',
                 )}
               >
-                <span className={cn('truncate', active === 'exclude' && 'text-muted-foreground')}>
+                <span className="truncate">
                   <HighlightText text={row.name} />
                 </span>
               </button>
@@ -215,7 +201,7 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
                   </Badge>
                 )}
                 {/* The pressed toggle floats over this slot */}
-                {active && <span className="size-8" />}
+                {isInSearch && <span className="size-8" />}
                 <span className="w-8 text-center text-muted-foreground text-xs tabular-nums">{formatCount(row.usedCount)}</span>
               </div>
             )}
@@ -237,13 +223,7 @@ export function LabelTile({ row, highlighted, singleExpand, onAction, onBoard }:
                 />
               )}
             </AnimatePresence>
-            <LabelActions
-              row={row}
-              active={active}
-              onAction={onAction}
-              className={actionClass}
-              pressedClassName={expanded ? 'translate-x-0 opacity-100' : active ? restingPressedSlot[active] : undefined}
-            />
+            <LabelFilterButton name={row.name} isPressed={isInSearch} onAction={onAction} className={actionClass} />
             <LabelOptionsButton row={row} canManage={!isReadOnly} className={actionClass} />
           </div>
         </div>

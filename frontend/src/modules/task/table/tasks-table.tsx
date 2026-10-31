@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project, Workspace } from 'sdk';
 import { appConfig } from 'shared';
-import { formatSearchParts, parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
@@ -17,7 +16,6 @@ import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
-import { searchHighlightRowClass } from '~/modules/task/search-highlight';
 import { useColumns } from '~/modules/task/table/tasks-columns';
 import { TasksTableBar } from '~/modules/task/table/tasks-table-bar';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
@@ -55,16 +53,10 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const [isCompact, setIsCompact] = useState(true);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
-  // Highlight mode ('=' prefix): fetch without the terms to match, so only exclusions filter, and tint matches client-side, like the board
-  const { highlight, effectiveQ, parts } = parseSearchQuery(q);
-  const effectiveSearch = highlight ? { ...search, q: formatSearchParts(parts.filter((part) => part.exclude)) } : search;
-
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
-  const optionsFor = (tableSearch: BoardSearchParams) =>
-    queryParams
-      ? tasksTableQueryOptions({ ...tableSearch, ...queryParams })
-      : publicTasksTableQueryOptions({ ...tableSearch, projectId: projects[0]?.id });
-  const queryOptions = optionsFor(effectiveSearch);
+  const queryOptions = queryParams
+    ? tasksTableQueryOptions({ ...search, ...queryParams })
+    : publicTasksTableQueryOptions({ ...search, projectId: projects[0]?.id });
 
   // biome-ignore lint/suspicious/noExplicitAny: union of query options with different key shapes
   const { data, error, isLoading, isFetching, fetchNextPage, hasNextPage } = useInfiniteQuery(queryOptions as any) as {
@@ -78,18 +70,10 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   const fetchedRows = data?.pages.flatMap(({ items }) => items);
 
-  // Highlight mode counts matches over all tasks, not the loaded rows: the filtered query's total, the cache entry filter
-  // mode reads. Same page size on purpose, since the table key leaves out the limit.
-  const matchOptions = optionsFor({ ...search, q: effectiveQ });
-  // biome-ignore lint/suspicious/noExplicitAny: union of query options with different key shapes
-  useInfiniteQuery({ ...(matchOptions as any), enabled: highlight });
-  const total = useListQueryTotal(highlight ? matchOptions.queryKey : queryOptions.queryKey);
+  const total = useListQueryTotal(queryOptions.queryKey);
 
   const isOnline = useOnlineManager();
-  const rows = isOnline || highlight ? fetchedRows : fetchedRows?.filter((row) => matchesBoardSearch(search, row));
-
-  // Tint matches among the loaded rows in highlight mode (search-filter strips the marker)
-  const rowClass = highlight ? (row: Task) => (matchesBoardSearch(search, row) ? searchHighlightRowClass : undefined) : undefined;
+  const rows = isOnline ? fetchedRows : fetchedRows?.filter((row) => matchesBoardSearch(q, row));
 
   // isFetching includes a next-page fetch
   const fetchMore = async () => {
@@ -118,9 +102,9 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
       <div className="flex h-full flex-col gap-4">
         <TasksTableBar
           total={total}
-          hasQuery={!!effectiveQ}
+          hasQuery={!!q?.trim()}
           selected={selected}
-          searchVars={effectiveSearch}
+          searchVars={search}
           columns={columns}
           setColumns={setColumns}
           projects={projects}
@@ -142,10 +126,9 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
             error,
             isLoading,
             isFetching,
-            isFiltered: !highlight && !!q,
+            isFiltered: !!q,
             hasNextPage,
             fetchMore,
-            rowClass,
             selectedRows: selectedRowIds,
             onSelectedRowsChange: handleSelectedRowsChange,
             isRowSelectionDisabled,

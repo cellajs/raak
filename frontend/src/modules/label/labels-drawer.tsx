@@ -11,7 +11,7 @@ import { Button } from '~/modules/ui/button';
 
 const labelsDrawerId = 'labels-drawer';
 
-// A label's filter, highlight or exclude only shows on the board behind the drawer
+// A label's filter only shows on the board behind the drawer
 const closeLabelsDrawer = () => sheeter.getState().remove(labelsDrawerId);
 
 const openLabelsDrawer = ({ entity, entityId }: LabelsScopeProps, triggerRef: TriggerRef) => {

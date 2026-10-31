@@ -1,6 +1,5 @@
-import { and, arrayOverlaps, asc, desc, eq, inArray, not, or, type SQL, sql } from 'drizzle-orm';
-import { parseSearchQuery } from 'shared/utils/parse-search-query';
-import { containsWord, foldText } from 'shared/utils/text-match';
+import { and, arrayOverlaps, asc, desc, eq, inArray, or, type SQL, sql } from 'drizzle-orm';
+import { foldText, parseTerms } from 'shared/utils/text-match';
 import type { z } from 'zod';
 import type { ActorContext } from '#/core/context';
 import { requestScopeWhere } from '#/db/utils/request-scope';
@@ -13,7 +12,7 @@ import { isoDateAgo } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
 import { pick } from '#/utils/pick';
 import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
-import { textSearchFilter, wordSearchFilter } from '#/utils/sql';
+import { textSearchFilter } from '#/utils/sql';
 import { TimeSpan } from '#/utils/time-span';
 
 const queryInfoSchema = taskListQueryBaseSchema.omit({ projectId: true, workspaceId: true });
@@ -21,45 +20,21 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
 
 /** A page of the tasks in `projectIds` that match the list query, hydrated with their projects' members and labels. */
 export const listTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean; range?: SeqRange }) => {
-  const { q, sort, order, acceptedCutOff, matchMode, limit, offset } = queryInfo;
+  const { q, sort, order, acceptedCutOff, limit, offset } = queryInfo;
   const rangeRead = seqRangeRead(tasksTable, opts?.range);
-  // Highlight-mode clients ('=' prefix) fetch with their exclusions only; stripping here keeps stray marked
-  // queries behaving like their plain form.
-  const { terms, excludeTerms } = parseSearchQuery(q);
 
   const [tasksUsers, tasksLabels] = await Promise.all([findProjectMembers(ctx, { projectIds }), findLabelsByProjects(ctx, { projectIds })]);
 
-  const tasksSearchFilters: SQL[] = [];
+  const keywordFilters = parseTerms(q).map((word) => {
+    const wordFilters: SQL[] = [textSearchFilter(tasksTable.keywords, word)];
 
-  if (terms.length > 0) {
-    const filtersByKeyword = terms.map((word) => {
-      const wordFilters: SQL[] = [textSearchFilter(tasksTable.keywords, word)];
+    const filteredLabels = tasksLabels.filter(({ name }) => foldText(name).includes(word)).map(({ id }) => id);
+    if (filteredLabels.length > 0) wordFilters.push(arrayOverlaps(tasksTable.labels, filteredLabels));
 
-      const filteredLabels = tasksLabels.filter(({ name }) => foldText(name).includes(word)).map(({ id }) => id);
-      if (filteredLabels.length > 0) wordFilters.push(arrayOverlaps(tasksTable.labels, filteredLabels));
+    const filteredUsers = tasksUsers.filter(({ name }) => foldText(name).includes(word)).map(({ id }) => id);
+    if (filteredUsers.length > 0) wordFilters.push(arrayOverlaps(tasksTable.assignedTo, filteredUsers));
 
-      const filteredUsers = tasksUsers.filter(({ name }) => foldText(name).includes(word)).map(({ id }) => id);
-      if (filteredUsers.length > 0) wordFilters.push(arrayOverlaps(tasksTable.assignedTo, filteredUsers));
-
-      return or(...wordFilters);
-    });
-
-    const searchFilter = matchMode === 'all' ? and(...filtersByKeyword) : or(...filtersByKeyword);
-    if (searchFilter) tasksSearchFilters.push(searchFilter);
-  }
-
-  // An excluded word leaves a task out in any mode, and only as a whole word: '-api' spares "rapid"
-  const exclusionFilters = excludeTerms.map((word) => {
-    const wordFilters: SQL[] = [wordSearchFilter(tasksTable.keywords, word)];
-
-    const excludedLabels = tasksLabels.filter(({ name }) => containsWord(foldText(name), word)).map(({ id }) => id);
-    if (excludedLabels.length > 0) wordFilters.push(arrayOverlaps(tasksTable.labels, excludedLabels));
-
-    const excludedUsers = tasksUsers.filter(({ name }) => containsWord(foldText(name), word)).map(({ id }) => id);
-    if (excludedUsers.length > 0) wordFilters.push(arrayOverlaps(tasksTable.assignedTo, excludedUsers));
-
-    const anyField = or(...wordFilters);
-    return anyField ? not(anyField) : undefined;
+    return or(...wordFilters);
   });
 
   const orderBy =
@@ -78,11 +53,10 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
 
   const filters = and(
     ...rangeRead.where,
-    tasksSearchFilters.length ? or(...tasksSearchFilters) : undefined,
+    ...keywordFilters,
     requestScopeWhere(ctx, tasksTable, 'task'),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,
-    ...exclusionFilters,
     opts?.publicOnly ? eq(tasksTable.public, true) : undefined,
   );
 

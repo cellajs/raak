@@ -43,7 +43,7 @@ export type BoardSearchParams = z.infer<typeof tasksTableSearchSchema>;
 export type TaskState = 'collapsed' | 'editing' | 'expanded';
 
 export interface TaskProps {
-  task: Task & { isMatchingSearch?: boolean };
+  task: Task;
   state: TaskState;
   isSelected: boolean;
   isFocused: boolean;

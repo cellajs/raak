@@ -6,7 +6,7 @@ import { mergePanelLayout, projectPanelIds, splitPanelLayout } from '~/modules/t
 import type { Task } from '~/modules/task/types';
 import { idbKvStorage } from '~/query/idb-kv-storage';
 
-export const defaultPanelPrefs = { expandAccepted: false, expandIced: false };
+const defaultPanelPrefs = { expandAccepted: false, expandIced: false };
 
 type PanelPrefs = typeof defaultPanelPrefs;
 /** A split section of a project. Every status belongs to exactly one section, so a task always has one panel. */

@@ -4,13 +4,12 @@ import { BirdIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
-import { parseSearchQuery } from 'shared/utils/parse-search-query';
-import { matchesTerms } from 'shared/utils/text-match';
+import { matchesTerms, parseTerms } from 'shared/utils/text-match';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
-import { labelSearchState, termsBesideLabels } from '~/modules/label/label-search';
+import { isLabelInSearch, termsBesideLabels } from '~/modules/label/label-search';
 import { LabelTile, labelTileDomId } from '~/modules/label/label-tile';
 import { labelTileStore } from '~/modules/label/label-tile-store';
 import { labelsCanonicalOptions } from '~/modules/label/query';
@@ -21,7 +20,7 @@ import { firstItemInView, registerPanelNav } from '~/modules/task/helpers/panel-
 import { ListFocusScope } from '~/modules/task/panel/list-focus-scope';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
-/** Highlight-mode match over the same columns the server search filters on (name + keywords). */
+/** A match over the same columns the server search filters on (name + keywords). */
 const matchesSearch = (row: LabelRow, terms: string[]) => matchesTerms([row.nameFolded, row.keywordsFolded], terms);
 
 const isPanelLabel = (mode: string) => mode !== 'primary';
@@ -76,24 +75,20 @@ interface LabelListViewProps extends LabelsHostProps {
   isLoading: boolean;
 }
 
-/** A plain search filters the rows; a '=' search keeps them all and highlights the matches. */
 function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const q = useSearch({ strict: false, select: (search) => search.q });
   const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
-  const { highlight, terms } = parseSearchQuery(q);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const grouped = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
-  // A label in the search, an excluded one too, keeps its row and its words narrow nothing, so the others stay at hand to add
-  const freeTerms = highlight
-    ? []
-    : termsBesideLabels(
-        terms,
-        grouped.map((row) => row.name),
-      );
-  const rows = freeTerms.length ? grouped.filter((row) => !!labelSearchState(q, row.name) || matchesSearch(row, freeTerms)) : grouped;
+  // A label in the search keeps its row and its words narrow nothing, so the others stay at hand to add
+  const freeTerms = termsBesideLabels(
+    parseTerms(q),
+    grouped.map((row) => row.name),
+  );
+  const rows = freeTerms.length ? grouped.filter((row) => isLabelInSearch(q, row.name) || matchesSearch(row, freeTerms)) : grouped;
   const itemIds = rows.map((row) => labelTileDomId(row.id));
 
   // Every tile is mounted, so bringing one into view is a plain scroll
@@ -125,13 +120,7 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
   const list = (
     <ul aria-label={t('c:label_other')}>
       {rows.map((row) => (
-        <LabelTile
-          key={row.id}
-          row={row}
-          highlighted={highlight && (labelSearchState(q, row.name) === 'highlight' || matchesSearch(row, terms))}
-          onBoard={!!navPanelId}
-          {...tileProps}
-        />
+        <LabelTile key={row.id} row={row} onBoard={!!navPanelId} {...tileProps} />
       ))}
     </ul>
   );

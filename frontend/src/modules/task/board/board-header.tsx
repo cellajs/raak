@@ -3,14 +3,11 @@ import { useState } from 'react';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
 import { LabelsDrawerButton } from '~/modules/label/labels-drawer';
-import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
-import { useMatchingTaskIds } from '~/modules/task/board/use-matching-task-ids';
 import { BoardSearch } from '~/modules/task/board-search';
 import { sortTasksAsOnBoard } from '~/modules/task/helpers/board-helpers';
-import { revealItem } from '~/modules/task/helpers/focus-item';
 import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
 import { deriveTasksQueryParams } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -32,8 +29,6 @@ export function BoardHeader({
   // No scope to derive params from in a public view or while a non-workspace board has no projects yet
   const queryParams = publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const total = useTasksTotal(queryParams);
-  const matchIds = useMatchingTaskIds(boardId, projects);
-  const currentItemId = useBoardFocusStore((state) => state.currentItemId);
   const selectedTaskIds = useTaskInteractionStore((state) => state.selectedTaskIds);
   const setSelectedTaskIds = useTaskInteractionStore((state) => state.setSelectedTaskIds);
 
@@ -54,11 +49,7 @@ export function BoardHeader({
         />
       )}
 
-      <BoardSearch
-        isInWorkspace={isInWorkspace}
-        toggleFocus={toggleSearchFocus}
-        matches={{ ids: matchIds, onStep: revealItem, currentId: currentItemId }}
-      />
+      <BoardSearch isInWorkspace={isInWorkspace} toggleFocus={toggleSearchFocus} total={total} />
 
       {!searchQuery && !isSearchFocused && <TableCount count={total} label="c:task" className="mr-3 max-sm:hidden" />}
 

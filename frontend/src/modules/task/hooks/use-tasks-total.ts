@@ -11,7 +11,6 @@ import type { QueryData } from '~/query/types';
 /** Total of the tasks on the board; while a search is active, the matches among the loaded tasks. */
 export const useTasksTotal = (queryParams?: BaseTasksQueryParam) => {
   const q = useSearch({ strict: false, select: (search) => search.q });
-  const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
 
   const isSearching = !!q?.trim();
   const queryKey = queryParams ? taskKeys.list.org(queryParams.organizationId) : taskKeys.publicList.base;
@@ -23,7 +22,7 @@ export const useTasksTotal = (queryParams?: BaseTasksQueryParam) => {
 
     return queries.reduce((total, [, data]) => {
       if (!isQueryData<Task>(data)) return total;
-      if (isSearching) return total + data.items.filter((task) => matchesBoardSearch({ q, matchMode }, task)).length;
+      if (isSearching) return total + data.items.filter((task) => matchesBoardSearch(q, task)).length;
       return total + data.total;
     }, 0);
   });
