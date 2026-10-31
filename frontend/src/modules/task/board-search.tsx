@@ -1,8 +1,7 @@
-import { type FocusEvent, type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react';
+import { type FocusEvent, type MouseEventHandler, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useSearchParams } from '~/hooks/use-search-params';
-import { TableFilterBarContext } from '~/modules/common/data-table/table-filter-bar';
 import { SearchCloseButton } from '~/modules/common/search-clear-button';
 import { SearchField } from '~/modules/common/search-field';
 import { setCurrentItem } from '~/modules/task/helpers/focus-item';
@@ -24,7 +23,6 @@ export function BoardSearch({ isInWorkspace, toggleFocus, total }: BoardSearchPr
   const isMobile = useBreakpointBelow('sm');
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const { isFilterActive } = useContext(TableFilterBarContext);
 
   const {
     search: { q: searchQuery = boardSearchDefaults.q },
@@ -55,10 +53,6 @@ export function BoardSearch({ isInWorkspace, toggleFocus, total }: BoardSearchPr
     inputRef.current?.blur();
     event.currentTarget.blur();
   };
-
-  useEffect(() => {
-    if (isFilterActive) inputRef.current?.focus();
-  }, [isFilterActive]);
 
   const searchLabel = t('c:search_in_resource', {
     resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace') }) : t('c:project'),
