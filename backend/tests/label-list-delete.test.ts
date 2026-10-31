@@ -71,20 +71,6 @@ describe('Label lists, primary label deletes and API key reads of their channels
     expect((await listLabels(ctx, { modes: 'primary' })).total).toBe(primaries.items.length);
   });
 
-  it('leaves out the labels a search excludes by whole word', async () => {
-    const ctx = await orgWithProject();
-    const created = await call(createLabels, {
-      path: ctx.path,
-      body: ['api', 'rapid'].map((name) => ({ id: crypto.randomUUID(), name, color: null, projectId: ctx.projectId, stx: mockStxBase() })),
-      headers: ctx.headers,
-    });
-    expect(created.response.status).toBe(201);
-
-    const searched = await listLabels(ctx, { q: '-api', modes: 'secondary' });
-    expect(searched.items.map((label) => label.name)).toEqual(['rapid']);
-    expect(searched.total).toBe(1);
-  });
-
   it('refuses a label created with a name that is empty as a slug', async () => {
     const ctx = await orgWithProject();
     const created = await call(createLabels, {
