@@ -70,17 +70,17 @@ export function TagTable<T>({ rows, columns, rowKeyGetter, hideHeader, onPrerend
         rowHeight={36}
         hideHeader={hideHeader}
         enableVirtualization={false}
-        readOnly
+        hideEndMarker
       />
     </div>
   );
 }
 
-export function TagBadges({ values }: { values: string[] }) {
+export function TagBadges({ kind, values }: { kind: string; values: string[] }) {
   return (
     <div className="flex flex-wrap gap-1">
       {values.map((tag) => (
-        <Badge key={tag} variant="outline">
+        <Badge key={tag} variant={kind === 'owner' ? 'secondary' : 'outline'}>
           {tag}
         </Badge>
       ))}

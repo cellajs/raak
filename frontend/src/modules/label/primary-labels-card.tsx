@@ -37,16 +37,17 @@ function renderRowDragPreview(row: PrimaryLabelDefinition) {
 
 interface PickerCellProps {
   row: PrimaryLabelDefinition;
+  tabIndex: number;
   onRowChange: (row: PrimaryLabelDefinition) => void;
 }
 
-function IconCell({ row, onRowChange }: PickerCellProps) {
+function IconCell({ row, tabIndex, onRowChange }: PickerCellProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger render={<Button variant="ghost" size="icon" aria-label={t('c:icon')} />}>
+      <PopoverTrigger render={<Button variant="ghost" size="icon" tabIndex={tabIndex} aria-label={t('c:icon')} />}>
         <PrimaryLabelIcon label={row} className="size-4" />
       </PopoverTrigger>
       {/* Portal events bubble through the React tree into the host gridcell, whose mousedown
@@ -66,13 +67,13 @@ function IconCell({ row, onRowChange }: PickerCellProps) {
   );
 }
 
-function ColorCell({ row, onRowChange }: PickerCellProps) {
+function ColorCell({ row, tabIndex, onRowChange }: PickerCellProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger render={<Button variant="ghost" size="icon" aria-label={t('c:color')} />}>
+      <PopoverTrigger render={<Button variant="ghost" size="icon" tabIndex={tabIndex} aria-label={t('c:color')} />}>
         <span className={cn('size-4 rounded-full', isLabelColorToken(row.color) ? labelPalette[row.color].dot : 'bg-muted')} />
       </PopoverTrigger>
       <PopoverContent className="w-auto p-2" onMouseDown={(event) => event.stopPropagation()}>
@@ -174,7 +175,7 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
       width: 56,
       cellClass: centeredCellClass,
       headerCellClass: 'text-center',
-      renderCell: ({ row, onRowChange }) => <IconCell row={row} onRowChange={onRowChange} />,
+      renderCell: ({ row, tabIndex, onRowChange }) => <IconCell row={row} tabIndex={tabIndex} onRowChange={onRowChange} />,
     },
     {
       key: 'color',
@@ -182,7 +183,7 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
       width: 56,
       cellClass: centeredCellClass,
       headerCellClass: 'text-center',
-      renderCell: ({ row, onRowChange }) => <ColorCell row={row} onRowChange={onRowChange} />,
+      renderCell: ({ row, tabIndex, onRowChange }) => <ColorCell row={row} tabIndex={tabIndex} onRowChange={onRowChange} />,
     },
     {
       key: 'name',
@@ -199,10 +200,11 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
       width: 32,
       maxWidth: 32,
       cellClass: centeredCellClass,
-      renderCell: ({ row }) => (
+      renderCell: ({ row, tabIndex }) => (
         <Button
           variant="ghost"
           size="icon"
+          tabIndex={tabIndex}
           aria-label={t('c:remove')}
           disabled={rows.length <= primaryLabelLimits.min}
           onClick={({ currentTarget }) => confirmRemove(row, currentTarget)}
@@ -236,8 +238,7 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
         rowKeyGetter={rowKeyGetter}
         columns={columns}
         hasNextPage={false}
-        readOnly
-        cellSelectionMode="cell"
+        hideEndMarker
         enableVirtualization={false}
         className="mb-0"
         onRowsChange={handleRowsChange}

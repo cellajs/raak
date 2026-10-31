@@ -8,6 +8,7 @@ import { FocusViewContainer } from '~/modules/common/focus-view';
 import { SearchScope } from '~/modules/common/match-highlight/match-scope';
 import { ScrollReset } from '~/modules/common/scroll-reset';
 import { DocsPageHeader } from '~/modules/docs/docs-page-header';
+import { AccessCellPopover } from '~/modules/docs/operations/access-explanation';
 import { OperationsBar } from '~/modules/docs/operations/operations-bar';
 import { filterOperations } from '~/modules/docs/operations/operations-filter';
 import { useColumns } from '~/modules/docs/operations/operations-table/operations-columns';
@@ -52,7 +53,6 @@ export function OperationsTable() {
             <DataTable<GenOperationSummary>
               columns={columns}
               rows={sortedOperations}
-              cellSelectionMode="none"
               hasNextPage={false}
               rowKeyGetter={(row) => row.hash}
               rowClass={(row) => (isSwitchedOff(row) ? 'opacity-60' : undefined)}
@@ -63,6 +63,7 @@ export function OperationsTable() {
               sortColumns={sortColumns}
               onSortColumnsChange={setSortColumns}
             />
+            <AccessCellPopover />
           </SearchScope>
         </FocusViewContainer>
       </ScrollReset>
