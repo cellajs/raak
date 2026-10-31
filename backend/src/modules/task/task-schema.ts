@@ -75,7 +75,6 @@ export const taskContract = evolutionContract.product('task', {
 export const taskUpdateStxBodySchema = taskContract.updateBodySchema;
 
 const taskListQueryShape = {
-  matchMode: z.enum(['all', 'any']).default('all'),
   sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('asc'),
   acceptedCutOff: z.coerce.number().positive().optional(),

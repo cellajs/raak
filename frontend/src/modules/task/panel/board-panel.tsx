@@ -2,7 +2,6 @@ import { useSearch } from '@tanstack/react-router';
 import { PlusIcon } from 'lucide-react';
 import { memo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollVisibility } from '~/hooks/use-scroll-visibility';
 import { BoardPanelContent } from '~/modules/common/board/board-layout';
@@ -11,8 +10,7 @@ import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
 import { prepareBoardTasks, projectPanelName, sectionPanelId } from '~/modules/task/helpers/board-helpers';
-import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { isExcludedBySearch, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
 import { openCreateTaskDialog } from '~/modules/task/mobile-create-task-dialog';
 import { PanelSectionRow } from '~/modules/task/panel/panel-section-row';
@@ -43,7 +41,6 @@ export const BoardPanel = memo(function BoardPanel({
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const q = useSearch({ strict: false, select: (search) => search.q });
-  const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
 
   const { isVisible: showFab } = useScrollVisibility(isMobile);
 
@@ -51,15 +48,7 @@ export const BoardPanel = memo(function BoardPanel({
   const panelId = sectionPanelId(project.id, sectionFilters);
   const isCollapsed = useBoardStore((state) => !sectionFilters && !!state.panelCollapseState[panelId]);
 
-  // The open create-form draft always stays visible; a highlight search keeps every task but the excluded ones
-  const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || matchesBoardSearch({ q, matchMode }, task));
-  const matchedIds = new Set(matchedTasks.map(({ id }) => id));
-  const filteredTasks = parseSearchQuery(q).highlight
-    ? fetchedTasks
-        .filter((task) => !isExcludedBySearch(q, task))
-        .map((task) => (matchedIds.has(task.id) ? { ...task, isMatchingSearch: true } : task))
-    : matchedTasks;
-
+  const filteredTasks = fetchedTasks.filter((task) => matchesBoardSearch(q, task));
   const tasks = prepareBoardTasks(filteredTasks, expandAccepted, expandIced);
 
   // The drop target wraps header and list, so its ring frames the whole panel, expanded or collapsed; mobile uses a different layout

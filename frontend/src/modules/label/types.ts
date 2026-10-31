@@ -15,7 +15,7 @@ export interface LabelsHostProps {
   windowScroll?: boolean;
   /** One tile open at a time, for the narrow drawer. */
   singleExpand?: boolean;
-  /** After a tile's filter, highlight or exclude toggle: the drawer closes on it to show the board. */
+  /** After a tile's filter toggle: the drawer closes on it to show the board. */
   onAction?: () => void;
   /** The board panel hosting the list: its tiles become board items, one Tab stop with arrow-key navigation. */
   navPanelId?: string;

@@ -40,12 +40,6 @@ export const markCurrentItemMounted = (id: string) => {
   };
 };
 
-/** Makes an item current and scrolls it into view, leaving DOM focus where it is: stepping from the search box. */
-export const revealItem = (id: string) => {
-  setCurrentItem(id);
-  scrollItemIntoView(id);
-};
-
 /** Makes an item current and focuses it, scrolling it into view first when its panel virtualized it out. */
 export const focusItem = (id: string) => {
   setCurrentItem(id);

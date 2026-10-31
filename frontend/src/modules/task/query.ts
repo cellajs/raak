@@ -73,7 +73,7 @@ type TaskUpdateFullVars = UpdateVariables<UpdateTaskOps> & Partial<OptimisticCac
 type TaskDeleteFullVars = DeleteVariables<Task>;
 
 /** Retains API literal unions for task-list sorting and matching filters. */
-type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode'>;
+type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order'>;
 /** Separate key space for public (unauthenticated) task queries. */
 type PublicTaskListFilters = TaskListFilters & { public: true };
 
@@ -267,34 +267,31 @@ export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: {
 };
 
 /** Task-table defaults shared by the member and public query options. */
-export const tasksTableQueryDefaults = { sort: 'createdAt', order: 'desc', matchMode: 'all' } as const;
+export const tasksTableQueryDefaults = { sort: 'createdAt', order: 'desc' } as const;
 
 const tasksTableQueryKey = ({
   q,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
-  matchMode = tasksTableQueryDefaults.matchMode,
   projectId,
   workspaceId,
   organizationId,
-}: Omit<GetTasksParam, 'acceptedCutOff' | 'tenantId'>) =>
-  taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, matchMode, q });
+}: Omit<GetTasksParam, 'acceptedCutOff' | 'tenantId'>) => taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, q });
 
 export const tasksTableQueryOptions = ({
   q,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
-  matchMode = tasksTableQueryDefaults.matchMode,
   projectId,
   workspaceId,
   organizationId,
   tenantId,
   limit = appConfig.requestLimits.tasksTable,
 }: Omit<GetTasksParam, 'acceptedCutOff'> & { limit?: number }) => {
-  const filters = { q, sort, order, organizationId, projectId, workspaceId, matchMode };
+  const filters = { q, sort, order, organizationId, projectId, workspaceId };
 
   return infiniteQueryOptions({
-    queryKey: tasksTableQueryKey({ q, sort, order, matchMode, projectId, workspaceId, organizationId }),
+    queryKey: tasksTableQueryKey({ q, sort, order, projectId, workspaceId, organizationId }),
     ...offsetPaging(limit, (offset, signal) =>
       getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }).then(liveItems),
     ),

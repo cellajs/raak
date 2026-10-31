@@ -5,11 +5,10 @@ import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import type { BoardPanelData, SectionsValue, TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import type { BoardResizablePanel, BoardSearchParams, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
+import type { BoardResizablePanel, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
 
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
@@ -162,18 +161,4 @@ export const resetTaskInteraction = (boardKey?: string) => {
   taskInteractionStore.getState().reset();
   useBoardFocusStore.getState().reset();
   taskCardStore.getState().reset();
-};
-
-/** The tasks a panel renders, in render order: the board search, the panel's section filters, then the accepted/iced folds. */
-export const renderedPanelTasks = (
-  panel: ProjectResizablePanel,
-  tasks: Task[],
-  search: { q?: string; matchMode?: BoardSearchParams['matchMode'] },
-  prefs: { expandAccepted: boolean; expandIced: boolean },
-) => {
-  const inPanel = tasks.filter(
-    (task) =>
-      task.projectId === panel.project.id && matchesBoardSearch(search, task) && (!panel.sectionFilters || inSections(task, panel.sectionFilters)),
-  );
-  return prepareBoardTasks(inPanel, prefs.expandAccepted, prefs.expandIced);
 };

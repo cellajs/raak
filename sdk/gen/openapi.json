@@ -10345,16 +10345,6 @@
           },
           {
             "schema": {
-              "type": "string",
-              "enum": ["all", "any"],
-              "default": "all"
-            },
-            "required": false,
-            "name": "matchMode",
-            "in": "query"
-          },
-          {
-            "schema": {
               "type": "number",
               "exclusiveMinimum": 0
             },
@@ -21323,16 +21313,6 @@
             "required": false,
             "description": "Range read for sync: the last sequence position to return. Requires afterSeq.",
             "name": "untilSeq",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["all", "any"],
-              "default": "all"
-            },
-            "required": false,
-            "name": "matchMode",
             "in": "query"
           },
           {
