@@ -8,11 +8,11 @@ import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { idealWidthFactor } from '~/modules/common/resizable-panels/resizable-panels';
+import { SearchField } from '~/modules/common/search-field';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import { buildBoardExtraPanels, usePanelLayout, useShowExplainer } from '~/modules/task/board/board-hooks';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
-import { BoardSearch } from '~/modules/task/board-search';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { PanelSectionRow } from '~/modules/task/panel/panel-section-row';
 import { newTaskButtonClass, panelHandleClass, statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
@@ -176,7 +176,7 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
 
   return (
     <div className={taskBarClass} aria-hidden="true" inert>
-      <BoardSearch isInWorkspace={isInWorkspace} toggleFocus={() => {}} />
+      <SearchField value="" onSearch={() => {}} label={t('c:placeholder.search')} className="edgeless sm:min-w-44" />
 
       <TableCount count={hasProjects ? 0 : null} label="c:task" className="mr-3 max-sm:hidden" />
 

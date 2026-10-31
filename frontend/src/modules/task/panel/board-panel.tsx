@@ -1,4 +1,3 @@
-import { useSearch } from '@tanstack/react-router';
 import { PlusIcon } from 'lucide-react';
 import { memo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +9,8 @@ import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
 import { prepareBoardTasks, projectPanelName, sectionPanelId } from '~/modules/task/helpers/board-helpers';
-import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { isBoardSearchActive, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
 import { openCreateTaskDialog } from '~/modules/task/mobile-create-task-dialog';
 import { PanelSectionRow } from '~/modules/task/panel/panel-section-row';
@@ -40,7 +40,7 @@ export const BoardPanel = memo(function BoardPanel({
 }: BoardPanelProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
-  const q = useSearch({ strict: false, select: (search) => search.q });
+  const search = useBoardSearch();
 
   const { isVisible: showFab } = useScrollVisibility(isMobile);
 
@@ -48,8 +48,13 @@ export const BoardPanel = memo(function BoardPanel({
   const panelId = sectionPanelId(project.id, sectionFilters);
   const isCollapsed = useBoardStore((state) => !sectionFilters && !!state.panelCollapseState[panelId]);
 
-  const filteredTasks = fetchedTasks.filter((task) => matchesBoardSearch(q, task));
-  const tasks = prepareBoardTasks(filteredTasks, expandAccepted, expandIced);
+  const filteredTasks = fetchedTasks.filter((task) => matchesBoardSearch(search, task));
+  // Filtering on a folded status shows its tasks
+  const tasks = prepareBoardTasks(
+    filteredTasks,
+    expandAccepted || search.statuses.includes('accepted'),
+    expandIced || search.statuses.includes('iced'),
+  );
 
   // The drop target wraps header and list, so its ring frames the whole panel, expanded or collapsed; mobile uses a different layout
   const panelRef = useRef<HTMLDivElement>(null);
@@ -75,7 +80,7 @@ export const BoardPanel = memo(function BoardPanel({
   } satisfies TaskCounts;
 
   return (
-    <div data-search={!!q} className="group/panel h-full">
+    <div data-search={isBoardSearchActive(search)} className="group/panel h-full">
       {isMobile ? (
         <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex h-full flex-col">
           <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} />

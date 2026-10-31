@@ -7,13 +7,14 @@ import { cn } from '~/utils/cn';
 
 interface LabelFilterButtonProps {
   name: string;
+  slug: string;
   isPressed: boolean;
   onAction?: () => void;
   className?: string;
 }
 
 /** Puts a label in the board search or takes it out; while pressed it stays in view on a resting tile. */
-export function LabelFilterButton({ name, isPressed, onAction, className }: LabelFilterButtonProps) {
+export function LabelFilterButton({ name, slug, isPressed, onAction, className }: LabelFilterButtonProps) {
   const { t } = useTranslation();
 
   return (
@@ -23,7 +24,7 @@ export function LabelFilterButton({ name, isPressed, onAction, className }: Labe
         size="xs"
         aria-pressed={isPressed}
         onClick={() => {
-          toggleLabelFilter(name);
+          toggleLabelFilter(slug);
           onAction?.();
         }}
         className={cn('size-8', className, isPressed && 'translate-x-0 bg-accent text-primary opacity-100')}

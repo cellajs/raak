@@ -9,7 +9,6 @@ import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-co
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
-import { isLabelInSearch, termsBesideLabels } from '~/modules/label/label-search';
 import { LabelTile, labelTileDomId } from '~/modules/label/label-tile';
 import { labelTileStore } from '~/modules/label/label-tile-store';
 import { labelsCanonicalOptions } from '~/modules/label/query';
@@ -17,6 +16,7 @@ import type { LabelRow, LabelsHostProps, LabelsScopeProps } from '~/modules/labe
 import { type LabelUsage, useLabelUsage } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { firstItemInView, registerPanelNav } from '~/modules/task/helpers/panel-nav-registry';
+import { filterValues } from '~/modules/task/helpers/search-filter';
 import { ListFocusScope } from '~/modules/task/panel/list-focus-scope';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
@@ -79,16 +79,14 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
   const { t } = useTranslation();
   const navigate = useNavigate();
   const q = useSearch({ strict: false, select: (search) => search.q });
+  const pickedSlugs = filterValues(useSearch({ strict: false, select: (search) => search.labels }));
   const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const grouped = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
-  // A label in the search keeps its row and its words narrow nothing, so the others stay at hand to add
-  const freeTerms = termsBesideLabels(
-    parseTerms(q),
-    grouped.map((row) => row.name),
-  );
-  const rows = freeTerms.length ? grouped.filter((row) => isLabelInSearch(q, row.name) || matchesSearch(row, freeTerms)) : grouped;
+  // A picked label keeps its row, so it stays at hand to take out
+  const terms = parseTerms(q);
+  const rows = terms.length ? grouped.filter((row) => pickedSlugs.includes(row.slug) || matchesSearch(row, terms)) : grouped;
   const itemIds = rows.map((row) => labelTileDomId(row.id));
 
   // Every tile is mounted, so bringing one into view is a plain scroll

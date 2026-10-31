@@ -21,12 +21,14 @@ const baseTaskViewSchema = z.object({
   ...labelPanelSearchSchema.shape,
 });
 
-export const tasksTableSearchSchema = zGetTasksQuery.pick({ q: true, sort: true, order: true }).extend({
+export const tasksTableSearchSchema = zGetTasksQuery.pick({ q: true, status: true, type: true, labels: true, sort: true, order: true }).extend({
   ...baseTaskViewSchema.shape,
   // Newest-first by default (the API default is ascending); matches `boardSearchDefaults.order`.
   order: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
-const tasksBoardSearchSchema = zGetTasksQuery.pick({ q: true }).extend({ projectSlug: z.string().optional(), ...baseTaskViewSchema.shape });
+const tasksBoardSearchSchema = zGetTasksQuery
+  .pick({ q: true, status: true, type: true, labels: true })
+  .extend({ projectSlug: z.string().optional(), ...baseTaskViewSchema.shape });
 
 export const boardSearchSchema = z.object({ ...tasksBoardSearchSchema.shape, ...tasksTableSearchSchema.shape });

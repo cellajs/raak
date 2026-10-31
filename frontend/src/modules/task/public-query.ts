@@ -27,22 +27,28 @@ type PublicTasksTableParams = Omit<GetTasksParam, 'acceptedCutOff' | 'organizati
 
 const publicTasksTableQueryKey = ({
   q,
+  status,
+  type,
+  labels,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
   projectId,
-}: PublicTasksTableParams) => taskKeys.publicList.filtered({ q, sort, order, projectId, public: true });
+}: PublicTasksTableParams) => taskKeys.publicList.filtered({ q, status, type, labels, sort, order, projectId, public: true });
 
 export const publicTasksTableQueryOptions = ({
   q,
+  status,
+  type,
+  labels,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
   limit = appConfig.requestLimits.tasksTable,
   projectId,
 }: PublicTasksTableParams & { limit?: number }) => {
-  const query = { q, sort, order, projectId };
+  const query = { q, status, type, labels, sort, order, projectId };
 
   return infiniteQueryOptions({
-    queryKey: publicTasksTableQueryKey({ q, sort, order, projectId }),
+    queryKey: publicTasksTableQueryKey({ q, status, type, labels, sort, order, projectId }),
     ...offsetPaging(limit, (offset, signal) => getPublicTasks({ query: { ...query, ...pageQuery(limit, offset) }, signal })),
     refetchOnWindowFocus: false,
     gcTime: 0,

@@ -4341,6 +4341,9 @@ export type GetPublicTasksData = {
     order?: 'asc' | 'desc';
     offset?: number;
     limit?: number;
+    status?: string;
+    type?: string;
+    labels?: string;
     acceptedCutOff?: number;
     projectId: string;
   };
@@ -8076,6 +8079,9 @@ export type GetTasksData = {
      * Range read for sync: the last sequence position to return. Requires afterSeq.
      */
     untilSeq?: number;
+    status?: string;
+    type?: string;
+    labels?: string;
     acceptedCutOff?: number;
     projectId?: string;
     workspaceId?: string;

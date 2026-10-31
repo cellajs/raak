@@ -74,7 +74,13 @@ export const taskContract = evolutionContract.product('task', {
 
 export const taskUpdateStxBodySchema = taskContract.updateBodySchema;
 
+// Comma-separated values of one filter: a task matches when it holds one of them
+const taskFilterValuesSchema = z.string().max(maxLength.html).optional();
+
 const taskListQueryShape = {
+  status: taskFilterValuesSchema,
+  type: taskFilterValuesSchema,
+  labels: taskFilterValuesSchema,
   sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('asc'),
   acceptedCutOff: z.coerce.number().positive().optional(),

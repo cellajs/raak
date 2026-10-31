@@ -1,86 +1,69 @@
-import { type FocusEvent, type MouseEventHandler, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useSearchParams } from '~/hooks/use-search-params';
-import { SearchCloseButton } from '~/modules/common/search-clear-button';
-import { SearchField } from '~/modules/common/search-field';
+import { TableCount } from '~/modules/common/data-table/table-count';
+import { TableFilterBar } from '~/modules/common/data-table/table-filter-bar';
+import { SearchChipsField } from '~/modules/common/search-chips-field';
+import type { EnrichedProject } from '~/modules/project/types';
 import { setCurrentItem } from '~/modules/task/helpers/focus-item';
-import { boardSearchDefaults } from '~/modules/task/search-params-schemas';
+import { isBoardSearchActive } from '~/modules/task/helpers/search-filter';
+import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
+import { useBoardSearchFilters } from '~/modules/task/hooks/use-board-search-filters';
 import type { BoardSearchParams } from '~/modules/task/types';
 
 /** The input's DOM id, for the find hotkey. */
 export const boardSearchInputId = 'board-search-input';
 
-interface BoardSearchProps {
+interface BoardSearchBarProps {
+  /** The board's projects; their cached tasks give the filters and counts. */
+  projects: Pick<EnrichedProject, 'id' | 'organizationId'>[];
   isInWorkspace?: boolean;
-  toggleFocus: () => void;
-  /** The tasks the search finds, shown in the field while it holds a query. */
-  total?: number | null;
+  publicView?: boolean;
+  /** All tasks when nothing filters, else the tasks found. */
+  total: number | null;
+  /** The board's or table's own controls, after the count. */
+  controls: ReactNode;
 }
 
-export function BoardSearch({ isInWorkspace, toggleFocus, total }: BoardSearchProps) {
+/** The search over the tasks of a board or table, shared by both views. */
+export function BoardSearchBar({ projects, isInWorkspace, publicView, total, controls }: BoardSearchBarProps) {
   const { t } = useTranslation();
-  const isMobile = useBreakpointBelow('sm');
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
+  const search = useBoardSearch();
+  const filters = useBoardSearchFilters(projects, publicView);
   const {
-    search: { q: searchQuery = boardSearchDefaults.q },
+    search: { q = '' },
     setSearch,
-  } = useSearchParams<Pick<BoardSearchParams, 'q'>>();
+  } = useSearchParams<BoardSearchParams>();
 
-  const [isFocused, setIsFocused] = useState(false);
-
-  const preventInputBlur: MouseEventHandler = (event) => {
-    event.stopPropagation();
-    event.preventDefault();
-  };
-
-  // Focus moving between the field and its own buttons keeps the search open, so Tab reaches the close X
-  const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
-    if (event.currentTarget.contains(event.relatedTarget)) return;
-    setIsFocused(true);
-    toggleFocus();
-  };
-
-  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
-    if (event.currentTarget.contains(event.relatedTarget)) return;
-    setIsFocused(false);
-    toggleFocus();
-  };
-
-  const closeSearch: MouseEventHandler<HTMLButtonElement> = (event) => {
-    inputRef.current?.blur();
-    event.currentTarget.blur();
-  };
-
-  const searchLabel = t('c:search_in_resource', {
-    resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace') }) : t('c:project'),
-  });
+  const isFiltered = isBoardSearchActive(search);
+  const label = t('c:search_in_resource', { resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace') }) : t('c:project') });
+  const reset = () => setSearch({ q: '', status: undefined, type: undefined, labels: undefined });
 
   return (
-    <div className="contents" onFocus={handleFocus} onBlur={handleBlur} onPointerDown={() => setCurrentItem(null)}>
-      <SearchField
-        ref={inputRef}
-        id={boardSearchInputId}
-        name="boardSearch"
-        label={isMobile ? t('c:placeholder.search') : searchLabel}
-        className="border-none shadow-none sm:min-w-44 max-sm:[&_[data-align=inline-start]_svg]:size-5"
-        value={searchQuery}
-        onSearch={(q) => setSearch({ q })}
-      >
-        {typeof total === 'number' && (
-          <div className="flex items-center whitespace-nowrap text-muted-foreground text-sm">
-            {t('c:resource_count', { count: total, resource: t('c:task', { count: total }) })}
+    <div className="contents max-sm:*:px-2">
+      <TableFilterBar
+        wideSearch
+        isFiltered={isFiltered}
+        onResetFilters={reset}
+        searchLabel={label}
+        count={<TableCount count={isFiltered ? null : total} label="c:task" className="mr-3 max-sm:hidden" />}
+        search={
+          <div className="contents" onPointerDown={() => setCurrentItem(null)}>
+            <SearchChipsField
+              {...filters}
+              id={boardSearchInputId}
+              name="boardSearch"
+              label={label}
+              value={q}
+              count={isFiltered && total !== null ? t('c:resource_count', { count: total, resource: t('c:task', { count: total }) }) : ''}
+              onSearch={(next) => setSearch({ q: next })}
+              onReset={reset}
+              className="edgeless"
+            />
           </div>
-        )}
-      </SearchField>
-      {/* On a phone the focused field fills the header and the close X stands beside it, apart from the clear X inside */}
-      {isMobile && isFocused && (
-        <div className="flex h-10 shrink-0 items-center border-l pl-1.5">
-          <SearchCloseButton onMouseDown={preventInputBlur} onClick={closeSearch} />
-        </div>
-      )}
+        }
+        controls={controls}
+      />
     </div>
   );
 }
