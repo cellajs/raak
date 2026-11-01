@@ -53,7 +53,7 @@ export const statusesBottomUp = statusPath.toSorted((a, b) => b - a);
 export const statusTabLists = new Map<string, TaskStatus[]>(statusPath.map((status) => [statusOptionsByValue[status].status, [status]]));
 
 /** A status panel's place on a board that starts with this status. */
-export const statusListIndex = (status: TaskStatus, startWith: TogglableStatusType) => (startWith === 'iced' ? iced - status : status);
+const statusListIndex = (status: TaskStatus, startWith: TogglableStatusType) => (startWith === 'iced' ? iced - status : status);
 
 /** The panel id of a status with a panel of its own. */
 export const statusPanelId = (projectId: string, status: TaskStatus) => `${projectId}-status-${statusOptionsByValue[status].status}`;

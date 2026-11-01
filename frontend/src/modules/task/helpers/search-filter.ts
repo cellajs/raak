@@ -42,7 +42,7 @@ export interface BoardSearch {
   labels?: string;
 }
 
-export const filterValues = (value?: string) => (value ? value.split(',') : []);
+const filterValues = (value?: string) => (value ? value.split(',') : []);
 
 /** A filter's value in the URL after a value's toggle; undefined with no value left. */
 export const toggleFilterValue = (value: string | undefined, toggled: string) => {
