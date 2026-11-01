@@ -34,7 +34,7 @@ function AddProjectsOption({ onClick, icon: Icon, label, ariaLabel }: AddProject
       <Icon className="size-12" strokeWidth={1} />
       <div className="flex flex-col truncate">
         <p>{label}</p>
-        <div className="mt-1 flex items-center truncate text-faint-foreground transition-colors group-hover/tile:text-foreground">
+        <div className="mt-1 flex items-center truncate text-muted-foreground transition-colors group-hover/tile:text-foreground">
           <strong>{t('c:continue')}</strong>
           <ChevronRightIcon className="ml-1" />
         </div>
@@ -84,11 +84,10 @@ export function AddProjects({ mode: baseMode }: AddProjectsProps) {
 
   const [createMode, setCreateMode] = useState<'create' | 'select' | null>(baseMode ?? null);
 
-  const updateMode = (mode: string | string[]) => {
-    const nextMode = mode === 'create' || mode === 'select' ? mode : null;
-    setCreateMode(nextMode);
+  const updateMode = (mode: 'create' | 'select' | null) => {
+    setCreateMode(mode);
 
-    dialoger.getState().update('create-project', { titleContent: <AddProjectsTitle mode={nextMode} onBack={() => updateMode('')} /> });
+    dialoger.getState().update('create-project', { titleContent: <AddProjectsTitle mode={mode} onBack={() => updateMode(null)} /> });
   };
 
   return (

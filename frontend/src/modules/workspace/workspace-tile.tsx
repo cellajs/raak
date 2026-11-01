@@ -27,7 +27,7 @@ export function WorkspaceTile({ entity }: WorkspaceTileProps) {
             {projects.map((project) => (
               <EntityAvatar
                 key={project.id}
-                className="-ml-2 size-10 border-2 border-black/25 more-contrast:border-black/85"
+                className="-ml-2 size-8 border-2 border-black/25 more-contrast:border-black/85 sm:size-10"
                 type="project"
                 id={project.id}
                 name={project.name}
@@ -35,14 +35,14 @@ export function WorkspaceTile({ entity }: WorkspaceTileProps) {
               />
             ))}
           </AvatarGroupList>
-          <AvatarOverflowIndicator className="-ml-2 rounded-md border-2 border-black/25 more-contrast:border-black/85 bg-muted font-semibold more-contrast:text-foreground text-faint-foreground text-xs tracking-tighter shadow-none" />
+          <AvatarOverflowIndicator className="-ml-2 size-8 rounded-md border-2 border-black/25 more-contrast:border-black/85 bg-muted font-semibold more-contrast:text-foreground text-faint-foreground text-xs tracking-tighter shadow-none sm:size-10" />
         </AvatarGroup>
       )}
     </div>
   );
 
   const meta = (
-    <div className="truncate text-muted-foreground text-sm">
+    <div className="truncate text-muted-foreground text-xs sm:text-sm">
       {projects.length > 0 ? projects.map((project) => project.name).join(', ') : t('c:no_resource_yet', { resource: t('c:project_other') })}
     </div>
   );

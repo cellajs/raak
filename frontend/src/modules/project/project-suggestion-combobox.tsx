@@ -114,6 +114,7 @@ export function ProjectSuggestionCombobox({
       <ComboboxContent className="p-0">
         <ComboboxSearchInput
           value={searchQuery}
+          onClear={() => setSearchQuery('')}
           isSearching={isFetching}
           placeholder={t('c:placeholder.type_input', { inputLabel: t('c:project') })}
         />
@@ -148,9 +149,9 @@ export function ProjectSuggestionCombobox({
                         data-assigned-workspace={isAssigned}
                         className="group/project-option justify-between"
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
                           <EntityAvatar type={entityType} id={id} name={name} url={thumbnailUrl} />
-                          <span className="truncate font-medium underline-offset-4 group-hover/project-option:underline group-data-[assigned-workspace=true]/project-option:no-underline">
+                          <span className="link-decoration group-active/project-option:link-decoration-strong truncate font-medium group-hover/project-option:underline group-data-[assigned-workspace=true]/project-option:no-underline">
                             {name}
                           </span>
                         </div>

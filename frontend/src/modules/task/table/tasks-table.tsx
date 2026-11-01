@@ -1,6 +1,6 @@
 import { type InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 import { BirdIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project, Workspace } from 'sdk';
 import { appConfig } from 'shared';
@@ -11,6 +11,7 @@ import { DataTable, rowKeyById } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
 import { SearchScope } from '~/modules/common/match-highlight/match-scope';
+import { ScrollReset } from '~/modules/common/scroll-reset';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { isBoardSearchActive, matchesBoardSearch, parseBoardSearch } from '~/modules/task/helpers/search-filter';
@@ -46,12 +47,16 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   });
   const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
 
-  const { q, sort, order } = search;
+  const { q, sort, order, status, type, labels } = search;
   const parsedSearch = parseBoardSearch(search);
 
   const [columns, setColumns] = useColumnVisibility(useColumns({ hideProject: !workspace, organization, tenantId, projects }));
   const [selected, setSelected] = useState<Task[]>([]);
   const [isCompact, setIsCompact] = useState(true);
+
+  // Here, not at the writes: the field, its chips, a recent search and the back button all change these
+  useEffect(() => setSelected([]), [q, status, type, labels]);
+
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
@@ -100,45 +105,47 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   return (
     <SearchScope q={q}>
-      <div className="flex h-full flex-col gap-4">
-        <TasksTableBar
-          total={total}
-          selected={selected}
-          searchVars={search}
-          columns={columns}
-          setColumns={setColumns}
-          projects={projects}
-          workspace={workspace}
-          publicView={publicView}
-          clearSelection={() => setSelected([])}
-          isCompact={isCompact}
-          setIsCompact={setIsCompact}
-        />
-        <DataTable<Task>
-          {...{
-            rows,
-            rowHeight: 52,
-            rowKeyGetter: rowKeyById,
-            columns,
-            enableVirtualization: true,
-            enableStickyHeader: true,
-            limit: tableLimit,
-            error,
-            isLoading,
-            isFetching,
-            isFiltered: isBoardSearchActive(parsedSearch),
-            hasNextPage,
-            fetchMore,
-            selectedRows: selectedRowIds,
-            onSelectedRowsChange: handleSelectedRowsChange,
-            isRowSelectionDisabled,
-            isCompact,
-            sortColumns,
-            onSortColumnsChange,
-            NoRowsComponent: noRowsComponent,
-          }}
-        />
-      </div>
+      <ScrollReset>
+        <div className="flex h-full flex-col gap-4">
+          <TasksTableBar
+            total={total}
+            selected={selected}
+            searchVars={search}
+            columns={columns}
+            setColumns={setColumns}
+            projects={projects}
+            workspace={workspace}
+            publicView={publicView}
+            clearSelection={() => setSelected([])}
+            isCompact={isCompact}
+            setIsCompact={setIsCompact}
+          />
+          <DataTable<Task>
+            {...{
+              rows,
+              rowHeight: 52,
+              rowKeyGetter: rowKeyById,
+              columns,
+              enableVirtualization: true,
+              enableStickyHeader: true,
+              limit: tableLimit,
+              error,
+              isLoading,
+              isFetching,
+              isFiltered: isBoardSearchActive(parsedSearch),
+              hasNextPage,
+              fetchMore,
+              selectedRows: selectedRowIds,
+              onSelectedRowsChange: handleSelectedRowsChange,
+              isRowSelectionDisabled,
+              isCompact,
+              sortColumns,
+              onSortColumnsChange,
+              NoRowsComponent: noRowsComponent,
+            }}
+          />
+        </div>
+      </ScrollReset>
     </SearchScope>
   );
 }

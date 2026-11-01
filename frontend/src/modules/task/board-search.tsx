@@ -23,10 +23,12 @@ interface BoardSearchBarProps {
   total: number | null;
   /** The board's or table's own controls, after the count. */
   controls: ReactNode;
+  /** A change scrolls the list back to the top. */
+  searchVars?: Record<string, unknown>;
 }
 
 /** The search over the tasks of a board or table, shared by both views. */
-export function BoardSearchBar({ projects, isInWorkspace, publicView, total, controls }: BoardSearchBarProps) {
+export function BoardSearchBar({ projects, isInWorkspace, publicView, total, controls, searchVars }: BoardSearchBarProps) {
   const { t } = useTranslation();
   const search = useBoardSearch();
   const filters = useBoardSearchFilters(projects, publicView);
@@ -45,6 +47,7 @@ export function BoardSearchBar({ projects, isInWorkspace, publicView, total, con
         wideSearch
         isFiltered={isFiltered}
         onResetFilters={reset}
+        searchVars={searchVars}
         searchLabel={label}
         count={<TableCount count={isFiltered ? null : total} label="c:task" className="mr-3 max-sm:hidden" />}
         search={

@@ -6,7 +6,7 @@ import type { Organization, Project } from 'sdk';
 import type { RenderCellProps } from '~/modules/common/data-grid';
 import { estimateWrappedLines } from '~/modules/common/data-grid/utils/wrap-text-utils';
 import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
-import { dateColumn } from '~/modules/common/data-table/columns';
+import { cellLinkTextClass, dateColumn } from '~/modules/common/data-table/columns';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
@@ -21,6 +21,7 @@ import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Button } from '~/modules/ui/button';
 import { ActorCell } from '~/modules/user/actor-cell';
+import { cn } from '~/utils/cn';
 
 function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
   const cellRef = useRef<HTMLButtonElement>(null);
@@ -58,26 +59,23 @@ function ProjectCell({ row, tabIndex, projects, organization, tenantId }: Projec
   if (!project || !organization || !tenantId) return row.projectId;
 
   return (
-    <Link
-      to="/$tenantId/$organizationSlug/project/$slug"
-      params={{ slug: project.slug, organizationSlug: organization.slug, tenantId }}
-      draggable={false}
-      tabIndex={tabIndex}
-      className="group flex items-center space-x-2 truncate outline-0"
+    <Button
+      variant="cell"
+      size="cell"
       data-tooltip="compact"
       data-tooltip-content={project.name}
+      render={
+        <Link
+          to="/$tenantId/$organizationSlug/project/$slug"
+          params={{ slug: project.slug, organizationSlug: organization.slug, tenantId }}
+          draggable={false}
+          tabIndex={tabIndex}
+        />
+      }
     >
-      <EntityAvatar
-        type="project"
-        className="group-active:press group-hover:font-semibold"
-        id={project.id}
-        name={project.name}
-        url={project.thumbnailUrl}
-      />
-      <span className="group-active:press in-data-[is-compact=true]:hidden truncate decoration-foreground/20 underline-offset-3 group-hover:underline group-active:decoration-foreground/50">
-        {project.name}
-      </span>
-    </Link>
+      <EntityAvatar type="project" className="size-8" id={project.id} name={project.name} url={project.thumbnailUrl} />
+      <span className={cn(cellLinkTextClass, 'in-data-[is-compact=true]:sr-only')}>{project.name}</span>
+    </Button>
   );
 }
 
@@ -102,10 +100,11 @@ export const useColumns = (opts: {
             <span className="mr-2 inline-flex shrink-0" data-tooltip="compact" data-tooltip-content={row.primaryLabel.name}>
               <PrimaryLabelIcon label={row.primaryLabel} />
             </span>
-            <span className="in-data-[is-compact=true]:hidden truncate">{row.primaryLabel.name}</span>
+            <span className="in-data-[is-compact=true]:sr-only truncate">{row.primaryLabel.name}</span>
           </>
         );
       },
+      exportValue: (row) => row.primaryLabel?.name,
       width: 140,
       modes: {
         compact: { width: 32, minWidth: 32 },
@@ -120,7 +119,18 @@ export const useColumns = (opts: {
       resizable: true,
       wrapText: 3,
       estimateLines: (row, { width }) => estimateWrappedLines(row.summaryLength ?? 0, width),
-      renderCell: (props) => <SummaryCell {...props} />,
+      renderCell: (props) => (
+        <>
+          <SeenMark
+            productId={props.row.id}
+            tenantId={props.row.tenantId}
+            organizationId={props.row.organizationId}
+            channelId={getSeenChannelId('task', props.row)}
+            productType="task"
+          />
+          <SummaryCell {...props} />
+        </>
+      ),
     },
     {
       key: 'todos',
@@ -140,6 +150,7 @@ export const useColumns = (opts: {
           </div>
         );
       },
+      exportValue: (row) => (row.checkboxCount ? `${row.checkedCount ?? 0} / ${row.checkboxCount}` : null),
     },
     {
       key: 'attachments',
@@ -157,6 +168,7 @@ export const useColumns = (opts: {
           </div>
         );
       },
+      exportValue: (row) => row.attachments?.length || null,
     },
     {
       key: 'status',
@@ -168,13 +180,6 @@ export const useColumns = (opts: {
         const status = statusOptionsByValue[row.status];
         return (
           <>
-            <SeenMark
-              productId={row.id}
-              tenantId={row.tenantId}
-              organizationId={row.organizationId}
-              channelId={getSeenChannelId('task', row)}
-              productType="task"
-            />
             <status.icon className="mr-2 size-4 shrink-0" aria-hidden="true" />
             <span>{t(`c:${status.status}`)}</span>
           </>
