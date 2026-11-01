@@ -7,12 +7,13 @@ import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels'
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { MotionTaskCard } from '~/modules/task/card/motion-task-card';
 import { DraftTaskItem } from '~/modules/task/draft-task-item';
+import { foldsSection, hasSectionBar } from '~/modules/task/helpers/board-helpers';
 import { revealDraftHostPanel } from '~/modules/task/helpers/create-task';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { usePanelScrolling } from '~/modules/task/hooks/use-panel-scrolling';
 import { ListFocusScope } from '~/modules/task/panel/list-focus-scope';
-import { PanelStatusSection } from '~/modules/task/panel/panel-status-section';
+import { OlderAcceptedHint, PanelStatusSection } from '~/modules/task/panel/panel-status-section';
 import { PanelTasksContext } from '~/modules/task/panel/panel-tasks-context';
 import { collapsedMainCount } from '~/modules/task/panel/task-panel-collapsed';
 import { TaskPanelEmpty } from '~/modules/task/panel/task-panel-empty';
@@ -30,7 +31,7 @@ const raisedRowClass = tw('[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=ed
 
 interface TaskPanelContentProps {
   project: Project;
-  /** The board panel showing these tasks: the project, or one split section of it. */
+  /** The board panel showing these tasks: the project's, or a status panel of it. */
   panelId: string;
   tasks: TaskProps['task'][];
   counts: TaskCounts;
@@ -53,7 +54,9 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   const sectionWindowMode = isMobile || !!windowScroll;
   const itemIds = tasks.map(({ id }) => id);
 
-  const hasContent = !!tasks.length || !!counts.accepted || !!counts.iced;
+  // Accepted without a bar to carry its older tasks: a panel of that status alone
+  const showsOlderHint = !counts.showAccepted && counts.acceptedCutOff > 0;
+  const hasContent = !!tasks.length || !!counts.accepted || !!counts.iced || showsOlderHint;
   const draftIndex = tasks.findIndex(isDraftTask);
   // The sticky status headers would overlap the create form
   const hostsDraft = draftIndex !== -1;
@@ -69,6 +72,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
 
   const statusSection = (type: TogglableStatusType) => (
     <PanelStatusSection
+      key={type}
       type={type}
       counts={counts}
       projectId={project.id}
@@ -78,14 +82,18 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
       suppressed={hostsDraft}
     />
   );
-  const topSlot = counts.showAccepted ? statusSection('accepted') : undefined;
-  const bottomSlot = counts.showIced ? statusSection('iced') : undefined;
+  const topSlot = foldsSection('accepted', counts) ? statusSection('accepted') : undefined;
+  const bottomSlot = foldsSection('iced', counts) ? (
+    statusSection('iced')
+  ) : showsOlderHint ? (
+    <OlderAcceptedHint i18nKey="c:older_accepted_in_table" count={counts.acceptedCutOff} />
+  ) : undefined;
 
   // Keyboard focus scrolls a card only to the viewport edge, under a pinned section bar (h-9). The margin holds even
   // while a bar is slid away: it slides in on the scroll that focus makes, too late for a margin that followed it.
   const cardScrollMargin = cn(
-    counts.showAccepted && !hostsDraft && '[&_[data-task-card-id]]:scroll-mt-[calc(var(--sticky-stack-nav)+--spacing(9))]',
-    counts.showIced && !hostsDraft && '[&_[data-task-card-id]]:scroll-mb-9',
+    foldsSection('accepted', counts) && !hostsDraft && '[&_[data-task-card-id]]:scroll-mt-[calc(var(--sticky-stack-nav)+--spacing(9))]',
+    foldsSection('iced', counts) && !hostsDraft && '[&_[data-task-card-id]]:scroll-mb-9',
   );
 
   const renderTask = (task: TaskProps['task']) => {
@@ -139,7 +147,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
                   itemIds={itemIds}
                   viewportRef={scrollViewportRef}
                 >
-                  {/* startMargin: the accepted bar's height (h-9), which stays in the flow above the list */}
+                  {/* startMargin: the top bar's height (h-9), which stays in the flow above the list */}
                   <Virtualizer
                     ref={virtualizerRef}
                     as="ul"
@@ -147,7 +155,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
                     scrollRef={scrollViewportRef}
                     keepMounted={keepDraftMounted}
                     shift={shift}
-                    startMargin={counts.accepted || counts.acceptedCutOff ? 36 : 0}
+                    startMargin={hasSectionBar('accepted', counts) ? 36 : 0}
                   >
                     {tasks.map(renderTask)}
                   </Virtualizer>

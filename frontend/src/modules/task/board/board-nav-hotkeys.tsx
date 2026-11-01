@@ -60,9 +60,7 @@ const toGroup = (event: KeyboardEvent) => {
 // item's panel. Focus elsewhere (the board header, an open menu) keeps them.
 const originPanelId = (event: KeyboardEvent) => {
   const target = event.target instanceof Element ? event.target : null;
-  // The header of a split project sits above its sections, and counts as the first of them
-  const panel = target?.closest<HTMLElement>('[data-panel]') ?? target?.closest('[data-panel-group]')?.querySelector<HTMLElement>('[data-panel]');
-  const panelId = panel?.dataset.panel;
+  const panelId = target?.closest<HTMLElement>('[data-panel]')?.dataset.panel;
   if (panelId) return panelId;
   if (target && target !== document.body) return null;
   return currentItem()?.panelId;

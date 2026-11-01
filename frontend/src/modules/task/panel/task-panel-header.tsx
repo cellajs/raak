@@ -1,28 +1,27 @@
-import { PlusIcon, SquareCheckBigIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { PanelDragHandleButton } from '~/modules/common/board/panel-drag-handle-button';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { EntityChip } from '~/modules/common/entity-chip';
-import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
+import { NewTaskButton } from '~/modules/task/board/new-task-button';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
-import { createTaskFormId, type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
+import { listStatusNames } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import { newTaskButtonClass, panelHandleClass } from '~/modules/task/task-styles';
+import { PanelStatusIcon, PanelStatusTitle } from '~/modules/task/panel/panel-status-title';
+import { panelHandleClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
-import { Button } from '~/modules/ui/button';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 
-interface PanelLeadingProps extends Pick<BoardPanelProps, 'project'> {
+interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'statuses'> {
   isInWorkspace: boolean;
   isCollapsed: boolean;
+  count: number;
 }
 
-function PanelLeading({ project, isInWorkspace, isCollapsed }: PanelLeadingProps) {
+function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: PanelLeadingProps) {
   const { t } = useTranslation();
 
   if (isInWorkspace) {
@@ -40,69 +39,49 @@ function PanelLeading({ project, isInWorkspace, isCollapsed }: PanelLeadingProps
   }
 
   // In a project view the project identity lives in the page header
+  const name = statuses ? listStatusNames(statuses) : t('c:task_other');
   return (
     <PanelDragHandleButton
-      name={t('c:task_other')}
-      fallbackLabel={t('c:task_other')}
-      icon={
-        <div className="flex min-w-8 justify-center">
-          <SquareCheckBigIcon className="size-4 shrink-0" />
-        </div>
-      }
+      name={name}
+      fallbackLabel={name}
+      icon={<PanelStatusIcon statuses={statuses} isCollapsed={isCollapsed} />}
       className={cn(panelHandleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
     >
-      {!isCollapsed && <div className="truncate font-semibold leading-6">{t('c:task_other')}</div>}
+      {!isCollapsed && <PanelStatusTitle statuses={statuses} count={count} />}
     </PanelDragHandleButton>
   );
 }
 
-interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView'> {
-  /** Over the sections of a split project, which are open by definition. */
-  spansSections?: boolean;
+interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses'> {
+  panelId: string;
+  count: number;
 }
 
 /** A project's panel header. */
-export function TaskPanelHeader({ project, publicView, spansSections }: TaskPanelHeaderProps) {
+export function TaskPanelHeader({ project, publicView, statuses, panelId, count }: TaskPanelHeaderProps) {
   const { t } = useTranslation();
 
   const isInWorkspace = useIsWorkspaceRoute();
 
-  const isCollapsed = useBoardStore((state) => !spansSections && !!state.panelCollapseState[project.id]);
-
-  const formId = createTaskFormId(project.id);
-  const hasDraft = useDraftStore((state) => {
-    const storedForm = state.getForm<NewTaskFormValues>(formId);
-    return !!storedForm && newTaskFormIsDirty(storedForm);
-  });
-
+  const isCollapsed = useBoardStore((state) => !!state.panelCollapseState[panelId]);
   const isReadOnly = useIsProjectReadOnly(project.id);
-  const isCreateFormOpen = useTaskInteractionStore((state) => state.draftTasks[project.id] !== undefined);
-
-  const toggleCreateForm = () => toggleCreateTaskForm(project);
 
   const actionsSlot = !isCollapsed ? (
     <>
-      {isReadOnly && (
+      {isReadOnly && panelId === project.id && (
         <Badge soft className="font-normal text-xs">
           {t('c:read_only')}
         </Badge>
       )}
       {!publicView && isInWorkspace && <ProjectActionsMenu project={project} className="h-8 px-1.5" />}
-      {!isReadOnly && (
-        <Button data-form-dirty={hasDraft} variant="secondary" size="xs" className={newTaskButtonClass} onClick={toggleCreateForm}>
-          <Badge className="absolute -top-1 -right-1 z-100 in-data-[form-dirty=false]:hidden size-2 p-0" />
-          <PlusIcon className={cn('size-4.5 transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />
-          <span>{t('c:task')}</span>
-        </Button>
-      )}
+      {isInWorkspace && <NewTaskButton project={project} className="-ml-1" />}
     </>
   ) : undefined;
 
   return (
     <BoardPanelHeader
-      // The separators between sections leave gaps in their top line: this line runs on above them
-      className={cn('bg-card', spansSections && 'border-b')}
-      leading={<PanelLeading project={project} isInWorkspace={isInWorkspace} isCollapsed={isCollapsed} />}
+      className="bg-card"
+      leading={<PanelLeading project={project} statuses={statuses} isInWorkspace={isInWorkspace} isCollapsed={isCollapsed} count={count} />}
       actions={actionsSlot}
       isCollapsed={isCollapsed}
     />

@@ -7,6 +7,8 @@ import {
   labelCreateManyStxBodySchema,
   labelCreateResponseSchema,
   labelListQuerySchema,
+  labelOlderAcceptedCountsQuerySchema,
+  labelOlderAcceptedCountsResponseSchema,
   labelSchema,
   labelUpdateStxBodySchema,
 } from '#/modules/label/label-schema';
@@ -41,6 +43,17 @@ const labelRoutes = createXRoutes(['labels', 'app', 'product'], {
     description: 'Returns a list of labels for a given project or workspace.',
     request: { params: tenantOrgParamSchema, query: labelListQuerySchema },
     responses: { 200: json('Label list', productListResponseSchema('label', labelSchema), mockPaginatedLabelsResponse()) },
+  }),
+  getLabelOlderAcceptedCounts: xRoute({
+    method: 'get',
+    path: '/older-accepted-counts',
+    xGuard: [actorGuard, tenantGuard, orgGuard],
+    xScope: 'task:read',
+    xRateLimiter: [syncReadLimiter],
+    summary: 'Get older accepted task counts per label',
+    description: 'Returns, per label id, how many tasks of a project were accepted before the cut-off of `acceptedCutOff` days ago.',
+    request: { params: tenantOrgParamSchema, query: labelOlderAcceptedCountsQuerySchema },
+    responses: { 200: json('Older accepted task counts per label id', labelOlderAcceptedCountsResponseSchema) },
   }),
   getLabel: xRoute({
     method: 'get',

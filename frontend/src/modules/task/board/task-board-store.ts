@@ -1,101 +1,81 @@
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
-import { mergePanelLayout, projectPanelIds, splitPanelLayout } from '~/modules/task/helpers/board-helpers';
-import type { Task } from '~/modules/task/types';
+import { useBoardStore } from '~/modules/common/board/board-store';
+import type { TaskStatus } from '~/modules/task/task-properties';
 import { idbKvStorage } from '~/query/idb-kv-storage';
 
 const defaultPanelPrefs = { expandAccepted: false, expandIced: false };
 
 type PanelPrefs = typeof defaultPanelPrefs;
-/** A split section of a project. Every status belongs to exactly one section, so a task always has one panel. */
-export type SectionsValue = Record<'status', Task['status'][]>;
 export type TogglableStatusType = 'iced' | 'accepted';
 
-/** One board's panel data: projectId → panel info. */
-export type BoardPanelData = Record<string, { viewSections?: SectionsValue[]; prefs: PanelPrefs }>;
-
 interface TaskBoardState {
-  panelData: Record<string, BoardPanelData>; // boardId → BoardPanelData
+  panelPrefs: Record<string, Record<string, PanelPrefs>>; // boardId → projectId → PanelPrefs
+  /** boardId → statuses with a panel of their own. Only a project page sets them, so a workspace board stays one column per project. */
+  statusPanels: Record<string, TaskStatus[]>;
+  /** boardId → the status its status panels start with, accepted when absent. Only a project page sets it. */
+  startWith: Record<string, TogglableStatusType>;
 
-  setPanelSections: (boardId: string, projectId: string, viewSections: SectionsValue[]) => void;
-  dropPanelSections: (boardId: string, projectId: string) => void;
+  setStartWith: (boardId: string, status: TogglableStatusType) => void;
+  toggleStatusPanel: (boardId: string, status: TaskStatus) => void;
   setPanelSectionExpanded: (boardId: string, projectId: string, status: TogglableStatusType, expanded: boolean) => void;
 
   reset: () => void; // Resets in-memory state to initial (call on sign-out)
 }
 
-const initStore: Pick<TaskBoardState, 'panelData'> = { panelData: {} };
-
-const ensureBoard = (state: TaskBoardState, boardId: string) => {
-  if (!state.panelData[boardId]) state.panelData[boardId] = {};
-  return state.panelData[boardId];
-};
-
-const ensurePanel = (board: BoardPanelData, projectId: string) => {
-  if (!board[projectId]) board[projectId] = { prefs: { ...defaultPanelPrefs } };
-  return board[projectId];
-};
+const initStore: Pick<TaskBoardState, 'panelPrefs' | 'statusPanels' | 'startWith'> = { panelPrefs: {}, statusPanels: {}, startWith: {} };
 
 export const useTaskBoardStore = create<TaskBoardState>()(
   devtools(
     persist(
-      immer((set, get) => ({
+      immer((set) => ({
         ...initStore,
 
-        setPanelSections: (boardId, projectId, viewSections) => {
-          // Persist the generic board layout before entering the Immer recipe,
-          // since accessing another store during drafting introduces a side effect.
-          const currentLayout = boardStore.getState().boardLayouts[boardId] ?? {};
-          boardStore.getState().updateBoardLayout(boardId, splitPanelLayout(currentLayout, projectId, projectPanelIds(projectId, viewSections)));
-
+        setStartWith: (boardId, status) => {
           set((state) => {
-            const board = ensureBoard(state, boardId);
-            const panel = ensurePanel(board, projectId);
-            panel.viewSections = viewSections;
+            state.startWith[boardId] = status;
           });
         },
 
-        dropPanelSections: (boardId, projectId) => {
-          const currentLayout = boardStore.getState().boardLayouts[boardId] ?? {};
-          const viewSections = get().panelData[boardId]?.[projectId]?.viewSections;
-          boardStore.getState().updateBoardLayout(boardId, mergePanelLayout(currentLayout, projectId, projectPanelIds(projectId, viewSections)));
-
+        toggleStatusPanel: (boardId, status) => {
           set((state) => {
-            const board = ensureBoard(state, boardId);
-            const panel = ensurePanel(board, projectId);
-            delete panel.viewSections;
+            const statuses = state.statusPanels[boardId] ?? [];
+            state.statusPanels[boardId] = statuses.includes(status) ? statuses.filter((other) => other !== status) : [...statuses, status];
           });
         },
 
         setPanelSectionExpanded: (boardId, projectId, status, expanded) => {
           set((state) => {
-            const board = ensureBoard(state, boardId);
-            const panel = ensurePanel(board, projectId);
+            state.panelPrefs[boardId] ??= {};
+            state.panelPrefs[boardId][projectId] ??= { ...defaultPanelPrefs };
 
             const key = status === 'iced' ? 'expandIced' : 'expandAccepted';
-            panel.prefs[key] = expanded;
+            state.panelPrefs[boardId][projectId][key] = expanded;
           });
         },
 
         reset: () => set(initStore),
       })),
-      { version: 1, name: 'task-board', skipHydration: true, storage: createJSONStorage(() => idbKvStorage('task-board')) },
+      {
+        version: 2,
+        name: 'task-board',
+        skipHydration: true,
+        storage: createJSONStorage(() => idbKvStorage('task-board')),
+        // v1 held split columns, and which bars were unfolded: not worth carrying over
+        migrate: () => initStore,
+      },
     ),
   ),
 );
 
 export { useTaskBoardStore as taskBoardStore };
 
-/** The active board's split sections of a project; undefined while it is unsplit. */
-export const useProjectViewSections = (projectId: string) => {
-  const boardId = useBoardStore((state) => state.activeBoardId);
-  return useTaskBoardStore((state) => (boardId ? state.panelData[boardId]?.[projectId]?.viewSections : undefined));
-};
+/** The status a board's status panels start with. */
+export const useStartWith = (boardId: string): TogglableStatusType => useTaskBoardStore((state) => state.startWith[boardId]) ?? 'accepted';
 
 /** The active board's expand preferences of a project's accepted and iced sections. */
 export const useProjectPanelPrefs = (projectId: string) => {
   const boardId = useBoardStore((state) => state.activeBoardId);
-  return useTaskBoardStore((state) => (boardId ? state.panelData[boardId]?.[projectId]?.prefs : undefined)) ?? defaultPanelPrefs;
+  return useTaskBoardStore((state) => (boardId ? state.panelPrefs[boardId]?.[projectId] : undefined)) ?? defaultPanelPrefs;
 };

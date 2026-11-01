@@ -1,10 +1,9 @@
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { BirdIcon, SearchIcon } from 'lucide-react';
+import { BirdIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
-import { matchesTerms, parseTerms } from 'shared/utils/text-match';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
@@ -13,15 +12,11 @@ import { LabelTile, labelTileDomId } from '~/modules/label/label-tile';
 import { labelTileStore } from '~/modules/label/label-tile-store';
 import { labelsCanonicalOptions } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps, LabelsScopeProps } from '~/modules/label/types';
-import { type LabelUsage, useLabelUsage } from '~/modules/label/use-label-usage';
+import { type LabelTotals, type LabelUsage, useLabelTotals, useLabelUsage } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { firstItemInView, registerPanelNav } from '~/modules/task/helpers/panel-nav-registry';
-import { filterValues } from '~/modules/task/helpers/search-filter';
 import { ListFocusScope } from '~/modules/task/panel/list-focus-scope';
 import { ScrollArea } from '~/modules/ui/scroll-area';
-
-/** A match over the same columns the server search filters on (name + keywords). */
-const matchesSearch = (row: LabelRow, terms: string[]) => matchesTerms([row.nameFolded, row.keywordsFolded], terms);
 
 const isPanelLabel = (mode: string) => mode !== 'primary';
 
@@ -47,8 +42,9 @@ function ProjectLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
     select: (result) => result.items.filter((label) => isPanelLabel(label.mode)),
   });
   const usage = useLabelUsage([entityId]);
+  const totals = useLabelTotals([entityId]);
 
-  return <LabelListView labels={data ?? []} usage={usage} isLoading={isLoading} {...hostProps} />;
+  return <LabelListView labels={data ?? []} usage={usage} totals={totals} isLoading={isLoading} {...hostProps} />;
 }
 
 /** Aggregates each project's canonical list client-side, so a just-created label shows without a refetch. */
@@ -65,28 +61,28 @@ function WorkspaceLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
     combine: combinePanelLabels,
   });
   const usage = useLabelUsage(projectIds ?? []);
+  const totals = useLabelTotals(projectIds ?? []);
 
-  return <LabelListView labels={labels} usage={usage} isLoading={projectIds === undefined || pending} {...hostProps} />;
+  return (
+    <LabelListView labels={labels} usage={usage} totals={totals} isLoading={projectIds === undefined || pending} showProjectUsage {...hostProps} />
+  );
 }
 
 interface LabelListViewProps extends LabelsHostProps {
   labels: Label[];
   usage: LabelUsage;
+  totals: LabelTotals;
   isLoading: boolean;
+  showProjectUsage?: boolean;
 }
 
-function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
+function LabelListView({ labels, usage, totals, isLoading, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const q = useSearch({ strict: false, select: (search) => search.q });
-  const pickedSlugs = filterValues(useSearch({ strict: false, select: (search) => search.labels }));
   const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
 
   const viewportRef = useRef<HTMLDivElement>(null);
-  const grouped = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
-  // A picked label keeps its row, so it stays at hand to take out
-  const terms = parseTerms(q);
-  const rows = terms.length ? grouped.filter((row) => pickedSlugs.includes(row.slug) || matchesSearch(row, terms)) : grouped;
+  const rows = groupLabelRows(labels, { usage, totals }).sort(byCreatedAtDesc);
   const itemIds = rows.map((row) => labelTileDomId(row.id));
 
   // Every tile is mounted, so bringing one into view is a plain scroll
@@ -111,13 +107,7 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
   }, [labelPageId, isLoading]);
 
   if (isLoading) return <Spinner className="my-8" />;
-  if (!rows.length) {
-    return grouped.length ? (
-      <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleOptions={{ resource: t('c:label_other') }} />
-    ) : (
-      <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:label_other') }} />
-    );
-  }
+  if (!rows.length) return <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:label_other') }} />;
 
   const list = (
     <ul aria-label={t('c:label_other')}>

@@ -17860,6 +17860,97 @@
         }
       }
     },
+    "/{tenantId}/{organizationId}/labels/older-accepted-counts": {
+      "get": {
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiKey": ["task:read"]
+          },
+          {
+            "oauth2": ["task:read"]
+          }
+        ],
+        "operationId": "getLabelOlderAcceptedCounts",
+        "tags": ["labels", "app", "product"],
+        "summary": "Get older accepted task counts per label",
+        "description": "Returns, per label id, how many tasks of a project were accepted before the cut-off of `acceptedCutOff` days ago.",
+        "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
+        "x-rate-limiter": ["syncReadLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "tenantId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "organizationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "required": true,
+            "name": "acceptedCutOff",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Older accepted task counts per label id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
     "/{tenantId}/{organizationId}/labels/{id}": {
       "get": {
         "security": [

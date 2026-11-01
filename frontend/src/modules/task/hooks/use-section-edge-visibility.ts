@@ -4,7 +4,7 @@ const scrollThreshold = 10; // Minimum accumulated scroll delta counted as a dir
 const confirmSignals = 2; // Same-direction scroll events before a flip, so a virtualizer correction does not read as a gesture
 
 interface UseSectionEdgeVisibilityOptions {
-  /** Accepted pins to the top, iced to the bottom. */
+  /** The end of the list the bar sits at and pins to. */
   edge: 'top' | 'bottom';
   /** The sticky element itself, next to the list in the flow. */
   barRef: RefObject<HTMLElement | null>;
@@ -76,7 +76,7 @@ export function useSectionEdgeVisibility({ edge, barRef, active, scrollRef, wind
       });
     };
 
-    // A shrinking list brings the iced slot on screen without any scroll event
+    // A shrinking list brings the bottom slot on screen without any scroll event
     const listObserver = new ResizeObserver(() => {
       if (slotShows()) setVisible(true);
     });

@@ -1,4 +1,4 @@
-import { EllipsisVerticalIcon, ExpandIcon, InfoIcon, PlusIcon, SettingsIcon, SquareCheckBigIcon, TagIcon } from 'lucide-react';
+import { EllipsisVerticalIcon, ExpandIcon, InfoIcon, PlusIcon, SettingsIcon, SlidersHorizontalIcon, TagIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -10,13 +10,16 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { idealWidthFactor } from '~/modules/common/resizable-panels/resizable-panels';
 import { SearchField } from '~/modules/common/search-field';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
-import { buildBoardExtraPanels, usePanelLayout, useShowExplainer } from '~/modules/task/board/board-hooks';
+import { buildBoardExtraPanels, usePanelLayout, useShowExplainer, useStatusTabList } from '~/modules/task/board/board-hooks';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
+import { StatusTabNav } from '~/modules/task/board/status-tab-nav';
+import { foldsStatus } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
-import { PanelSectionRow } from '~/modules/task/panel/panel-section-row';
+import { PanelStatusIcon, PanelStatusTitle } from '~/modules/task/panel/panel-status-title';
+import { TaskStatus } from '~/modules/task/task-properties';
 import { newTaskButtonClass, panelHandleClass, statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
-import type { BoardResizablePanel, ProjectResizablePanel } from '~/modules/task/types';
+import type { BoardResizablePanel } from '~/modules/task/types';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
 import { cn } from '~/utils/cn';
@@ -78,7 +81,7 @@ export function BoardSkeleton({
       case 'mobile':
         return (
           <>
-            {isInWorkspace && <ProjectTabNav projects={projects} />}
+            {isInWorkspace ? <ProjectTabNav projects={projects} /> : <StatusTabNav />}
             <MobilePanelSkeleton />
           </>
         );
@@ -97,12 +100,16 @@ export function BoardSkeleton({
       default:
         return (
           <>
-            {panel.sectionFilters ? (
-              <PanelSectionRow sectionFilters={panel.sectionFilters} />
-            ) : (
-              !projectPage && <PanelHeaderSkeleton project={panel.project} projectPage={false} isCollapsed={isCollapsed(panel.panelId)} />
-            )}
-            <PanelBodySkeleton />
+            <PanelHeaderSkeleton
+              project={panel.project}
+              projectPage={projectPage}
+              statuses={panel.statuses}
+              isCollapsed={isCollapsed(panel.panelId)}
+            />
+            <PanelBodySkeleton
+              showAccepted={foldsStatus(panel.statuses, TaskStatus.Accepted)}
+              showIced={foldsStatus(panel.statuses, TaskStatus.Iced)}
+            />
           </>
         );
     }
@@ -119,36 +126,12 @@ export function BoardSkeleton({
         )}
       >
         <div className="flex h-full" style={{ gap: columnGap, minWidth: rowMinWidth }}>
-          {panels.map((panel, index) => {
+          {panels.map((panel) => {
             const { panelId } = panel;
             if (panel.kind === 'mobile') {
               return (
                 <div key={panelId} className="flex h-full w-full min-w-0 flex-col">
                   {renderColumn(panel)}
-                </div>
-              );
-            }
-            if (panel.kind === 'project' && panel.sectionFilters) {
-              const previous = panels[index - 1];
-              if (previous?.kind === 'project' && previous.project.id === panel.project.id) return null;
-
-              const sections = panels.filter(
-                (candidate): candidate is ProjectResizablePanel => candidate.kind === 'project' && candidate.project.id === panel.project.id,
-              );
-              const innerGaps = (sections.length - 1) * columnGap;
-              const widthOf = (read: (panelId: string) => number) => sections.reduce((sum, section) => sum + read(section.panelId), innerGaps);
-              const groupStyle = { flex: `${widthOf((id) => defaultSizes[id])} 1 0px`, minWidth: widthOf(() => panelMinWidth) };
-
-              return (
-                <div key={panel.project.id} className="flex h-full flex-col" style={groupStyle}>
-                  <PanelHeaderSkeleton project={panel.project} projectPage={projectPage} isCollapsed={false} className="border-b" />
-                  <div className="flex min-h-0 flex-1" style={{ gap: columnGap }}>
-                    {sections.map((section) => (
-                      <div key={section.panelId} className="flex h-full flex-col" style={columnStyle(section.panelId)}>
-                        {renderColumn(section)}
-                      </div>
-                    ))}
-                  </div>
                 </div>
               );
             }
@@ -173,9 +156,17 @@ interface BoardHeaderSkeletonProps {
 /** Inert stand-in for the board's task bar; like the live one, a board without projects shows no task count. */
 export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false, publicView = false }: BoardHeaderSkeletonProps) {
   const { t } = useTranslation();
+  const showsProjectControls = !isInWorkspace && hasProjects && !publicView;
 
   return (
     <div className={taskBarClass} aria-hidden="true" inert>
+      {showsProjectControls && (
+        <Button variant="secondary" className={newTaskButtonClass}>
+          <PlusIcon className="size-4.5" />
+          <span>{t('c:task')}</span>
+        </Button>
+      )}
+
       <SearchField value="" onSearch={() => {}} label={t('c:placeholder.search')} className="edgeless sm:min-w-44" />
 
       <TableCount count={hasProjects ? 0 : null} label="c:task" className="mr-3 max-sm:hidden" />
@@ -195,7 +186,7 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
             <EllipsisVerticalIcon />
           </Button>
         </>
-      ) : hasProjects && !publicView ? (
+      ) : showsProjectControls ? (
         <Button variant="ghost">
           <EllipsisVerticalIcon />
         </Button>
@@ -204,6 +195,13 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
       {hasProjects && !publicView && (
         <Button variant="ghost" className="sm:hidden">
           <TagIcon />
+        </Button>
+      )}
+
+      {showsProjectControls && (
+        <Button variant="outline" className="max-sm:hidden">
+          <SlidersHorizontalIcon />
+          <span className="max-xl:sr-only">{t('c:view')}</span>
         </Button>
       )}
 
@@ -218,9 +216,15 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
 
 /** The mobile panel while its tasks load, with an inert create button where the live one sits. */
 export function MobilePanelSkeleton() {
+  const statuses = useStatusTabList();
+
   return (
     <>
-      <PanelBodySkeleton rowHeight={mobileRowHeight} />
+      <PanelBodySkeleton
+        rowHeight={mobileRowHeight}
+        showAccepted={foldsStatus(statuses, TaskStatus.Accepted)}
+        showIced={foldsStatus(statuses, TaskStatus.Iced)}
+      />
       <div inert>
         <FloatingNavButton id="create-task-placeholder" icon={PlusIcon} onClick={() => {}} />
       </div>
@@ -230,19 +234,25 @@ export function MobilePanelSkeleton() {
 
 interface PanelBodySkeletonProps {
   rowHeight?: number;
+  showAccepted?: boolean;
+  showIced?: boolean;
 }
 
-function PanelBodySkeleton({ rowHeight = desktopRowHeight }: PanelBodySkeletonProps) {
+function PanelBodySkeleton({ rowHeight = desktopRowHeight, showAccepted = true, showIced = true }: PanelBodySkeletonProps) {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden sm:border">
-      <div className={cn('h-9 shrink-0 border-t border-t-transparent', statusSectionColors.accepted.border, statusSectionColors.accepted.fill)} />
+      {showAccepted && (
+        <div
+          className={cn('h-9 shrink-0 border-t border-t-transparent', statusSectionColors.accepted.border.top, statusSectionColors.accepted.fill)}
+        />
+      )}
       {Array.from({ length: rowCount }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations
         <div key={index} className="border-b px-1 py-2">
           <Skeleton className="w-full rounded" style={{ height: rowHeight }} />
         </div>
       ))}
-      <div className={cn('h-9', statusSectionColors.iced.fill)} />
+      {showIced && <div className={cn('h-9', statusSectionColors.iced.fill)} />}
     </div>
   );
 }
@@ -258,43 +268,41 @@ function LocalPanelBodySkeleton() {
   );
 }
 
-interface PanelHeaderSkeletonProps extends Pick<BoardPanelProps, 'project'> {
+interface PanelHeaderSkeletonProps extends Pick<BoardPanelProps, 'project' | 'statuses'> {
   projectPage: boolean;
   isCollapsed: boolean;
-  className?: string;
 }
 
-function PanelHeaderSkeleton({ projectPage, project, isCollapsed, className }: PanelHeaderSkeletonProps) {
+function PanelHeaderSkeleton({ projectPage, project, statuses, isCollapsed }: PanelHeaderSkeletonProps) {
   const { t } = useTranslation();
 
   return (
     <BoardPanelHeader
-      className={cn('bg-background', className)}
+      className="bg-background"
       isCollapsed={isCollapsed}
       leading={
         <div className={cn(buttonVariants({ variant: 'ghost' }), panelHandleClass, 'truncate', isCollapsed && 'w-full justify-center')}>
           {projectPage ? (
-            <div className="flex min-w-8 justify-center">
-              <SquareCheckBigIcon className="size-4 shrink-0" />
-            </div>
+            <PanelStatusIcon statuses={statuses} isCollapsed={isCollapsed} />
           ) : (
             <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
           )}
-          {!isCollapsed && <div className="truncate font-semibold leading-6">{projectPage ? t('c:task_other') : project.name}</div>}
+          {!isCollapsed &&
+            (projectPage ? <PanelStatusTitle statuses={statuses} /> : <div className="truncate font-semibold leading-6">{project.name}</div>)}
         </div>
       }
       actions={
-        <>
-          {!projectPage && (
+        !projectPage && (
+          <>
             <Button variant="ghost" className="h-8 px-1.5 max-sm:hidden" aria-label={t('c:resource_options', { resource: t('c:project') })}>
               <EllipsisVerticalIcon />
             </Button>
-          )}
-          <Button variant="secondary" size="xs" className={newTaskButtonClass}>
-            <PlusIcon className="size-4.5" />
-            <span>{t('c:task')}</span>
-          </Button>
-        </>
+            <Button variant="secondary" size="xs" className={cn(newTaskButtonClass, '-ml-1')}>
+              <PlusIcon className="size-4.5" />
+              <span>{t('c:task')}</span>
+            </Button>
+          </>
+        )
       }
     />
   );

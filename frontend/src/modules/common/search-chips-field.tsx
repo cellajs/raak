@@ -1,10 +1,10 @@
 import { HistoryIcon, SearchIcon } from 'lucide-react';
-import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react';
+import { type FocusEvent, type KeyboardEvent, type MouseEvent, type ReactNode, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { foldText, matchesTerms } from 'shared/utils/text-match';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useDebounce } from '~/hooks/use-debounce';
-import { CloseButton } from '~/modules/common/close-button';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { MatchScope } from '~/modules/common/match-highlight/match-scope';
 import { SearchClearButton } from '~/modules/common/search-clear-button';
@@ -17,6 +17,9 @@ import { cn } from '~/utils/cn';
 
 export interface SearchChip {
   key: string;
+  /** The filter this chip is a value of, and that value: pressing the chip offers the filter's other values. */
+  group: string;
+  value: string;
   label: string;
   icon?: ReactNode;
   onRemove: () => void;
@@ -38,8 +41,12 @@ export interface SearchOptionGroup {
   label: string;
   options: SearchOption[];
   onToggle: (value: string) => void;
+  /** Swaps a selected value for another. A filter of one value can leave this out: its toggle already does that. */
+  onReplace?: (from: string, to: string) => void;
   /** Smaller chips, for a row of many values such as labels. */
   isCompact?: boolean;
+  /** How many options the row shows; a selected one always shows, and typing finds the rest. */
+  rowLimit?: number;
 }
 
 /** A search made before, with its filters. */
@@ -95,15 +102,20 @@ const isTouch = () => window.matchMedia('(pointer: coarse)').matches;
 // A touch device keeps the options on focus out: a chip's press lowers the keyboard, and the options stay to pick more
 const closingReasons = new Set(['outside-press', 'escape-key', 'focus-out']);
 
-const filterChipClass =
-  'border-transparent bg-primary text-primary-foreground [&_button]:hover:bg-primary-foreground/20 [&_button]:hover:text-primary-foreground';
-const phoneChipClass = 'h-9 shrink-0 pl-3 [&_button]:size-8';
+const filterChipClass = 'border-transparent bg-foreground-soft text-background [&_button]:hover:bg-background/20 [&_button]:hover:text-background';
+const pickingChipClass = 'outline-2 outline-foreground-soft outline-offset-1';
+const editingChipClass = 'border-foreground-soft bg-background pr-0.5 pl-2.5';
+const phoneChipClass = 'h-7 shrink-0 [&>button:last-child]:size-6';
+// The width of the bar's close X and the gap before it, so the options on a phone reach as far as the bar's row
+const phonePopupWidthClass = 'w-[calc(var(--anchor-width)+2.5rem)]';
 
 /**
  * A search where every word and filter is its own chip with its own X. The input holds only the word being typed, which
  * filters as it is typed: a space, a comma, Enter or leaving the field turns it into a chip. An empty input offers every
- * filter and the recent searches, an input with text suggests what matches it. From `sm` up the chips sit in the field; on a
- * phone they scroll in a row below it.
+ * filter and the recent searches, an input with text suggests what matches it. Pressing a chip's value changes it: a word
+ * is edited in place, a filter's value offers the filter's other values to swap it for. From `sm` up the chips sit in the field and
+ * its X clears the search, leaving open options open to close on the next press; on a phone the chips scroll in a row below
+ * the field and the bar's X clears and closes.
  */
 export function SearchChipsField({
   value,
@@ -127,12 +139,19 @@ export function SearchChipsField({
   const fieldRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<HTMLDivElement>(null);
   const highlightedRef = useRef<SearchSelection | undefined>(undefined);
+  const wordInputRef = useRef<HTMLInputElement>(null);
 
   const [words, setWords] = useState(() => splitWords(value));
   const [draft, setDraft] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [pickingKey, setPickingKey] = useState<string | null>(null);
+  const [wordEdit, setWordEdit] = useState<{ word: string; text: string } | null>(null);
 
-  const query = joinQuery(words, draft);
+  // A chip can go from under its edit, such as by a reset, a recent search or the back button
+  if (wordEdit && !words.includes(wordEdit.word)) setWordEdit(null);
+
+  const editedWords = wordEdit ? [...new Set(words.flatMap((other) => (other === wordEdit.word ? splitWords(wordEdit.text) : [other])))] : words;
+  const query = joinQuery(editedWords, draft);
   const typedQuery = useDebounce(query, typingPause);
   const sentRef = useRef(value);
 
@@ -157,8 +176,18 @@ export function SearchChipsField({
   const isTyping = isOpen && !!word;
   const terms = word ? [foldText(word)] : [];
   const hasOptions = groups.length > 0 || recents.length > 0;
+  const hasChips = chips.length > 0 || words.length > 0;
+  const hasSearch = hasChips || !!word;
+
+  const alternativesOf = (group?: SearchOptionGroup) => group?.options.filter((option) => !option.isSelected) ?? [];
+  const groupOf = (chip?: SearchChip) => groups.find((group) => group.key === chip?.group);
+
+  const pickingChip = chips.find((chip) => chip.key === pickingKey);
+  const pickingGroup = groupOf(pickingChip);
+  if (pickingKey && !pickingChip) setPickingKey(null);
 
   const close = () => {
+    setPickingKey(null);
     setIsOpen(false);
     const nextWords = word && !words.includes(word) ? [...words, word] : words;
     setWords(nextWords);
@@ -173,18 +202,70 @@ export function SearchChipsField({
     send(joinQuery(words, ''));
   };
 
-  const removeWord = (removed: string) => {
-    const next = words.filter((other) => other !== removed);
-    setWords(next);
-    send(joinQuery(next, draft));
+  // Flushed so the edit's input is gone before focus moves on: its blur would save the edit again
+  const endWordEdit = (save: boolean) => {
+    if (!wordEdit) return;
+    flushSync(() => {
+      if (save) setWords(editedWords);
+      setWordEdit(null);
+    });
   };
 
-  const reset = () => {
+  const removeWord = (removed: string) => {
+    const isEdited = wordEdit?.word === removed;
+    const next = (isEdited ? words : editedWords).filter((other) => other !== removed);
+    flushSync(() => {
+      setWords(next);
+      setWordEdit(null);
+    });
+    send(joinQuery(next, draft));
+    if (isEdited) inputRef.current?.focus();
+  };
+
+  const clearOrClose = ({ currentTarget }: MouseEvent<HTMLButtonElement>) => {
+    if (!hasSearch) {
+      setIsOpen(false);
+      return inputRef.current?.blur();
+    }
+    onSearchEnd?.(query);
+    const wasEditing = !!wordEdit;
+    endWordEdit(false);
     setWords([]);
     setDraft('');
     sentRef.current = '';
     onReset();
-    inputRef.current?.focus();
+    // Only a keyboard gets the X focused, and clearing hides it; a mouse press leaves focus and the options as they are
+    if (wasEditing || document.activeElement === currentTarget) inputRef.current?.focus();
+  };
+
+  const pressFilterChip = (chip: SearchChip) => {
+    endWordEdit(true);
+    setPickingKey(chip.key === pickingKey ? null : chip.key);
+    if (hasOptions) setIsOpen(true);
+    // In the input the arrow keys walk the options; a phone keeps its keyboard down for a choice between chips
+    if (!isTouch()) inputRef.current?.focus();
+  };
+
+  const pressWordChip = (text: string) => {
+    endWordEdit(true);
+    setPickingKey(null);
+    setIsOpen(false);
+    // Rendered within the tap, so the input takes focus inside the gesture: iOS opens its keyboard for no later focus
+    flushSync(() => setWordEdit({ word: text, text }));
+    wordInputRef.current?.focus();
+    wordInputRef.current?.select();
+  };
+
+  const handleWordKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter' && event.key !== 'Escape') return;
+    event.preventDefault();
+    endWordEdit(event.key === 'Enter');
+    if (!isTouch()) inputRef.current?.focus();
+  };
+
+  const handleWordBlur = ({ relatedTarget }: FocusEvent<HTMLInputElement>) => {
+    endWordEdit(true);
+    if (!fieldRef.current?.contains(relatedTarget)) onSearchEnd?.(query);
   };
 
   const pick = (selection: SearchSelection | null) => {
@@ -193,6 +274,13 @@ export function SearchChipsField({
     if (selection.kind === 'recent') {
       selection.recent.onPick();
       return setIsOpen(false);
+    }
+    if (pickingChip) {
+      const { group, option } = selection;
+      group.onReplace ? group.onReplace(pickingChip.value, option.value) : group.onToggle(option.value);
+      setPickingKey(null);
+      if (isTouch()) inputRef.current?.blur();
+      return;
     }
     selection.group.onToggle(selection.option.value);
     // A suggestion replaces the word that found it; a chip leaves the options open to pick more
@@ -207,6 +295,7 @@ export function SearchChipsField({
     const finished = parts.slice(0, -1).filter((part) => part && !words.includes(part));
     if (finished.length) setWords([...words, ...finished]);
     setDraft(parts.at(-1) ?? '');
+    setPickingKey(null);
     if (hasOptions) setIsOpen(true);
   };
 
@@ -232,8 +321,6 @@ export function SearchChipsField({
     }
   };
 
-  const wordChips: SearchChip[] = words.map((text) => ({ key: `word:${text}`, label: text, onRemove: () => removeWord(text) }));
-
   const chipNodes = (
     <>
       {chips.map((chip) => (
@@ -241,7 +328,10 @@ export function SearchChipsField({
           key={chip.key}
           onRemove={chip.onRemove}
           removeLabel={t('c:remove_resource', { resource: chip.label })}
-          className={cn('max-w-48', filterChipClass, isMobile && phoneChipClass)}
+          onPress={alternativesOf(groupOf(chip)).length > 0 ? () => pressFilterChip(chip) : undefined}
+          pressLabel={t('c:change_resource', { resource: chip.label })}
+          isExpanded={chip.key === pickingKey}
+          className={cn('max-w-48', filterChipClass, isMobile && phoneChipClass, chip.key === pickingKey && pickingChipClass)}
         >
           <span className="flex items-center gap-1 [&_svg]:size-3.5 [&_svg]:shrink-0">
             {chip.icon}
@@ -249,19 +339,45 @@ export function SearchChipsField({
           </span>
         </Chip>
       ))}
-      {wordChips.map((chip) => (
-        <Chip
-          key={chip.key}
-          onRemove={chip.onRemove}
-          removeLabel={t('c:remove_resource', { resource: chip.label })}
-          className={cn('max-w-48', isMobile && phoneChipClass)}
-        >
-          {chip.label}
-        </Chip>
-      ))}
+      {words.map((text) =>
+        wordEdit?.word === text ? (
+          <Chip
+            key={text}
+            onRemove={() => removeWord(text)}
+            removeLabel={t('c:remove_resource', { resource: text })}
+            className={cn('max-w-48', editingChipClass, isMobile && phoneChipClass)}
+            // A press on its X leaves focus in the edit: losing it would save the edit, and its chip would go before the click lands
+            onMouseDown={(event) => {
+              if (event.target !== wordInputRef.current) event.preventDefault();
+            }}
+          >
+            <input
+              ref={wordInputRef}
+              aria-label={t('c:edit_resource', { resource: text })}
+              enterKeyHint="done"
+              size={Math.max(wordEdit.text.length, 1)}
+              value={wordEdit.text}
+              onChange={(event) => setWordEdit({ word: text, text: event.target.value })}
+              onKeyDown={handleWordKeyDown}
+              onBlur={handleWordBlur}
+              className="field-sizing-content min-w-2 max-w-full bg-transparent outline-hidden"
+            />
+          </Chip>
+        ) : (
+          <Chip
+            key={text}
+            onRemove={() => removeWord(text)}
+            removeLabel={t('c:remove_resource', { resource: text })}
+            onPress={() => pressWordChip(text)}
+            pressLabel={t('c:edit_resource', { resource: text })}
+            className={cn('max-w-48 *:data-[slot=chip-value]:cursor-text', isMobile && phoneChipClass)}
+          >
+            {text}
+          </Chip>
+        ),
+      )}
     </>
   );
-  const hasChips = chips.length > 0 || words.length > 0;
 
   const optionMatches = groups.flatMap((group) =>
     group.options.filter((option) => matchesTerms([foldText(option.label)], terms)).map((option) => ({ group, option })),
@@ -272,25 +388,27 @@ export function SearchChipsField({
 
   const groupRow = (group: SearchOptionGroup) => (
     <ComboboxGroup key={group.key} aria-label={group.label} className="no-scrollbar flex gap-1 overflow-x-auto border-b px-3 py-2 last:border-b-0">
-      {group.options.map((option) => (
-        <ComboboxItem
-          key={option.value}
-          value={{ kind: 'option', group, option } satisfies SearchSelection}
-          aria-selected={option.isSelected}
-          className={cn(
-            'w-auto shrink-0 rounded-full border border-input px-2.5 py-0',
-            group.isCompact ? 'h-6.5 pointer-coarse:h-8.5' : 'h-7.5 pointer-coarse:h-10',
-            option.isSelected &&
-              'border-transparent bg-primary text-primary-foreground data-highlighted:bg-primary data-highlighted:text-primary-foreground',
-          )}
-        >
-          {option.icon}
-          {option.label}
-          {option.count !== undefined && (
-            <span className={cn('text-xs tabular-nums', !option.isSelected && 'text-muted-foreground')}>{option.count}</span>
-          )}
-        </ComboboxItem>
-      ))}
+      {group.options
+        .filter((option, index) => group.rowLimit === undefined || index < group.rowLimit || option.isSelected)
+        .map((option) => (
+          <ComboboxItem
+            key={option.value}
+            value={{ kind: 'option', group, option } satisfies SearchSelection}
+            aria-selected={option.isSelected}
+            className={cn(
+              'w-auto shrink-0 rounded-full border border-input px-2.5 py-0',
+              group.isCompact ? 'h-6.5 pointer-coarse:h-8.5' : 'h-7.5 pointer-coarse:h-10',
+              option.isSelected &&
+                'border-transparent bg-foreground-soft text-background data-highlighted:bg-foreground-soft data-highlighted:text-background',
+            )}
+          >
+            {option.icon}
+            {option.label}
+            {option.count !== undefined && (
+              <span className={cn('text-xs tabular-nums', !option.isSelected && 'text-muted-foreground')}>{option.count}</span>
+            )}
+          </ComboboxItem>
+        ))}
     </ComboboxGroup>
   );
 
@@ -307,6 +425,7 @@ export function SearchChipsField({
         open={isOpen && hasOptions}
         onOpenChange={(next, { reason }) => {
           if (next) setIsOpen(true);
+          else if (reason === 'escape-key' && pickingChip) setPickingKey(null);
           else if (closingReasons.has(reason) && !(reason === 'focus-out' && isTouch())) close();
         }}
         onItemHighlighted={(item) => {
@@ -315,7 +434,13 @@ export function SearchChipsField({
         filter={() => true}
         itemToStringLabel={() => ''}
       >
-        <InputGroup ref={groupRef} className="h-auto min-h-10 flex-wrap">
+        <ComboboxPrimitive.InputGroup
+          ref={groupRef}
+          render={<InputGroup className="h-auto min-h-10 flex-wrap" />}
+          onClick={({ target }) => {
+            if (target instanceof Element && !target.closest('button')) setPickingKey(null);
+          }}
+        >
           <InputGroupAddon className="pl-1.5">
             <SearchSpinner value={query} isSearching={isSearching} />
           </InputGroupAddon>
@@ -336,23 +461,46 @@ export function SearchChipsField({
             }}
             // A suggestion closes the options before focus leaves, so this ends that search
             onBlur={() => {
-              if (!isOpen) onSearchEnd?.(query);
+              if (!isOpen && !wordEdit) onSearchEnd?.(query);
             }}
             onKeyDown={handleKeyDown}
           />
 
-          <InputGroupAddon className="gap-0.5 pr-2" align="inline-end">
+          <InputGroupAddon className="gap-0.5 pr-1.5 has-[>button]:mr-0" align="inline-end">
             {/* Mounted while empty too: a status region announces changes only once it exists */}
-            <span role="status" className="mr-1 whitespace-nowrap text-muted-foreground text-sm tabular-nums">
+            <span role="status" className="mr-1 whitespace-nowrap font-normal text-muted-foreground text-sm tabular-nums">
               {count}
             </span>
-            <SearchClearButton className={cn(!query && !chips.length && 'invisible')} onClick={reset} />
+            {/* On a phone the bar's close X clears the search */}
+            {!isMobile && (
+              <SearchClearButton
+                aria-label={hasSearch ? t('c:clear_search') : t('c:close')}
+                className={cn(!hasSearch && !isOpen && 'invisible')}
+                // Out of the tab order with nothing to clear: Tab closes the options, and that would hide the X it landed on
+                tabIndex={hasSearch ? undefined : -1}
+                onClick={clearOrClose}
+              />
+            )}
           </InputGroupAddon>
-        </InputGroup>
+        </ComboboxPrimitive.InputGroup>
 
-        <ComboboxContent anchor={isMobile ? fieldRef : groupRef} className="min-w-80 max-w-[min(51.25rem,var(--available-width))]">
+        <ComboboxContent
+          anchor={isMobile ? fieldRef : groupRef}
+          className={cn('min-w-80 max-w-(--available-width)', isMobile && phonePopupWidthClass)}
+        >
           <ComboboxList className="p-0">
-            {isTyping ? (
+            {pickingChip && pickingGroup ? (
+              <>
+                <div aria-hidden className="px-3 pt-2 text-muted-foreground text-xs">
+                  {t('c:change_resource_to', { resource: pickingChip.label })}
+                </div>
+                {groupRow({
+                  ...pickingGroup,
+                  label: t('c:change_resource_to', { resource: pickingChip.label }),
+                  options: alternativesOf(pickingGroup),
+                })}
+              </>
+            ) : isTyping ? (
               <div className="p-1">
                 <ComboboxItem value={{ kind: 'text' } satisfies SearchSelection}>
                   <SearchIcon className="text-muted-foreground" />
@@ -383,11 +531,10 @@ export function SearchChipsField({
               </div>
             ) : (
               <>
-                {groups.filter((group) => !group.isCompact).map(groupRow)}
                 {recents.length > 0 && (
                   <ComboboxGroup aria-label={t('c:history')} className="border-b p-1 last:border-b-0">
                     {recents.map((recent) => (
-                      <ComboboxItem key={recent.key} value={{ kind: 'recent', recent } satisfies SearchSelection} className="justify-between">
+                      <ComboboxItem key={recent.key} value={{ kind: 'recent', recent } satisfies SearchSelection} className="justify-between pr-1">
                         <div className="flex min-w-0 items-center gap-2">
                           <HistoryIcon className="text-muted-foreground" />
                           {recent.chips.map((chip) => (
@@ -400,9 +547,10 @@ export function SearchChipsField({
                           ))}
                           <span className="truncate">{recent.text}</span>
                         </div>
-                        <CloseButton
-                          size="sm"
-                          label="c:remove"
+                        <SearchClearButton
+                          aria-label={t('c:remove')}
+                          // The margin puts this X under the field's
+                          className="mr-px size-6 rounded-sm hover:bg-foreground/10 active:bg-foreground/10"
                           onClick={(event) => {
                             event.stopPropagation();
                             recent.onRemove();
@@ -412,14 +560,17 @@ export function SearchChipsField({
                     ))}
                   </ComboboxGroup>
                 )}
-                {groups.filter((group) => group.isCompact).map(groupRow)}
+                {groups.map(groupRow)}
               </>
             )}
           </ComboboxList>
         </ComboboxContent>
-      </Combobox>
 
-      {isMobile && hasChips && <div className="no-scrollbar flex gap-1.5 overflow-x-auto">{chipNodes}</div>}
+        {/* The part, so a press on a chip here counts as inside the field. The padding leaves room for a chip's outline */}
+        {isMobile && hasChips && (
+          <ComboboxPrimitive.Chips className="no-scrollbar -m-1 flex gap-1.5 overflow-x-auto p-1">{chipNodes}</ComboboxPrimitive.Chips>
+        )}
+      </Combobox>
     </div>
   );
 }

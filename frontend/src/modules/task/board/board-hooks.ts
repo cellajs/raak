@@ -2,30 +2,28 @@ import { useSearch } from '@tanstack/react-router';
 import { type RefObject, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getOrderBetween } from 'shared/utils/display-order';
-import { useShallow } from 'zustand/react/shallow';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
-import { type BoardLayoutHandle, type BoardLayoutPanel, collapsedPanelMinWidth } from '~/modules/common/board/board-layout';
+import type { BoardLayoutHandle, BoardLayoutPanel } from '~/modules/common/board/board-layout';
 import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
 import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
 import { LABELS_PANEL_ID } from '~/modules/label/types';
 import type { EnrichedProject } from '~/modules/project/types';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { normalizePanelWidths, openViewSections, pickViewSections, prepareBoardPanels, projectPanelName } from '~/modules/task/helpers/board-helpers';
+import { useStartWith, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { normalizePanelWidths, prepareBoardPanels, projectPanelName, statusTabLists } from '~/modules/task/helpers/board-helpers';
+import { isBoardSearchActive } from '~/modules/task/helpers/search-filter';
+import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
 import type { BoardResizablePanel } from '~/modules/task/types';
 
 // Finite anchors keep the fractional reorder math working when a neighboring panel is dragged against them
 
 const kindDefaultOrders: Record<BoardResizablePanel['kind'], number> = { explainer: -1_000_000, project: 0, labels: 1_000_000 };
 
-// A project's split sections share one place on the board
-const reorderId = (panel: BoardResizablePanel) => (panel.kind === 'project' ? panel.project.id : panel.panelId);
-
-/** A device-local order wins, then the membership order, then the kind default. Split sections tie, and a stable sort keeps them in their own order. */
+/** A device-local order wins, then the membership order, then the kind default. */
 export function getPanelDisplayOrder(panel: BoardResizablePanel, localOrders: Record<string, number> = {}): number | undefined {
-  const localOrder = localOrders[reorderId(panel)];
+  const localOrder = localOrders[panel.panelId];
   if (localOrder !== undefined) return localOrder;
 
-  if (panel.kind === 'project') return panel.project.membership?.displayOrder ?? kindDefaultOrders.project;
+  if (panel.kind === 'project') return (panel.project.membership?.displayOrder ?? kindDefaultOrders.project) + (panel.orderOffset ?? 0);
 
   return kindDefaultOrders[panel.kind];
 }
@@ -62,7 +60,7 @@ type PanelReorderResult =
   | { kind: 'local'; panelId: string; displayOrder: number }
   | null;
 
-/** Fractional panel order from the render comparator; projects persist membership order, local panels a local one. `newOrder` holds reorder ids. */
+/** Fractional panel order from the render comparator; projects persist membership order, local panels a local one. */
 export function computePanelReorder(
   panels: BoardResizablePanel[],
   localOrders: Record<string, number> | undefined,
@@ -70,7 +68,7 @@ export function computePanelReorder(
   sourcePanelId: string,
   options?: { persist?: 'auto' | 'local' },
 ): PanelReorderResult {
-  const panelById = new Map(panels.map((panel) => [reorderId(panel), panel]));
+  const panelById = new Map(panels.map((panel) => [panel.panelId, panel]));
   const sourcePanel = panelById.get(sourcePanelId);
   if (!sourcePanel) return null;
 
@@ -110,12 +108,12 @@ export function computePanelReorder(
 
 /** The board's panels in display order with their stored widths; the loading skeleton lays out the same way. */
 export function usePanelLayout(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[]) {
-  // Projected past the expand prefs so an iced/accepted toggle does not rebuild every panel
-  const viewSections = useTaskBoardStore(useShallow((state) => pickViewSections(state.panelData[boardId])));
+  const statusPanels = useTaskBoardStore((state) => state.statusPanels[boardId]);
+  const startWith = useStartWith(boardId);
   const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
   const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);
 
-  const projectPanels = prepareBoardPanels(projects, openViewSections(viewSections, storedBoardLayout));
+  const projectPanels = prepareBoardPanels(projects, statusPanels, startWith);
   const panels = sortPanelsByOrder([...projectPanels, ...(extraPanels ?? [])], localOrders);
   const defaultLayout = normalizePanelWidths(storedBoardLayout ?? {}, panels);
 
@@ -129,28 +127,31 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
   const updateBoardLayout = useBoardStore((state) => state.updateBoardLayout);
 
   useEffect(() => {
-    prunePanelOrders(boardId, panels.map(reorderId));
+    prunePanelOrders(
+      boardId,
+      panels.map(({ panelId }) => panelId),
+    );
   }, [boardId, panels, prunePanelOrders]);
 
   const layoutPanels: BoardLayoutPanel[] = panels.map((panel) => ({
     panelId: panel.panelId,
     label:
-      panel.kind === 'project'
-        ? projectPanelName(panel.project, panel.sectionFilters)
-        : t(panel.kind === 'labels' ? 'c:label_other' : 'c:getting_started'),
-    ...(panel.kind === 'project' && panel.sectionFilters && { group: { id: panel.project.id, label: panel.project.name } }),
+      panel.kind === 'project' ? projectPanelName(panel.project, panel.statuses) : t(panel.kind === 'labels' ? 'c:label_other' : 'c:getting_started'),
   }));
 
-  // A layout holds mounted panels only: the sections of a collapsed project keep their stored widths for its expand
+  // A layout holds mounted panels only: a status panel turned off keeps its stored width for when it returns
   const handleLayoutChanged = (layout: Record<string, number>) => {
     updateBoardLayout(boardId, { ...boardStore.getState().boardLayouts[boardId], ...layout });
   };
 
-  const handleGroupCollapse = (projectId: string) => {
-    updateBoardLayout(boardId, { ...boardStore.getState().boardLayouts[boardId], [projectId]: collapsedPanelMinWidth });
-  };
+  return { panels, layoutPanels, defaultLayout, handleLayoutChanged };
+}
 
-  return { panels, layoutPanels, defaultLayout, handleLayoutChanged, handleGroupCollapse };
+/** The statuses a mobile project board's open tab lists; undefined for all of them, as with a search active. */
+export function useStatusTabList() {
+  const statusTab = useSearch({ strict: false, select: (search) => search.statusTab });
+  const isSearching = isBoardSearchActive(useBoardSearch());
+  return statusTab && !isSearching ? statusTabLists.get(statusTab) : undefined;
 }
 
 /** Whether the board shows the getting-started panel: in a workspace, until its welcome text has been seen. */

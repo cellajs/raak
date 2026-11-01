@@ -24,7 +24,7 @@ export const projectRouteBeforeLoad = async ({ params, context }: ProjectRouteBe
     tenantId,
     findInCache: findProjectByIdOrSlug,
     detailQueryOptions: (id) => projectQueryOptions(id, organizationId, tenantId),
-    fetchBySlug: () => getProject({ path: { id: slug, organizationId, tenantId }, query: { slug: true } }),
+    fetchBySlug: () => getProject({ path: { id: slug, organizationId, tenantId }, query: { slug: true, include: 'counts' } }),
     params,
     buildSlugOverrides: (entity) => ({ slug: entity.slug }),
   });

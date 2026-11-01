@@ -29,6 +29,6 @@ export const tasksTableSearchSchema = zGetTasksQuery.pick({ q: true, status: tru
 
 const tasksBoardSearchSchema = zGetTasksQuery
   .pick({ q: true, status: true, type: true, labels: true })
-  .extend({ projectSlug: z.string().optional(), ...baseTaskViewSchema.shape });
+  .extend({ projectSlug: z.string().optional(), statusTab: z.string().optional(), ...baseTaskViewSchema.shape });
 
 export const boardSearchSchema = z.object({ ...tasksBoardSearchSchema.shape, ...tasksTableSearchSchema.shape });

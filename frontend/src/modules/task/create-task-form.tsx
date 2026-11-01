@@ -58,9 +58,19 @@ interface CreateTaskFormProps {
   dialog?: boolean;
   onSuccess?: (task: Task) => void;
   onStatusChange?: (status: TaskStatusType) => void;
+  /** The status the form opens in; it wins over a draft's. */
+  initialStatus?: TaskStatusType;
 }
 
-export function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog, onSuccess, onStatusChange }: CreateTaskFormProps) {
+export function CreateTaskForm({
+  projectId,
+  organizationId,
+  className,
+  dialog: isDialog,
+  onSuccess,
+  onStatusChange,
+  initialStatus,
+}: CreateTaskFormProps) {
   const { t } = useTranslation();
   const overlay = useOverlayClose();
   const user = useCurrentUser();
@@ -69,6 +79,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
 
   const isMobile = useBreakpointBelow('sm');
   const setForm = useDraftStore((state) => state.setForm);
+  const resetDraftForm = useDraftStore((state) => state.resetForm);
 
   const formId = createTaskFormId(projectId);
   const isFocused = useBoardFocusStore((state) => state.currentItemId === formId);
@@ -84,10 +95,20 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
 
   const formOptions: UseFormProps<NewTaskFormValues> = {
     resolver: formResolver(createTaskFormSchema),
-    defaultValues: { ...newTaskFormDefaults, id: defaultId, projectId },
+    defaultValues: { ...newTaskFormDefaults, id: defaultId, projectId, status: initialStatus ?? newTaskFormDefaults.status },
   };
 
   const form = useFormWithDraft<NewTaskFormValues>(formId, { formOptions });
+
+  // After the draft's restore: a task created in a draft's old status would land out of view of the tab this form opened on
+  useEffect(() => {
+    if (initialStatus === undefined) return;
+    form.setValue('status', initialStatus);
+    // After the hook's own flush: a draft of nothing would carry this status to a form opened anywhere else
+    return () => {
+      if (!newTaskFormIsDirty(form.getValues())) resetDraftForm(formId);
+    };
+  }, [initialStatus, formId, form.setValue, form.getValues, resetDraftForm]);
 
   // Subscribe for render: the form only re-renders when isDirty *toggles*, so
   // render-time form.getValues() reads of these fields go stale once dirty

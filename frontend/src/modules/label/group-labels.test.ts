@@ -9,11 +9,12 @@ describe('groupLabelRows', () => {
   it('sums the usage of the labels that share a slug across projects', () => {
     const rows = groupLabelRows([label('a1', 'bug', 'p1'), label('a2', 'bug', 'p2'), label('b1', 'docs', 'p1')], {
       usage: { a1: 2, a2: 3 },
+      totals: { a1: 4, a2: 10 },
     });
 
-    expect(rows.map(({ slug, usedCount, siblingIds }) => ({ slug, usedCount, siblingIds }))).toEqual([
-      { slug: 'bug', usedCount: 5, siblingIds: ['a1', 'a2'] },
-      { slug: 'docs', usedCount: 0, siblingIds: ['b1'] },
+    expect(rows.map(({ slug, usedCount, totalCount, siblingIds }) => ({ slug, usedCount, totalCount, siblingIds }))).toEqual([
+      { slug: 'bug', usedCount: 5, totalCount: 14, siblingIds: ['a1', 'a2'] },
+      { slug: 'docs', usedCount: 0, totalCount: 0, siblingIds: ['b1'] },
     ]);
   });
 

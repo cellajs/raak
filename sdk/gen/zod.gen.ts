@@ -3240,6 +3240,21 @@ export const zCreateLabelsResponse = z.union([
   }),
 ]);
 
+export const zGetLabelOlderAcceptedCountsPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+export const zGetLabelOlderAcceptedCountsQuery = z.object({
+  projectId: z.string().max(50),
+  acceptedCutOff: z.number().gt(0),
+});
+
+/**
+ * Older accepted task counts per label id
+ */
+export const zGetLabelOlderAcceptedCountsResponse = z.record(z.string(), z.int().gte(0));
+
 export const zGetLabelPath = z.object({
   tenantId: z.string().max(50),
   organizationId: z.string().max(50),

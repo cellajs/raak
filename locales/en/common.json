@@ -68,6 +68,8 @@
   "carousel": "Carousel",
   "change_field.text": "Change {{field, lowercase}} of <strong>{{name}}</strong>",
   "change_language": "Change language",
+  "change_resource": "Change {{resource}}",
+  "change_resource_to": "Change {{resource}} to",
   "change_theme": "Change theme",
   "changelog": "Changelog",
   "chat": "Chat",
