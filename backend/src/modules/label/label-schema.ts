@@ -86,6 +86,13 @@ export const labelListQuerySchema = productListQuerySchema({
   workspaceId: validIdSchema.optional(),
 }).refine((data) => !data.projectId || !data.workspaceId, { message: 'Only one of projectId or workspaceId can be provided' });
 
+export const labelOlderAcceptedCountsQuerySchema = z.object({
+  projectId: validIdSchema,
+  acceptedCutOff: z.coerce.number().positive(),
+});
+
+export const labelOlderAcceptedCountsResponseSchema = z.record(z.string(), z.number().int().min(0));
+
 export const labelCreateManyStxBodySchema = labelContract.createItemSchema
   .array()
   .min(1)

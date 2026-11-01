@@ -37,9 +37,10 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   const { t } = useTranslation();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isActive = hasSectionBar(type, counts);
+  const isTop = type === 'accepted';
   // Visibility lives here so scroll flips re-render only this header, not the panel
   const isEdgeVisible = useSectionEdgeVisibility({
-    edge: type === 'iced' ? 'bottom' : 'top',
+    edge: isTop ? 'top' : 'bottom',
     barRef: wrapperRef,
     active: isActive,
     scrollRef,
@@ -83,11 +84,11 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
     setCurrentItem(barId);
   };
 
-  // Publishes the accepted bar's pinned height as --sticky-stack-top on the panel content, so card headers (StickyBox)
+  // Publishes the top bar's pinned height as --sticky-stack-top on the panel content, so card headers (StickyBox)
   // pin below the bar and glide with its transition. Set imperatively to avoid re-rendering the panel's cards.
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (isIced) return;
+    if (!isTop) return;
     const wrapper = wrapperRef.current;
     const host = wrapper?.parentElement;
     if (!host) return;
@@ -99,7 +100,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
       host.style.removeProperty('--sticky-stack-top');
       host.style.removeProperty('transition');
     };
-  }, [isVisible, suppressed, isIced, isActive]);
+  }, [isVisible, suppressed, isTop, isActive]);
 
   if (!isActive) return null;
 
@@ -115,9 +116,9 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
         ref={wrapperRef}
         className={cn(
           'pointer-events-none sticky z-20 shrink-0 overflow-clip transition-[top,bottom] duration-300 ease-in-out motion-reduce:transition-none',
-          // Accepted pins below a page-level sticky nav (mobile tabs); iced pins to the bottom
-          isIced ? (suppressed ? '-bottom-9' : 'bottom-0') : suppressed ? '-top-9' : 'top-(--sticky-stack-nav)',
-          isIced ? 'text-editing:-bottom-9' : 'text-editing:-top-9',
+          // The top bar pins below a page-level sticky nav (mobile tabs); the other to the bottom
+          isTop ? (suppressed ? '-top-9' : 'top-(--sticky-stack-nav)') : suppressed ? '-bottom-9' : 'bottom-0',
+          isTop ? 'text-editing:-top-9' : 'text-editing:-bottom-9',
         )}
       >
         <Button
@@ -132,13 +133,13 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
           size="sm"
           className={cn(
             'focus-inset relative flex w-full justify-start gap-1 rounded-none border-0 bg-clip-border px-1.5 text-xs transition-[translate,opacity,color,background-color,border-color,box-shadow] duration-300 ease-in-out sm:px-2',
-            isVisible ? 'pointer-events-auto' : isIced ? 'translate-y-full opacity-0' : '-translate-y-full opacity-0',
+            isVisible ? 'pointer-events-auto' : isTop ? '-translate-y-full opacity-0' : 'translate-y-full opacity-0',
             colors.fill,
             colors.text,
             isIced
               ? 'hover:bg-sky-100 hover:text-sky-800 max-sm:border-b-sky-500/10 dark:hover:bg-sky-900 dark:hover:text-sky-300'
               : 'hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900 dark:hover:text-green-400',
-            !isIced && colors.border,
+            isTop && colors.border.top,
           )}
         >
           <span className="min-w-8 text-center">{count}</span>
@@ -162,21 +163,34 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
           </span>
         </Button>
       </div>
-      {hasOnlyOlderAccepted && isExpanded && (
-        <div className={cn('flex gap-4 px-4 py-5 text-xs', colors.border, colors.fill, colors.text, hintFadeOut)}>
-          <InfoIcon className="shrink-0" />
-          <p>
-            <Trans
-              t={t}
-              i18nKey="c:older_accepted_table_only"
-              count={counts.acceptedCutOff}
-              components={{
-                table_anchor: <Link to="." resetScroll={false} search={(prev) => ({ ...prev, view: 'table' })} className="link-inline" />,
-              }}
-            />
-          </p>
-        </div>
-      )}
+      {hasOnlyOlderAccepted && isExpanded && <OlderAcceptedHint i18nKey="c:older_accepted_table_only" count={counts.acceptedCutOff} />}
     </>
+  );
+}
+
+interface OlderAcceptedHintProps {
+  i18nKey: 'c:older_accepted_table_only' | 'c:older_accepted_in_table';
+  count: number;
+}
+
+/** Points to the table for the accepted tasks the board leaves out. */
+export function OlderAcceptedHint({ i18nKey, count }: OlderAcceptedHintProps) {
+  const { t } = useTranslation();
+  const colors = statusSectionColors.accepted;
+
+  return (
+    <div className={cn('flex gap-4 px-4 py-5 text-xs', colors.border.top, colors.fill, colors.text, hintFadeOut)}>
+      <InfoIcon className="shrink-0" />
+      <p>
+        <Trans
+          t={t}
+          i18nKey={i18nKey}
+          count={count}
+          components={{
+            table_anchor: <Link to="." resetScroll={false} search={(prev) => ({ ...prev, view: 'table' })} className="link-inline" />,
+          }}
+        />
+      </p>
+    </div>
   );
 }

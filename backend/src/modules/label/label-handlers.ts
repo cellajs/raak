@@ -4,6 +4,7 @@ import { labelRoutes } from '#/modules/label/label-routes';
 import { createLabelsOp } from '#/modules/label/operations/create-labels';
 import { deleteLabelsOp } from '#/modules/label/operations/delete-labels';
 import { getLabelOp } from '#/modules/label/operations/get-label';
+import { getLabelOlderAcceptedCountsOp } from '#/modules/label/operations/get-label-older-accepted-counts';
 import { getLabelsOp } from '#/modules/label/operations/get-labels';
 import { updateLabelOp } from '#/modules/label/operations/update-label';
 import { defaultHook } from '#/utils/default-hook';
@@ -17,6 +18,12 @@ app.openapi(labelRoutes.createLabels, async (ctx) => {
 
 app.openapi(labelRoutes.getLabels, async (ctx) => {
   const result = await getLabelsOp(ctx, ctx.req.valid('query'));
+  return ctx.json(result, 200);
+});
+
+// Ahead of /{id}, which would take the path segment for an id
+app.openapi(labelRoutes.getLabelOlderAcceptedCounts, async (ctx) => {
+  const result = await getLabelOlderAcceptedCountsOp(ctx, ctx.req.valid('query'));
   return ctx.json(result, 200);
 });
 

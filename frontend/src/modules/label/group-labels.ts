@@ -1,25 +1,26 @@
 import type { Label } from 'sdk';
-import { foldText } from 'shared/utils/text-match';
 import { labelRecencyStore } from '~/modules/label/label-recency-store';
 import type { LabelRow } from '~/modules/label/types';
-import type { LabelUsage } from '~/modules/label/use-label-usage';
+import type { LabelTotals, LabelUsage } from '~/modules/label/use-label-usage';
 
 /**
- * One row per slug across projects (usage summed, sibling ids collected): the slug survives renames, the name does not.
+ * One row per slug across projects (usage and totals summed, sibling ids collected): the slug survives renames, the name does not.
  * `preferredProjectId` picks the sibling that represents a group.
  */
-export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: string; usage?: LabelUsage } = {}): LabelRow[] => {
-  const rowMap = new Map<string, Omit<LabelRow, 'nameFolded' | 'keywordsFolded'>>();
+export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: string; usage?: LabelUsage; totals?: LabelTotals } = {}): LabelRow[] => {
+  const rowMap = new Map<string, LabelRow>();
 
   for (const label of labels) {
     const groupKey = label.slug;
     const existing = rowMap.get(groupKey);
     const usedCount = opts.usage?.[label.id] ?? 0;
+    const totalCount = opts.totals?.[label.id] ?? 0;
 
     if (!existing) {
       rowMap.set(groupKey, {
         ...label,
         usedCount,
+        totalCount,
         projectUsage: { [label.projectId]: usedCount },
         siblingIds: [label.id],
         projectIds: [label.projectId],
@@ -29,6 +30,7 @@ export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: str
 
     const aggregates = {
       usedCount: existing.usedCount + usedCount,
+      totalCount: existing.totalCount + totalCount,
       projectUsage: { ...existing.projectUsage, [label.projectId]: (existing.projectUsage[label.projectId] ?? 0) + usedCount },
       siblingIds: [...existing.siblingIds, label.id],
       projectIds: existing.projectIds.includes(label.projectId) ? existing.projectIds : [...existing.projectIds, label.projectId],
@@ -37,7 +39,7 @@ export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: str
     rowMap.set(groupKey, preferNew ? { ...label, ...aggregates } : { ...existing, ...aggregates });
   }
 
-  return Array.from(rowMap.values(), (row) => ({ ...row, nameFolded: foldText(row.name), keywordsFolded: foldText(row.keywords) }));
+  return Array.from(rowMap.values());
 };
 
 /** Picker view over the grouped rows, sorted by recency then name. */

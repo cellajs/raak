@@ -1,9 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, SquareSplitHorizontalIcon, UsersIcon } from 'lucide-react';
+import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, UsersIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
-import { useBoardStore } from '~/modules/common/board/board-store';
 import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { NamedText } from '~/modules/common/named-text';
@@ -11,8 +10,6 @@ import { TooltipButton } from '~/modules/common/tooltip-button';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import type { EnrichedProject } from '~/modules/project/types';
-import { useProjectViewSections, useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { defaultSplitSections } from '~/modules/task/helpers/board-helpers';
 import { Button } from '~/modules/ui/button';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
@@ -28,12 +25,7 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const boardId = useBoardStore((state) => state.activeBoardId)!;
   const isInWorkspace = useIsWorkspaceRoute();
-
-  const viewSections = useProjectViewSections(project.id);
-  const setPanelSections = useTaskBoardStore((state) => state.setPanelSections);
-  const dropPanelSections = useTaskBoardStore((state) => state.dropPanelSections);
 
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const { data: organization } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
@@ -44,7 +36,6 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
   const hasGoTo = isInWorkspace || !!projectWorkspace;
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
-    const isMobile = window.innerWidth < 640;
     const triggerRef = { current: currentTarget };
     const closeThen = (action: () => void) => () => {
       dropdowner.getState().remove();
@@ -91,19 +82,6 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
             </DropdownActionItem>
           </>
         )}
-        {!isMobile && (
-          <>
-            {(hasGoTo || projectMembership) && <DropdownActionSeparator />}
-            <DropdownActionItem
-              icon={SquareSplitHorizontalIcon}
-              onSelect={closeThen(() =>
-                viewSections ? dropPanelSections(boardId, project.id) : setPanelSections(boardId, project.id, defaultSplitSections),
-              )}
-            >
-              {viewSections ? t('c:merge') : t('c:split')}
-            </DropdownActionItem>
-          </>
-        )}
       </>,
       {
         id: `project-options-${project.id}`,
@@ -116,6 +94,9 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
       },
     );
   };
+
+  // A non-member on a project page has nothing to pick
+  if (!isInWorkspace && !projectMembership) return null;
 
   return (
     <TooltipButton toolTipContent={t('c:resource_options', { resource: t('c:project') })}>

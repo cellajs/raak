@@ -29,10 +29,11 @@ export const labelTileReveal = {
 interface LabelTileDetailsProps {
   row: LabelRow;
   canManage: boolean;
+  showProjectUsage?: boolean;
 }
 
-/** Body of an expanded tile: the epic switch, open tasks per project and, for epics, the description. */
-export function LabelTileDetails({ row, canManage }: LabelTileDetailsProps) {
+/** Body of an expanded tile: the epic switch, open tasks per project on a workspace and, for epics, the description. */
+export function LabelTileDetails({ row, canManage, showProjectUsage }: LabelTileDetailsProps) {
   const { t } = useTranslation();
   const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
 
@@ -40,7 +41,7 @@ export function LabelTileDetails({ row, canManage }: LabelTileDetailsProps) {
 
   const switchId = `epic-switch-${row.id}`;
   const projectListId = `label-projects-${row.id}`;
-  const projects = row.projectIds.map((id) => findProjectByIdOrSlug(id, row.tenantId)).filter((project) => !!project);
+  const projects = showProjectUsage ? row.projectIds.map((id) => findProjectByIdOrSlug(id, row.tenantId)).filter((project) => !!project) : [];
   const overflows = projects.length > inlineProjectSlots;
   const inlineProjects = overflows ? projects.slice(0, inlineProjectSlots - 1) : projects;
   const hiddenCount = projects.length - inlineProjects.length;

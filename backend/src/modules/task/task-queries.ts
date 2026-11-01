@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray, isNull, type SQL, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull, lte, type SQL, sql } from 'drizzle-orm';
 import type { ActorContext, DbContext } from '#/core/context';
 import type { DbOrTx } from '#/db/db';
 import type { ActorId } from '#/db/utils/ids';
@@ -12,6 +12,7 @@ import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
+import { TaskStatus } from '#/modules/task/task-properties';
 import { userMinimalBaseSelect } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
 import type { StxBase } from '#/schemas/sync-transaction-schemas';
@@ -184,6 +185,29 @@ export const countTasksByStatus = async (ctx: ActorContext, { projectId }: Count
     .from(tasksTable)
     .where(and(eq(tasksTable.projectId, projectId), requestScopeWhere(ctx, tasksTable, 'task')))
     .groupBy(tasksTable.status);
+};
+
+interface CountOlderAcceptedTasksByLabelOpts {
+  projectIds: string[];
+  acceptedBefore: string;
+}
+
+export const countOlderAcceptedTasksByLabel = async (ctx: ActorContext, { projectIds, acceptedBefore }: CountOlderAcceptedTasksByLabelOpts) => {
+  const { db } = ctx.var;
+  const labelId = sql<string>`unnest(${tasksTable.labels})`;
+  return db
+    .select({ labelId, count: count() })
+    .from(tasksTable)
+    .where(
+      and(
+        inArray(tasksTable.projectId, projectIds),
+        requestScopeWhere(ctx, tasksTable, 'task'),
+        eq(tasksTable.status, TaskStatus.Accepted),
+        lte(tasksTable.statusChangedAt, acceptedBefore),
+        isNull(tasksTable.deletedAt),
+      ),
+    )
+    .groupBy(labelId);
 };
 
 /**

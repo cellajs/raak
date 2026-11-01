@@ -15,23 +15,18 @@ export interface LabelsHostProps {
   windowScroll?: boolean;
   /** One tile open at a time, for the narrow drawer. */
   singleExpand?: boolean;
-  /** After a tile's filter toggle: the drawer closes on it to show the board. */
-  onAction?: () => void;
   /** The board panel hosting the list: its tiles become board items, one Tab stop with arrow-key navigation. */
   navPanelId?: string;
 }
 
 /**
  * A visible labels row: a concrete label plus its cross-project name-group aggregates.
- * `projectUsage` splits `usedCount` by project id.
- * `nameFolded`/`keywordsFolded` are precomputed at grouping time so highlight-mode search does
- * not fold every row on each render.
+ * `usedCount` counts the tasks not yet accepted, `totalCount` all of them; `projectUsage` splits `usedCount` by project id.
  */
 export type LabelRow = Label & {
   usedCount: number;
+  totalCount: number;
   projectUsage: Record<string, number>;
   siblingIds: string[];
   projectIds: string[];
-  nameFolded: string;
-  keywordsFolded: string;
 };

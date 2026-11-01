@@ -1,11 +1,20 @@
 import { SearchIcon } from 'lucide-react';
 import { type ReactNode, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { useBreakpointAbove } from '~/hooks/use-breakpoints';
 import { TableBarContainer } from '~/modules/common/data-table/table-bar-container';
 import { SearchCloseButton } from '~/modules/common/search-clear-button';
 import { StickyBox, scrollToPinLine } from '~/modules/common/sticky-box';
 import { Button } from '~/modules/ui/button';
+import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
+
+// The look of the closed row's search button, so its icon and placeholder hold still when it opens into the panel.
+// Chip icons sit outside the field's addon, and the options render in a portal.
+const panelFieldClass = tw(
+  '[&_[data-slot=input-group-addon]_svg]:size-5 [&_[data-slot=input-group-addon]_svg]:opacity-100 [&_input]:text-base [&_input]:placeholder:text-muted-foreground',
+);
 
 interface TableFilterBarProps {
   /** Buttons before the count, such as a create button. */
@@ -29,8 +38,8 @@ interface TableFilterBarProps {
 /**
  * The bar above a list. From `sm` up one row: actions and count, search, controls, and the count steps aside while the
  * search has focus. On a phone the search is a button; it opens a panel pinned at the top of the screen over the page
- * tabs, the field with a close X, while the list filters underneath. The X resets the filters, so a filtered bar opens with
- * its panel open.
+ * tabs, the field with a close X, while the list filters underneath. The X clears a search first and closes the panel on
+ * the next press, so a filtered bar opens with its panel open.
  */
 export function TableFilterBar({
   actions,
@@ -44,6 +53,7 @@ export function TableFilterBar({
   sticky,
   wideSearch,
 }: TableFilterBarProps) {
+  const { t } = useTranslation();
   const isDesktop = useBreakpointAbove('sm');
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +71,7 @@ export function TableFilterBar({
   };
 
   const close = () => {
-    if (isFiltered) onResetFilters();
+    if (isFiltered) return onResetFilters();
     setIsOpen(false);
   };
 
@@ -80,7 +90,8 @@ export function TableFilterBar({
         <button
           type="button"
           onClick={open}
-          className="focus-effect flex h-10 min-w-0 grow items-center gap-2 rounded-md px-1.5 text-start text-muted-foreground"
+          // The transparent border is the one the panel's field has, which would move the icon a pixel on opening
+          className="focus-effect flex h-10 min-w-0 grow items-center gap-2 rounded-md border border-transparent px-1.5 text-start text-muted-foreground"
         >
           <SearchIcon className="size-5 shrink-0" />
           <span className="truncate">{searchLabel}</span>
@@ -107,9 +118,14 @@ export function TableFilterBar({
   if (isPanel) {
     return (
       <TableBarContainer ref={barRef} searchVars={searchVars} pinned className="items-start gap-1 border-b">
-        <div className="min-w-0 grow">{search}</div>
+        <div className={cn('min-w-0 grow', panelFieldClass)}>{search}</div>
         <div className="flex h-10 shrink-0 items-center">
-          <SearchCloseButton onClick={close} />
+          <SearchCloseButton
+            aria-label={isFiltered ? t('c:clear_search') : t('c:close')}
+            // Keeps focus in the input, so a cleared search leaves the keyboard up to type the next one
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={close}
+          />
         </div>
       </TableBarContainer>
     );

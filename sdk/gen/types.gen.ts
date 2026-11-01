@@ -6829,6 +6829,55 @@ export type CreateLabelsResponses = {
 
 export type CreateLabelsResponse = CreateLabelsResponses[keyof CreateLabelsResponses];
 
+export type GetLabelOlderAcceptedCountsData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query: {
+    projectId: string;
+    acceptedCutOff: number;
+  };
+  url: '/{tenantId}/{organizationId}/labels/older-accepted-counts';
+};
+
+export type GetLabelOlderAcceptedCountsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetLabelOlderAcceptedCountsError = GetLabelOlderAcceptedCountsErrors[keyof GetLabelOlderAcceptedCountsErrors];
+
+export type GetLabelOlderAcceptedCountsResponses = {
+  /**
+   * Older accepted task counts per label id
+   */
+  200: {
+    [key: string]: number;
+  };
+};
+
+export type GetLabelOlderAcceptedCountsResponse = GetLabelOlderAcceptedCountsResponses[keyof GetLabelOlderAcceptedCountsResponses];
+
 export type GetLabelData = {
   body?: never;
   path: {

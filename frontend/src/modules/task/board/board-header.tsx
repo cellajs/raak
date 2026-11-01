@@ -1,7 +1,9 @@
 import { FocusView } from '~/modules/common/focus-view';
 import { LabelsDrawerButton } from '~/modules/label/labels-drawer';
 import { DisplayOptions } from '~/modules/task/board/display-options';
+import { NewTaskButton } from '~/modules/task/board/new-task-button';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
+import { StatusPanelsMenu } from '~/modules/task/board/status-panels-menu';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { BoardSearchBar } from '~/modules/task/board-search';
 import { sortTasksAsOnBoard } from '~/modules/task/helpers/board-helpers';
@@ -18,6 +20,8 @@ export function BoardHeader({
   publicView,
 }: Pick<ResolvedBoardProps, 'boardId' | 'projects' | 'workspace' | 'publicView'>) {
   const isInWorkspace = !!workspace;
+  // A project page holds its project's controls in this bar; a workspace in each panel, a public view none
+  const pageProject = isInWorkspace || publicView ? undefined : projects[0];
 
   // No scope to derive params from in a public view or while a non-workspace board has no projects yet
   const queryParams = publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
@@ -44,13 +48,15 @@ export function BoardHeader({
         isInWorkspace={isInWorkspace}
         publicView={publicView}
         total={total}
+        leading={pageProject && <NewTaskButton project={pageProject} size="default" />}
         controls={
           <>
             {isInWorkspace && <WorkspaceActionButtons />}
-            {!isInWorkspace && !publicView && projects[0] && <ProjectActionsMenu project={projects[0]} />}
+            {pageProject && <ProjectActionsMenu project={pageProject} />}
             {!publicView && projects.length > 0 && (
               <LabelsDrawerButton entity={workspace ? 'workspace' : 'project'} entityId={workspace?.id ?? boardId} />
             )}
+            {pageProject && <StatusPanelsMenu boardId={boardId} className="max-sm:hidden" />}
             <DisplayOptions className="max-sm:hidden" />
             <FocusView iconOnly />
           </>

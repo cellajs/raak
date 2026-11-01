@@ -51,10 +51,9 @@ export const focusItem = (id: string) => {
   focusWhenMounted(id);
 };
 
-/** Focuses where arrowing into a panel lands, once its list has replaced `placeholderId`: after expanding it. A split project lands in its first section. */
+/** Focuses where arrowing into a panel lands, once its list has replaced `placeholderId`: after expanding it. */
 export const focusPanelOnceListed = (panelId: string, placeholderId: string, framesLeft = 60) => {
-  const firstSection = document.querySelector<HTMLElement>(`[data-panel-group="${CSS.escape(panelId)}"] [data-panel]`);
-  const nav = getPanelNav(firstSection?.dataset.panel ?? panelId);
+  const nav = getPanelNav(panelId);
   const targetId = nav?.firstInView() ?? nav?.items()[0]?.id;
   if (targetId && targetId !== placeholderId) return focusItem(targetId);
   if (framesLeft > 0) requestAnimationFrame(() => focusPanelOnceListed(panelId, placeholderId, framesLeft - 1));

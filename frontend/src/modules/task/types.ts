@@ -2,9 +2,8 @@ import type { DropTargetRecord } from '@atlaskit/pragmatic-drag-and-drop/dist/ty
 import type { GetTaskResponse } from 'sdk';
 import type { z } from 'zod';
 import type { EnrichedProject } from '~/modules/project/types';
-import type { SectionsValue } from '~/modules/task/board/task-board-store';
 import type { tasksTableSearchSchema } from '~/modules/task/search-params-schemas';
-import type { statusOptions } from '~/modules/task/task-properties';
+import type { statusOptions, TaskStatus } from '~/modules/task/task-properties';
 import type { DraggableItemData } from '~/utils/get-draggable-item-data';
 
 export type Task = GetTaskResponse & { _draft?: boolean };
@@ -12,13 +11,16 @@ export type Task = GetTaskResponse & { _draft?: boolean };
 /** The label shape embedded in a task, a subset of the full label. */
 export type TaskLabel = NonNullable<Task['labels']>[number];
 
-/** A board column: a project panel (optionally a section-filtered split of one) or a local panel (explainer, labels), told apart by `kind`. */
+/** A board column: a project panel or a local panel (explainer, labels), told apart by `kind`. */
 export type BoardResizablePanel =
   | {
       kind: 'project';
       project: EnrichedProject;
-      sectionFilters?: SectionsValue;
       panelId: string;
+      /** The statuses it lists, in workflow order; all of them when absent. */
+      statuses?: TaskStatus[];
+      /** Added to the project's order, so a status panel never ties with the project's panel. */
+      orderOffset?: number;
     }
   | { kind: 'explainer'; panelId: string }
   | { kind: 'labels'; panelId: string };
@@ -28,13 +30,13 @@ export type ProjectResizablePanel = Extract<BoardResizablePanel, { kind: 'projec
 
 export type TaskCounts = {
   total: number;
-  /** Whether this panel shows the accepted / iced section (false when section filters exclude it). */
+  /** Whether this panel folds accepted / iced into a section: not when it lacks them or lists nothing else. */
   showAccepted: boolean;
   showIced: boolean;
   /** Count of accepted / iced tasks in this panel (0 when the section isn't shown here). */
   accepted: number;
   iced: number;
-  /** Total accepted tasks including those beyond the cutoff. 0 = no cutoff data available. */
+  /** Total accepted tasks including those beyond the cutoff. 0 = no cutoff data available, or a panel without accepted tasks. */
   acceptedCutOff: number;
 };
 

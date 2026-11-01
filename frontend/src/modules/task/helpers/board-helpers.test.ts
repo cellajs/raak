@@ -1,15 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import { shallow } from 'zustand/shallow';
-import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
+import type { EnrichedProject } from '~/modules/project/types';
 import {
-  defaultSplitSections,
-  formatSectionLabel,
-  mergePanelLayout,
+  foldsStatus,
+  formatStatusesLabel,
   normalizePanelWidths,
-  openViewSections,
-  pickViewSections,
-  projectPanelIds,
-  splitPanelLayout,
+  prepareBoardPanels,
+  statusesBottomUp,
+  statusPanelId,
+  statusPath,
+  statusTabLists,
 } from '~/modules/task/helpers/board-helpers';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { ProjectResizablePanel } from '~/modules/task/types';
@@ -18,97 +17,103 @@ vi.mock('i18next', () => ({
   default: { t: (key: string, values?: Record<string, string>) => (values ? Object.values(values).join(` ${key} `) : key.replace('c:', '')) },
 }));
 
-const sections: SectionsValue[] = [{ status: [TaskStatus.Accepted] }, { status: [TaskStatus.Iced] }];
-const prefs = { expandAccepted: false, expandIced: false };
+const project = { id: 'p' } as EnrichedProject;
 
-describe('pickViewSections', () => {
-  it('keeps split projects and omits unsplit ones', () => {
-    const board: BoardPanelData = { split: { viewSections: sections, prefs }, unsplit: { prefs } };
-    expect(pickViewSections(board)).toEqual({ split: sections });
-    expect(pickViewSections(undefined)).toEqual({});
-  });
-
-  // Mirrors the immer update of an expand toggle: the touched panel and board are new objects.
-  it('stays shallow-equal when only prefs change', () => {
-    const before: BoardPanelData = { split: { viewSections: sections, prefs }, unsplit: { prefs } };
-    const after: BoardPanelData = {
-      split: { ...before.split, prefs: { ...prefs, expandIced: true } },
-      unsplit: { prefs: { ...prefs, expandAccepted: true } },
-      prefsOnly: { prefs },
-    };
-    expect(shallow(pickViewSections(before), pickViewSections(after))).toBe(true);
-  });
-
-  it('changes when a project is split', () => {
-    const before: BoardPanelData = { a: { prefs } };
-    const after: BoardPanelData = { a: { viewSections: sections, prefs } };
-    expect(shallow(pickViewSections(before), pickViewSections(after))).toBe(false);
-  });
-});
-
-describe('defaultSplitSections', () => {
-  it('holds every status in exactly one section', () => {
+describe('statusPath', () => {
+  it('holds every status once', () => {
     const statuses = Object.values(TaskStatus).filter((value) => typeof value === 'number');
-    const inSections = defaultSplitSections.flatMap((section) => section.status);
-    expect([...inSections].sort()).toEqual([...statuses].sort());
+    expect([...statusPath].sort()).toEqual([...statuses].sort());
   });
 });
 
-describe('formatSectionLabel', () => {
-  it('names one status, a pair and a run', () => {
-    expect(formatSectionLabel({ status: [TaskStatus.Iced] })).toBe('iced');
-    expect(formatSectionLabel(defaultSplitSections[1])).toBe('unstarted c:status_pair iced');
-    expect(formatSectionLabel(defaultSplitSections[0])).toBe('started c:status_range accepted');
-  });
-
-  it('lists statuses that are no run', () => {
-    expect(formatSectionLabel({ status: [TaskStatus.Accepted, TaskStatus.Started, TaskStatus.Delivered] })).toBe('started, delivered, accepted');
-  });
-});
-
-describe('split and merge widths', () => {
-  it('shares the width over the sections and sums it back', () => {
-    const panelIds = projectPanelIds('p', defaultSplitSections);
-    const split = splitPanelLayout({ p: 800, other: 400 }, 'p', panelIds);
-    expect(split).toEqual({ other: 400, [panelIds[0]]: 400, [panelIds[1]]: 400 });
-    expect(mergePanelLayout(split, 'p', panelIds)).toEqual({ other: 400, p: 800 });
-  });
-
-  it('keeps sections at the minimum width', () => {
-    const panelIds = projectPanelIds('p', defaultSplitSections);
-    expect(splitPanelLayout({ p: 50 }, 'p', panelIds)[panelIds[0]]).toBe(300);
-    expect(mergePanelLayout({ [panelIds[0]]: 50, [panelIds[1]]: 50 }, 'p', panelIds).p).toBe(300);
-  });
-
-  it('leaves a project without a stored width to the default', () => {
-    expect(splitPanelLayout({ other: 400 }, 'p', ['p-a', 'p-b'])).toEqual({ other: 400 });
-  });
-
-  it('keeps a collapsed project collapsed when it merges', () => {
-    expect(mergePanelLayout({ p: 50, 'p-a': 500, 'p-b': 400 }, 'p', ['p-a', 'p-b'])).toEqual({ p: 50 });
-  });
-
-  it('expands a collapsed project when it splits', () => {
-    const panelIds = projectPanelIds('p', defaultSplitSections);
-    expect(openViewSections({ p: defaultSplitSections }, splitPanelLayout({ p: 50 }, 'p', panelIds))).toEqual({ p: defaultSplitSections });
+describe('statusesBottomUp', () => {
+  it('runs from iced to accepted', () => {
+    expect(statusesBottomUp).toEqual([
+      TaskStatus.Iced,
+      TaskStatus.Unstarted,
+      TaskStatus.Started,
+      TaskStatus.Finished,
+      TaskStatus.Delivered,
+      TaskStatus.Reviewed,
+      TaskStatus.Accepted,
+    ]);
   });
 });
 
-describe('openViewSections', () => {
-  it('leaves out a project collapsed on this board, and no other', () => {
-    expect(openViewSections({ a: sections, b: sections, c: sections }, { a: 50, b: 400 })).toEqual({ b: sections, c: sections });
-    expect(openViewSections({ a: sections })).toEqual({ a: sections });
+describe('statusTabLists', () => {
+  it('lists each status alone under its name', () => {
+    expect(statusTabLists.get('accepted')).toEqual([TaskStatus.Accepted]);
+    expect(statusTabLists.get('unstarted')).toEqual([TaskStatus.Unstarted]);
+    expect(statusTabLists.size).toBe(statusPath.length);
+  });
+
+  it('knows no other tab, inherited names included', () => {
+    expect(statusTabLists.get('constructor')).toBeUndefined();
+  });
+});
+
+describe('prepareBoardPanels', () => {
+  it('gives each project one panel without status panels', () => {
+    expect(prepareBoardPanels([project])).toEqual([{ kind: 'project', project, panelId: 'p' }]);
+  });
+
+  it('leaves the project panel the statuses without a panel of their own, in workflow order', () => {
+    const [main, ...own] = prepareBoardPanels([project], [TaskStatus.Iced, TaskStatus.Unstarted]);
+    expect(main.panelId).toBe('p');
+    expect(main.statuses).toEqual([TaskStatus.Started, TaskStatus.Finished, TaskStatus.Delivered, TaskStatus.Reviewed, TaskStatus.Accepted]);
+    expect(own.map(({ panelId, statuses }) => [panelId, statuses])).toEqual([
+      [statusPanelId('p', TaskStatus.Iced), [TaskStatus.Iced]],
+      [statusPanelId('p', TaskStatus.Unstarted), [TaskStatus.Unstarted]],
+    ]);
+  });
+
+  it('lines status panels up from the status the board starts with, with the project panel after them', () => {
+    const ids = (startWith: 'accepted' | 'iced') =>
+      prepareBoardPanels([project], [TaskStatus.Accepted, TaskStatus.Unstarted], startWith)
+        .sort((a, b) => (a.orderOffset ?? 0) - (b.orderOffset ?? 0))
+        .map(({ panelId }) => panelId);
+
+    const acceptedPanel = statusPanelId('p', TaskStatus.Accepted);
+    const backlogPanel = statusPanelId('p', TaskStatus.Unstarted);
+    expect(ids('accepted')).toEqual([acceptedPanel, backlogPanel, 'p']);
+    expect(ids('iced')).toEqual([backlogPanel, acceptedPanel, 'p']);
+  });
+
+  it('drops the project panel when every status has its own', () => {
+    const panels = prepareBoardPanels([project], statusPath);
+    expect(panels).toHaveLength(statusPath.length);
+    expect(panels.some(({ panelId }) => panelId === 'p')).toBe(false);
+  });
+});
+
+describe('foldsStatus', () => {
+  it('folds a status listed among others, in a panel of all or of some', () => {
+    expect(foldsStatus(undefined, TaskStatus.Iced)).toBe(true);
+    expect(foldsStatus([TaskStatus.Started, TaskStatus.Iced], TaskStatus.Iced)).toBe(true);
+  });
+
+  it('does not fold a status listed alone or not at all', () => {
+    expect(foldsStatus([TaskStatus.Iced], TaskStatus.Iced)).toBe(false);
+    expect(foldsStatus([TaskStatus.Started, TaskStatus.Finished], TaskStatus.Iced)).toBe(false);
+  });
+});
+
+describe('formatStatusesLabel', () => {
+  it('names one status, a pair and more', () => {
+    expect(formatStatusesLabel([TaskStatus.Iced])).toBe('iced');
+    expect(formatStatusesLabel([TaskStatus.Unstarted, TaskStatus.Iced])).toBe('unstarted c:status_pair iced');
+    expect(formatStatusesLabel([TaskStatus.Finished, TaskStatus.Reviewed, TaskStatus.Accepted])).toBe('finished c:status_range accepted');
   });
 });
 
 describe('normalizePanelWidths', () => {
-  const panel = (panelId: string, sectionFilters?: SectionsValue) => ({ kind: 'project', panelId, sectionFilters }) as ProjectResizablePanel;
+  const panel = (panelId: string) => ({ kind: 'project', panelId }) as ProjectResizablePanel;
 
   it('defaults missing widths and drops panels off the board', () => {
     expect(normalizePanelWidths({ gone: 500, a: 400 }, [panel('a'), panel('b')])).toEqual({ a: 400, b: 300 });
   });
 
-  it('lets a panel stay collapsed, but opens a section stored collapsed', () => {
-    expect(normalizePanelWidths({ a: 50, s: 50 }, [panel('a'), panel('s', sections[0])])).toEqual({ a: 50, s: 300 });
+  it('lets a panel stay collapsed', () => {
+    expect(normalizePanelWidths({ a: 50 }, [panel('a')])).toEqual({ a: 50 });
   });
 });

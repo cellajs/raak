@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useRouter, useSearch } from '@tanstack/react-router';
 import { MotionConfig } from 'motion/react';
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import type { Workspace } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { usePreloadLazyComponents } from '~/hooks/use-preload-lazy-components';
@@ -14,7 +14,7 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { BoardEmpty } from '~/modules/task/board/board-empty';
 import { BoardHeader } from '~/modules/task/board/board-header';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
-import { MobileBoard } from '~/modules/task/board/mobile-board';
+import { MobileProjectBoard, MobileWorkspaceBoard } from '~/modules/task/board/mobile-board';
 import { ProjectBoard } from '~/modules/task/board/project-board';
 import { UnseenTasksSnapshot } from '~/modules/task/board/unseen-tasks-snapshot';
 import { WorkspaceBoard } from '~/modules/task/board/workspace-board';
@@ -42,7 +42,8 @@ function BoardView({ boardId, projects, workspace, publicView, isLoading }: Boar
   if (isLoading && workspace) return <WorkspaceBoardSkeleton workspace={workspace} withHeader={false} />;
   if (isLoading) return <BoardSkeleton boardId={boardId} withHeader={false} publicView={publicView} />;
   if (!projects.length) return <BoardEmpty workspace={workspace} publicView={publicView} />;
-  if (isMobile) return <MobileBoard projects={projects} workspace={workspace} publicView={publicView} />;
+  if (isMobile && workspace) return <MobileWorkspaceBoard projects={projects} />;
+  if (isMobile) return <MobileProjectBoard project={projects[0]} publicView={publicView} />;
   if (!workspace) return <ProjectBoard boardId={boardId} projects={projects} publicView={publicView} />;
   return <WorkspaceBoard boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />;
 }
@@ -62,7 +63,8 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
   const projects = projectsProp ?? flattenInfiniteData<EnrichedProject>(fetchedData);
   const isLoadingProjects = !projectsProp && isPending;
 
-  useEffect(() => {
+  // Before paint: panels read which way their lists run from the active board
+  useLayoutEffect(() => {
     setActiveBoard(boardId);
   }, [boardId, setActiveBoard]);
 

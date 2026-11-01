@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Task } from '~/modules/task/types';
-import { matchesBoardSearch, parseBoardSearch } from './search-filter';
+import { isWorthRecalling, matchesBoardSearch, parseBoardSearch, replaceFilterValue } from './search-filter';
 
 const paragraph = (text: string) =>
   JSON.stringify([{ id: '1', type: 'paragraph', props: {}, content: [{ type: 'text', text, styles: {} }], children: [] }]);
@@ -51,5 +51,28 @@ describe('matchesBoardSearch', () => {
     expect(matches({ type: 'chore,bug', labels: 'other,performance' })).toBe(true);
     expect(matches({ type: 'bug', labels: 'other' })).toBe(false);
     expect(matches({ q: 'missing', type: 'bug' })).toBe(false);
+  });
+});
+
+describe('replaceFilterValue', () => {
+  it('swaps one value in place and leaves the others', () => {
+    expect(replaceFilterValue('started,delivered', 'started', 'iced')).toBe('iced,delivered');
+    expect(replaceFilterValue('started', 'started', 'iced')).toBe('iced');
+  });
+});
+
+describe('isWorthRecalling', () => {
+  const worth = (q: string, filters: Record<string, string[]>) => isWorthRecalling({ q, filters });
+
+  it('skips a lone status or type', () => {
+    expect(worth('', { status: ['backlog'], type: [], labels: [] })).toBe(false);
+    expect(worth('', { status: [], type: ['bug'], labels: [] })).toBe(false);
+  });
+
+  it('keeps words, a label, and any combination', () => {
+    expect(worth('kk', { status: [], type: ['bug'], labels: [] })).toBe(true);
+    expect(worth('', { status: [], type: [], labels: ['garden'] })).toBe(true);
+    expect(worth('', { status: ['delivered', 'reviewed'], type: [], labels: [] })).toBe(true);
+    expect(worth('', { status: ['backlog'], type: ['bug'], labels: [] })).toBe(true);
   });
 });

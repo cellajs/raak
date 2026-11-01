@@ -4,6 +4,7 @@ import { foldText, matchesTerms, parseTerms } from 'shared/utils/text-match';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
+import type { RecentListSearch } from '~/utils/recent-searches';
 
 type SearchableText = { text: string; folded: string };
 
@@ -49,6 +50,12 @@ export const toggleFilterValue = (value: string | undefined, toggled: string) =>
   return (values.includes(toggled) ? values.filter((other) => other !== toggled) : [...values, toggled]).join(',') || undefined;
 };
 
+/** A filter's value in the URL with one value swapped for another, in the same place. */
+export const replaceFilterValue = (value: string, from: string, to: string) =>
+  filterValues(value)
+    .map((other) => (other === from ? to : other))
+    .join(',');
+
 export const parseBoardSearch = ({ q, status, type, labels }: BoardSearch) => ({
   terms: parseTerms(q),
   statuses: filterValues(status),
@@ -60,6 +67,10 @@ export type ParsedBoardSearch = ReturnType<typeof parseBoardSearch>;
 
 export const isBoardSearchActive = ({ terms, statuses, types, labels }: ParsedBoardSearch) =>
   terms.length > 0 || statuses.length > 0 || types.length > 0 || labels.length > 0;
+
+/** Whether a search earns a recent's place: a lone status or type is always in plain sight among the options, a label may be scrolled off. */
+export const isWorthRecalling = ({ q, filters: { status = [], type = [], labels = [] } }: RecentListSearch) =>
+  !!q || labels.length > 0 || status.length + type.length > 1;
 
 /** Whether a task passes each part of the search, so a filter's counts can leave that filter out. */
 export const boardSearchParts = (search: ParsedBoardSearch, task: Task) => ({

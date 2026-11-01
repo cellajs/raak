@@ -89,7 +89,8 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
 export const projectQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: keys.detail.byId(id),
-    queryFn: async () => (await getProject({ path: { id, organizationId, tenantId } })) as EnrichedProject,
+    // A project page's board needs the task count to tell how many accepted tasks it leaves out
+    queryFn: async () => (await getProject({ path: { id, organizationId, tenantId }, query: { include: 'counts' } })) as EnrichedProject,
     placeholderData: () => findProjectByIdOrSlug(id, tenantId),
     structuralSharing: preserveIncluded,
   });

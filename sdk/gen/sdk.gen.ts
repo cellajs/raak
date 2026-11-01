@@ -138,6 +138,9 @@ import type {
   GetConnectionsResponses,
   GetLabelData,
   GetLabelErrors,
+  GetLabelOlderAcceptedCountsData,
+  GetLabelOlderAcceptedCountsErrors,
+  GetLabelOlderAcceptedCountsResponses,
   GetLabelResponses,
   GetLabelsData,
   GetLabelsErrors,
@@ -472,6 +475,7 @@ import {
   zGetAuthHealthResponse,
   zGetConnectedAppsResponse,
   zGetConnectionsResponse,
+  zGetLabelOlderAcceptedCountsResponse,
   zGetLabelResponse,
   zGetLabelsResponse,
   zGetMcpProtectedResourceMetadataResponse,
@@ -3412,6 +3416,30 @@ export const createLabels = <ThrowOnError extends boolean = true>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Get older accepted task counts per label
+ *
+ * Returns, per label id, how many tasks of a project were accepted before the cut-off of `acceptedCutOff` days ago.
+ *
+ * **GET /{tenantId}/{organizationId}/labels/older-accepted-counts** ·· [getLabelOlderAcceptedCounts](https://www.raak.dev/docs/operations?operationTag=labels#tag/labels/GET/{tenantId}/{organizationId}/labels/older-accepted-counts) ·· _labels · app · product_
+ *
+ * @param {getLabelOlderAcceptedCountsData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {string} options.path.organizationId - `string`
+ * @param {string} options.query.projectId - `string`
+ * @param {number} options.query.acceptedCutOff - `number`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 429
+ */
+export const getLabelOlderAcceptedCounts = <ThrowOnError extends boolean = true>(
+  options: Options<GetLabelOlderAcceptedCountsData, ThrowOnError>,
+): RequestResult<GetLabelOlderAcceptedCountsResponses, GetLabelOlderAcceptedCountsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetLabelOlderAcceptedCountsResponses, GetLabelOlderAcceptedCountsErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zGetLabelOlderAcceptedCountsResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/{tenantId}/{organizationId}/labels/older-accepted-counts',
+    ...options,
   });
 
 /**

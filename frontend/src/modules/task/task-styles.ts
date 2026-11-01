@@ -57,13 +57,21 @@ export const taskCardActionsRevealClass = tw(
 /** Shared by the panel header's drag handle and the board skeleton's stand-in, so the strip keeps its shape through loading. */
 export const panelHandleClass = tw('flex h-auto items-center justify-start gap-2 p-0 hover:bg-transparent');
 
-/** Shared by the panel header's "+ Task" button and the board skeleton's stand-in. */
-export const newTaskButtonClass = tw('relative -ml-1 hidden rounded sm:inline-flex');
+/** Shared by the "+ Task" button and the board skeleton's stand-ins. */
+export const newTaskButtonClass = tw('relative hidden rounded sm:inline-flex');
 
 export const taskBarClass = tw('z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2');
 
 /** Shared by the panel section headers, the collapsed panel and the board skeleton, so a strip keeps its fill through a collapse. */
 export const statusSectionColors = {
-  accepted: { fill: 'bg-green-50 dark:bg-green-950', text: 'text-green-700 dark:text-green-400', border: 'border-b border-b-green-500/10' },
-  iced: { fill: 'bg-sky-50 dark:bg-sky-950', text: 'text-sky-700 dark:text-sky-400', border: 'border-t border-t-sky-500/10' },
+  accepted: {
+    fill: 'bg-green-50 dark:bg-green-950',
+    text: 'text-green-700 dark:text-green-400',
+    border: { top: 'border-b border-b-green-500/10', bottom: 'border-t border-t-green-500/10' },
+  },
+  iced: {
+    fill: 'bg-sky-50 dark:bg-sky-950',
+    text: 'text-sky-700 dark:text-sky-400',
+    border: { top: 'border-b border-b-sky-500/10', bottom: 'border-t border-t-sky-500/10' },
+  },
 } as const;

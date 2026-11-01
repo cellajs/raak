@@ -19,6 +19,6 @@ export function useRoleSearchFilter({ entityType, value, onChange }: RoleSearchF
 
   return {
     groups: [{ key: 'role', label: t('c:role'), options, onToggle: (role) => onChange(role === value ? undefined : role) }],
-    chips: selected ? [{ key: 'role', label: selected.label, onRemove: () => onChange(undefined) }] : [],
+    chips: selected ? [{ key: 'role', group: 'role', value: selected.value, label: selected.label, onRemove: () => onChange(undefined) }] : [],
   };
 }

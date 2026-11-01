@@ -16,6 +16,9 @@ export function PublicProjectRouteComponent() {
   const view = publicProjectApi.useSearch({ select: (search) => search.view });
   const { data } = useSuspenseQuery(publicProjectQueryOptions(projectId));
   const projects = [data];
+  // Not the project's id: a member's status panels and widths on that board are not for the public view
+  const boardId = `public-${data.id}`;
+
   return (
     <PublicProjectPage key={data.id} project={data}>
       {view === 'table' ? (
@@ -23,8 +26,8 @@ export function PublicProjectRouteComponent() {
           <TasksTable projects={projects} publicView />
         </Suspense>
       ) : (
-        <Suspense fallback={<BoardSkeleton boardId={data.id} projects={projects} projectPage publicView />}>
-          <Board boardId={data.id} projects={projects} publicView />
+        <Suspense fallback={<BoardSkeleton boardId={boardId} projects={projects} projectPage publicView />}>
+          <Board boardId={boardId} projects={projects} publicView />
         </Suspense>
       )}
     </PublicProjectPage>

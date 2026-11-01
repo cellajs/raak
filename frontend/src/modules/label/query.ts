@@ -6,6 +6,7 @@ import {
   deleteLabels,
   type GetLabelsData,
   getLabel,
+  getLabelOlderAcceptedCounts,
   getLabels,
   type Label,
   type UpdateLabelData,
@@ -17,6 +18,7 @@ import { labelName } from 'shared/config/labels-config';
 import { isRecord } from 'shared/utils/as-record';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-owned-fields';
 import { toaster } from '~/modules/common/toaster/toaster';
+import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
@@ -96,6 +98,22 @@ export const labelsCanonicalOptions = ({ organizationId, tenantId, projectId }: 
       );
     },
     staleTime: syncStaleTime,
+  });
+};
+
+/** Per label, the project's tasks accepted before the board's cut-off: what the board list leaves out of a label's total. */
+export const labelOlderAcceptedCountsOptions = ({
+  organizationId,
+  tenantId,
+  projectId,
+}: {
+  organizationId: string;
+  tenantId: string;
+  projectId: string;
+}) => {
+  return queryOptions({
+    queryKey: ['label', 'older-accepted-counts', organizationId, projectId],
+    queryFn: () => getLabelOlderAcceptedCounts({ path: { organizationId, tenantId }, query: { projectId, acceptedCutOff: boardAcceptedCutOffDays } }),
   });
 };
 

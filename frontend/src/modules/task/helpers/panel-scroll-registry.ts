@@ -10,7 +10,7 @@ interface PanelScroller {
 
 const scrollers = new Map<string, Set<PanelScroller>>();
 
-/** A Set per project, since split view mounts several panels for one; each no-ops when its list lacks the band or task. Returns the unregister. */
+/** A Set per project, since a project page can mount several panels for one; each no-ops when its list lacks the band or task. Returns the unregister. */
 export const registerPanelScroller = (projectId: string, scroller: PanelScroller) => {
   const projectScrollers = scrollers.get(projectId) ?? new Set();
   projectScrollers.add(scroller);

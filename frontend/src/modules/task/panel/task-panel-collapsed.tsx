@@ -1,4 +1,6 @@
 import type { CollapsedSection } from '~/modules/common/board/board-panel';
+import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
+import { foldsSection } from '~/modules/task/helpers/board-helpers';
 import { CollapsedPanelStrip } from '~/modules/task/panel/collapsed-panel-strip';
 import { statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
@@ -14,25 +16,12 @@ interface TaskPanelCollapsedProps {
 }
 
 export function TaskPanelCollapsed({ panelId, name, counts }: TaskPanelCollapsedProps) {
-  const sections: CollapsedSection[] = [];
-
-  if (counts.showAccepted) {
-    sections.push({
-      count: counts.accepted,
-      colorClass: cn(statusSectionColors.accepted.fill, statusSectionColors.accepted.text),
-      borderClass: statusSectionColors.accepted.border,
-      position: 'top',
-    });
-  }
-
-  if (counts.showIced) {
-    sections.push({
-      count: counts.iced,
-      colorClass: cn(statusSectionColors.iced.fill, statusSectionColors.iced.text),
-      borderClass: statusSectionColors.iced.border,
-      position: 'bottom',
-    });
-  }
+  const section = (type: TogglableStatusType, position: CollapsedSection['position']): CollapsedSection[] => {
+    if (!foldsSection(type, counts)) return [];
+    const { fill, text, border } = statusSectionColors[type];
+    return [{ count: counts[type], colorClass: cn(fill, text), borderClass: border[position], position }];
+  };
+  const sections = [...section('accepted', 'top'), ...section('iced', 'bottom')];
 
   return <CollapsedPanelStrip panelId={panelId} name={name} mainCount={collapsedMainCount(counts)} sections={sections} />;
 }

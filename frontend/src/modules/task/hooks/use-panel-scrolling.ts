@@ -28,9 +28,10 @@ const glowOnceMounted = (taskId: string, framesLeft = 10) => {
   if (framesLeft > 0) requestAnimationFrame(() => glowOnceMounted(taskId, framesLeft - 1));
 };
 
+const sectionStatus: Record<TogglableStatusType, TaskStatus> = { accepted: TaskStatus.Accepted, iced: TaskStatus.Iced };
+
 interface UsePanelScrollingOptions {
   projectId: string;
-  /** The board panel showing these tasks: a project, or one split section of it. */
   panelId: string;
   tasks: TaskProps['task'][];
   counts: TaskCounts;
@@ -47,17 +48,13 @@ export function usePanelScrolling({ projectId, panelId, tasks, counts, isMobile,
   const countsRef = useLatestRef(counts);
 
   // Keyboard navigation reads the list in render order, statuses as groups, and brings virtualized-out cards into view.
-  // The accepted and iced bars are its first and last rows.
+  // The two bars are its first and last rows.
   useEffect(() => {
-    const sectionBar = (type: TogglableStatusType, group: TaskStatus) =>
-      hasSectionBar(type, countsRef.current) ? [{ id: sectionBarId(type, projectId), group }] : [];
+    const sectionBar = (type: TogglableStatusType) =>
+      hasSectionBar(type, countsRef.current) ? [{ id: sectionBarId(type, projectId), group: sectionStatus[type] }] : [];
 
     return registerPanelNav(panelId, {
-      items: () => [
-        ...sectionBar('accepted', TaskStatus.Accepted),
-        ...tasksRef.current.map(({ id, status }) => ({ id, group: status })),
-        ...sectionBar('iced', TaskStatus.Iced),
-      ],
+      items: () => [...sectionBar('accepted'), ...tasksRef.current.map(({ id, status }) => ({ id, group: status })), ...sectionBar('iced')],
       scrollTo: (taskId) => {
         const index = tasksRef.current.findIndex((task) => task.id === taskId);
         if (index !== -1) virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
@@ -107,7 +104,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, counts, isMobile,
 
   usePanelAutoScroll(scrollViewportRef, isMobile || windowScroll);
 
-  // Accepted rows come and go at the top, and virtua keeps measured heights by index: `shift` moves them with their rows
+  // The top bar's rows come and go above the others, and virtua keeps measured heights by index: `shift` moves them with their rows
   // and holds the rows in view in place, so a collapse needs no scroll of its own. On for that one render only.
   const [shift, setShift] = useState(false);
   useLayoutEffect(() => {
@@ -131,13 +128,14 @@ export function usePanelScrolling({ projectId, panelId, tasks, counts, isMobile,
     // A frame later, for the virtualizer to lay out the added rows
     requestAnimationFrame(() => {
       const tasks = tasksRef.current;
-      const index =
-        type === 'accepted'
-          ? tasks.findLastIndex((task) => task.status === TaskStatus.Accepted)
-          : tasks.findIndex((task) => task.status === TaskStatus.Iced);
+      const isTop = type === 'accepted';
+      const matches = (task: TaskProps['task']) => task.status === sectionStatus[type];
+      // The row next to the rest of the list
+      const index = isTop ? tasks.findLastIndex(matches) : tasks.findIndex(matches);
       if (index === -1) {
-        // Only older accepted tasks: their note opens under the bar, at the top of the list
-        if (type === 'accepted') (scrollViewportRef.current ?? window).scrollTo({ top: 0 });
+        // Only older accepted tasks: their note opens under the bar, at that end of the list
+        const viewport = scrollViewportRef.current;
+        if (type === 'accepted') (viewport ?? window).scrollTo({ top: isTop ? 0 : (viewport ?? document.documentElement).scrollHeight });
         return;
       }
       virtualizerRef.current?.scrollToIndex(index, { align: 'center', smooth: false });

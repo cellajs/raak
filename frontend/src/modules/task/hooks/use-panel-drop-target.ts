@@ -5,19 +5,23 @@ import { useTaskDropLandingStore } from '~/modules/task/board/task-drop-landing-
 import { canDropTaskIntoProject, getPanelLandingSlot, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { isCoarsePointerDevice } from '~/modules/task/helpers/mobile-drag-indicator';
 import { scrollStatusIntoView } from '~/modules/task/helpers/panel-scroll-registry';
+import type { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 
 interface UsePanelDropTargetOptions {
   panelRef: RefObject<HTMLDivElement | null>;
   projectId: string;
   tasks: Task[];
+  /** The statuses the panel lists; a drag does not change a task's status, so others are refused. */
+  statuses?: TaskStatus[];
 }
 
 /** Highlights a task panel while a task from another project is dragged over it, and marks where a drop on the panel lands; registered on the outer wrapper to stay live when collapsed. */
-export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropTargetOptions) {
+export function usePanelDropTarget({ panelRef, projectId, tasks, statuses }: UsePanelDropTargetOptions) {
   const [highlightProject, setHighlightProject] = useState(false);
-  // getData() reads the latest tasks without re-registering the listeners
+  // getData() and canDrop read the latest values without re-registering the listeners
   const tasksRef = useLatestRef(tasks);
+  const statusesRef = useLatestRef(statuses);
 
   useEffect(() => {
     if (!panelRef.current) return;
@@ -32,7 +36,7 @@ export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropT
       element: panelRef.current,
       getData: () => ({ dragItem: true, item: { projectId, tasks: tasksRef.current }, type: 'panel', itemType: 'project' }),
       canDrop: ({ source: { data } }) => {
-        if (!isTaskData(data)) return false;
+        if (!isTaskData(data) || (statusesRef.current && !statusesRef.current.includes(data.item.status))) return false;
         return canDropTaskIntoProject(data.item.projectId, projectId);
       },
       onDragEnter: ({ source: { data } }) => {

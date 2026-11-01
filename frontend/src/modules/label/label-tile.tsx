@@ -1,10 +1,8 @@
-import { useSearch } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelName } from 'shared/config/labels-config';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
-import { LabelFilterButton } from '~/modules/label/label-filter-button';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
 import { LabelTileDetails, labelTileReveal } from '~/modules/label/label-tile-details';
 import { labelTileStore, useLabelTileStore } from '~/modules/label/label-tile-store';
@@ -15,7 +13,6 @@ import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
-import { filterValues } from '~/modules/task/helpers/search-filter';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
 import { itemFocusBarClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
@@ -41,30 +38,22 @@ const restingActionsPointer = tw(
 const openActionsReveal = tw(
   'group-focus-within/label-tile:translate-x-0 group-focus-within/label-tile:opacity-100 group-hover/label-tile:translate-x-0 group-hover/label-tile:opacity-100 group-has-data-dropdowner-active/label-tile:translate-x-0 group-has-data-dropdowner-done/label-tile:translate-x-0 group-has-data-dropdowner-active/label-tile:opacity-100 group-has-data-dropdowner-done/label-tile:opacity-100 max-sm:translate-x-0 max-sm:opacity-100',
 );
-const metaHide = tw(
-  'transition-opacity group-hover/label-tile:opacity-0 group-focus-visible/label-tile:opacity-0 group-has-[:focus-visible]/label-tile:opacity-0 group-has-data-dropdowner-active/label-tile:opacity-0 group-has-data-dropdowner-done/label-tile:opacity-0 motion-reduce:transition-none',
-);
-// Transparent under the floating filter and options buttons (2 × 2rem + a 0.25rem gap), then a 1.5rem fade. A mask fades the
-// text itself, so it works on the hover tint and on the transparent panel.
-const nameFade = tw(
-  'group-hover/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-focus-visible/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-has-[:focus-visible]/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)]',
-);
 
-interface LabelTileProps extends Pick<LabelsHostProps, 'singleExpand' | 'onAction'> {
+interface LabelTileProps extends Pick<LabelsHostProps, 'singleExpand'> {
   row: LabelRow;
   /** A tile in the board panel is a board item: one Tab stop for the list, arrow keys between tiles. */
   onBoard?: boolean;
+  showProjectUsage?: boolean;
 }
 
 /** DOM id of a label tile, so a label link can scroll its tile into view. */
 export const labelTileDomId = (labelId: string) => `label-tile-${labelId}`;
 
 /** A click expands the tile in place, like a task card; a click on the expanded name renames it, and on the board Enter does both. */
-export function LabelTile({ row, singleExpand, onAction, onBoard }: LabelTileProps) {
+export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: LabelTileProps) {
   const { t } = useTranslation();
 
   const expanded = useLabelTileStore((state) => !!state.expandedIds[row.id]);
-  const isInSearch = useSearch({ strict: false, select: (search) => filterValues(search.labels).includes(row.slug) });
 
   // Read-only viewers (guest membership or public access) cannot rename, switch mode or delete
   const isReadOnly = useIsProjectReadOnly(row.projectId);
@@ -163,9 +152,8 @@ export function LabelTile({ row, singleExpand, onAction, onBoard }: LabelTilePro
         )}
       >
         <div className="flex min-h-11 items-center gap-2 px-4 py-1.5">
-          {/* Name and count share one box that reaches the row's edge: on a collapsed tile the actions float over
-              its end, which fades out beneath them, so no width is held for buttons that are hidden */}
-          <div className={cn('flex min-w-0 grow items-center gap-2', !expanded && nameFade)}>
+          {/* A collapsed tile holds the room of its floating button, so a long name's count stays clear of it */}
+          <div className={cn('flex min-w-0 grow items-center gap-2', !expanded && 'pr-9')}>
             {/* Edit and display boxes share height, padding and border so the swap causes no layout shift */}
             {editingName !== null ? (
               <Input
@@ -194,16 +182,14 @@ export function LabelTile({ row, singleExpand, onAction, onBoard }: LabelTilePro
               </button>
             )}
             {!expanded && (
-              <div className={cn('ml-auto flex shrink-0 items-center gap-1', metaHide)}>
-                {row.mode === 'epic' && (
-                  <Badge variant="secondary" className="mr-1">
-                    {t('c:epic')}
-                  </Badge>
-                )}
-                {/* The pressed toggle floats over this slot */}
-                {isInSearch && <span className="size-8" />}
-                <span className="w-8 text-center text-muted-foreground text-xs tabular-nums">{formatCount(row.usedCount)}</span>
-              </div>
+              <span className="ml-1 shrink-0 whitespace-nowrap text-muted-foreground text-xs tabular-nums">
+                {formatCount(row.usedCount)} / {formatCount(row.totalCount)}
+              </span>
+            )}
+            {!expanded && row.mode === 'epic' && (
+              <Badge variant="secondary" className="ml-auto shrink-0">
+                {t('c:epic')}
+              </Badge>
             )}
           </div>
 
@@ -223,7 +209,6 @@ export function LabelTile({ row, singleExpand, onAction, onBoard }: LabelTilePro
                 />
               )}
             </AnimatePresence>
-            <LabelFilterButton name={row.name} slug={row.slug} isPressed={isInSearch} onAction={onAction} className={actionClass} />
             <LabelOptionsButton row={row} canManage={!isReadOnly} className={actionClass} />
           </div>
         </div>
@@ -231,7 +216,7 @@ export function LabelTile({ row, singleExpand, onAction, onBoard }: LabelTilePro
         <AnimatePresence initial={false}>
           {expanded && (
             <motion.div key="details" {...labelTileReveal}>
-              <LabelTileDetails row={row} canManage={!isReadOnly} />
+              <LabelTileDetails row={row} canManage={!isReadOnly} showProjectUsage={showProjectUsage} />
             </motion.div>
           )}
         </AnimatePresence>

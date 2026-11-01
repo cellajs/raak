@@ -6,20 +6,13 @@
    One place to update when app chrome heights change; breakpoint switching stays in the
    Tailwind classes that consume these. */
 :root {
-  --board-offset-sm: 4rem; /* app chrome above the board row (sm and up) */
+  --board-offset-sm: 4.63rem; /* app chrome above the board row (sm and up) */
   --board-offset-md: 4.88rem; /* taller app chrome from md up */
   --board-mobile-offset: 8rem; /* app chrome + floating bottom nav on mobile */
   --board-panel-offset: 146px; /* chrome above a project panel body: md board offset (78px) + 68px panel header row */
-  --board-section-panel-offset: calc(var(--board-panel-offset) + 1.75rem); /* a split section: its filter row sits above the body too */
   --local-panel-offset: 78px; /* chrome above a local panel frame (its header renders inside the frame) */
   --task-sheet-offset: 3rem; /* sheet chrome above a task card rendered in a sheet */
   --task-sheet-offset-sm: 3.25rem;
-}
-
-/* No overflow-x-clip on html and body (cella #1139) until the board is checked against it on phones. */
-html,
-body {
-  overflow-x: visible;
 }
 
 /* Pinned section bars animate this registered offset. Consumers follow it through calc()

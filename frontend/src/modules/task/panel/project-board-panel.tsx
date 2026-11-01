@@ -2,24 +2,24 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import type { EnrichedProject } from '~/modules/project/types';
-import type { SectionsValue } from '~/modules/task/board/task-board-store';
-import { inSections } from '~/modules/task/helpers/board-helpers';
 import { BoardPanel } from '~/modules/task/panel/board-panel';
 import { publicTasksBoardQueryOptions } from '~/modules/task/public-query';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
+import type { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { stableArray } from '~/utils/stable-array';
 
 interface ProjectBoardPanelProps {
   project: EnrichedProject;
   publicView?: boolean;
-  sectionFilters?: SectionsValue;
+  panelId?: string;
+  statuses?: TaskStatus[];
   windowScroll?: boolean;
 }
 
 /** Fetches a project's canonical tasks and merges the open draft task. */
-export function ProjectBoardPanel({ project, publicView, sectionFilters, windowScroll }: ProjectBoardPanelProps) {
+export function ProjectBoardPanel({ project, publicView, panelId, statuses, windowScroll }: ProjectBoardPanelProps) {
   const queryOptions = publicView
     ? publicTasksBoardQueryOptions(project.id)
     : tasksCanonicalOptions({ organizationId: project.organizationId, tenantId: project.tenantId, projectId: project.id });
@@ -34,12 +34,12 @@ export function ProjectBoardPanel({ project, publicView, sectionFilters, windowS
   const projectTasksRef = useRef<Task[]>([]);
   const panelTasksRef = useRef<Task[]>([]);
 
-  // Mobile creates through a dialog, so no draft row enters its list. A split gives the draft to the section of its status.
+  // Mobile creates through a dialog, so no draft row enters its list. Status panels give the draft to the panel of its status.
   const rawProjectTasks: Task[] = !isMobile && draftTask ? [...data.items, draftTask] : data.items;
   const projectTasks = stableArray(projectTasksRef.current, rawProjectTasks);
   projectTasksRef.current = projectTasks;
 
-  const rawPanelTasks = sectionFilters ? projectTasks.filter((task) => inSections(task, sectionFilters)) : projectTasks;
+  const rawPanelTasks = statuses ? projectTasks.filter((task) => statuses.includes(task.status)) : projectTasks;
   const panelTasks = stableArray(panelTasksRef.current, rawPanelTasks);
   panelTasksRef.current = panelTasks;
 
@@ -49,7 +49,8 @@ export function ProjectBoardPanel({ project, publicView, sectionFilters, windowS
       project={project}
       projectFetchedCount={data.items.length}
       publicView={publicView}
-      sectionFilters={sectionFilters}
+      panelId={panelId ?? project.id}
+      statuses={statuses}
       windowScroll={windowScroll}
     />
   );
