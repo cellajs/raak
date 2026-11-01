@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { BirdIcon } from 'lucide-react';
+import { BirdIcon, SearchIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
@@ -112,7 +112,11 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
 
   if (isLoading) return <Spinner className="my-8" />;
   if (!rows.length) {
-    return <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:label_other') }} />;
+    return grouped.length ? (
+      <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleOptions={{ resource: t('c:label_other') }} />
+    ) : (
+      <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:label_other') }} />
+    );
   }
 
   const list = (

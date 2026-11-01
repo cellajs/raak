@@ -11,6 +11,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/form-fields/blocknote';
+import { FormActions } from '~/modules/common/form-fields/form-actions';
 import { InputTriggerButton, InputTriggerChevron } from '~/modules/common/form-fields/input-trigger-button';
 import { useOverlayClose } from '~/modules/common/overlay-close';
 import { Spinner } from '~/modules/common/spinner';
@@ -365,7 +366,7 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
             )}
           />
 
-          <div className="flex flex-col gap-2 py-2 sm:flex-row">
+          <FormActions className="py-2">
             <div className="active:press flex">
               <Button type="submit" disabled={!isDirty} press={false} className="grow rounded-none rounded-l">
                 <span>
@@ -406,23 +407,21 @@ export function CreateTaskForm({ projectId, organizationId, className, dialog: i
               />
             </div>
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row">
-              <Button
-                type="reset"
-                variant="secondary"
-                className={isDirty ? '' : 'hidden'}
-                onClick={() => {
-                  form.reset();
-                  setEditorKey((count) => count + 1);
-                }}
-              >
-                {t('c:cancel')}
-              </Button>
-              <Button type="button" variant="secondary" onClick={handleCloseForm} className={isDirty ? 'hidden' : ''}>
-                {t('c:close')}
-              </Button>
-            </div>
-          </div>
+            <Button
+              type="reset"
+              variant="secondary"
+              className={isDirty ? '' : 'hidden'}
+              onClick={() => {
+                form.reset();
+                setEditorKey((count) => count + 1);
+              }}
+            >
+              {t('c:cancel')}
+            </Button>
+            <Button type="button" variant="secondary" onClick={handleCloseForm} className={isDirty ? 'hidden' : ''}>
+              {t('c:close')}
+            </Button>
+          </FormActions>
         </form>
       </Form>
     </motion.div>

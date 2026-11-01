@@ -11,7 +11,6 @@ export const configureForExport = (tasks: Task[], projects: Omit<Project, 'count
       ...task,
       summary: titleFromDocument(task.summary),
       labels: task.labels.map((label) => label.name),
-      primaryLabelId: task.primaryLabel?.name ?? '-',
       status: statusOptionsByValue[task.status].status,
       projectId: project?.name ?? '-',
       createdBy: task.createdBy?.name ?? '-',

@@ -1,5 +1,8 @@
-import type { RefObject } from 'react';
+import i18n from 'i18next';
+import type { ReactNode, RefObject } from 'react';
+import { titleFromDocument } from 'shared/blocknote';
 import { type DropdownData, dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { NamedText } from '~/modules/common/named-text';
 import { SelectLabels } from '~/modules/task/dropdowns/select-labels';
 import { SelectMembers } from '~/modules/task/dropdowns/select-members';
 import { SelectPrimaryLabel } from '~/modules/task/dropdowns/select-primary-label';
@@ -17,6 +20,7 @@ import type { Task } from '~/modules/task/types';
 interface TriggerProps {
   triggerId: string;
   triggerRef: RefObject<HTMLButtonElement | null>;
+  lead?: ReactNode;
 }
 
 export type TaskDropdownProps = TriggerProps &
@@ -59,11 +63,12 @@ export const taskDropdownContent = (props: TaskDropdownProps) => {
 };
 
 export function openTaskDropdown(props: TaskDropdownProps) {
-  const { dropdownType, triggerId, triggerRef } = props;
+  const { dropdownType, triggerId, triggerRef, lead } = props;
   const options: DropdownData = {
     id: dropdownType,
     triggerRef,
     triggerId,
+    lead,
     align: dropdownType === 'status' || dropdownType === 'assignedTo' ? 'end' : 'start',
   };
 
@@ -83,6 +88,9 @@ export function openTaskFieldDropdown(
 ) {
   const base = { triggerId: trigger.id, triggerRef: { current: trigger }, taskId: task.id };
   const { projectId } = task;
+  // The sheet covers the card, so it names the task it edits. The label and member pickers keep their room for the search.
+  const title = titleFromDocument(task.summary);
+  const leadFor = (fieldName: string) => (title ? <NamedText i18nKey="c:change_field.text" name={title} values={{ field: fieldName }} /> : undefined);
 
   switch (field) {
     case 'labels':
@@ -97,8 +105,21 @@ export function openTaskFieldDropdown(
     case 'assignedTo':
       return openTaskDropdown({ ...base, dropdownType: field, value: task.assignedTo, projectId, onChange: handlers.onAssignedToChange });
     case 'status':
-      return openTaskDropdown({ ...base, dropdownType: field, value: task.status, onChange: handlers.onStatusChange });
+      return openTaskDropdown({
+        ...base,
+        dropdownType: field,
+        value: task.status,
+        onChange: handlers.onStatusChange,
+        lead: leadFor(i18n.t('c:status')),
+      });
     case 'primaryLabel':
-      return openTaskDropdown({ ...base, dropdownType: field, value: task.primaryLabelId, projectId, onChange: handlers.onPrimaryLabelChange });
+      return openTaskDropdown({
+        ...base,
+        dropdownType: field,
+        value: task.primaryLabelId,
+        projectId,
+        onChange: handlers.onPrimaryLabelChange,
+        lead: leadFor(i18n.t('c:type')),
+      });
   }
 }
