@@ -6,7 +6,6 @@ import { type FocusEvent, type MouseEvent, memo, useEffect, useRef, useState } f
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { DropIndicator } from '~/modules/common/drop-indicator';
-import { StickyBox } from '~/modules/common/sticky-box';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
@@ -235,13 +234,9 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
             productType="task"
           />
           {effectiveState !== 'collapsed' && (
-            <StickyBox
-              className="z-10 data-[sticky=true]:-mx-2 data-[sticky=true]:bg-background data-[sticky=true]:px-2"
-              enabled={!isSheet}
-              offsetBottom={52}
-            >
+            <div className="z-10">
               <TaskCardHeader task={task} isSheet={isSheet} animateClose={hasToggled} showDragHandle={!isSheet && !isReadOnly} />
-            </StickyBox>
+            </div>
           )}
           <TaskCardDescription
             task={task}
