@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.27](https://github.com/cellajs/raak/compare/0.1.26...0.1.27) (2026-11-01)
+
+
+### 🎉 New features
+
+* **task:** filter the board and table by status, type and label ([#244](https://github.com/cellajs/raak/issues/244)) ([4c25b3b](https://github.com/cellajs/raak/commit/4c25b3bc204d418e5f1ee8e55bd0b4b16afbe2bf))
+* **task:** status panels replace split and merge, phone status tabs ([#248](https://github.com/cellajs/raak/issues/248)) ([10f377a](https://github.com/cellajs/raak/commit/10f377a533151d0bb39143a8a2379645e1bd857f))
+* **task:** unseen mark on new tasks, Start check, split projects collapse as a whole ([#238](https://github.com/cellajs/raak/issues/238)) ([989b3dd](https://github.com/cellajs/raak/commit/989b3dd4105bff3e44caa54a572f077a2bc65995))
+
+
+### 🐞 Bug fixes
+
+* **mobile:** sticky and floating UI stops pinning while editing text ([#240](https://github.com/cellajs/raak/issues/240)) ([2645eb5](https://github.com/cellajs/raak/commit/2645eb5e816862423a390da1013617fcf72af5ab))
+* **task:** align the task table, pickers and forms with cella patterns ([#247](https://github.com/cellajs/raak/issues/247)) ([6a49c3f](https://github.com/cellajs/raak/commit/6a49c3f7e1a3e76ed7146c3e6a2b76a152fed1b6))
+
+
+### 🔧 Small improvements
+
+* **task:** plain search on the board and table ([#242](https://github.com/cellajs/raak/issues/242)) ([93e69d0](https://github.com/cellajs/raak/commit/93e69d06a8de2ea29444a72e57e4d30971dfa49f))
+
+
+### 🧹 Chores
+
+* upgrade cella to v0.32.0 (aa9fed11a) ([#241](https://github.com/cellajs/raak/issues/241)) ([fae158e](https://github.com/cellajs/raak/commit/fae158eb79b946cf0c16a86df1984e27077ffeab))
+* upgrade cella to v0.33.0 (1fe5fab02) ([#245](https://github.com/cellajs/raak/issues/245)) ([a1dc565](https://github.com/cellajs/raak/commit/a1dc5650b9203c13f4706dd19d6a3d4ec160eeda))
+* upgrade cella to v0.33.0 (210be2d3c) ([#243](https://github.com/cellajs/raak/issues/243)) ([41b2bf1](https://github.com/cellajs/raak/commit/41b2bf1c16ffb0c9134d800842d5a7094eb52606))
+* upgrade cella to v0.33.0 (2c1a47662) ([#246](https://github.com/cellajs/raak/issues/246)) ([7c73e46](https://github.com/cellajs/raak/commit/7c73e465cc6833b1f8a9467671799f06fb308fd1))
+
 ## [0.1.26](https://github.com/cellajs/raak/compare/0.1.25...0.1.26) (2026-10-30)
 
 
