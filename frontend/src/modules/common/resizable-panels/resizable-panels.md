@@ -186,7 +186,7 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 
 ## Lifecycle
 
-- **L1, first mount:** a panel's width is its `defaultLayout` entry, else its last expanded width in this group, else `minWidth`. Every collapsible panel reports its state through `onCollapseChange`. The observer's first tick refits (R1) and, if that changes a width, saves (P1).
+- **L1, first mount:** a panel's width is its `defaultLayout` entry, else its last expanded width in this group, else `minWidth`. Every collapsible panel reports its state through `onCollapseChange`. The row then refits (R1) and, if that changes a width, saves (P1).
 - **L2, panel added:** it takes its width as in L1, and the row refits: autoFill scales the others to make room, overflow grows the container. Crossing the ideal sum switches the mode (G6).
 - **L3, panel removed:** the row refits to take up the room. The consumer keeps the stored width, so a panel that returns takes its old place in the proportions; failing that, the group remembers its last expanded width.
 - **L4, reorder:** widths stay with their panels and a separator stays at its index, so it now sits between other panels. Every separator-index lookup re-sorts by DOM order. A reorder saves nothing.
@@ -220,7 +220,7 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 
 ## Saving
 
-- **P1, `onLayoutChanged`** fires with the widths of all mounted panels after: a drag ends, a keyboard action (also one that moved nothing), a toggle, a refit that changed a width. It does not fire on an aborted drag, or on a panel added or removed alone.
+- **P1, `onLayoutChanged`** fires with the widths of all mounted panels after: a drag ends, a keyboard action (also one that moved nothing), a toggle, a refit that changed a width. It does not fire on an aborted drag.
 - **P2, what is saved:** rendered widths. A stored width at or below `collapsedWidth` means collapsed; the consumer keeps entries of unmounted panels.
 - **P3, `onCollapseChange`** fires when a collapsible panel registers and on each change. Collapsed is `width <= collapsedWidth`.
 
@@ -235,6 +235,5 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 
 Where the code differs from the rules above. The commit that fixes one removes its line.
 
-- **L2, L3:** the row only refits when the container or parent changes size, and adding or removing a panel often changes neither. On a fixed-height board the row stays over, or keeps a gap, until the next refit. Boards whose height follows their lists hide this through L7.
 - **G5:** arrow keys can take a panel below `minWidth`, and in overflow mode the grower is capped at `minWidth * 2` while the victim still shrinks.
 - **Pointer:** `pointercancel` does not end a drag, a secondary button starts one, and moves are not filtered by pointer id.

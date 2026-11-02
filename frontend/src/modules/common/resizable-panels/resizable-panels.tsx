@@ -158,6 +158,7 @@ export function ResizablePanelGroup({
   const widthsRef = useRef<Record<string, number>>({});
   const dragRef = useRef<DragState | null>(null);
   const expandedWidthsRef = useRef<Record<string, number>>({});
+  const refitPendingRef = useRef(false);
   const separatorsRef = useRef<Map<number, HTMLDivElement>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
   const onLayoutChangedRef = useLatestRef(onLayoutChanged);
@@ -362,6 +363,7 @@ export function ResizablePanelGroup({
     applyWidths();
     if (dragRef.current) abortDrag();
     updateContainerWidth();
+    scheduleRefit();
   };
 
   const unregisterPanel = (panelId: string) => {
@@ -370,6 +372,7 @@ export function ResizablePanelGroup({
     if (dragRef.current) abortDrag();
     updateContainerWidth();
     updateSeparatorAria();
+    scheduleRefit();
   };
 
   const registerSeparator = (index: number, element: HTMLDivElement) => {
@@ -436,6 +439,22 @@ export function ResizablePanelGroup({
     container.style.minWidth = `${Math.ceil(targetWidth)}px`;
   };
 
+  // Resizing the parent can cross the autoFill/overflow threshold
+  const refit = () => {
+    updateContainerWidth();
+    if (redistributePanels()) onLayoutChangedRef.current?.(getWidths());
+  };
+
+  // Adding or removing a panel often leaves the container's box as it is, so no observer fires. Once per commit, not per panel.
+  const scheduleRefit = () => {
+    if (refitPendingRef.current) return;
+    refitPendingRef.current = true;
+    queueMicrotask(() => {
+      refitPendingRef.current = false;
+      if (!dragRef.current) refit();
+    });
+  };
+
   // Scale non-collapsed panels so their total matches the available container space.
   const redistributePanels = () => {
     const container = containerRef.current;
@@ -500,13 +519,7 @@ export function ResizablePanelGroup({
 
     const handleResize = () => {
       if (dragRef.current) return;
-
-      // Resizing the parent can cross the autoFill/overflow threshold
-      updateContainerWidth();
-
-      if (redistributePanels()) {
-        onLayoutChangedRef.current?.(getWidths());
-      }
+      refit();
     };
 
     const observer = new ResizeObserver(handleResize);

@@ -200,16 +200,21 @@ export const OverflowKeepsWiderWidths = scenario({ width: 700, panels: ['a', 'b'
   await expect(board.saves).toHaveLength(0);
 });
 
-export const GapAddPanelDoesNotRefit = scenario({ width: 1200, panels: ['a'], layout: { a: 1200, b: 300 } }, async (board) => {
+export const AddPanelRefits = scenario({ width: 1200, panels: ['a'], layout: { a: 1200, b: 300 } }, async (board) => {
   await board.set({ panels: ['a', 'b'] });
-  await expect(board.widths()).toEqual({ a: 1200, b: 300 });
-  await expect(board.over()).toBe(307);
+  await expect(board.widths()).toEqual({ a: 893, b: 300 });
+  await expect(board.over()).toBe(0);
 });
 
-export const GapAddPanelDoesNotRefitClipped = scenario({ width: 1200, panels: ['a'], layout: { a: 1200, b: 300 }, parent: 'clip' }, async (board) => {
+export const AddPanelRefitsClipped = scenario({ width: 1200, panels: ['a'], layout: { a: 1200, b: 300 }, parent: 'clip' }, async (board) => {
   await board.set({ panels: ['a', 'b'] });
-  await expect(board.widths()).toEqual({ a: 1200, b: 300 });
-  await expect(board.over()).toBe(307);
+  await expect(board.widths()).toEqual({ a: 893, b: 300 });
+  await expect(board.over()).toBe(0);
+});
+
+export const AddClosedPanelRefits = scenario({ width: 1200, panels: ['a'], layout: { a: 1200, b: 50 } }, async (board) => {
+  await board.set({ panels: ['a', 'b'] });
+  await expect(board.widths()).toEqual({ a: 1143, b: 50 });
 });
 
 export const AddPanelCrossesIntoOverflow = scenario({ width: 1000, panels: ['a', 'b'], layout: { a: 496, b: 497.36, c: 300 } }, async (board) => {
@@ -218,9 +223,9 @@ export const AddPanelCrossesIntoOverflow = scenario({ width: 1000, panels: ['a',
   await expect(board.minWidth()).toBe('1307px');
 });
 
-export const GapRemovePanelLeavesRoom = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
+export const RemovePanelFillsTheRoom = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
   await board.set({ panels: ['a'] });
-  await expect(board.widths()).toEqual({ a: 600 });
+  await expect(board.widths()).toEqual({ a: 1200 });
 });
 
 export const RemovePanelClearsMinWidth = scenario({ width: 1000, panels: ['a', 'b', 'c'], layout: { a: 400, b: 400, c: 400 } }, async (board) => {
@@ -249,11 +254,11 @@ export const PanelChangeAbortsDrag = scenario({ width: 1200, panels: ['a', 'b'],
   board.pointerMove(-100);
   await expect(board.widths()).toEqual({ a: 500, b: 693 });
   await board.set({ panels: ['a', 'b', 'c'] });
-  await expect(board.widths()).toEqual({ a: 600, b: 593, c: 300 });
+  await expect(board.widths()).toEqual({ a: 445, b: 442, c: 300 });
   board.pointerMove(-200);
-  await expect(board.widths()).toEqual({ a: 600, b: 593, c: 300 });
+  await expect(board.widths()).toEqual({ a: 445, b: 442, c: 300 });
   await board.pointerUp();
-  await expect(board.saves).toHaveLength(0);
+  await expect(board.saves).toHaveLength(1);
 });
 
 export const RefitScalesInProportion = scenario({ width: 2000, panels: ['a', 'b'], layout: { a: 1000, b: 993.36 } }, async (board) => {
