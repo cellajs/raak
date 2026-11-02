@@ -7,6 +7,7 @@ import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import type { EnrichedProject } from '~/modules/project/types';
+import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
 import { foldsStatus, prepareBoardTasks, projectPanelName } from '~/modules/task/helpers/board-helpers';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
@@ -45,6 +46,7 @@ export const BoardPanel = memo(function BoardPanel({
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const search = useBoardSearch();
+  const isReadOnly = useIsProjectReadOnly(project.id);
 
   const { isVisible: showFab } = useScrollVisibility(isMobile);
 
@@ -88,13 +90,15 @@ export const BoardPanel = memo(function BoardPanel({
       {isMobile ? (
         <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex h-full flex-col">
           <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} />
-          <FloatingNavButton
-            id="create-task"
-            icon={PlusIcon}
-            onClick={() => openCreateTaskDialog(project.id, project.organizationId, isOneStatus ? statuses?.[0] : undefined)}
-            ariaLabel={t('c:create_resource', { resource: t('c:task') })}
-            className={showFab ? 'opacity-100' : 'pointer-events-none translate-y-16 scale-50 opacity-0'}
-          />
+          {!isReadOnly && (
+            <FloatingNavButton
+              id="create-task"
+              icon={PlusIcon}
+              onClick={() => openCreateTaskDialog(project.id, project.organizationId, isOneStatus ? statuses?.[0] : undefined)}
+              ariaLabel={t('c:create_resource', { resource: t('c:task') })}
+              className={showFab ? 'opacity-100' : 'pointer-events-none translate-y-16 scale-50 opacity-0'}
+            />
+          )}
         </div>
       ) : (
         <div ref={panelRef} className={cn('relative flex h-full flex-col', windowScroll && 'min-h-[80vh]')}>

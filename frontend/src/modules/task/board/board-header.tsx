@@ -58,7 +58,8 @@ export function BoardHeader({
             )}
             {pageProject && <StatusPanelsMenu boardId={boardId} className="max-sm:hidden" />}
             <DisplayOptions className="max-sm:hidden" />
-            <FocusView iconOnly />
+            {/* Focus view hides app chrome, which public pages do not have */}
+            {!publicView && <FocusView iconOnly />}
           </>
         }
       />

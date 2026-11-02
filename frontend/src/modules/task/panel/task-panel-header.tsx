@@ -68,7 +68,8 @@ export function TaskPanelHeader({ project, publicView, statuses, panelId, count 
 
   const actionsSlot = !isCollapsed ? (
     <>
-      {isReadOnly && panelId === project.id && (
+      {/* A public board is read-only for every visitor, so the badge would tell nobody anything */}
+      {isReadOnly && !publicView && panelId === project.id && (
         <Badge soft className="font-normal text-xs">
           {t('c:read_only')}
         </Badge>
