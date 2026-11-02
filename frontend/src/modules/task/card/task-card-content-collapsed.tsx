@@ -25,7 +25,7 @@ export function TaskCardContentCollapsed({ task, animateClose = false, onEditReq
       </div>
       {/* Grows to the card edge so the fade under the options button sits at the edge */}
       <div className="task-summary-fade mt-1.5 mb-1 ml-1 min-w-0 grow leading-tight">
-        <TaskSummaryHtml className="inline leading-tight" task={task} />
+        <TaskSummaryHtml className="inline leading-tight sm:font-[450]" task={task} />
         {env.VITE_DEBUG_MODE && <span className="ml-2 text-faint-foreground">#{task.displayOrder}</span>}
         <TaskCardSummaryButtons task={task} />
         <TaskMatchReason task={task} className="mt-1" />

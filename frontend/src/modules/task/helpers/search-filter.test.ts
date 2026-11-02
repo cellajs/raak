@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { RecentBoardSearch } from '~/modules/task/board/task-board-store';
 import type { Task } from '~/modules/task/types';
 import { isWorthRecalling, matchesBoardSearch, parseBoardSearch, replaceFilterValue } from './search-filter';
 
@@ -48,6 +49,8 @@ describe('matchesBoardSearch', () => {
   it('widens within a filter and narrows across filters and words', () => {
     expect(matches({ status: 'started,unstarted' })).toBe(true);
     expect(matches({ status: 'iced' })).toBe(false);
+    expect(matches({ status: 'delivered' })).toBe(true);
+    expect(parseBoardSearch({ status: 'delivered,iced' }).statuses).toEqual(['iced']);
     expect(matches({ type: 'chore,bug', labels: 'other,performance' })).toBe(true);
     expect(matches({ type: 'bug', labels: 'other' })).toBe(false);
     expect(matches({ q: 'missing', type: 'bug' })).toBe(false);
@@ -56,23 +59,28 @@ describe('matchesBoardSearch', () => {
 
 describe('replaceFilterValue', () => {
   it('swaps one value in place and leaves the others', () => {
-    expect(replaceFilterValue('started,delivered', 'started', 'iced')).toBe('iced,delivered');
+    expect(replaceFilterValue('started,finished', 'started', 'iced')).toBe('iced,finished');
     expect(replaceFilterValue('started', 'started', 'iced')).toBe('iced');
   });
 });
 
 describe('isWorthRecalling', () => {
-  const worth = (q: string, filters: Record<string, string[]>) => isWorthRecalling({ q, filters });
+  const worth = (q: string, filters: Omit<RecentBoardSearch, 'q'>) => isWorthRecalling({ q, ...filters });
 
   it('skips a lone status or type', () => {
     expect(worth('', { status: ['backlog'], type: [], labels: [] })).toBe(false);
     expect(worth('', { status: [], type: ['bug'], labels: [] })).toBe(false);
   });
 
+  it('skips words under three characters on their own', () => {
+    expect(worth('kk', { status: [], type: [], labels: [] })).toBe(false);
+    expect(worth('kkk', { status: [], type: [], labels: [] })).toBe(true);
+  });
+
   it('keeps words, a label, and any combination', () => {
     expect(worth('kk', { status: [], type: ['bug'], labels: [] })).toBe(true);
     expect(worth('', { status: [], type: [], labels: ['garden'] })).toBe(true);
-    expect(worth('', { status: ['delivered', 'reviewed'], type: [], labels: [] })).toBe(true);
+    expect(worth('', { status: ['finished', 'reviewed'], type: [], labels: [] })).toBe(true);
     expect(worth('', { status: ['backlog'], type: ['bug'], labels: [] })).toBe(true);
   });
 });

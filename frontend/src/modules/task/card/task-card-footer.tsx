@@ -15,12 +15,13 @@ import { setTaskSelected } from '~/modules/task/helpers/task-selection';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import { statusButtonVariants, taskCardDimClass } from '~/modules/task/task-styles';
+import { statusButtonVariants, taskCardAvatarRestClass, taskCardGhostClass, taskCardMetaClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
+import { useUserStore } from '~/modules/user/user-store';
 import { cn } from '~/utils/cn';
 
 interface TaskCardFooterProps {
@@ -42,6 +43,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
   const isExpandedMobile = isMobile && taskState !== 'collapsed';
 
   const handlers = useTaskFieldHandlers(task);
+  const currentUserId = useUserStore((state) => state.user?.id);
 
   const statusChangedRelative = useRelativeDate(task.statusChangedAt);
   const isJustNow = dayjs().diff(dayjs.utc(task.statusChangedAt)) <= 1000;
@@ -59,7 +61,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       aria-label={t('c:set_resource', { resource: t('c:label_other') })}
       variant="ghost"
       size="xs"
-      className={cn('h-auto min-h-8 min-w-8 p-0.5', labelsHide)}
+      className={cn('h-auto min-h-8 min-w-8 p-0.5', taskCardGhostClass, labelsHide)}
       {...readOnlyInert}
     >
       {task.labels.length > 0 ? (
@@ -76,7 +78,10 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               <div key={id} className="flex max-w-full flex-wrap items-center justify-center">
                 <Badge
                   variant="outline"
-                  className="inline-block h-4 max-w-full shrink truncate border-0 px-1 py-0 font-normal text-muted-foreground leading-4 shadow-none"
+                  className={cn(
+                    'inline-block h-4 max-w-full shrink truncate border-0 px-1 py-0 font-normal leading-4 shadow-none',
+                    taskCardMetaClass,
+                  )}
                 >
                   <HighlightText text={name} />
                 </Badge>
@@ -111,14 +116,22 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             aria-label={t('c:assign_to')}
             variant="ghost"
             size="xs"
-            className={cn(taskCardDimClass, 'mr-1 min-w-8 px-1')}
+            className={cn('mr-1 min-w-8 px-1', taskCardGhostClass)}
             {...readOnlyInert}
           >
             {task.assignedTo.length > 0 ? (
               <AvatarGroup limit={isMobile ? 2 : 3}>
                 <AvatarGroupList>
                   {task.assignedTo.map((user) => (
-                    <EntityAvatar type="user" key={user.id} id={user.id} name={user.name} url={user.thumbnailUrl} className="size-6" />
+                    <EntityAvatar
+                      type="user"
+                      key={user.id}
+                      id={user.id}
+                      name={user.name}
+                      url={user.thumbnailUrl}
+                      // Overlapping greys would merge. The only assignee question on a board is "is this mine?", so your own keeps its color.
+                      className={cn('size-6 not-first:ring-1 not-first:ring-background', user.id !== currentUserId && taskCardAvatarRestClass)}
+                    />
                   ))}
                 </AvatarGroupList>
                 <AvatarOverflowIndicator className="size-6 text-xs" />
@@ -128,16 +141,17 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             )}
           </Button>
 
-          <div data-task-status-control={task.id} className="relative flex">
-            <TooltipButton toolTipContent={statusTooltip} side="top">
+          {/* On the group, not per button: moving between the two would close one tooltip and open another. Also reaches a disabled or inert button. */}
+          <TooltipButton toolTipContent={statusTooltip} side="top">
+            <div data-task-status-control={task.id} className="relative flex">
               <Button
-                onClick={() => handlers.onStatusChange(task.status - 1)}
+                onClick={() => handlers.onStatusChange(statusOptionsByValue[task.status].next)}
                 disabled={task.status === TaskStatus.Accepted}
                 variant="outline-ghost"
                 size="xs"
                 press={false}
                 className={cn(
-                  'mr-1 font-normal disabled:opacity-100',
+                  'mr-1 disabled:opacity-100',
                   !readOnlyHide && 'sm:rounded-r-none sm:border-r-0',
                   !readOnlyHide && isExpandedMobile && 'rounded-r-none border-r-0',
                   statusButtonVariants({ status: task.status }),
@@ -146,8 +160,6 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               >
                 {t(`c:${readOnlyHide ? statusOptionsByValue[task.status].status : statusOptionsByValue[task.status].action}`)}
               </Button>
-            </TooltipButton>
-            <TooltipButton toolTipContent={statusTooltip} side="top">
               <Button
                 id={taskFieldTriggerId('status', task.id, isSheet)}
                 onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'status', handlers, currentTarget)}
@@ -163,12 +175,12 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
                 )}
                 {...readOnlyInert}
               >
-                <ChevronDownIcon className="size-3.5" strokeWidth={2} />
+                <ChevronDownIcon className="size-3.5" />
               </Button>
-            </TooltipButton>
-            {/* Without its chevron the action keeps its mr-1, which the check must not cover */}
-            <TaskStartCheck taskId={task.id} className={cn(!isExpandedMobile && 'max-sm:right-1')} />
-          </div>
+              {/* Without its chevron the action keeps its mr-1, which the check must not cover */}
+              <TaskStartCheck taskId={task.id} className={cn(!isExpandedMobile && 'max-sm:right-1')} />
+            </div>
+          </TooltipButton>
         </div>
       </div>
     </div>

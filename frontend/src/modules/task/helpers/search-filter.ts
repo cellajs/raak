@@ -1,10 +1,10 @@
 import type { Block } from '@blocknote/core';
 import { getSearchableTextFromBlocks } from 'shared/blocknote';
 import { foldText, matchesTerms, parseTerms } from 'shared/utils/text-match';
+import type { RecentBoardSearch } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { statusOptionsByValue } from '~/modules/task/task-properties';
+import { statusOptions, statusOptionsByValue } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
-import type { RecentListSearch } from '~/utils/recent-searches';
 
 type SearchableText = { text: string; folded: string };
 
@@ -42,7 +42,7 @@ export interface BoardSearch {
   labels?: string;
 }
 
-const filterValues = (value?: string) => (value ? value.split(',') : []);
+export const filterValues = (value?: string) => (value ? value.split(',') : []);
 
 /** A filter's value in the URL after a value's toggle; undefined with no value left. */
 export const toggleFilterValue = (value: string | undefined, toggled: string) => {
@@ -56,9 +56,12 @@ export const replaceFilterValue = (value: string, from: string, to: string) =>
     .map((other) => (other === from ? to : other))
     .join(',');
 
+const statusNames = new Set<string>(statusOptions.map(({ status }) => status));
+
 export const parseBoardSearch = ({ q, status, type, labels }: BoardSearch) => ({
   terms: parseTerms(q),
-  statuses: filterValues(status),
+  // A bookmark or recent search can name a retired status: nothing would match it and no chip could clear it
+  statuses: filterValues(status).filter((name) => statusNames.has(name)),
   types: filterValues(type),
   labels: filterValues(labels),
 });
@@ -68,9 +71,11 @@ export type ParsedBoardSearch = ReturnType<typeof parseBoardSearch>;
 export const isBoardSearchActive = ({ terms, statuses, types, labels }: ParsedBoardSearch) =>
   terms.length > 0 || statuses.length > 0 || types.length > 0 || labels.length > 0;
 
-/** Whether a search earns a recent's place: a lone status or type is always in plain sight among the options, a label may be scrolled off. */
-export const isWorthRecalling = ({ q, filters: { status = [], type = [], labels = [] } }: RecentListSearch) =>
-  !!q || labels.length > 0 || status.length + type.length > 1;
+/** Whether a search earns a recent's place: a lone status or type is always in plain sight among the options, a label may be scrolled off, and words alone need three characters. */
+export const isWorthRecalling = ({ q, status, type, labels }: RecentBoardSearch) => {
+  const filterCount = status.length + type.length;
+  return labels.length > 0 || filterCount > 1 || q.trim().length >= (filterCount ? 1 : 3);
+};
 
 /** Whether a task passes each part of the search, so a filter's counts can leave that filter out. */
 export const boardSearchParts = (search: ParsedBoardSearch, task: Task) => ({

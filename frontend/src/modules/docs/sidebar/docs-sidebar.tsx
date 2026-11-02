@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { SearchIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Logo } from '~/modules/common/logo';
+import { LogoMark } from '~/modules/common/logo-art';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { openDocsSearch } from '~/modules/docs/search/open-docs-search';
 import { ApiReferenceSection } from '~/modules/docs/sidebar/api-reference-section';
@@ -31,7 +31,7 @@ export function DocsSidebar() {
             className="focus-effect active:press ml-1 flex h-8 items-center rounded-md transition-transform hover:scale-105"
             onClick={closeSidebarSheetAndNavigate}
           >
-            <Logo iconOnly className="h-8 w-auto" title={null} />
+            <LogoMark className="size-7" />
           </Link>
         </TooltipButton>
         <div aria-hidden="true" className="h-6 w-px bg-foreground/15 more-contrast:bg-foreground/40" />

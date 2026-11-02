@@ -5,7 +5,7 @@ import { useReadOnlyInert } from '~/modules/project/use-read-only';
 import { useShowsUnseenMark } from '~/modules/task/board/unseen-tasks-store';
 import { openTaskFieldDropdown, taskFieldTriggerId } from '~/modules/task/helpers/open-task-dropdown';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
-import { taskCardDimClass } from '~/modules/task/task-styles';
+import { taskCardDimClass, taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
@@ -28,7 +28,12 @@ export function TaskPrimaryLabelButton({ task, isSheet = false }: TaskPrimaryLab
       aria-label={t('c:set_resource', { resource: t('c:type') })}
       variant="ghost"
       size="xs"
-      className={cn(taskCardDimClass, 'focus-inset -ml-0.5 group-data-[sheet=true]/task:opacity-100', showsMark && 'relative opacity-100')}
+      className={cn(
+        taskCardDimClass,
+        taskCardGhostClass,
+        'focus-inset -ml-0.5 group-data-[sheet=true]/task:opacity-100',
+        showsMark && 'relative opacity-100',
+      )}
       {...readOnlyInert}
     >
       {showsMark && <span aria-hidden className={cn('task-unseen-halo', labelIconColorClass(task.primaryLabel?.color))} />}

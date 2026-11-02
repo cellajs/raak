@@ -13,8 +13,10 @@ import { DeleteTasks } from '~/modules/task/delete-tasks';
 import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
 import { setCurrentItem } from '~/modules/task/helpers/focus-item';
+import { taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
+import { cn } from '~/utils/cn';
 
 interface TaskOptionsButtonProps {
   task: Task;
@@ -98,7 +100,7 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
         onClick={({ currentTarget }) => openOptionsDropdown(currentTarget)}
         aria-label={t('c:resource_options', { resource: t('c:task') })}
         variant="ghost"
-        className="focus-inset size-8 data-dropdowner-active:bg-muted"
+        className={cn('focus-inset size-8 data-dropdowner-active:bg-foreground/7', taskCardGhostClass)}
         size="xs"
       >
         <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-3.5" />

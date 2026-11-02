@@ -61,9 +61,15 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
   });
 };
 
-/** The organization's workspaces from the list cache, which the menu fills. */
+/** The organization's workspaces; the menu's list has no organization filter, so this one is its own fetch. */
 export const useOrganizationWorkspaces = (organizationId: string) =>
-  useInfiniteRows({ ...workspacesListQueryOptions({ organizationId }), refetchOnMount: false }).rows ?? [];
+  useInfiniteRows({ ...workspacesListQueryOptions({ organizationId }), refetchOnMount: true }).rows ?? [];
+
+/** Adds a created workspace to its organization's cached lists and the unfiltered ones. */
+export const addCreatedWorkspaceToLists = (workspace: Workspace) => {
+  // A list off screen only gets marked stale and is persisted, so a row wrongly added to another organization's would stay
+  for (const organizationId of [workspace.organizationId, undefined]) cacheCreate(keys.list.filtered({ organizationId }), [workspace]);
+};
 
 export const workspaceQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
@@ -87,7 +93,7 @@ export const useWorkspaceCreateMutation = () => {
     onSuccess: (createdWorkspace) => {
       const membership = getApiIncludedMembership(createdWorkspace);
       if (membership) addMyMembershipCache(membership);
-      cacheCreate(listKey, [createdWorkspace]);
+      addCreatedWorkspaceToLists(createdWorkspace);
     },
     onSettled: () => {
       invalidateIfLastMutation(queryClient, keys.all, listKey);

@@ -523,7 +523,6 @@ export const zProject = z.object({
           .object({
             accepted: z.number(),
             reviewed: z.number(),
-            delivered: z.number(),
             finished: z.number(),
             started: z.number(),
             unstarted: z.number(),
@@ -571,7 +570,7 @@ export const zTask = z.object({
   summaryLength: z.int().gte(-2147483648).lte(2147483647),
   primaryLabelId: z.uuid(),
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
-  status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
+  status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(1), z.literal(0)]),
   statusChangedAt: z.string(),
   checkboxCount: z.int().gte(-2147483648).lte(2147483647),
   checkedCount: z.int().gte(-2147483648).lte(2147483647),
@@ -2524,7 +2523,6 @@ export const zCreateProjectsResponse = z.object({
                   .object({
                     accepted: z.number(),
                     reviewed: z.number(),
-                    delivered: z.number(),
                     finished: z.number(),
                     started: z.number(),
                     unstarted: z.number(),
@@ -2672,73 +2670,6 @@ export const zAssignProjectWorkspaceResponse = zProject.and(
               .object({
                 accepted: z.number(),
                 reviewed: z.number(),
-                delivered: z.number(),
-                finished: z.number(),
-                started: z.number(),
-                unstarted: z.number(),
-                iced: z.number(),
-              })
-              .optional(),
-          })
-          .optional(),
-        members: z.array(zUserMinimalBase).optional(),
-      })
-      .optional(),
-  }),
-);
-
-export const zRemoveProjectWorkspacePath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * A project that organizes tasks and members within an organization.
- */
-export const zRemoveProjectWorkspaceResponse = zProject.and(
-  z.object({
-    included: z
-      .object({
-        membership: zMembershipBase,
-        counts: z
-          .object({
-            membership: z.object({
-              admin: z.number(),
-              member: z.number(),
-              guest: z.number(),
-              pending: z.number(),
-              total: z.number(),
-            }),
-            entities: z.object({
-              task: z.number(),
-              label: z.number(),
-              attachment: z.number(),
-            }),
-            entitiesSelf: z.object({
-              task: z.number(),
-              label: z.number(),
-              attachment: z.number(),
-            }),
-            activity: z.object({
-              task: z.object({
-                created: z.number().nullable(),
-                updated: z.number().nullable(),
-              }),
-              label: z.object({
-                created: z.number().nullable(),
-                updated: z.number().nullable(),
-              }),
-              attachment: z.object({
-                created: z.number().nullable(),
-                updated: z.number().nullable(),
-              }),
-            }),
-            taskStatusCounts: z
-              .object({
-                accepted: z.number(),
-                reviewed: z.number(),
-                delivered: z.number(),
                 finished: z.number(),
                 started: z.number(),
                 unstarted: z.number(),
@@ -2808,7 +2739,6 @@ export const zMoveProjectToWorkspaceResponse = zProject.and(
               .object({
                 accepted: z.number(),
                 reviewed: z.number(),
-                delivered: z.number(),
                 finished: z.number(),
                 started: z.number(),
                 unstarted: z.number(),
@@ -3808,7 +3738,7 @@ export const zCreateTasksBody = z
       name: z.string().max(255).optional(),
       description: z.string().max(1000000).nullable(),
       id: z.uuid(),
-      status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
+      status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(1), z.literal(0)]),
       primaryLabelId: z.uuid().optional(),
       displayOrder: z.number().optional(),
       labels: z.array(z.uuid()).max(50).optional(),
@@ -3865,7 +3795,7 @@ export const zUpdateTaskBody = z.object({
   ops: z.object({
     name: z.string().max(255).optional(),
     description: z.string().max(1000000).nullish(),
-    status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]).optional(),
+    status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(1), z.literal(0)]).optional(),
     primaryLabelId: z.uuid().optional(),
     displayOrder: z.number().optional(),
     labels: z

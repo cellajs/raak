@@ -4,6 +4,7 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { PanelDragHandleButton } from '~/modules/common/board/panel-drag-handle-button';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { EntityChip } from '~/modules/common/entity-chip';
+import { PublicBadge, PublicProjectChip } from '~/modules/project/public-project-indicators';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { NewTaskButton } from '~/modules/task/board/new-task-button';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
@@ -29,9 +30,14 @@ function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: 
       <PanelDragHandleButton
         name={project.name}
         fallbackLabel={project.name}
-        icon={<EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />}
+        icon={
+          <span className="relative flex">
+            <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
+            {project.public && <PublicBadge className="ring-card" />}
+          </span>
+        }
         preview={<EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl} />}
-        className={cn(panelHandleClass, 'truncate no-underline', isCollapsed ? 'w-full justify-center' : 'pr-2')}
+        className={cn(panelHandleClass, 'min-w-0 no-underline', isCollapsed ? 'w-full justify-center' : 'pr-2')}
       >
         {!isCollapsed && <div className="truncate font-semibold leading-6">{project.name}</div>}
       </PanelDragHandleButton>
@@ -68,12 +74,12 @@ export function TaskPanelHeader({ project, publicView, statuses, panelId, count 
 
   const actionsSlot = !isCollapsed ? (
     <>
-      {/* A public board is read-only for every visitor, so the badge would tell nobody anything */}
-      {isReadOnly && !publicView && panelId === project.id && (
+      {isReadOnly && isInWorkspace && (
         <Badge soft className="font-normal text-xs">
           {t('c:read_only')}
         </Badge>
       )}
+      {!isReadOnly && isInWorkspace && project.public && <PublicProjectChip project={project} />}
       {!publicView && isInWorkspace && <ProjectActionsMenu project={project} className="h-8 px-1.5" />}
       {isInWorkspace && <NewTaskButton project={project} className="-ml-1" />}
     </>

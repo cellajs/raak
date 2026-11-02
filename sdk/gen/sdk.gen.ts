@@ -314,9 +314,6 @@ import type {
   RedirectToTaskData,
   RedirectToTaskErrors,
   RedirectToTaskResponses,
-  RemoveProjectWorkspaceData,
-  RemoveProjectWorkspaceErrors,
-  RemoveProjectWorkspaceResponses,
   ResendInvitationWithTokenData,
   ResendInvitationWithTokenErrors,
   ResendInvitationWithTokenResponses,
@@ -526,7 +523,6 @@ import {
   zPublishOrganizationResponse,
   zPullYjsDocumentResponse,
   zPushYjsUpdateResponse,
-  zRemoveProjectWorkspaceResponse,
   zResendInvitationWithTokenResponse,
   zResendPendingInvitationResponse,
   zResolveTaskLinkResponse,
@@ -2959,29 +2955,6 @@ export const assignProjectWorkspace = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Remove project from workspace
- *
- * Removes the current user's project membership from its assigned workspace without leaving the project.
- *
- * **DELETE /{tenantId}/{organizationId}/projects/{id}/workspace** ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· _projects · app · channel_
- *
- * @param {removeProjectWorkspaceData} options
- * @param {string} options.path.tenantId - `string`
- * @param {string} options.path.organizationId - `string`
- * @param {string} options.path.id - `string`
- * @returns Possible status codes: 200, 400, 401, 403, 404, 429
- */
-export const removeProjectWorkspace = <ThrowOnError extends boolean = true>(
-  options: Options<RemoveProjectWorkspaceData, ThrowOnError>,
-): RequestResult<RemoveProjectWorkspaceResponses, RemoveProjectWorkspaceErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).delete<RemoveProjectWorkspaceResponses, RemoveProjectWorkspaceErrors, ThrowOnError, 'data'>({
-    responseValidator: async (data) => await zRemoveProjectWorkspaceResponse.parseAsync(data),
-    responseStyle: 'data',
-    url: '/{tenantId}/{organizationId}/projects/{id}/workspace',
-    ...options,
-  });
-
-/**
  * Move project between workspaces
  *
  * Moves a project from one workspace to another.
@@ -3008,7 +2981,7 @@ export const moveProjectToWorkspace = <ThrowOnError extends boolean = true>(
 /**
  * Delete workspaces
  *
- * Deletes one or more workspaces by ID.
+ * Deletes one or more workspaces by ID. A user's last workspace in the organization is refused; projects filed under a deleted workspace move to the user's next one.
  *
  * **DELETE /{tenantId}/{organizationId}/workspaces** ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces) ·· _workspaces · app · channel_
  *

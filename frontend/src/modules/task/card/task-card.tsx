@@ -200,13 +200,13 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         tabIndex={isSheet || isFocused ? 0 : -1}
         ref={taskRef}
         className={cn(
-          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent py-0 focus-visible:outline-hidden sm:py-0',
+          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-78% via-transparent py-0 focus-visible:outline-hidden sm:py-0',
           isDragging && 'opacity-30',
           // Hover and current spread the status gradient; the tint is for unstarted cards, which have no gradient
-          isCurrent && 'is-focused bg-muted/50 via-40%',
+          isCurrent && 'is-focused bg-muted/50 via-58%',
           isSheet
             ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]'
-            : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-muted/50 hover:via-40%',
+            : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-muted/50 hover:via-58%',
           // A selected card keeps full strength, so it stands out among the resting ones
           !isSheet && effectiveState === 'collapsed' && !isCurrent && !isSelected && 'resting-text',
           // A touch long-press on a collapsed card must start a drag, never a text selection or the iOS callout.

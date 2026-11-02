@@ -1,14 +1,15 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, cancelFrame, frame, motion } from 'motion/react';
+import { type FocusEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelName } from 'shared/config/labels-config';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
+import { LabelFilterButton } from '~/modules/label/label-filter-button';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
-import { LabelTileDetails, labelTileReveal } from '~/modules/label/label-tile-details';
+import { LabelTileDetails } from '~/modules/label/label-tile-details';
+import { labelTileReveal } from '~/modules/label/label-tile-reveal';
 import { labelTileStore, useLabelTileStore } from '~/modules/label/label-tile-store';
 import { useLabelUpdateMutation } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps } from '~/modules/label/types';
-import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
@@ -20,6 +21,7 @@ import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
 import { formatCount } from '~/utils/format-count';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
+import { getScrollParent } from '~/utils/scroll-parent';
 import { tw } from '~/utils/tw';
 
 // Like a task card's actions: hidden until the tile is hovered or holds focus, then each slides in from the right like the
@@ -39,8 +41,24 @@ const openActionsReveal = tw(
   'group-focus-within/label-tile:translate-x-0 group-focus-within/label-tile:opacity-100 group-hover/label-tile:translate-x-0 group-hover/label-tile:opacity-100 group-has-data-dropdowner-active/label-tile:translate-x-0 group-has-data-dropdowner-done/label-tile:translate-x-0 group-has-data-dropdowner-active/label-tile:opacity-100 group-has-data-dropdowner-done/label-tile:opacity-100 max-sm:translate-x-0 max-sm:opacity-100',
 );
 
-interface LabelTileProps extends Pick<LabelsHostProps, 'singleExpand'> {
+/** Holds a tile where it is while the open one above it collapses. Scroll anchoring would, but a sticky panel turns it off and Safari has none. */
+const holdTileInPlace = (tile: HTMLElement) => {
+  const top = tile.getBoundingClientRect().top;
+  const scrollParent = getScrollParent(tile);
+  const end = performance.now() + labelTileReveal.transition.duration * 1000 + 50;
+  // After motion's render: earlier, each correction would lag the collapse by a frame
+  const hold = () => {
+    const shift = tile.getBoundingClientRect().top - top;
+    if (shift) scrollParent.scrollBy({ top: shift, behavior: 'instant' });
+    if (performance.now() >= end) cancelFrame(hold);
+  };
+  frame.postRender(hold, true);
+};
+
+interface LabelTileProps extends Pick<LabelsHostProps, 'onAction'> {
   row: LabelRow;
+  /** Its read-only projects, by a guest membership or public access. Any one locks the whole label, as a rename or delete acts on all its projects. */
+  lockedByProjectIds: string[];
   /** A tile in the board panel is a board item: one Tab stop for the list, arrow keys between tiles. */
   onBoard?: boolean;
   showProjectUsage?: boolean;
@@ -49,14 +67,13 @@ interface LabelTileProps extends Pick<LabelsHostProps, 'singleExpand'> {
 /** DOM id of a label tile, so a label link can scroll its tile into view. */
 export const labelTileDomId = (labelId: string) => `label-tile-${labelId}`;
 
-/** A click expands the tile in place, like a task card; a click on the expanded name renames it, and on the board Enter does both. */
-export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: LabelTileProps) {
+/** A click expands the tile in place, like a task card; a click or Tab on the expanded name renames it, and on the board Enter does both. */
+export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProjectUsage }: LabelTileProps) {
   const { t } = useTranslation();
 
-  const expanded = useLabelTileStore((state) => !!state.expandedIds[row.id]);
+  const expanded = useLabelTileStore((state) => state.expandedId === row.id);
+  const isReadOnly = lockedByProjectIds.length > 0;
 
-  // Read-only viewers (guest membership or public access) cannot rename, switch mode or delete
-  const isReadOnly = useIsProjectReadOnly(row.projectId);
   const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
   const [editingName, setEditingName] = useState<string | null>(null);
 
@@ -81,7 +98,13 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
     }
     // A collapsed name spans the tile: a click on it focuses the tile, as on a task card, so the arrow keys go on from it
     if (onBoard) focusItem(domId);
-    labelTileStore.getState().expand(row.id, singleExpand);
+    if (tileRef.current && labelTileStore.getState().expandedId) holdTileInPlace(tileRef.current);
+    labelTileStore.getState().expand(row.id);
+  };
+
+  // Keyboard only: a press goes through handleNameClick, where one on a collapsed tile just opens it
+  const handleNameFocus = (event: FocusEvent<HTMLButtonElement>) => {
+    if (expanded && !isReadOnly && event.currentTarget.matches(':focus-visible')) setEditingName(row.name);
   };
 
   // Back to the tile after a keyboard rename, once the field has unmounted: blurring it first would commit again
@@ -126,7 +149,8 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
   const commitName = () => {
     const name = labelName(editingName?.trim() ?? '', row.mode);
     setEditingName(null);
-    if (!name || name === row.name) return;
+    // Compared raw as well: Tab passes through this field, and must not slugify an older name nobody edited
+    if (!name || name === row.name || editingName === row.name) return;
     // Secondary slug groups rename every sibling row; epics rename their single row
     const ids = row.mode === 'epic' ? [row.id] : row.siblingIds;
     for (const id of ids) updateLabel.mutate({ id, ops: { name } });
@@ -152,12 +176,21 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
         )}
       >
         <div className="flex min-h-11 items-center gap-2 px-4 py-1.5">
+          {/* Margins put the icon and the name under the panel header's, whose handle has a border and p-2 inside the header's px-2.
+              z-1 lifts it above the collapsed name's overlay. Small so its pressed fill clears the name; the after-overlay keeps a 2rem target. */}
+          <LabelFilterButton
+            name={row.name}
+            slug={row.slug}
+            onAction={onAction}
+            className="relative z-1 -mr-1 -ml-0.75 size-6 shrink-0 p-0 after:absolute after:-inset-1"
+          />
           {/* A collapsed tile holds the room of its floating button, so a long name's count stays clear of it */}
           <div className={cn('flex min-w-0 grow items-center gap-2', !expanded && 'pr-9')}>
             {/* Edit and display boxes share height, padding and border so the swap causes no layout shift */}
             {editingName !== null ? (
               <Input
                 value={editingName}
+                aria-label={t('c:name')}
                 autoFocus
                 onChange={(event) => setEditingName(event.target.value)}
                 onBlur={commitName}
@@ -170,6 +203,7 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
                 aria-expanded={expanded}
                 title={expanded && !isReadOnly ? t('c:edit') : undefined}
                 onClick={handleNameClick}
+                onFocus={handleNameFocus}
                 className={cn(
                   '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0',
                   // Collapsed, an after-overlay stretches the button over the whole tile; the action buttons sit above it
@@ -182,12 +216,10 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
               </button>
             )}
             {!expanded && (
-              <span className="ml-1 shrink-0 whitespace-nowrap text-muted-foreground text-xs tabular-nums">
-                {formatCount(row.usedCount)} / {formatCount(row.totalCount)}
-              </span>
+              <span className="ml-1 shrink-0 whitespace-nowrap text-muted-foreground text-xs tabular-nums">{formatCount(row.usedCount)}</span>
             )}
             {!expanded && row.mode === 'epic' && (
-              <Badge variant="secondary" className="ml-auto shrink-0">
+              <Badge variant="secondary" className="shrink-0">
                 {t('c:epic')}
               </Badge>
             )}
@@ -216,7 +248,7 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
         <AnimatePresence initial={false}>
           {expanded && (
             <motion.div key="details" {...labelTileReveal}>
-              <LabelTileDetails row={row} canManage={!isReadOnly} showProjectUsage={showProjectUsage} />
+              <LabelTileDetails row={row} lockedByProjectIds={lockedByProjectIds} showProjectUsage={showProjectUsage} />
             </motion.div>
           )}
         </AnimatePresence>

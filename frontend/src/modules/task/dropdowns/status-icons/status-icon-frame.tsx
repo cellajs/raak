@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 export const statusIconStrokeWidth = 1.1;
 
 interface StatusIconFrameProps extends SVGProps<SVGSVGElement> {
-  status: 'accepted' | 'reviewed' | 'delivered' | 'finished' | 'started' | 'unstarted' | 'iced';
+  status: 'accepted' | 'reviewed' | 'finished' | 'started' | 'unstarted' | 'iced';
 }
 
 /** A 1em svg titled with the translated status. */

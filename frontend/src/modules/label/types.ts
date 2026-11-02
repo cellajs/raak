@@ -13,19 +13,18 @@ export interface LabelsScopeProps {
 export interface LabelsHostProps {
   /** The panel grows with its content and the page scrolls; otherwise the list scrolls internally. */
   windowScroll?: boolean;
-  /** One tile open at a time, for the narrow drawer. */
-  singleExpand?: boolean;
   /** The board panel hosting the list: its tiles become board items, one Tab stop with arrow-key navigation. */
   navPanelId?: string;
+  /** After a tile's filter toggle: the drawer closes, so the filtered board shows. */
+  onAction?: () => void;
 }
 
 /**
  * A visible labels row: a concrete label plus its cross-project name-group aggregates.
- * `usedCount` counts the tasks not yet accepted, `totalCount` all of them; `projectUsage` splits `usedCount` by project id.
+ * `usedCount` counts the tasks not yet accepted that the board search leaves; `projectUsage` splits it by project id.
  */
 export type LabelRow = Label & {
   usedCount: number;
-  totalCount: number;
   projectUsage: Record<string, number>;
   siblingIds: string[];
   projectIds: string[];

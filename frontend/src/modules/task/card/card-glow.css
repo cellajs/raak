@@ -10,10 +10,6 @@
 [data-status="1"] {
   --glow-color-rgb: 249, 115, 22;
 }
-/* delivered */
-[data-status="2"] {
-  --glow-color-rgb: 234, 179, 8;
-}
 /* finished */
 [data-status="3"] {
   --glow-color-rgb: 132, 204, 22;

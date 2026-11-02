@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { GetPublicProjectResponse } from 'sdk';
 import { PageHeader } from '~/modules/common/page/header';
+import { PublicBadge, PublicProjectLabel } from '~/modules/project/public-project-indicators';
 import { ReadOnlyScope } from '~/modules/project/use-read-only';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 
@@ -13,7 +14,13 @@ export function PublicProjectPage({ project, children }: PublicProjectPageProps)
   return (
     <ReadOnlyScope.Provider value>
       <TaskSheetHandler />
-      <PageHeader entity={project} canUpdate={false} onCoverUpdate={() => {}} />
+      <PageHeader
+        entity={project}
+        canUpdate={false}
+        onCoverUpdate={() => {}}
+        avatarBadge={<PublicBadge large />}
+        typeLabel={<PublicProjectLabel />}
+      />
       <div className="flex flex-col sm:gap-2 sm:p-3 md:gap-3">{children}</div>
     </ReadOnlyScope.Provider>
   );

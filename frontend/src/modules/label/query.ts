@@ -101,7 +101,7 @@ export const labelsCanonicalOptions = ({ organizationId, tenantId, projectId }: 
   });
 };
 
-/** Per label, the project's tasks accepted before the board's cut-off: what the board list leaves out of a label's total. */
+/** Per label, the project's tasks accepted before the board's cut-off: what the board list leaves out of a label's status counts. */
 export const labelOlderAcceptedCountsOptions = ({
   organizationId,
   tenantId,

@@ -11,10 +11,10 @@ import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useOverlayClose } from '~/modules/common/overlay-close';
 import { toaster } from '~/modules/common/toaster/toaster';
+import { PublicAccessCard } from '~/modules/project/public-access-card';
 import { useProjectCreateMutation } from '~/modules/project/query';
 import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
-import { Checkbox } from '~/modules/ui/checkbox';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
+import { Form, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { formResolver } from '~/utils/form-resolver';
 
@@ -68,11 +68,8 @@ export function CreateProjectForm() {
           control={form.control}
           name="public"
           render={({ field }) => (
-            <FormItem className="flex-row items-center" name="public">
-              <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(checked === true)} />
-              </FormControl>
-              <FormLabel>{t('c:public_access')}</FormLabel>
+            <FormItem name="public">
+              <PublicAccessCard checked={field.value} onCheckedChange={field.onChange} />
               <FormMessage />
             </FormItem>
           )}

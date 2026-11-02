@@ -7,7 +7,7 @@ import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { dangerToolBase, generalToolBase } from '~/modules/entities/channel-settings-tools';
 import type { ChannelEnrichment } from '~/modules/entities/types';
-import { CreateWorkspaceForm } from '~/modules/workspace/create-workspace-form';
+import { CreateWorkspaceDescription, CreateWorkspaceForm } from '~/modules/workspace/create-workspace-form';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { getRouter } from '~/routes/-router-instance';
 import { getCreatedChannelRoute } from '~/utils/channel-route';
@@ -34,7 +34,7 @@ const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>, 
   return dialoger.getState().create(<CreateWorkspaceForm organizationId={organizationId} callback={handleCreated} />, {
     className: 'md:max-w-2xl',
     id: 'create-workspace',
-    description: i18n.t('c:create_workspace.text'),
+    description: <CreateWorkspaceDescription organizationId={organizationId} />,
     triggerRef,
     title,
     titleContent: <UnsavedBadge title={title} />,

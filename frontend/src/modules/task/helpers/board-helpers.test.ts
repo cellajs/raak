@@ -10,7 +10,7 @@ import {
   statusPath,
   statusTabLists,
 } from '~/modules/task/helpers/board-helpers';
-import { TaskStatus } from '~/modules/task/task-properties';
+import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import type { ProjectResizablePanel } from '~/modules/task/types';
 
 vi.mock('i18next', () => ({
@@ -33,10 +33,17 @@ describe('statusesBottomUp', () => {
       TaskStatus.Unstarted,
       TaskStatus.Started,
       TaskStatus.Finished,
-      TaskStatus.Delivered,
       TaskStatus.Reviewed,
       TaskStatus.Accepted,
     ]);
+  });
+});
+
+describe('statusOptions', () => {
+  it('moves a task along the path one status at a time, past the retired gap', () => {
+    const walked = statusPath.slice(0, -2).map((status) => statusOptionsByValue[status].next);
+    expect(walked).toEqual([TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed, TaskStatus.Accepted]);
+    expect(statusOptionsByValue[TaskStatus.Iced].next).toBe(TaskStatus.Unstarted);
   });
 });
 
@@ -60,7 +67,7 @@ describe('prepareBoardPanels', () => {
   it('leaves the project panel the statuses without a panel of their own, in workflow order', () => {
     const [main, ...own] = prepareBoardPanels([project], [TaskStatus.Iced, TaskStatus.Unstarted]);
     expect(main.panelId).toBe('p');
-    expect(main.statuses).toEqual([TaskStatus.Started, TaskStatus.Finished, TaskStatus.Delivered, TaskStatus.Reviewed, TaskStatus.Accepted]);
+    expect(main.statuses).toEqual([TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed, TaskStatus.Accepted]);
     expect(own.map(({ panelId, statuses }) => [panelId, statuses])).toEqual([
       [statusPanelId('p', TaskStatus.Iced), [TaskStatus.Iced]],
       [statusPanelId('p', TaskStatus.Unstarted), [TaskStatus.Unstarted]],

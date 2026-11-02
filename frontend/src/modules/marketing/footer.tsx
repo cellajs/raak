@@ -95,7 +95,7 @@ export function MarketingFooter() {
           className="focus-effect active:press mt-12 rounded-sm p-1 transition-transform sm:hover:scale-105"
           aria-label={t('c:go_to_about')}
         >
-          <Logo textColor="white" iconColor="#b07a939e" title={t('c:go_to_about')} />
+          <Logo size="xl" textColor="white" iconColor="#b07a939e" title={t('c:go_to_about')} />
         </Link>
 
         <ul className="mt-6 mb-12 flex flex-wrap justify-center gap-4 border-white/20 border-t pt-12 text-center text-sm text-white/60">

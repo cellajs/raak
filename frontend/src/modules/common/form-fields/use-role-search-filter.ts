@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { appConfig, type ChannelEntityType, hierarchy } from 'shared';
-import type { SearchFilters } from '~/modules/common/search-chips-field';
+import type { SearchFilters } from '~/modules/common/search-chips/types';
 
 interface RoleSearchFilterOptions {
   /** Restrict options to this channel entity's role vocabulary; omit for system roles. */

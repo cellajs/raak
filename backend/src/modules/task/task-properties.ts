@@ -1,9 +1,9 @@
+/** The values are stored, so 2 (Delivered, retired) stays a gap. */
 export enum TaskStatus {
   Iced = 6,
   Unstarted = 5,
   Started = 4,
   Finished = 3,
-  Delivered = 2,
   Reviewed = 1,
   Accepted = 0,
 }

@@ -3,6 +3,7 @@ import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { boardSearchDefaults, boardSearchSchema } from '~/modules/task/search-params-schemas';
 import { WorkspaceRouteComponent } from '~/modules/workspace/route-components';
 import { workspaceRouteBeforeLoad } from '~/modules/workspace/route-logic';
+import { useWorkspaceArrivalStore } from '~/modules/workspace/workspace-arrival-store';
 import { createErrorComponent } from '~/routes/-route-utils';
 import { appTitle } from '~/utils/app-title';
 
@@ -14,7 +15,10 @@ export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/workspac
   // Absence means default: params equal to the default view are stripped from the URL
   search: { middlewares: [stripSearchParams(boardSearchDefaults)] },
   staticData: { isAuth: true, floatingNavButtons: { left: 'menu' } },
-  onLeave: () => resetTaskInteraction(),
+  onLeave: () => {
+    resetTaskInteraction();
+    useWorkspaceArrivalStore.getState().clearArrival();
+  },
   beforeLoad: workspaceRouteBeforeLoad,
   head: ({ match }) => {
     const name = match.context.workspace?.name;

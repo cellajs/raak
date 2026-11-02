@@ -12,6 +12,7 @@ import { FormActions } from '~/modules/common/form-fields/form-actions';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
+import { NamedText } from '~/modules/common/named-text';
 import { useOverlayClose } from '~/modules/common/overlay-close';
 import { Spinner } from '~/modules/common/spinner';
 import { toaster } from '~/modules/common/toaster/toaster';
@@ -32,11 +33,25 @@ const formSchema = z.object({
 });
 type FormValues = z.infer<typeof formSchema>;
 
-// shouldDirty recomputes dirty against the defaults, so picking the opening organization back leaves the form clean
 const followOrganization = { shouldDirty: true, shouldValidate: true } as const;
 
+const formContainerId = 'create-workspace';
+
+const startingOrganization = (items: Organization[], organizationId?: string) =>
+  organizationId ? items.find(({ id }) => id === organizationId) : items.length === 1 ? items[0] : undefined;
+
+/** Names the organization the new workspace lands in, once that is settled. */
+export function CreateWorkspaceDescription({ organizationId }: { organizationId?: string }) {
+  const { t } = useTranslation();
+  const query = useInfiniteQuery(organizationsListQueryOptions({}));
+  const organization = startingOrganization(flattenInfiniteData<Organization>(query.data), organizationId);
+
+  if (!organization) return t('c:create_workspace.text');
+  return <NamedText i18nKey="c:create_workspace_in.text" name={organization.name} />;
+}
+
 interface CreateWorkspaceFormProps {
-  /** Preselected organization; a restored draft keeps its own. */
+  /** The organization it starts from; without one, and with several to choose from, the form asks. */
   organizationId?: string;
   callback?: (workspace: Workspace) => void;
 }
@@ -51,8 +66,7 @@ export function CreateWorkspaceForm({ organizationId, callback }: CreateWorkspac
 
   if (query.isLoading) return <Spinner className="my-8" />;
 
-  const organization =
-    createdOrganization ?? (organizationId ? items.find(({ id }) => id === organizationId) : items.length === 1 ? items[0] : undefined);
+  const organization = createdOrganization ?? startingOrganization(items, organizationId);
 
   if (!organization && !items.length)
     return (
@@ -86,7 +100,11 @@ function WorkspaceForm({ organization, organizations, callback }: WorkspaceFormP
     defaultValues: { name: organization?.name ?? '', organizationId: organization?.id ?? '', tenantId: organization?.tenantId ?? '' },
   };
 
-  const form = useFormWithDraft<FormValues>('create-workspace', { formOptions });
+  // A draft carries its organizationId: under one shared key it would silently create in another organization while the field is hidden
+  const form = useFormWithDraft<FormValues>(organization ? `${formContainerId}-${organization.id}` : formContainerId, {
+    formOptions,
+    formContainerId,
+  });
 
   const { mutate: create, isPending } = useWorkspaceCreateMutation();
 
@@ -118,15 +136,16 @@ function WorkspaceForm({ organization, organizations, callback }: WorkspaceFormP
   return (
     <Form {...form}>
       <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <SelectParentFormField
-          parentType="organization"
-          control={form.control}
-          label={t('c:organization')}
-          name="organizationId"
-          onSelect={handleOrganizationSelect}
-          required
-          disabled={organizations.length === 1}
-        />
+        {!organization && (
+          <SelectParentFormField
+            parentType="organization"
+            control={form.control}
+            label={t('c:organization')}
+            name="organizationId"
+            onSelect={handleOrganizationSelect}
+            required
+          />
+        )}
 
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
 

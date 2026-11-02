@@ -5,7 +5,13 @@ export function ReviewedIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <StatusIconFrame status="reviewed" {...props}>
       <rect x="1.25" y="1.25" width="13.5" height="13.5" rx="4.25" fill="none" stroke="#f97316" strokeWidth={statusIconStrokeWidth} />
-      <rect x="3.2" y="3.2" width="9.6" height="9.6" rx="3.15" fill="#f97316" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        transform="translate(8 8) scale(1.17) translate(-8 -8)"
+        d="M6 4v3.7c0 .1.1.2.2.1L8 6.4h.2l1.7 1.4h.2V3.8c1.2.3 2.1 1.4 2.1 2.7v2.9c0 1.4-1.2 2.6-2.6 2.6h-3A2.7 2.7 0 0 1 4 9.5v-3c0-1.2.9-2.3 2.1-2.6Z"
+        fill="#f97316"
+      />
     </StatusIconFrame>
   );
 }

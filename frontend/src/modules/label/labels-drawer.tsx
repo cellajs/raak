@@ -1,22 +1,43 @@
 import { useSearch } from '@tanstack/react-router';
 import i18n from 'i18next';
 import { TagIcon } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { sheeter, type TriggerRef } from '~/modules/common/sheeter/use-sheeter';
+import { Spinner } from '~/modules/common/spinner';
 import { LabelList } from '~/modules/label/label-list';
 import type { LabelsScopeProps } from '~/modules/label/types';
 import { Button } from '~/modules/ui/button';
 
 const labelsDrawerId = 'labels-drawer';
 
+const closeLabelsDrawer = () => sheeter.getState().remove(labelsDrawerId);
+
+/** The list mounts once the sheet is on screen: the tiles would otherwise hold up its first frame, so a tap on a slow phone seems to do nothing. */
+function LabelsDrawerContent({ entity, entityId }: LabelsScopeProps) {
+  const [isSheetShown, setIsSheetShown] = useState(false);
+
+  // In a frame, as a transition: this frame paints first, and the render yields to the slide
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => startTransition(() => setIsSheetShown(true)));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  if (!isSheetShown) return <Spinner className="my-8" />;
+  return <LabelList entity={entity} entityId={entityId} windowScroll onAction={closeLabelsDrawer} />;
+}
+
 const openLabelsDrawer = ({ entity, entityId }: LabelsScopeProps, triggerRef: TriggerRef) => {
   const { get, create } = sheeter.getState();
   if (get(labelsDrawerId)) return;
 
-  const list = <LabelList entity={entity} entityId={entityId} windowScroll singleExpand />;
-  create(list, { id: labelsDrawerId, triggerRef, side: 'right', title: i18n.t('c:label_other').toLowerCase() });
+  create(<LabelsDrawerContent entity={entity} entityId={entityId} />, {
+    id: labelsDrawerId,
+    triggerRef,
+    side: 'right',
+    title: i18n.t('c:label_other'),
+  });
 };
 
 function MobileLabelsDrawerButton(props: LabelsScopeProps) {

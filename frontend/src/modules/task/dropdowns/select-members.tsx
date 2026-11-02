@@ -129,8 +129,8 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
           placeholder={t('c:assign_to')}
         />
         <ComboboxHotkeyHint searching={!!searchValue.length}>U</ComboboxHotkeyHint>
-        <ScrollArea className={comboboxScrollClass}>
-          <ComboboxList>
+        <ScrollArea className={comboboxScrollClass} viewportClassName="sm:min-h-0 sm:overscroll-contain">
+          <ComboboxList className="max-h-none overflow-visible">
             {(user: UserMinimalBase) => {
               const index = visibleMembers.findIndex((member) => member.id === user.id);
               return (

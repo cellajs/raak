@@ -577,7 +577,6 @@ export type Project = {
       taskStatusCounts?: {
         accepted: number;
         reviewed: number;
-        delivered: number;
         finished: number;
         started: number;
         unstarted: number;
@@ -623,7 +622,7 @@ export type Task = {
   summaryLength: number;
   primaryLabelId: string;
   displayOrder: number;
-  status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
+  status: 6 | 5 | 4 | 3 | 1 | 0;
   statusChangedAt: string;
   checkboxCount: number;
   checkedCount: number;
@@ -5377,7 +5376,6 @@ export type CreateProjectsResponses = {
             taskStatusCounts?: {
               accepted: number;
               reviewed: number;
-              delivered: number;
               finished: number;
               started: number;
               unstarted: number;
@@ -5638,7 +5636,6 @@ export type AssignProjectWorkspaceResponses = {
         taskStatusCounts?: {
           accepted: number;
           reviewed: number;
-          delivered: number;
           finished: number;
           started: number;
           unstarted: number;
@@ -5651,98 +5648,6 @@ export type AssignProjectWorkspaceResponses = {
 };
 
 export type AssignProjectWorkspaceResponse = AssignProjectWorkspaceResponses[keyof AssignProjectWorkspaceResponses];
-
-export type RemoveProjectWorkspaceData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/projects/{id}/workspace';
-};
-
-export type RemoveProjectWorkspaceErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type RemoveProjectWorkspaceError = RemoveProjectWorkspaceErrors[keyof RemoveProjectWorkspaceErrors];
-
-export type RemoveProjectWorkspaceResponses = {
-  /**
-   * A project that organizes tasks and members within an organization.
-   */
-  200: Project & {
-    included?: {
-      membership: MembershipBase;
-      counts?: {
-        membership: {
-          admin: number;
-          member: number;
-          guest: number;
-          pending: number;
-          total: number;
-        };
-        entities: {
-          task: number;
-          label: number;
-          attachment: number;
-        };
-        entitiesSelf: {
-          task: number;
-          label: number;
-          attachment: number;
-        };
-        activity: {
-          task: {
-            created: number | null;
-            updated: number | null;
-          };
-          label: {
-            created: number | null;
-            updated: number | null;
-          };
-          attachment: {
-            created: number | null;
-            updated: number | null;
-          };
-        };
-        taskStatusCounts?: {
-          accepted: number;
-          reviewed: number;
-          delivered: number;
-          finished: number;
-          started: number;
-          unstarted: number;
-          iced: number;
-        };
-      };
-      members?: Array<UserMinimalBase>;
-    };
-  };
-};
-
-export type RemoveProjectWorkspaceResponse = RemoveProjectWorkspaceResponses[keyof RemoveProjectWorkspaceResponses];
 
 export type MoveProjectToWorkspaceData = {
   body?: never;
@@ -5824,7 +5729,6 @@ export type MoveProjectToWorkspaceResponses = {
         taskStatusCounts?: {
           accepted: number;
           reviewed: number;
-          delivered: number;
           finished: number;
           started: number;
           unstarted: number;
@@ -8190,7 +8094,7 @@ export type CreateTasksData = {
     name?: string;
     description: string | null;
     id: string;
-    status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
+    status: 6 | 5 | 4 | 3 | 1 | 0;
     primaryLabelId?: string;
     displayOrder?: number;
     labels?: Array<string>;
@@ -8368,7 +8272,7 @@ export type UpdateTaskData = {
     ops: {
       name?: string;
       description?: string | null;
-      status?: 6 | 5 | 4 | 3 | 2 | 1 | 0;
+      status?: 6 | 5 | 4 | 3 | 1 | 0;
       primaryLabelId?: string;
       displayOrder?: number;
       labels?: {

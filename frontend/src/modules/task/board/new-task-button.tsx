@@ -1,7 +1,7 @@
 import { PlusIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import type { Project } from 'sdk';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
-import type { EnrichedProject } from '~/modules/project/types';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { createTaskFormId, type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -11,7 +11,7 @@ import { Button, type ButtonProps } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
 interface NewTaskButtonProps extends Pick<ButtonProps, 'size' | 'className'> {
-  project: EnrichedProject;
+  project: Project;
 }
 
 /** Opens or closes a project's create-task form, and marks an unsent draft; a read-only project has none. */
