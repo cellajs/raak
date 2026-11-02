@@ -394,6 +394,8 @@ export function ResizablePanelGroup({
   const getSeparatorSpace = () => {
     let separatorSpace = 0;
     for (const separator of separatorsRef.current.values()) {
+      // A removed panel's separator stays registered until its own cleanup, and a detached element's margins parse to NaN
+      if (!separator.isConnected) continue;
       const style = getComputedStyle(separator);
       separatorSpace += separator.getBoundingClientRect().width + Number.parseFloat(style.marginLeft) + Number.parseFloat(style.marginRight);
     }

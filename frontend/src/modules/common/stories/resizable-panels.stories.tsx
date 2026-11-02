@@ -59,7 +59,8 @@ class Board {
     }, 0);
     const panelSum = this.panels.reduce((sum, panel) => sum + panel.getBoundingClientRect().width, 0);
     const frame = this.canvas?.querySelector<HTMLElement>('[data-frame]');
-    return Math.round(panelSum + separatorSpace - (frame?.getBoundingClientRect().width ?? 0));
+    // + 0 turns -0 into 0
+    return Math.round(panelSum + separatorSpace - (frame?.getBoundingClientRect().width ?? 0)) + 0;
   }
 
   minWidth() {
@@ -222,15 +223,12 @@ export const GapRemovePanelLeavesRoom = scenario({ width: 1200, panels: ['a', 'b
   await expect(board.widths()).toEqual({ a: 600 });
 });
 
-export const GapRemovePanelKeepsStaleMinWidth = scenario(
-  { width: 1000, panels: ['a', 'b', 'c'], layout: { a: 400, b: 400, c: 400 } },
-  async (board) => {
-    await expect(board.minWidth()).toBe('1214px');
-    await board.set({ panels: ['a', 'b'] });
-    await expect(board.widths()).toEqual({ a: 400, b: 400 });
-    await expect(board.minWidth()).toBe('1214px');
-  },
-);
+export const RemovePanelClearsMinWidth = scenario({ width: 1000, panels: ['a', 'b', 'c'], layout: { a: 400, b: 400, c: 400 } }, async (board) => {
+  await expect(board.minWidth()).toBe('1214px');
+  await board.set({ panels: ['a', 'b'] });
+  await expect(board.widths()).toEqual({ a: 496, b: 497 });
+  await expect(board.minWidth()).toBe('');
+});
 
 export const ReorderKeepsWidths = scenario({ width: 1200, panels: ['a', 'b', 'c'], layout: { a: 400, b: 400, c: 386.72 } }, async (board) => {
   await board.set({ panels: ['c', 'a', 'b'] });
