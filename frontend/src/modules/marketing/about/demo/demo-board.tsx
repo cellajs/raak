@@ -3,12 +3,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useInView } from '~/hooks/use-in-view';
 import { usePageVisible } from '~/hooks/use-page-visible';
-import type { TKey } from '~/lib/i18n-locales';
-import { BoardLayout } from '~/modules/common/board/board-layout';
+import { BoardLayout, panelMinWidth } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { LocalTabNav } from '~/modules/common/page/local-tab-nav';
 import { DemoCursor, type DemoCursorState } from '~/modules/marketing/about/demo/demo-cursor';
 import { type DemoStage, playDemoRound } from '~/modules/marketing/about/demo/demo-script';
+import { DemoTabs } from '~/modules/marketing/about/demo/demo-tabs';
 import { DemoTypeMenu, type DemoTypeMenuAnchor, demoTypeMenuHeight } from '~/modules/marketing/about/demo/demo-type-menu';
 import { demoProjects, demoSeed, website } from '~/modules/marketing/about/demo/fixtures';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
@@ -26,7 +25,11 @@ import { cn } from '~/utils/cn';
 const boardId = 'about-demo';
 const stopped = Symbol('stopped');
 const noop = () => {};
-const phoneTabs = demoProjects.map(({ id, name }) => ({ id, label: name as TKey }));
+const dragSteps = 50;
+const keepRealPointerOut = (event: PointerEvent) => {
+  if (event.isTrusted) event.stopPropagation();
+};
+const easeInOut = (progress: number) => (progress < 0.5 ? 2 * progress ** 2 : 1 - (-2 * progress + 2) ** 2 / 2);
 
 interface TypeMenuState {
   task: Task;
@@ -59,6 +62,9 @@ export function DemoBoard() {
   const [carried, setCarried] = useState<CarriedCard | null>(null);
   const [typeMenu, setTypeMenu] = useState<TypeMenuState | null>(null);
   const [isFading, setIsFading] = useState(false);
+  const [phoneProjectId, setPhoneProjectId] = useState(website.id);
+  // A new key puts the panels back at their first widths, which only their group holds
+  const [layoutRound, setLayoutRound] = useState(0);
 
   const { panels, defaultLayout } = usePanelLayout(boardId, demoProjects);
   const setActiveBoard = useBoardStore((state) => state.setActiveBoard);
@@ -147,11 +153,59 @@ export function DemoBoard() {
         setCursor((current) => ({ ...current, pressed: false }));
         useTaskDropLandingStore.getState().setLanding(null);
       },
+      dragDivider: async (distance) => {
+        const frame = frameRect();
+        const divider = frameRef.current?.querySelector<HTMLElement>('[role="separator"]');
+        const start = divider?.getBoundingClientRect();
+        if (!frame || !divider || !start) return;
+
+        // On a narrow window the panel being narrowed holds its real minimum
+        const travel = Math.min(distance, frame.right - start.right - panelMinWidth);
+        if (travel <= 0) return;
+
+        const startX = start.left + start.width / 2;
+        const clientY = start.top + start.height / 2;
+        const pointer = (type: string, clientX: number) =>
+          new PointerEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            pointerId: 1,
+            pointerType: 'mouse',
+            isPrimary: true,
+            buttons: 1,
+            clientX,
+            clientY,
+          });
+
+        // The real drag: the group follows the pointer on the document, and a scripted pointer has nothing to capture
+        divider.setPointerCapture = noop;
+        // The group follows any pointer, and the visitor's mouse must not pull the divider around
+        window.addEventListener('pointermove', keepRealPointerOut, true);
+        window.addEventListener('pointerup', keepRealPointerOut, true);
+        divider.dispatchEvent(pointer('pointerdown', startX));
+        setCursor((current) => ({ ...current, pressed: true, tracking: true }));
+        try {
+          for (let step = 1; step <= dragSteps; step += 1) {
+            await stage.sleep(16);
+            const clientX = startX + travel * easeInOut(step / dragSteps);
+            document.dispatchEvent(pointer('pointermove', clientX));
+            setCursor((current) => ({ ...current, x: clientX - frame.left }));
+          }
+        } finally {
+          document.dispatchEvent(pointer('pointerup', startX + travel));
+          window.removeEventListener('pointermove', keepRealPointerOut, true);
+          window.removeEventListener('pointerup', keepRealPointerOut, true);
+          setCursor((current) => ({ ...current, pressed: false, tracking: false }));
+        }
+      },
+      showProject: setPhoneProjectId,
       reset: async () => {
         setIsFading(true);
         await stage.sleep(450);
         clearSharedStores();
         setTasks(demoSeed(isPhone));
+        setPhoneProjectId(website.id);
+        setLayoutRound((current) => current + 1);
         await stage.sleep(60);
         setIsFading(false);
       },
@@ -159,6 +213,8 @@ export function DemoBoard() {
 
     const play = async () => {
       setTasks(demoSeed(isPhone));
+      setPhoneProjectId(website.id);
+      setLayoutRound((current) => current + 1);
       setIsFading(false);
       while (!isStopped) await playDemoRound(stage);
     };
@@ -196,13 +252,22 @@ export function DemoBoard() {
           <div inert className={cn('flex min-h-0 flex-1 flex-col transition-opacity duration-400', isFading && 'opacity-0')}>
             {isPhone ? (
               <>
-                <LocalTabNav tabs={phoneTabs} activeId={website.id} onTabChange={noop} />
-                <div className="min-h-0 flex-1 overflow-hidden">{panelFor(website.id, website.id)}</div>
+                <DemoTabs activeId={phoneProjectId} />
+                {/* Keyed: virtua keeps measured heights by index, and they are another list's on the next tab */}
+                <div key={phoneProjectId} className="min-h-0 flex-1 overflow-hidden">
+                  {panelFor(phoneProjectId, phoneProjectId)}
+                </div>
               </>
             ) : (
               // Layout and panels size themselves against the app chrome; here that is what the frame leaves over, less its padding and the panel header
               <div className="min-h-0 flex-1 [--board-offset-md:calc(100dvh-var(--demo-height)+1.625rem)] [--board-offset-sm:calc(100dvh-var(--demo-height)+1.625rem)] [--board-panel-offset:calc(100dvh-var(--demo-height)+4.875rem)]">
-                <BoardLayout boardId={boardId} panels={panels.map(({ panelId }) => ({ panelId }))} defaultLayout={defaultLayout} panelFade="marked">
+                <BoardLayout
+                  key={layoutRound}
+                  boardId={boardId}
+                  panels={panels.map(({ panelId }) => ({ panelId }))}
+                  defaultLayout={defaultLayout}
+                  panelFade="marked"
+                >
                   {(panelId) => {
                     const panel = panels.find((candidate) => candidate.panelId === panelId);
                     return panel?.kind === 'project' ? panelFor(panel.project.id, panel.panelId) : null;

@@ -37,6 +37,10 @@ const playRound = async (isPhone: boolean) => {
     carry: log('carry'),
     carryTo: log('carryTo'),
     drop: log('drop'),
+    dragDivider: async () => {
+      calls.push('dragDivider');
+    },
+    showProject: log('showProject'),
     reset: async () => {
       calls.push('reset');
     },
@@ -59,12 +63,16 @@ describe('playDemoRound', () => {
     expect(calls.at(-1)).toBe('reset');
     expect(calls.indexOf('closeTypeMenu')).toBeGreaterThan(calls.indexOf('openTypeMenu'));
     expect(calls.indexOf('drop')).toBeGreaterThan(calls.indexOf('carry'));
+    expect(calls.indexOf('dragDivider')).toBeGreaterThan(calls.indexOf('drop'));
+    expect(calls).not.toContain('showProject');
   });
 
-  it('leaves the move out on a phone, which shows one project', async () => {
+  it('opens the other project on a phone instead of moving a task and resizing', async () => {
     const { tasks, calls } = await playRound(true);
 
     expect(calls).not.toContain('carry');
+    expect(calls).not.toContain('dragDivider');
+    expect(calls).toContain('showProject');
     expect(tasks.get(syncStateTask.id)?.projectId).toBe(syncStateTask.projectId);
     expect(tasks.get(typoTask.id)?.primaryLabelId).toBe(demoType('chore').id);
   });

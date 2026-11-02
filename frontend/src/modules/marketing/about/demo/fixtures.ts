@@ -41,7 +41,7 @@ const project = (slug: string, name: string): EnrichedProject => ({
 });
 
 export const website = project('website', 'Website');
-const mobileApp = project('mobile-app', 'Mobile app');
+export const mobileApp = project('mobile-app', 'Mobile app');
 export const demoProjects = [website, mobileApp];
 
 /** The types a new organization starts with, so the demo's picker lists what a new team finds. */

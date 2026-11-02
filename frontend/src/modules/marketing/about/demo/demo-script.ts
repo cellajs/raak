@@ -3,6 +3,7 @@ import {
   demoLabel,
   demoType,
   exportTask,
+  mobileApp,
   people,
   summaryOf,
   syncStateTask,
@@ -40,6 +41,10 @@ export interface DemoStage {
   /** Walks the carrying cursor to the foot of a card, and shows where the task lands. */
   carryTo: (landingTaskId: string) => void;
   drop: () => void;
+  /** Drags the divider between the panels this far to the right, with the cursor on it. */
+  dragDivider: (distance: number) => Promise<void>;
+  /** Shows another project's tab on a phone. */
+  showProject: (projectId: string) => void;
   /** Fades the board back to the seed. */
   reset: () => Promise<void>;
 }
@@ -118,15 +123,35 @@ const moveTask = async (stage: DemoStage) => {
   await stage.sleep(1800);
 };
 
-/** One round of a team at work: a task added, started, retyped and labelled, and, where two projects show, moved. */
+const resizePanels = async (stage: DemoStage) => {
+  stage.point('[role="separator"]');
+  await stage.sleep(1000);
+  await stage.dragDivider(180);
+  await stage.sleep(1500);
+};
+
+const openOtherProject = async (stage: DemoStage) => {
+  stage.point(`[data-tab="${mobileApp.id}"]`);
+  await stage.sleep(1000);
+  await stage.press();
+  stage.showProject(mobileApp.id);
+  await stage.sleep(2200);
+};
+
+/** One round of a team at work: a task added, started, retyped and labelled. Then two panels share a move and a resize, or a phone opens the other project. */
 export const playDemoRound = async (stage: DemoStage) => {
   await stage.sleep(1400);
   await addTask(stage);
   await startTask(stage);
   await changeType(stage);
   await addLabel(stage);
-  // A phone shows one project, so the card would simply vanish
-  if (!stage.isPhone) await moveTask(stage);
+  // A phone cannot move a task to another project, and shows one at a time
+  if (stage.isPhone) {
+    await openOtherProject(stage);
+  } else {
+    await moveTask(stage);
+    await resizePanels(stage);
+  }
   stage.hideCursor();
   await stage.sleep(1100);
   await stage.reset();

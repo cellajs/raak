@@ -8,6 +8,8 @@ export interface DemoCursorState {
   name: string;
   pressed: boolean;
   visible: boolean;
+  /** Stays exactly on a dragged element, without the spring's lag. */
+  tracking?: boolean;
 }
 
 interface DemoCursorProps {
@@ -26,7 +28,7 @@ export function DemoCursor({ cursor, nameOnLeft, children }: DemoCursorProps) {
       className="pointer-events-none absolute top-0 left-0 z-100"
       initial={false}
       animate={{ x: cursor.x, y: cursor.y, opacity: cursor.visible ? 1 : 0, scale: cursor.pressed ? 0.88 : 1 }}
-      transition={{ type: 'spring', stiffness: 90, damping: 18, mass: 0.8 }}
+      transition={cursor.tracking ? { duration: 0 } : { type: 'spring', stiffness: 90, damping: 18, mass: 0.8 }}
     >
       {children}
       <svg viewBox="0 0 24 24" aria-hidden="true" className="relative size-5 fill-foreground stroke-background drop-shadow-md" strokeWidth={1.5}>

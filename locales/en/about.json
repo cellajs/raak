@@ -1,6 +1,6 @@
 {
   "demo_caption": "A team at work in raak. Real interface, made-up tasks.",
-  "demo_label": "A board of two projects, where a team adds a task, starts one, changes a bug to a chore, adds a label and moves a card to the other project.",
+  "demo_label": "A board of two projects, where a team adds a task, starts one, changes a bug to a chore, adds a label, moves a card to the other project and resizes the panels.",
   "highlights.text_1": "Matches show up in each project at the same time, so you never search one project after another.",
   "highlights.text_2": "One click moves the work along, right where you see it.",
   "highlights.text_3": "Tasks are stored locally for offline search and direct updates. Changes are synced as you get back online.",
