@@ -62,7 +62,7 @@ export function BoardSkeleton({
   const showExplainer = useShowExplainer(isInWorkspace);
   const extraPanels = buildBoardExtraPanels({ showExplainer, publicView });
 
-  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, projects, extraPanels);
+  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, projects, extraPanels, publicView);
   const panels: SkeletonColumn[] = isMobile ? [{ kind: 'mobile', panelId: 'mobilePanel' }] : boardPanels;
   const { ref: rowFrameRef, bounds: rowFrame } = useMeasure<HTMLDivElement>();
 

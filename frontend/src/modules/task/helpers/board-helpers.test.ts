@@ -5,6 +5,7 @@ import {
   formatStatusesLabel,
   normalizePanelWidths,
   prepareBoardPanels,
+  publicBoardPanels,
   statusesBottomUp,
   statusPanelId,
   statusPath,
@@ -90,6 +91,47 @@ describe('prepareBoardPanels', () => {
     const panels = prepareBoardPanels([project], statusPath);
     expect(panels).toHaveLength(statusPath.length);
     expect(panels.some(({ panelId }) => panelId === 'p')).toBe(false);
+  });
+});
+
+describe('prepareBoardPanels without the rest panel', () => {
+  it('leaves out the panel of the remaining statuses', () => {
+    const panels = prepareBoardPanels([project], [TaskStatus.Started], 'accepted', true);
+    expect(panels.map(({ statuses }) => statuses)).toEqual([[TaskStatus.Started]]);
+  });
+
+  it('keeps the one panel of a board without status panels', () => {
+    expect(prepareBoardPanels([project], [], 'accepted', true)).toEqual([{ kind: 'project', project, panelId: 'p' }]);
+  });
+});
+
+describe('publicBoardPanels', () => {
+  const tasks = (...statuses: TaskStatus[]) => statuses.map((status) => ({ status }));
+
+  it('assumes all of them before the tasks load', () => {
+    expect(publicBoardPanels()).toEqual({ statusPanels: [TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed], withoutRest: false });
+  });
+
+  it('leaves out a status without tasks, which then stays in nobody', () => {
+    expect(publicBoardPanels(tasks(TaskStatus.Started, TaskStatus.Accepted))).toEqual({ statusPanels: [TaskStatus.Started], withoutRest: false });
+  });
+
+  it('leaves out the rest panel when no task is left for it', () => {
+    expect(publicBoardPanels(tasks(TaskStatus.Started, TaskStatus.Finished))).toEqual({
+      statusPanels: [TaskStatus.Started, TaskStatus.Finished],
+      withoutRest: true,
+    });
+  });
+
+  it('never gives more than four panels', () => {
+    const everything = tasks(...statusPath);
+    const { statusPanels, withoutRest } = publicBoardPanels(everything);
+    expect(prepareBoardPanels([project], statusPanels, 'accepted', withoutRest)).toHaveLength(4);
+  });
+
+  it('gives one panel to a project without tasks', () => {
+    const { statusPanels, withoutRest } = publicBoardPanels([]);
+    expect(prepareBoardPanels([project], statusPanels, 'accepted', withoutRest)).toEqual([{ kind: 'project', project, panelId: 'p' }]);
   });
 });
 

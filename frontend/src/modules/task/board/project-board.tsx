@@ -10,7 +10,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
   const extraPanels = buildBoardExtraPanels({ publicView });
-  const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
+  const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels, publicView);
   useExpandLabelsPanel(boardLayoutRef);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
@@ -33,6 +33,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
       onLayoutChanged={handleLayoutChanged}
       panelFade="marked"
       autoHeight={publicView}
+      mustFit={publicView}
       reorderable={!publicView}
       onPanelReorder={handlePanelReorder}
     >
