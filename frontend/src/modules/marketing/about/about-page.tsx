@@ -27,7 +27,7 @@ export function AboutPage() {
     <>
       <MarketingNav />
 
-      <main>
+      <main className="focus:outline-hidden">
         <Hero title="about:title_1" text={isMobile ? undefined : 'about:text_1'}>
           {joinedToWaitlist ? (
             <span className="flex items-center justify-between gap-2 rounded-full border-2 border-success px-4 py-3.5 ring-4 ring-primary/5">

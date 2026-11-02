@@ -12,7 +12,7 @@ import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/form-fields/blocknote';
 import { FormActions } from '~/modules/common/form-fields/form-actions';
-import { InputTriggerButton, InputTriggerChevron } from '~/modules/common/form-fields/input-trigger-button';
+import { InputTriggerButton } from '~/modules/common/form-fields/input-trigger-button';
 import { useOverlayClose } from '~/modules/common/overlay-close';
 import { Spinner } from '~/modules/common/spinner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
@@ -323,7 +323,7 @@ export function CreateTaskForm({
                       </>
                     )}
                   </div>
-                  <InputTriggerChevron className="ml-auto size-4" />
+                  <ChevronDownIcon className="ml-auto size-4 shrink-0 text-faint-foreground" />
                 </div>
                 <FormMessage />
               </FormItem>

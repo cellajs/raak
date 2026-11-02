@@ -87,6 +87,7 @@
   "restored_to_workspace.text": "Restored to {{name}}",
   "review": "Review",
   "reviewed": "Reviewed",
+  "role_description.guest": "Can view it, without making changes.",
   "search_resource": "Search {{resource, lowercase}}",
   "select_project": "Select existing projects",
   "select_project.text": "Select a project in {{name}} to add to your workspace.",
