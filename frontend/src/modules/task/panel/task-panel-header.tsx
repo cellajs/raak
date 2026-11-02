@@ -16,15 +16,15 @@ import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 
 interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'statuses'> {
-  showProject: boolean;
+  isInWorkspace: boolean;
   isCollapsed: boolean;
   count: number;
 }
 
-function PanelLeading({ project, statuses, showProject, isCollapsed, count }: PanelLeadingProps) {
+function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: PanelLeadingProps) {
   const { t } = useTranslation();
 
-  if (showProject) {
+  if (isInWorkspace) {
     return (
       <PanelDragHandleButton
         name={project.name}
@@ -52,13 +52,13 @@ function PanelLeading({ project, statuses, showProject, isCollapsed, count }: Pa
   );
 }
 
-interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses' | 'showProject'> {
+interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses'> {
   panelId: string;
   count: number;
 }
 
 /** A project's panel header. */
-export function TaskPanelHeader({ project, publicView, statuses, showProject, panelId, count }: TaskPanelHeaderProps) {
+export function TaskPanelHeader({ project, publicView, statuses, panelId, count }: TaskPanelHeaderProps) {
   const { t } = useTranslation();
 
   const isInWorkspace = useIsWorkspaceRoute();
@@ -82,9 +82,7 @@ export function TaskPanelHeader({ project, publicView, statuses, showProject, pa
   return (
     <BoardPanelHeader
       className="bg-card"
-      leading={
-        <PanelLeading project={project} statuses={statuses} showProject={isInWorkspace || !!showProject} isCollapsed={isCollapsed} count={count} />
-      }
+      leading={<PanelLeading project={project} statuses={statuses} isInWorkspace={isInWorkspace} isCollapsed={isCollapsed} count={count} />}
       actions={actionsSlot}
       isCollapsed={isCollapsed}
     />

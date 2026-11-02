@@ -1,6 +1,7 @@
-import { ArrowRightIcon, Building2Icon, FolderIcon, SearchIcon, UsersIcon, ZapIcon } from 'lucide-react';
+import { Building2Icon, FolderIcon, UsersIcon } from 'lucide-react';
 import type { GetPublicCountsResponse } from 'sdk';
 import { appConfig } from 'shared';
+import { nanoid } from 'shared/utils/nanoid';
 import type { TKey } from '~/lib/i18n-locales';
 import type { IconComponent } from '~/modules/common/icons/types';
 import type { InfoCard } from '~/modules/marketing/about/info-cards';
@@ -78,22 +79,20 @@ export const counts = [
   { id: 'project', title: 'c:project_other', icon: FolderIcon },
 ] as const satisfies readonly { id: keyof GetPublicCountsResponse; title: TKey; icon: IconComponent }[];
 
-// About - Demo board
+// About - Why
 
-const aboutDemoProjectSlugsByMode: Partial<Record<string, string[]>> = {
-  // Public projects of one local seed, which names projects at random: point these at public projects in your own database
-  development: ['fantastic-wooden-chair-rtinfi', 'modern-plastic-car-4p0cik'],
-};
+export const whyItems = [{ id: 'simple' }, { id: 'automation' }, { id: 'instant' }];
 
-/** Public projects the about hero shows as a live, read-only board; none leaves the board out. */
-export const aboutDemoProjectSlugs = aboutDemoProjectSlugsByMode[appConfig.mode] ?? [];
+export const whyLightSlides = [
+  { id: nanoid(), url: '/static/marketing/screenshots/board.webp' },
+  { id: nanoid(), url: '/static/marketing/screenshots/table.webp' },
+  { id: nanoid(), url: '/static/marketing/screenshots/task.webp' },
+];
 
-// About - Highlights
-
-export const highlightItems = [
-  { id: 'search', icon: SearchIcon, className: 'bg-green-500/10 text-green-700 dark:text-green-400' },
-  { id: 'next-step', icon: ArrowRightIcon, className: 'bg-orange-500/10 text-orange-700 dark:text-orange-400' },
-  { id: 'instant', icon: ZapIcon, className: 'bg-sky-500/10 text-sky-700 dark:text-sky-400' },
+export const whyDarkSlides = [
+  { id: nanoid(), url: '/static/marketing/screenshots/board-dark.webp' },
+  { id: nanoid(), url: '/static/marketing/screenshots/table-dark.webp' },
+  { id: nanoid(), url: '/static/marketing/screenshots/task-dark.webp' },
 ];
 
 // Dedicated marketing pages

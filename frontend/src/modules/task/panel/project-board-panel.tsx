@@ -15,12 +15,11 @@ interface ProjectBoardPanelProps {
   publicView?: boolean;
   panelId?: string;
   statuses?: TaskStatus[];
-  showProject?: boolean;
   windowScroll?: boolean;
 }
 
 /** Fetches a project's canonical tasks and merges the open draft task. */
-export function ProjectBoardPanel({ project, publicView, panelId, statuses, showProject, windowScroll }: ProjectBoardPanelProps) {
+export function ProjectBoardPanel({ project, publicView, panelId, statuses, windowScroll }: ProjectBoardPanelProps) {
   const queryOptions = publicView
     ? publicTasksBoardQueryOptions(project.id)
     : tasksCanonicalOptions({ organizationId: project.organizationId, tenantId: project.tenantId, projectId: project.id });
@@ -52,7 +51,6 @@ export function ProjectBoardPanel({ project, publicView, panelId, statuses, show
       publicView={publicView}
       panelId={panelId ?? project.id}
       statuses={statuses}
-      showProject={showProject}
       windowScroll={windowScroll}
     />
   );

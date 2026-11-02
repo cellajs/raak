@@ -31,8 +31,6 @@ export interface BoardPanelProps {
   panelId: string;
   /** The statuses it lists; all of them when absent. */
   statuses?: TaskStatus[];
-  /** Names the project in the panel header, for a board of several projects outside a workspace. */
-  showProject?: boolean;
   windowScroll?: boolean;
 }
 
@@ -43,7 +41,6 @@ export const BoardPanel = memo(function BoardPanel({
   publicView,
   panelId,
   statuses,
-  showProject,
   windowScroll,
 }: BoardPanelProps) {
   const { t } = useTranslation();
@@ -109,7 +106,6 @@ export const BoardPanel = memo(function BoardPanel({
             project={project}
             publicView={publicView}
             statuses={statuses}
-            showProject={showProject}
             panelId={panelId}
             count={filteredTasks.filter((task) => !isDraftTask(task)).length}
           />
