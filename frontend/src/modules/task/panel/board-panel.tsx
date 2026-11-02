@@ -1,5 +1,5 @@
 import { PlusIcon } from 'lucide-react';
-import { memo, useRef } from 'react';
+import { memo, useContext, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollVisibility } from '~/hooks/use-scroll-visibility';
@@ -18,6 +18,7 @@ import { openCreateTaskDialog } from '~/modules/task/mobile-create-task-dialog';
 import { TaskPanelCollapsed } from '~/modules/task/panel/task-panel-collapsed';
 import { TaskPanelContent } from '~/modules/task/panel/task-panel-content';
 import { TaskPanelHeader } from '~/modules/task/panel/task-panel-header';
+import { TaskDemoScope } from '~/modules/task/task-demo-scope';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskCounts } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
@@ -31,6 +32,8 @@ export interface BoardPanelProps {
   panelId: string;
   /** The statuses it lists; all of them when absent. */
   statuses?: TaskStatus[];
+  /** Names the project in the panel header, for a board of several projects outside a workspace. */
+  showProject?: boolean;
   windowScroll?: boolean;
 }
 
@@ -41,12 +44,14 @@ export const BoardPanel = memo(function BoardPanel({
   publicView,
   panelId,
   statuses,
+  showProject,
   windowScroll,
 }: BoardPanelProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const search = useBoardSearch();
   const isReadOnly = useIsProjectReadOnly(project.id);
+  const isDemo = useContext(TaskDemoScope);
 
   const { isVisible: showFab } = useScrollVisibility(isMobile);
 
@@ -90,7 +95,7 @@ export const BoardPanel = memo(function BoardPanel({
       {isMobile ? (
         <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex h-full flex-col">
           <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} />
-          {!isReadOnly && (
+          {!isReadOnly && !isDemo && (
             <FloatingNavButton
               id="create-task"
               icon={PlusIcon}
@@ -106,6 +111,7 @@ export const BoardPanel = memo(function BoardPanel({
             project={project}
             publicView={publicView}
             statuses={statuses}
+            showProject={showProject}
             panelId={panelId}
             count={filteredTasks.filter((task) => !isDraftTask(task)).length}
           />

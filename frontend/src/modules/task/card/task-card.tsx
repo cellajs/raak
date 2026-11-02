@@ -2,7 +2,7 @@ import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-d
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
 import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/utils/preserve-offset-on-source';
 import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
-import { type FocusEvent, type MouseEvent, memo, useEffect, useRef, useState } from 'react';
+import { type FocusEvent, type MouseEvent, memo, useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { DropIndicator } from '~/modules/common/drop-indicator';
@@ -22,6 +22,7 @@ import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
+import { TaskDemoScope } from '~/modules/task/task-demo-scope';
 import { taskCardFocusBarClass, taskCardVariants } from '~/modules/task/task-styles';
 import type { TaskProps } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
@@ -39,6 +40,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
   const { t } = useTranslation();
   const taskRef = useRef<HTMLDivElement>(null);
   const isReadOnly = useIsProjectReadOnly(task.projectId);
+  const isDemo = useContext(TaskDemoScope);
   const mobileClosestEdge = useMobileTaskDragIndicatorStore((state) => (state.indicator?.taskId === task.id ? state.indicator.edge : null));
   const landingEdge = useTaskDropLandingStore((state) => (state.landing?.taskId === task.id ? state.landing.edge : null));
 
@@ -227,13 +229,15 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
             !isSheet && effectiveState !== 'collapsed' && 'pt-0.5',
           )}
         >
-          <SeenMark
-            productId={task.id}
-            tenantId={task.tenantId}
-            organizationId={task.organizationId}
-            channelId={getSeenChannelId('task', task)}
-            productType="task"
-          />
+          {!isDemo && (
+            <SeenMark
+              productId={task.id}
+              tenantId={task.tenantId}
+              organizationId={task.organizationId}
+              channelId={getSeenChannelId('task', task)}
+              productType="task"
+            />
+          )}
           {effectiveState !== 'collapsed' && (
             <StickyBox
               className="z-10 data-[sticky=true]:-mx-2 data-[sticky=true]:bg-background data-[sticky=true]:px-2"
