@@ -270,9 +270,9 @@ export const RefitCrossesTheModeThreshold = scenario({ width: 760, panels: ['a',
   await expect(board.widths()).toEqual({ a: 495, b: 498 });
 });
 
-export const GapRefitLeavesRowOver = scenario({ width: 1000, panels: ['a', 'b'], layout: { a: 900, b: 300 } }, async (board) => {
-  await expect(board.widths()).toEqual({ a: 745, b: 300 });
-  await expect(board.over()).toBe(52);
+export const RefitPaysForAPanelAtMin = scenario({ width: 1000, panels: ['a', 'b'], layout: { a: 900, b: 300 } }, async (board) => {
+  await expect(board.widths()).toEqual({ a: 693, b: 300 });
+  await expect(board.over()).toBe(0);
 });
 
 export const RefitToleranceLeavesThatMuch = scenario({ width: 1500, panels: ['a', 'b'], layout: { a: 750, b: 750 } }, async (board) => {
@@ -335,7 +335,7 @@ export const EnterAndDoublePressToggleLeftPanel = scenario(
   { width: 1200, panels: ['a', 'b', 'c'], layout: { a: 400, b: 400, c: 386.72 } },
   async (board) => {
     await board.press('Enter');
-    await expect(board.widths()).toEqual({ a: 50, b: 567, c: 570 });
+    await expect(board.widths()).toEqual({ a: 50, b: 577, c: 560 });
     await board.press('Enter');
     await expect(board.widths().a).toBeGreaterThan(50);
     await board.doublePress();
@@ -440,7 +440,7 @@ export const NonCollapsiblePanelHoldsItsMin = scenario(
   },
 );
 
-export const GapMixedSizesRunOver = scenario(
+export const MixedSizesFit = scenario(
   {
     width: 1000,
     panels: [
@@ -450,7 +450,7 @@ export const GapMixedSizesRunOver = scenario(
     layout: { a: 400, b: 400 },
   },
   async (board) => {
-    await expect(board.widths()).toEqual({ a: 496, b: 500 });
-    await expect(board.over()).toBe(3);
+    await expect(board.widths()).toEqual({ a: 493, b: 500 });
+    await expect(board.over()).toBe(0);
   },
 );

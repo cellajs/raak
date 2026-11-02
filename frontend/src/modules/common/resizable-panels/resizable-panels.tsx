@@ -2,7 +2,14 @@ import type { KeyboardEventHandler, PointerEventHandler, ReactNode } from 'react
 import { createContext, useContext, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLatestRef } from '~/hooks/use-latest-ref';
-import { type DragState, type HintData, type LayoutResult, type PanelConfig, resolveLayout } from '~/modules/common/resizable-panels/panel-layout';
+import {
+  type DragState,
+  distributeWidths,
+  type HintData,
+  type LayoutResult,
+  type PanelConfig,
+  resolveLayout,
+} from '~/modules/common/resizable-panels/panel-layout';
 import { cn } from '~/utils/cn';
 import { tw } from '~/utils/tw';
 
@@ -464,26 +471,14 @@ export function ResizablePanelGroup({
       return changed;
     }
 
-    let allocated = 0;
-    const expandedPanels: PanelEntry[] = [];
-    for (const panel of panelsRef.current) {
-      if (isCollapsed(panel)) {
-        allocated += widthOf(panel);
-      } else {
-        expandedPanels.push(panel);
-      }
-    }
+    const expandedPanels = panelsRef.current.filter((panel) => !isCollapsed(panel));
+    const allocated = panelsRef.current.reduce((sum, panel) => sum + (isCollapsed(panel) ? widthOf(panel) : 0), 0);
+    const weights = Object.fromEntries(expandedPanels.map((panel) => [panel.id, widthOf(panel)]));
+    const shares = distributeWidths(expandedPanels, weights, available - allocated);
 
-    const target = available - allocated;
-    let distributed = 0;
-    for (let i = 0; i < expandedPanels.length; i++) {
-      const panel = expandedPanels[i];
+    for (const panel of expandedPanels) {
       const width = widthOf(panel);
-      const isLast = i === expandedPanels.length - 1;
-      // Last panel absorbs rounding remainder to keep total exact
-      let newWidth = Math.max(panel.minWidth, isLast ? target - distributed : Math.floor(width * ratio));
-      newWidth = Math.min(newWidth, viewportWidth);
-      distributed += newWidth;
+      const newWidth = Math.min(shares[panel.id], viewportWidth);
       if (Math.abs(newWidth - width) >= 1) {
         widthsRef.current[panel.id] = newWidth;
         if (newWidth > panel.collapsedWidth) expandedWidthsRef.current[panel.id] = newWidth;

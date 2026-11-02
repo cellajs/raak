@@ -43,6 +43,34 @@ function collapseProgress(panel: PanelConfig, rawWidth: number): number {
 }
 
 // Idempotent and DOM-free: dragging backward re-evaluates from initialWidths and reverses.
+/** Shares `available` by `weights`: whoever a share would take below `minWidth` holds it, the others share the rest, and the last takes the rounding. */
+export function distributeWidths(panels: PanelConfig[], weights: Record<string, number>, available: number): Record<string, number> {
+  const widths: Record<string, number> = {};
+  const totalWeight = (group: PanelConfig[]) => group.reduce((sum, panel) => sum + weights[panel.id], 0);
+
+  let rest = panels;
+  let free = available;
+  while (rest.length) {
+    const total = totalWeight(rest);
+    const share = free;
+    const pinned = rest.filter((panel) => (share * weights[panel.id]) / total < panel.minWidth);
+    if (!pinned.length) break;
+    for (const panel of pinned) {
+      widths[panel.id] = panel.minWidth;
+      free -= panel.minWidth;
+    }
+    rest = rest.filter((panel) => !pinned.includes(panel));
+  }
+
+  const total = totalWeight(rest);
+  let given = 0;
+  rest.forEach((panel, index) => {
+    widths[panel.id] = index === rest.length - 1 ? free - given : Math.floor((free * weights[panel.id]) / total);
+    given += widths[panel.id];
+  });
+  return widths;
+}
+
 export function resolveLayout(panels: PanelConfig[], drag: DragState, dx: number): LayoutResult {
   const { separatorIndex, initialWidths, collapsedAtStart, autoFill } = drag;
   const widths = { ...initialWidths };

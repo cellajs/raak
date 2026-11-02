@@ -196,7 +196,7 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 
 ## Refit (redistributePanels)
 
-- **R1, scaling:** collapsed panels keep `collapsedWidth`. Open panels scale in proportion to their widths to fill the container, none below `minWidth`.
+- **R1, scaling:** collapsed panels keep `collapsedWidth`. Open panels scale in proportion to their widths to fill the container exactly. A panel a share would take below `minWidth` holds it, and the others share what is left.
 - **R2, tolerance:** within 0.5% of the available width nothing scales, so that much gap or overflow can stay.
 - **R3, viewport clamp:** after a drag and on resize, a pre-pass clamps any panel wider than the scroll parent's visible width. It runs before R1, so it fires even when the total already matches (ratio ≈ 1).
 - **R4, during a drag:** no refit. A resize during a drag is applied at the drop.
@@ -236,6 +236,5 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 Where the code differs from the rules above. The commit that fixes one removes its line.
 
 - **L2, L3:** the row only refits when the container or parent changes size, and adding or removing a panel often changes neither. On a fixed-height board the row stays over, or keeps a gap, until the next refit. Boards whose height follows their lists hide this through L7.
-- **R1:** a single pass can leave the row over: a panel held at `minWidth` is not paid for by the others. With parent 1000, A=900, B=300, the row is over by 52.
 - **G5:** arrow keys can take a panel below `minWidth`, and in overflow mode the grower is capped at `minWidth * 2` while the victim still shrinks.
 - **Pointer:** `pointercancel` does not end a drag, a secondary button starts one, and moves are not filtered by pointer id.

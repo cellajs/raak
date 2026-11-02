@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type DragState, type PanelConfig, resolveLayout } from '~/modules/common/resizable-panels/panel-layout';
+import { type DragState, distributeWidths, type PanelConfig, resolveLayout } from '~/modules/common/resizable-panels/panel-layout';
 
 const panel = (id: string, overrides: Partial<PanelConfig> = {}): PanelConfig => ({
   id,
@@ -23,6 +23,25 @@ const resolve = (widths: Record<string, number>, separatorIndex: number, dx: num
     dragOf(widths, separatorIndex, autoFill),
     dx,
   );
+
+describe('distributeWidths', () => {
+  it('R1: shares in proportion and fills exactly', () => {
+    expect(distributeWidths([panel('a'), panel('b')], { a: 1000, b: 500 }, 1200)).toEqual({ a: 800, b: 400 });
+    expect(distributeWidths([panel('a'), panel('b')], { a: 500, b: 500 }, 1001)).toEqual({ a: 500, b: 501 });
+  });
+
+  it('R1: a panel a share would take below min holds it, and the others pay', () => {
+    expect(distributeWidths([panel('a'), panel('b')], { a: 900, b: 300 }, 993)).toEqual({ a: 693, b: 300 });
+  });
+
+  it('R1: holding one can take another below min, so it repeats', () => {
+    expect(distributeWidths([panel('a'), panel('b'), panel('c')], { a: 300, b: 400, c: 2000 }, 1000)).toEqual({ a: 300, b: 300, c: 400 });
+  });
+
+  it('ends at min when the room is too small, which overflow then scrolls', () => {
+    expect(distributeWidths([panel('a'), panel('b')], { a: 500, b: 500 }, 400)).toEqual({ a: 300, b: 300 });
+  });
+});
 
 describe('resolveLayout', () => {
   it('leaves everything in place without a delta', () => {
