@@ -16,6 +16,7 @@ interface BoardState {
   groupId?: string;
   /** `scroll` is a member board's ScrollArea, `clip` the public page's wrapper. */
   parent?: 'scroll' | 'clip';
+  mustFit?: boolean;
 }
 
 const specId = (spec: PanelSpec) => (typeof spec === 'string' ? spec : spec.id);
@@ -119,12 +120,13 @@ function PanelBoard({ board }: { board: Board }) {
     board.update = (next) => setState((previous) => ({ ...previous, ...next }));
   }, [board]);
 
-  const { width, panels, layout, groupId = 'group', parent = 'scroll' } = state;
+  const { width, panels, layout, groupId = 'group', parent = 'scroll', mustFit } = state;
   const group = (
     <ResizablePanelGroup
       id={groupId}
       className={parent === 'scroll' ? 'group/board h-[inherit] min-h-40' : 'group/board h-40'}
       defaultLayout={layout}
+      mustFit={mustFit}
       onLayoutChanged={(saved) => board.saves.push(saved)}
       onCollapseChange={(id, collapsed) => board.collapses.push(`${id}:${collapsed ? 'closed' : 'open'}`)}
       onReady={(api) => {
@@ -477,6 +479,125 @@ export const MixedSizesFit = scenario(
   },
   async (board) => {
     await expect(board.widths()).toEqual({ a: 493, b: 500 });
+    await expect(board.over()).toBe(0);
+  },
+);
+
+const fitting = { mustFit: true, parent: 'clip' } as const;
+const four = ['a', 'b', 'c', 'd'];
+
+export const FitSharesTheRow = scenario({ ...fitting, width: 1256, panels: four }, async (board) => {
+  await expect(board.widths()).toEqual({ a: 309, b: 309, c: 309, d: 309 });
+  await expect(board.over()).toBe(0);
+  await expect(board.minWidth()).toBe('');
+  await expect(board.saves).toHaveLength(0);
+});
+
+export const FitGoesBelowTheIdealWidth = scenario({ ...fitting, width: 700, panels: ['a', 'b'] }, async (board) => {
+  await expect(board.widths()).toEqual({ a: 346, b: 347 });
+  await expect(board.minWidth()).toBe('');
+});
+
+export const FitClosesTheRightmost = scenario({ ...fitting, width: 1000, panels: four }, async (board) => {
+  await expect(board.widths()).toEqual({ a: 310, b: 310, c: 310, d: 50 });
+  await expect(board.over()).toBe(0);
+  await expect(board.collapses).toContain('d:closed');
+});
+
+export const FitWorksInAScrollArea = scenario({ mustFit: true, width: 1000, panels: four }, async (board) => {
+  await expect(board.widths()).toEqual({ a: 310, b: 310, c: 310, d: 50 });
+  await expect(board.over()).toBe(0);
+});
+
+export const FitReopensWhenRoomReturns = scenario({ ...fitting, width: 1000, panels: four }, async (board) => {
+  await board.set({ width: 1256 });
+  await expect(board.widths()).toEqual({ a: 309, b: 309, c: 309, d: 309 });
+  await expect(board.collapses).toContain('d:open');
+  await expect(board.saves).toHaveLength(0);
+});
+
+export const FitRestoresWidthsAfterNarrowing = scenario(
+  { ...fitting, width: 1600, panels: ['a', 'b'], layout: { a: 300, b: 1294 } },
+  async (board) => {
+    const before = board.widths();
+    await board.set({ width: 700 });
+    await expect(board.over()).toBe(0);
+    await board.set({ width: 1600 });
+    await expect(board.widths()).toEqual(before);
+    await expect(board.saves).toHaveLength(0);
+  },
+);
+
+export const FitAddedPanelStaysOpen = scenario({ ...fitting, width: 1000, panels: ['a', 'b', 'c'] }, async (board) => {
+  await board.set({ panels: four });
+  await expect(board.widths()).toEqual({ a: 310, b: 310, c: 50, d: 310 });
+  await expect(board.over()).toBe(0);
+  await expect(board.saves).toHaveLength(0);
+});
+
+export const FitRemovedPanelFreesARoom = scenario({ ...fitting, width: 1000, panels: four }, async (board) => {
+  await board.set({ panels: ['a', 'b', 'd'] });
+  await expect(board.widths()).toEqual({ a: 328, b: 328, d: 331 });
+  await board.set({ panels: ['a', 'b', 'c', 'd'] });
+  await expect(board.over()).toBe(0);
+});
+
+export const FitOpeningAStripClosesAnother = scenario({ ...fitting, width: 1000, panels: four }, async (board) => {
+  board.api?.expandPanel('d');
+  await settle();
+  await expect(board.widths()).toEqual({ a: 310, b: 310, c: 50, d: 310 });
+  await expect(board.over()).toBe(0);
+  await expect(board.saves).toHaveLength(1);
+});
+
+export const FitUserCloseStaysThroughResize = scenario({ ...fitting, width: 1256, panels: four }, async (board) => {
+  board.api?.togglePanel('b');
+  await settle();
+  await expect(board.widths().b).toBe(50);
+  await board.set({ width: 800 });
+  await board.set({ width: 1600 });
+  await expect(board.widths().b).toBe(50);
+  await expect(board.widths().d).toBeGreaterThan(300);
+});
+
+export const FitOneStaysOpen = scenario({ ...fitting, width: 1000, panels: ['a', 'b'] }, async (board) => {
+  board.api?.togglePanel('a');
+  await settle();
+  await expect(board.widths()).toEqual({ a: 50, b: 943 });
+  board.api?.togglePanel('b');
+  await settle();
+  await expect(board.widths()).toEqual({ a: 50, b: 943 });
+});
+
+export const FitDragHoldsThenSwaps = scenario({ ...fitting, width: 500, panels: ['a', 'b'], layout: { a: 443.36, b: 50 } }, async (board) => {
+  await board.pointerDown();
+  board.pointerMove(-200);
+  await expect(board.widths()).toEqual({ a: 443, b: 50 });
+  board.pointerMove(-400);
+  await expect(board.widths()).toEqual({ a: 50, b: 443 });
+  await expect(board.over()).toBe(0);
+  await board.pointerUp();
+  await expect(board.widths()).toEqual({ a: 50, b: 443 });
+  await expect(board.saves).toHaveLength(1);
+});
+
+export const FitDragAndKeySave = scenario({ ...fitting, width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
+  await board.drag(0);
+  await expect(board.saves).toHaveLength(0);
+  await board.drag(-100);
+  await expect(board.widths()).toEqual({ a: 500, b: 693 });
+  await expect(board.saves).toHaveLength(1);
+  await board.press('ArrowLeft');
+  await expect(board.widths()).toEqual({ a: 480, b: 713 });
+  await expect(board.saves).toHaveLength(2);
+});
+
+export const FitArrowOpensAStripAndClosesAnother = scenario(
+  { ...fitting, width: 500, panels: ['a', 'b'], layout: { a: 443.36, b: 50 } },
+  async (board) => {
+    await board.press('ArrowLeft');
+    await expect(board.widths().a).toBe(50);
+    await expect(board.widths().b).toBe(443);
     await expect(board.over()).toBe(0);
   },
 );

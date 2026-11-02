@@ -192,8 +192,8 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 - **L4, reorder:** widths stay with their panels and a separator stays at its index, so it now sits between other panels. Every separator-index lookup re-sorts by DOM order. A reorder saves nothing.
 - **L5, group `id`:** a new `id` re-registers every panel against `defaultLayout`. With the same `id`, a changed `defaultLayout` is only read when a panel registers.
 - **L6, panel set changes during a drag:** the drag aborts. Widths go back to the drag's start, nothing is saved, and the rest of that pointer gesture is ignored.
-- **L8, pointer:** only the primary button starts a drag, only the pointer that started it moves it, and a `pointercancel` aborts it as in L6.
 - **L7, observers:** a `ResizeObserver` watches the container and its parent, on both axes, and refits unless a drag runs. On a board whose height follows its lists, a list changing height therefore refits too.
+- **L8, pointer:** only the primary button starts a drag, only the pointer that started it moves it, and a `pointercancel` aborts it as in L6.
 
 ## Refit (redistributePanels)
 
@@ -231,3 +231,19 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 - **C2, sizes:** `minWidth` and `collapsedWidth` are per panel, and `collapsible` can be off. The API supports mixing them, and they follow the same rules, but every consumer today uses one size and collapsible panels.
 - **C3, direction:** left to right only.
 - **C4, separators:** separator `i` sits between panels `i` and `i + 1`, so `index` has no gaps.
+
+## Must-fit (`mustFit`)
+
+For a parent that cannot scroll, such as a public page. The rules above hold unless one of these replaces them. Fixed for the group's lifetime.
+
+- **F1, the row fits:** it always fills its parent exactly, with no container min-width and no overflow mode. G6, O2, R2, R3 and R5 do not apply.
+- **F2, closing:** a panel that does not fit collapses to its strip. It is not hidden, because its tasks would look gone.
+- **F3, which closes:** the least recently touched, among equals the rightmost. A panel just opened, just added or holding focus closes last.
+- **F4, room returns:** panels the fit closed reopen, last closed first, once one fits with 24px to spare. Without the margin a classic scrollbar appearing could close a panel, shorten the page, remove the scrollbar and reopen it. A panel the user closed stays closed.
+- **F5, one stays open:** toggling the last open panel does nothing.
+- **F6, too narrow for one:** one panel stays open and the rest is clipped. Give the group few enough panels for the narrowest width it renders at.
+- **F7, swap:** dragging a closed panel open with no room closes the direct victim, instead of G10. Until the victims can pay for it, the drag holds at the gate, whatever the pointer does. The total never changes.
+- **F8, what is saved:** the user's choice, not the rendered widths (replaces P2 and T1). A drag or keyboard action that moved something makes the row as it now stands the choice, leaving out panels the fit closed. A toggle changes only that panel, and reopens it at its own earlier choice. Nothing else writes the choice, so a resize, mount, or added or removed panel never saves, and narrowing and widening again brings back the same widths.
+- **F9, observers:** only a change of the parent's width refits (replaces L7). Lists changing height do not.
+
+Rendered widths come from one function of the choice and the available width, `fitPanels`. It holds for any stored value, so a stale or corrupt width can change proportions but not break the layout.
