@@ -367,6 +367,23 @@ describe('Task and label access', async () => {
       expect(await rowsOf(pathA.organizationId)).toEqual(before);
     });
 
+    it('answers a delete sent again as its first attempt, only to the caller who sent it', async () => {
+      for (const [route, id] of [
+        [deleteTasks, (await newTask(pathA, adminA, projectA)).id],
+        [deleteLabels, await newLabel(pathA, adminA, projectA)],
+      ] as const) {
+        const stx = deleteStx();
+        const send = (as: User, sentStx = stx) => call(route, { path: pathA, body: { ids: [id], stx: sentStx }, headers: headers(as) });
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const { data, response } = await send(adminA);
+          expect(response.status).toBe(200);
+          expect((data as { rejectedIds: string[] }).rejectedIds).toEqual([]);
+        }
+        expect((await send(member)).response.status).toBe(403);
+        expect((await send(adminA, deleteStx())).response.status).toBe(403);
+      }
+    });
+
     it('lets each role do what it holds (positive controls)', async () => {
       expect((await attempts.getTask(targetA, guest)).response.status).toBe(200);
       expect((await attempts.getTasks(targetA, guest)).data).toMatchObject({
