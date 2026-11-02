@@ -1,7 +1,10 @@
 import '~/query/tests/query-client-env';
 import { describe, expect, it, vi } from 'vitest';
 
-type Req = { body: { ops: Record<string, unknown>; stx: { mutationId: string; replayed?: boolean; fieldTimestamps: Record<string, string> } } };
+type Req = {
+  query?: { fullResponse?: boolean };
+  body: { ops: Record<string, unknown>; stx: { mutationId: string; replayed?: boolean; fieldTimestamps: Record<string, string> } };
+};
 const { updateTask, updateLabel } = vi.hoisted(() => ({
   updateTask: vi.fn(async (_req: Req) => ({ id: 'task-1' })),
   updateLabel: vi.fn(async (_req: Req) => ({ id: 'label-1' })),
@@ -19,6 +22,11 @@ describe('task and label updates replayed from the offline queue', () => {
   it('a live task edit carries no replay flag, so the server orders it by arrival', async () => {
     await updateTaskMutationFn({ ...ctx, id: 'task-1', ops: { name: 'Renamed' } });
     expect(updateTask.mock.lastCall?.[0].body.stx.replayed).toBeUndefined();
+  });
+
+  it('a task replay asks for the full row, so the settle takes its stored relations', async () => {
+    await updateTaskMutationFn({ ...ctx, id: 'task-1', ops: { name: 'Renamed' }, stx: { ...persistedStx('task-paused'), replayed: true } });
+    expect(updateTask.mock.lastCall?.[0]).toMatchObject({ query: { fullResponse: true } });
   });
 
   it('a task replay reuses the stx persisted in variables: same mutationId and HLCs, no restamp', async () => {

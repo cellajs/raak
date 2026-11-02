@@ -15,7 +15,7 @@ import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
-import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
+import { cacheCreate, cacheRemove, cacheUpdate, cancelKeepingMark, removeDetailQueriesById, writeKeepingMark } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
@@ -24,6 +24,7 @@ import { createCacheFinder } from '~/query/basic/find-in-list-cache';
 import { liveItems, offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
+import { syncedListOptions } from '~/query/basic/synced-list-options';
 import { addMutationRegistrar } from '~/query/mutation-registry';
 import { isArrayDelta } from '~/query/offline/array-delta';
 import {
@@ -143,7 +144,11 @@ const scalarFieldNamesOf = (ops: UpdateTaskOps | undefined) =>
 /** Exported for the replay test. */
 export const updateTaskMutationFn = async ({ tenantId, organizationId, id, ops, stx }: TaskUpdateFullVars) => {
   const effectiveStx = stx ?? createStxForUpdate(scalarFieldNamesOf(ops));
-  return updateTask({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
+  return updateTask({
+    body: { ops, stx: effectiveStx },
+    path: { id, organizationId, tenantId },
+    query: effectiveStx.replayed ? { fullResponse: true } : undefined,
+  });
 };
 
 const deleteTasksMutationFn = async ({ tenantId, organizationId, rows, stx }: TaskDeleteFullVars) => {
@@ -196,10 +201,10 @@ const applyOptimisticTaskUpdate = (
       cacheRemove(oldScopeKey, [previousTask]);
       const newScopeKey = taskKeys.list.home(organizationId, mergedOps.projectId as string);
       cacheCreate(newScopeKey, [optimisticTask]);
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(taskId), optimisticTask);
+      writeKeepingMark<Task>(queryClient, taskKeys.detail.byId(taskId), () => optimisticTask);
     } else {
       cacheUpdate(orgKey, [optimisticTask]);
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(taskId), (old) => (old ? optimisticTask : old));
+      writeKeepingMark<Task>(queryClient, taskKeys.detail.byId(taskId), (old) => (old ? optimisticTask : old));
     }
   }
 
@@ -249,21 +254,24 @@ const carryUnansweredCreates = (client: QueryClient, projectId: string) => {
 
 /** One flat query per project scope; board and table views derive from it with select() or client-side filtering. */
 export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) => {
-  return queryOptions({
-    queryKey: taskKeys.list.home(organizationId, projectId),
-    queryFn: async ({ client }) => {
-      const completeRead = carryUnansweredCreates(client, projectId);
-      const read = await fetchAllPages(
-        ({ limit, offset }) =>
-          getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOffDays } }).then(
-            liveItems,
-          ),
-        appConfig.requestLimits.tasks,
-      );
-      return completeRead(read);
-    },
-    staleTime: syncStaleTime,
-  });
+  return syncedListOptions(
+    queryOptions({
+      queryKey: taskKeys.list.home(organizationId, projectId),
+      queryFn: async ({ client }) => {
+        const completeRead = carryUnansweredCreates(client, projectId);
+        const read = await fetchAllPages(
+          ({ limit, offset }) =>
+            getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOffDays } }).then(
+              liveItems,
+            ),
+          appConfig.requestLimits.tasks,
+        );
+        return completeRead(read);
+      },
+      staleTime: syncStaleTime,
+    }),
+    { organizationId, tenantId, channelId: projectId },
+  );
 };
 
 /** Task-table defaults shared by the member and public query options. */
@@ -297,15 +305,17 @@ export const tasksTableQueryOptions = ({
 }: Omit<GetTasksParam, 'acceptedCutOff'> & { limit?: number }) => {
   const filters = { q, status, type, labels, sort, order, organizationId, projectId, workspaceId };
 
-  return infiniteQueryOptions({
-    queryKey: tasksTableQueryKey({ q, status, type, labels, sort, order, projectId, workspaceId, organizationId }),
-    ...offsetPaging(limit, (offset, signal) =>
-      getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }).then(liveItems),
-    ),
-    refetchOnWindowFocus: false,
-    meta: { persist: false },
-    staleTime: syncStaleTime,
-  });
+  return syncedListOptions(
+    infiniteQueryOptions({
+      queryKey: tasksTableQueryKey({ q, status, type, labels, sort, order, projectId, workspaceId, organizationId }),
+      ...offsetPaging(limit, (offset, signal) =>
+        getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }).then(liveItems),
+      ),
+      refetchOnWindowFocus: false,
+      meta: { persist: false },
+      staleTime: syncStaleTime,
+    }),
+  );
 };
 
 /** Shared by the live hook and the offline-replay defaults: callbacks derive the org key from durable variables (onMutate skips replay). */
@@ -326,7 +336,7 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
         assignedTo: fullAssignedTo,
       }),
     );
-    await queryClient.cancelQueries({ queryKey: orgKey });
+    await cancelKeepingMark(queryClient, orgKey);
     // Insert into the row's canonical home (project) list only, never filtered/search lists.
     insertEntitiesIntoHome(queryClient, optimisticTasks);
 
@@ -360,7 +370,7 @@ const taskUpdateOptions = (
   meta: { suppressGlobalErrorToast: true },
   // Squash/coalesce runs in the hook's prepare step, so variables already carry the merge; onMutate keeps only cache work.
   onMutate: async (variables) => {
-    await queryClient.cancelQueries({ queryKey: taskKeys.list.org(variables.organizationId) });
+    await cancelKeepingMark(queryClient, taskKeys.list.org(variables.organizationId));
     return applyOptimisticTaskUpdate(queryClient, variables.organizationId, variables);
   },
   onError: (error, variables, context) => {
@@ -378,7 +388,7 @@ const taskUpdateOptions = (
       } else {
         cacheUpdate(orgKey, [context.previousTask]);
       }
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(context.previousTask.id), context.previousTask);
+      writeKeepingMark<Task>(queryClient, taskKeys.detail.byId(context.previousTask.id), () => context.previousTask);
     }
   },
   onSuccess: (updatedTask, variables) => {
@@ -387,20 +397,20 @@ const taskUpdateOptions = (
     const cached = findTaskInCache(updatedTask.id);
     const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
 
-    // Cross-project move: the server's labels/assignedTo win over the cached ones
-    const isProjectMove = variables.ops && 'projectId' in variables.ops;
+    // A move and a replay answer the full row, whose relations win over the cached ones; any other update answers them as stubs
+    const isFullResponse = (variables.ops && 'projectId' in variables.ops) || variables.stx?.replayed;
     const merged = mergeServerResponse({
+      queryClient,
       cached,
       serverEntity: updatedTask,
       mutatedKeys,
       derivedKeys: { description: taskDerivedDescriptionFields, status: ['statusChangedAt'] },
-      skipKeys: isProjectMove ? [] : ['labels', 'assignedTo'],
+      skipKeys: isFullResponse ? [] : ['labels', 'assignedTo', 'primaryLabel', 'createdBy'],
     });
 
-    // The lite response path answers primaryLabel: null, so a merged response must never
-    // supply it; rebuild the derived object from the cached label row the id points at.
-    if (!isProjectMove && typeof variables.ops?.primaryLabelId === 'string') {
-      const freshPrimary = findLabelInCache(variables.ops.primaryLabelId);
+    // The settle can bring a primaryLabelId the kept object does not match, from this edit or a remote one kept out while it was pending.
+    if (!isFullResponse && merged.primaryLabel?.id !== merged.primaryLabelId) {
+      const freshPrimary = findLabelInCache(merged.primaryLabelId);
       if (freshPrimary) merged.primaryLabel = freshPrimary;
     }
     writeEntityToCache({ entity: merged, listKey: orgKey, detailKey, queryClient });
@@ -419,7 +429,7 @@ const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteD
     const orgKey = taskKeys.list.org(organizationId);
     const taskIds = rows.map(({ id }) => id);
     removePendingMutations(queryClient, taskKeys.update, taskIds);
-    await queryClient.cancelQueries({ queryKey: orgKey });
+    await cancelKeepingMark(queryClient, orgKey);
     cacheRemove(orgKey, rows);
     removeDetailQueriesById(queryClient, taskKeys.detail.base, taskIds);
     return { tasksToDelete: rows };

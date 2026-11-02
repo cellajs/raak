@@ -20,7 +20,7 @@ import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-owned-fie
 import { toaster } from '~/modules/common/toaster/toaster';
 import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
-import { cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
+import { cacheRemove, cacheUpdate, cancelKeepingMark, removeDetailQueriesById, writeKeepingMark } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
@@ -29,6 +29,7 @@ import { createCacheFinder } from '~/query/basic/find-in-list-cache';
 import { liveItems } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
+import { syncedListOptions } from '~/query/basic/synced-list-options';
 import { addMutationRegistrar } from '~/query/mutation-registry';
 import { type CreateVariables, type DeleteVariables, registerVariablesVersion, type UpdateVariables } from '~/query/offline/mutation-variables';
 import { prepareProductDelete } from '~/query/offline/prepare-delete';
@@ -78,7 +79,7 @@ const invalidateOrgLists = (queryClient: QueryClient, organizationId: string) =>
 const patchCachedLabel = (queryClient: QueryClient, organizationId: string, row: Label, ops: UpdateLabelFields) => {
   const patched = { ...row, ...ops, updatedAt: new Date().toISOString() };
   cacheUpdate(keys.list.org(organizationId), [patched]);
-  queryClient.setQueryData(keys.detail.byId(row.id), patched);
+  writeKeepingMark(queryClient, keys.detail.byId(row.id), () => patched);
   propagateEmbeddedProduct('label', [row.id], 'update');
 };
 
@@ -89,16 +90,19 @@ export const findLabelInCache = createCacheFinder<Label>('label');
  * Org and workspace views aggregate these per-project lists client-side.
  */
 export const labelsCanonicalOptions = ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) => {
-  return queryOptions({
-    queryKey: keys.list.home(organizationId, projectId),
-    queryFn: () => {
-      return fetchAllPages(
-        ({ limit, offset }) => getLabels({ path: { organizationId, tenantId }, query: { projectId, limit, offset } }).then(liveItems),
-        appConfig.requestLimits.labels,
-      );
-    },
-    staleTime: syncStaleTime,
-  });
+  return syncedListOptions(
+    queryOptions({
+      queryKey: keys.list.home(organizationId, projectId),
+      queryFn: () => {
+        return fetchAllPages(
+          ({ limit, offset }) => getLabels({ path: { organizationId, tenantId }, query: { projectId, limit, offset } }).then(liveItems),
+          appConfig.requestLimits.labels,
+        );
+      },
+      staleTime: syncStaleTime,
+    }),
+    { organizationId, tenantId, channelId: projectId },
+  );
 };
 
 /** Per label, the project's tasks accepted before the board's cut-off: what the board list leaves out of a label's status counts. */
@@ -150,7 +154,7 @@ const labelCreateOptions = (queryClient: QueryClient): UseMutationOptions<Create
   mutationFn: createLabelMutationFn,
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ tenantId, organizationId, data }) => {
-    await queryClient.cancelQueries({ queryKey: keys.list.org(organizationId) });
+    await cancelKeepingMark(queryClient, keys.list.org(organizationId));
     // The ids live on the request path, not the create body, so carry them onto the row: cache placement resolves the
     // canonical home list from the entity itself, and a delete takes its path from it.
     const optimisticLabels = data.map((row) => createOptimisticEntity(zLabel, { ...row, tenantId, organizationId }));
@@ -182,8 +186,8 @@ const labelUpdateOptions = (
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ organizationId, id, ops }) => {
     const orgKey = keys.list.org(organizationId);
-    await queryClient.cancelQueries({ queryKey: orgKey });
-    await queryClient.cancelQueries({ queryKey: keys.detail.byId(id) });
+    await cancelKeepingMark(queryClient, orgKey);
+    await cancelKeepingMark(queryClient, keys.detail.byId(id));
     const previousLabel = findLabelInCache(id);
     if (previousLabel) patchCachedLabel(queryClient, organizationId, previousLabel, ops);
     return { previousLabel };
@@ -194,7 +198,7 @@ const labelUpdateOptions = (
     handleError('update', error);
     if (context?.previousLabel) {
       cacheUpdate(keys.list.org(variables.organizationId), [context.previousLabel]);
-      queryClient.setQueryData(keys.detail.byId(context.previousLabel.id), context.previousLabel);
+      writeKeepingMark(queryClient, keys.detail.byId(context.previousLabel.id), () => context.previousLabel);
       // Embedded copies carry the optimistic edit and its newer updatedAt beats the restored
       // row in the propagation guard, so hosts recover through a refetch
       invalidateEmbeddingHosts('label', variables.organizationId);
@@ -204,7 +208,7 @@ const labelUpdateOptions = (
     const orgKey = keys.list.org(variables.organizationId);
     const cached = findLabelInCache(updatedLabel.id);
     const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
-    const merged = mergeServerResponse({ cached, serverEntity: updatedLabel, mutatedKeys, derivedKeys: { description: ['keywords'] } });
+    const merged = mergeServerResponse({ queryClient, cached, serverEntity: updatedLabel, mutatedKeys, derivedKeys: { description: ['keywords'] } });
     writeEntityToCache({ entity: merged, listKey: orgKey, detailKey: keys.detail.byId(updatedLabel.id), queryClient });
   },
   onSettled: (_data, error, variables) => {
@@ -221,7 +225,7 @@ const labelDeleteOptions = (queryClient: QueryClient): UseMutationOptions<Delete
     const orgKey = keys.list.org(organizationId);
     const labelIds = rows.map(({ id }) => id);
     removePendingMutations(queryClient, keys.update, labelIds);
-    await queryClient.cancelQueries({ queryKey: orgKey });
+    await cancelKeepingMark(queryClient, orgKey);
     cacheRemove(orgKey, rows);
     removeDetailQueriesById(queryClient, keys.detail.base, labelIds);
     propagateEmbeddedProduct('label', labelIds, 'remove');
