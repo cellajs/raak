@@ -9,12 +9,12 @@ import { cn } from '~/utils/cn';
 
 interface HeroProps {
   title: TKey;
-  children: ReactNode;
-  /** Shown below the call to action, its lower part over the page background past the curve. */
-  demo?: ReactNode;
+  text: TKey;
+  /** Shown below the text, its lower part over the page background past the curve. */
+  demo: ReactNode;
 }
 
-export function Hero({ title, children, demo }: HeroProps) {
+export function Hero({ title, text, demo }: HeroProps) {
   const { t } = useTranslation();
   const theme = useUIStore((state) => state.theme);
   const { ref, inView } = useInView({ once: true, threshold: 0.5 });
@@ -32,55 +32,37 @@ export function Hero({ title, children, demo }: HeroProps) {
     : undefined;
 
   return (
-    <section
-      id="spy-welcome"
-      className={cn(
-        'rich-gradient relative flex flex-col items-center',
-        demo ? 'px-3 pt-20 pb-12 sm:px-4 sm:pt-24' : 'min-h-[90vh] justify-center px-4 py-24 lg:py-32',
-      )}
-    >
+    <section id="spy-welcome" className="rich-gradient relative flex flex-col items-center px-3 pt-20 pb-12 sm:px-4 sm:pt-24">
       <header
         ref={ref}
         className={cn(
-          'flex max-w-4xl flex-col items-center gap-4 text-center transition-[opacity,translate,scale] duration-500 ease-out',
-          demo ? 'w-full' : 'container',
+          'flex w-full max-w-4xl flex-col items-center gap-2 text-center transition-[opacity,translate,scale] duration-500 ease-out',
           !inView && 'translate-y-4 scale-95 opacity-0',
         )}
       >
-        <h1
-          className={cn(
-            'font-heading',
-            demo
-              ? 'mb-2 text-2xl leading-8 sm:text-4xl sm:leading-13 lg:text-5xl lg:leading-15 lg:*:whitespace-normal'
-              : 'mb-6 text-3xl leading-10 sm:mt-6 sm:text-4xl sm:leading-13 md:text-5xl md:leading-18 lg:text-6xl',
-          )}
-        >
+        <h1 className="font-heading text-2xl leading-8 sm:text-4xl sm:leading-13 lg:text-5xl lg:leading-15 lg:*:whitespace-normal">
           <span className={cn('whitespace-pre-line bg-linear-to-br bg-clip-text font-bold', gradientClass)} style={gradientStyle}>
             {t(title)}
           </span>
         </h1>
-        <div>{children}</div>
+        <p className="text-balance text-foreground sm:text-lg lg:text-xl">{t(text)}</p>
       </header>
-      {demo ? (
-        // One boundary for the demo and the block behind it: without the demo the block would cover the call to action
-        <ErrorBoundary
-          fallback={
-            <>
-              <div className="h-[40vh]" />
-              <BackgroundCurve />
-            </>
-          }
-        >
-          <div className="mt-8 w-full lg:mt-10">{demo}</div>
-          <div aria-hidden className="absolute inset-x-0 bottom-0 h-80 bg-background sm:h-96">
-            <div className="absolute inset-x-0 bottom-full">
-              <BackgroundCurve />
-            </div>
+      {/* One boundary for the demo and the block behind it: without the demo the block would cover the text */}
+      <ErrorBoundary
+        fallback={
+          <>
+            <div className="h-[40vh]" />
+            <BackgroundCurve />
+          </>
+        }
+      >
+        <div className="mt-8 w-full lg:mt-10">{demo}</div>
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-80 bg-background sm:h-96">
+          <div className="absolute inset-x-0 bottom-full">
+            <BackgroundCurve />
           </div>
-        </ErrorBoundary>
-      ) : (
-        <BackgroundCurve />
-      )}
+        </div>
+      </ErrorBoundary>
     </section>
   );
 }
