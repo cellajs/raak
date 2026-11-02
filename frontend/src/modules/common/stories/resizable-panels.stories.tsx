@@ -404,17 +404,28 @@ export const ArrowOpensClosedGrower = scenario({ width: 640, panels: ['a', 'b'],
   await expect(board.minWidth()).toBe('870px');
 });
 
-export const GapArrowGoesBelowMin = scenario({ width: 706, panels: ['a', 'b'], layout: { a: 400, b: 300 } }, async (board) => {
+export const ArrowOpensClosedGrowerWithVictimAtMin = scenario(
+  { width: 1364, panels: ['a', 'b', 'c'], layout: { a: 300, b: 50, c: 1000.72 } },
+  async (board) => {
+    await board.press('ArrowLeft');
+    await expect(board.widths()).toEqual({ a: 300, b: 300, c: 751 });
+  },
+);
+
+export const ArrowStopsAtMin = scenario({ width: 706, panels: ['a', 'b'], layout: { a: 400, b: 300 } }, async (board) => {
   await expect(board.widths()).toEqual({ a: 428, b: 322 });
   await board.press('ArrowRight');
   await board.press('ArrowRight');
-  await expect(board.widths()).toEqual({ a: 468, b: 282 });
+  await expect(board.widths()).toEqual({ a: 450, b: 300 });
 });
 
-export const GapArrowCapsGrowerInOverflow = scenario({ width: 1000, panels: ['a', 'b', 'c'], layout: { a: 600, b: 400, c: 300 } }, async (board) => {
-  await board.press('ArrowRight');
-  await expect(board.widths()).toEqual({ a: 600, b: 380, c: 300 });
-});
+export const ArrowGrowerIsUncappedInOverflow = scenario(
+  { width: 1000, panels: ['a', 'b', 'c'], layout: { a: 600, b: 400, c: 300 } },
+  async (board) => {
+    await board.press('ArrowRight');
+    await expect(board.widths()).toEqual({ a: 620, b: 380, c: 300 });
+  },
+);
 
 export const GapCancelledPointerKeepsDragging = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
   await board.pointerDown();

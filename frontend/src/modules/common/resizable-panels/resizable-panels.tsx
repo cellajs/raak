@@ -26,7 +26,7 @@ interface PanelGroupContextValue {
   registerSeparator: (index: number, element: HTMLDivElement) => void;
   unregisterSeparator: (index: number) => void;
   startDrag: (separatorIndex: number, startX: number) => void;
-  applyKeyboardStep: (separatorIndex: number, delta: number) => void;
+  applyKeyboardStep: (separatorIndex: number, delta: number, toLimit?: boolean) => void;
   toggleCollapseAtSeparator: (separatorIndex: number) => void;
 }
 
@@ -230,42 +230,26 @@ export function ResizablePanelGroup({
     return getIdealPanelSum() + getSeparatorSpace() <= parentWidth;
   };
 
-  const applyKeyboardStep = (separatorIndex: number, delta: number) => {
+  // `toLimit` is Home/End: as far as the victim goes, closed if it can. An arrow stops at its minWidth.
+  const applyKeyboardStep = (separatorIndex: number, delta: number, toLimit = false) => {
     sortPanels();
-    // Compute mode before mutating widths so getBoundingClientRect is fresh
-    const autoFill = computeAutoFill();
 
     const panels = panelsRef.current;
     const draggingLeft = delta < 0;
-    const victimIndex = draggingLeft ? separatorIndex : separatorIndex + 1;
-    const growerIndex = draggingLeft ? separatorIndex + 1 : separatorIndex;
-    const victim = panels[victimIndex];
-    const grower = panels[growerIndex];
+    const victim = panels[draggingLeft ? separatorIndex : separatorIndex + 1];
+    const grower = panels[draggingLeft ? separatorIndex + 1 : separatorIndex];
     if (!victim || !grower) return;
 
-    const victimWidth = widthOf(victim);
-    const growerWidth = widthOf(grower);
-    const step = Math.abs(delta);
-
-    let victimShrunk = 0;
-
-    if (!isCollapsed(victim, victimWidth)) {
-      // Keyboard steps clamp without snap-collapse; Enter collapses
-      const minVictimWidth = victim.collapsible ? victim.collapsedWidth : victim.minWidth;
-      const newVictimWidth = Math.max(minVictimWidth, victimWidth - step);
-      victimShrunk = victimWidth - newVictimWidth;
+    if (!isCollapsed(victim)) {
+      const victimWidth = widthOf(victim);
+      const growerWidth = widthOf(grower);
+      const limit = toLimit && victim.collapsible ? victim.collapsedWidth : victim.minWidth;
+      const newVictimWidth = toLimit ? limit : Math.max(limit, victimWidth - Math.abs(delta));
+      const victimShrunk = Math.max(0, victimWidth - newVictimWidth);
       if (victimShrunk > 0) setWidth(victim, newVictimWidth);
-    }
 
-    // Zero-sum: the grower only takes what the victim freed
-    if (victimShrunk > 0) {
-      if (isCollapsed(grower, growerWidth)) {
-        // Expand-on-reverse: collapsed grower snaps to minWidth
-        setWidth(grower, grower.minWidth);
-      } else {
-        const maxGrow = autoFill ? Number.MAX_SAFE_INTEGER : grower.minWidth * 2;
-        setWidth(grower, Math.max(grower.minWidth, Math.min(maxGrow, growerWidth + victimShrunk)));
-      }
+      if (isCollapsed(grower, growerWidth)) setWidth(grower, grower.minWidth);
+      else if (victimShrunk > 0) setWidth(grower, Math.max(grower.minWidth, growerWidth + victimShrunk));
     }
 
     commitLayout();
@@ -673,11 +657,11 @@ export function ResizableSeparator({ index, className, 'aria-label': ariaLabel }
         break;
       case 'Home':
         event.preventDefault();
-        context.applyKeyboardStep(index, -10000);
+        context.applyKeyboardStep(index, -keyboardStep, true);
         break;
       case 'End':
         event.preventDefault();
-        context.applyKeyboardStep(index, 10000);
+        context.applyKeyboardStep(index, keyboardStep, true);
         break;
       case 'Enter':
         event.preventDefault();

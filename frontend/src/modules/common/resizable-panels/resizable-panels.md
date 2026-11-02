@@ -235,5 +235,4 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 
 Where the code differs from the rules above. The commit that fixes one removes its line.
 
-- **G5:** arrow keys can take a panel below `minWidth`, and in overflow mode the grower is capped at `minWidth * 2` while the victim still shrinks.
 - **Pointer:** `pointercancel` does not end a drag, a secondary button starts one, and moves are not filtered by pointer id.
