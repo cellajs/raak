@@ -103,19 +103,25 @@ export const BoardPanel = memo(function BoardPanel({
           <WorkspaceArrivalBalloon project={project} />
         </div>
       ) : (
-        <div ref={panelRef} className={cn('relative flex h-full flex-col', windowScroll && 'min-h-[80vh]')}>
+        <div
+          ref={panelRef} // The header pins to the window, and the bars and card headers below read this to pin under it
+          className={cn('relative flex h-full flex-col', windowScroll && 'min-h-[80vh] [--sticky-stack-nav:3.25rem]')}
+        >
           <TaskPanelHeader
             project={project}
             publicView={publicView}
             statuses={statuses}
             panelId={panelId}
+            windowScroll={windowScroll}
             count={filteredTasks.filter((task) => !isDraftTask(task)).length}
           />
           <WorkspaceArrivalBalloon project={project} />
           <div className="flex min-h-0 flex-1 flex-col">
             <BoardPanelContent
               isCollapsed={isCollapsed}
-              collapsedContent={<TaskPanelCollapsed panelId={panelId} name={projectPanelName(project, statuses)} counts={counts} />}
+              collapsedContent={
+                <TaskPanelCollapsed panelId={panelId} name={projectPanelName(project, statuses)} counts={counts} windowScroll={windowScroll} />
+              }
             >
               <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} windowScroll={windowScroll} />
             </BoardPanelContent>

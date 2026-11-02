@@ -1,6 +1,6 @@
 import { type MouseEvent, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { usePanelDragHandle } from '~/modules/common/board/board-drag';
+import { usePanelCollapse } from '~/modules/common/board/board-drag';
 import { CollapsedPanelView, type CollapsedSection } from '~/modules/common/board/board-panel';
 import { boardFocusStore } from '~/modules/task/board/board-focus-store';
 import { focusPanelOnceListed, setCurrentItem } from '~/modules/task/helpers/focus-item';
@@ -11,14 +11,15 @@ interface CollapsedPanelStripProps {
   name: string;
   mainCount?: number;
   sections?: CollapsedSection[];
+  windowScroll?: boolean;
   className?: string;
 }
 
 /** A collapsed panel's strip: the one item the board's arrow keys reach in it, expanded by Enter or a click. */
 export function CollapsedPanelStrip({ panelId, name, ...viewProps }: CollapsedPanelStripProps) {
   const { t } = useTranslation();
-  const panelDrag = usePanelDragHandle();
-  const canExpand = !!panelDrag;
+  const panelCollapse = usePanelCollapse();
+  const canExpand = !!panelCollapse;
   const stripId = `collapsed-${panelId}`;
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export function CollapsedPanelStrip({ panelId, name, ...viewProps }: CollapsedPa
   }, [panelId, canExpand]);
 
   const handleExpand = (event: MouseEvent<HTMLButtonElement>) => {
-    panelDrag?.onToggleCollapsed();
+    panelCollapse?.onToggleCollapsed();
     // A key press goes on into the list; a click leaves focus to the pointer
     if (event.detail === 0) focusPanelOnceListed(panelId, stripId);
   };

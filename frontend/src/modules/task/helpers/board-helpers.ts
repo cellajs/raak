@@ -50,15 +50,20 @@ const statusListIndex = (status: TaskStatus, startWith: TogglableStatusType) => 
 /** The panel id of a status with a panel of its own. */
 export const statusPanelId = (projectId: string, status: TaskStatus) => `${projectId}-status-${statusOptionsByValue[status].status}`;
 
-/** One panel per project; on a board with status panels, the project's panel keeps the statuses left over. Status panels line up from the status the board starts with, and the project's panel follows them. */
-export const prepareBoardPanels = (projects: EnrichedProject[], statusPanels: TaskStatus[] = [], startWith: TogglableStatusType = 'accepted') =>
+/** One panel per project; on a board with status panels, the project's panel keeps the statuses left over, unless `withoutRest`. Status panels line up from the status the board starts with, and the project's panel follows them. */
+export const prepareBoardPanels = (
+  projects: EnrichedProject[],
+  statusPanels: TaskStatus[] = [],
+  startWith: TogglableStatusType = 'accepted',
+  withoutRest = false,
+) =>
   sortByMembership(projects).flatMap((project): ProjectResizablePanel[] => {
     const panel: ProjectResizablePanel = { kind: 'project', project, panelId: project.id };
     if (!statusPanels.length) return [panel];
 
     const leftOver = statusPath.filter((status) => !statusPanels.includes(status));
     return [
-      ...(leftOver.length ? [{ ...panel, statuses: leftOver, orderOffset: iced + 1 }] : []),
+      ...(leftOver.length && !withoutRest ? [{ ...panel, statuses: leftOver, orderOffset: iced + 1 }] : []),
       ...statusPanels.map((status) => ({
         ...panel,
         panelId: statusPanelId(project.id, status),
@@ -67,6 +72,16 @@ export const prepareBoardPanels = (projects: EnrichedProject[], statusPanels: Ta
       })),
     ];
   });
+
+// The work in progress gets its own columns. The rest panel folds accepted and iced into its bars, which makes four panels at most: all open from a 1280 window.
+const publicStatusPanelOrder = [TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed];
+
+/** The status panels of a public board, whose viewers have no menu and keep no choice. Before the tasks load it assumes all of them, like a skeleton. */
+export const publicBoardPanels = (tasks?: { status: TaskStatus }[]) => {
+  if (!tasks) return { statusPanels: publicStatusPanelOrder, withoutRest: false };
+  const statusPanels = publicStatusPanelOrder.filter((status) => tasks.some((task) => task.status === status));
+  return { statusPanels, withoutRest: tasks.every((task) => statusPanels.includes(task.status)) };
+};
 
 /** Whether a panel folds this status into a bar: when it lists the status among others. */
 export const foldsStatus = (statuses: TaskStatus[] | undefined, status: TaskStatus) =>

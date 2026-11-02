@@ -2,11 +2,13 @@ import { EllipsisVerticalIcon, ExpandIcon, InfoIcon, PlusIcon, SettingsIcon, Sli
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
+import { useMeasure } from '~/hooks/use-measure';
 import { collapsedPanelMinWidth, panelMinWidth } from '~/modules/common/board/board-layout';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { fitPanels } from '~/modules/common/resizable-panels/panel-layout';
 import { idealWidthFactor } from '~/modules/common/resizable-panels/resizable-panels';
 import { SearchField } from '~/modules/common/search-field';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
@@ -60,23 +62,38 @@ export function BoardSkeleton({
   const showExplainer = useShowExplainer(isInWorkspace);
   const extraPanels = buildBoardExtraPanels({ showExplainer, publicView });
 
-  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, projects, extraPanels);
-  const isCollapsed = (panelId: string) => defaultSizes[panelId] <= collapsedPanelMinWidth;
+  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, projects, extraPanels, publicView);
   const panels: SkeletonColumn[] = isMobile ? [{ kind: 'mobile', panelId: 'mobilePanel' }] : boardPanels;
+  const { ref: rowFrameRef, bounds: rowFrame } = useMeasure<HTMLDivElement>();
 
   // The row sizes itself like the live panel group (resizable-panels.md, G6): it fills its parent when every open panel
   // fits at its ideal width, and otherwise scrolls at the ideal or the stored total, whichever is wider.
   const gaps = Math.max(0, panels.length - 1) * columnGap;
+  // A public board fits its parent, with the live group's own function, so the same panels load closed
+  const fitted =
+    publicView && !isMobile && rowFrame.width > 0
+      ? fitPanels({
+          panels: panels.map(({ panelId }) => ({ id: panelId, minWidth: panelMinWidth, collapsedWidth: collapsedPanelMinWidth, collapsible: true })),
+          chosen: defaultSizes,
+          autoCollapsed: [],
+          available: rowFrame.width - gaps,
+        }).widths
+      : undefined;
+  const isCollapsed = (panelId: string) => (fitted?.[panelId] ?? defaultSizes[panelId]) <= collapsedPanelMinWidth;
   const total = (openWidth: (panelId: string) => number) =>
     panels.reduce((sum, { panelId }) => sum + (isCollapsed(panelId) ? collapsedPanelMinWidth : openWidth(panelId)), gaps);
   const ideal = total(() => idealPanelWidth);
   const stored = total((panelId) => defaultSizes[panelId]);
   // `(ideal - 100%) * 9999` is a switch on the parent's width: far above `stored` while the parent is narrower than `ideal`, negative once it fits.
-  const rowMinWidth = isMobile ? undefined : `max(${ideal}px, min(${stored}px, (${ideal}px - 100%) * 9999))`;
+  const rowMinWidth = isMobile || publicView ? undefined : `max(${ideal}px, min(${stored}px, (${ideal}px - 100%) * 9999))`;
 
   // Open columns share the row in proportion to their widths, as the panel group does when it fills its container.
   const columnStyle = (panelId: string) =>
-    isCollapsed(panelId) ? { flex: 'none', width: collapsedPanelMinWidth } : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: panelMinWidth };
+    fitted && !isCollapsed(panelId)
+      ? { flex: 'none', width: fitted[panelId] }
+      : isCollapsed(panelId)
+        ? { flex: 'none', width: collapsedPanelMinWidth }
+        : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: panelMinWidth };
 
   const renderColumn = (panel: SkeletonColumn) => {
     switch (panel.kind) {
@@ -122,6 +139,7 @@ export function BoardSkeleton({
       {withHeader && <BoardHeaderSkeleton isInWorkspace={isInWorkspace} hasProjects={!!projects.length} publicView={publicView} />}
       {/* BoardLayout's frame: a loading board scrolls the page no further than the loaded one. */}
       <div
+        ref={rowFrameRef}
         className={cn(
           'overflow-x-clip',
           !windowScroll && 'sm:h-[calc(100dvh-var(--board-offset-sm,4rem))] md:h-[calc(100dvh-var(--board-offset-md,4.88rem))]',
