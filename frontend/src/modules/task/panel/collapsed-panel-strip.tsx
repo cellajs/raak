@@ -11,6 +11,7 @@ interface CollapsedPanelStripProps {
   name: string;
   mainCount?: number;
   sections?: CollapsedSection[];
+  windowScroll?: boolean;
   className?: string;
 }
 

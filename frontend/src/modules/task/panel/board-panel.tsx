@@ -115,7 +115,9 @@ export const BoardPanel = memo(function BoardPanel({
           <div className="flex min-h-0 flex-1 flex-col">
             <BoardPanelContent
               isCollapsed={isCollapsed}
-              collapsedContent={<TaskPanelCollapsed panelId={panelId} name={projectPanelName(project, statuses)} counts={counts} />}
+              collapsedContent={
+                <TaskPanelCollapsed panelId={panelId} name={projectPanelName(project, statuses)} counts={counts} windowScroll={windowScroll} />
+              }
             >
               <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} windowScroll={windowScroll} />
             </BoardPanelContent>

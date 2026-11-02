@@ -13,9 +13,10 @@ interface TaskPanelCollapsedProps {
   panelId: string;
   name: string;
   counts: TaskCounts;
+  windowScroll?: boolean;
 }
 
-export function TaskPanelCollapsed({ panelId, name, counts }: TaskPanelCollapsedProps) {
+export function TaskPanelCollapsed({ panelId, name, counts, windowScroll }: TaskPanelCollapsedProps) {
   const section = (type: TogglableStatusType, position: CollapsedSection['position']): CollapsedSection[] => {
     if (!foldsSection(type, counts)) return [];
     const { fill, text, border } = statusSectionColors[type];
@@ -23,5 +24,5 @@ export function TaskPanelCollapsed({ panelId, name, counts }: TaskPanelCollapsed
   };
   const sections = [...section('accepted', 'top'), ...section('iced', 'bottom')];
 
-  return <CollapsedPanelStrip panelId={panelId} name={name} mainCount={collapsedMainCount(counts)} sections={sections} />;
+  return <CollapsedPanelStrip panelId={panelId} name={name} mainCount={collapsedMainCount(counts)} sections={sections} windowScroll={windowScroll} />;
 }
