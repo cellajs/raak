@@ -1,162 +1,131 @@
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { ClockIcon, SearchIcon, UserIcon, UsersRoundIcon } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { UsersRoundIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ChannelBase } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useDebounce } from '~/hooks/use-debounce';
-import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { InputTriggerChevron } from '~/modules/common/form-fields/input-trigger-button';
+import { StatusDot, tileTones } from '~/modules/common/expandable-tile';
+import { InlineLinkButton } from '~/modules/common/inline-link-button';
 import { MiddleCut } from '~/modules/common/middle-cut';
 import { inviteCheckQueryOptions } from '~/modules/memberships/query';
-import { Badge } from '~/modules/ui/badge';
-import { Chip } from '~/modules/ui/chip';
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxItem,
-  ComboboxItemIndicator,
-  ComboboxList,
-  ComboboxPrimitive,
-} from '~/modules/ui/combobox';
+import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
+import { focusOnMount } from '~/modules/user/invite-result';
 import { usersListQueryOptions } from '~/modules/user/query';
-import { inviteNote } from '~/modules/user/use-invite-check';
-
-const contentVariants = {
-  hidden: { opacity: 0, y: -5, scale: 0.98 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.1 } },
-  exit: { opacity: 0, y: -5, scale: 0.98, transition: { duration: 0.1 } },
-};
+import { outcomeView } from '~/modules/user/use-invite-check';
+import type { InvitePerson } from '~/modules/user/use-invite-list';
+import { cn } from '~/utils/cn';
 
 interface UserComboboxProps {
-  value: string[];
-  onChange: (emails: string[]) => void;
+  /** Addresses already in the list, which the results leave out. */
+  chosen: string[];
+  onPick: (person: InvitePerson) => void;
   channel: ChannelBase & { organizationId?: string };
+  autoFocus?: boolean;
+  /** Without a match, a way to invite by address. */
+  onToEmail: () => void;
 }
 
-export function UserCombobox({ value, onChange, channel }: UserComboboxProps) {
+/** Search people by name. A pick leaves the field empty for the next search. */
+export function UserCombobox({ chosen, onPick, channel, autoFocus, onToEmail }: UserComboboxProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
 
   const [searchQuery, setSearchQuery] = useState('');
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-
-  // A removed chip unmounts its focused remove button, so focus goes to the trigger and not to the page
-  const handleUnselect = (email: string) => {
-    onChange(value.filter((selected) => selected !== email));
-    triggerRef.current?.focus();
-  };
+  const highlightedRef = useRef<string | undefined>(undefined);
 
   const { data, isFetching } = useInfiniteQuery(usersListQueryOptions({ q: debouncedSearchQuery }));
-
-  const items = data?.pages.flatMap((page) => page.items) ?? [];
+  const items = (data?.pages.flatMap((page) => page.items) ?? []).filter(({ email }) => !chosen.includes(email.toLowerCase()));
 
   // The same check as typed addresses: a member is left out, one invited before shows when
   const resultEmails = items.map((user) => user.email.toLowerCase()).sort();
   const { data: outcomes } = useQuery({ ...inviteCheckQueryOptions(channel, resultEmails), placeholderData: keepPreviousData });
   const outcomeByEmail = new Map((outcomes ?? []).map((outcome) => [outcome.email, outcome]));
+  const isLeftOut = (email: string) => {
+    const outcome = outcomeByEmail.get(email.toLowerCase());
+    return !!outcome && outcomeView(outcome, t).group === 'out';
+  };
+
+  const pick = (person?: (typeof items)[number]) => {
+    if (person) onPick(person);
+    setSearchQuery('');
+  };
 
   return (
-    <Combobox<string, true>
-      multiple
+    <Combobox<string>
       items={items.map((user) => user.email)}
       itemToStringLabel={(email) => email}
       itemToStringValue={(email) => email}
-      value={value}
-      onValueChange={onChange}
+      value={null}
+      onValueChange={(email) => pick(items.find((user) => user.email === email))}
+      onItemHighlighted={(email) => {
+        highlightedRef.current = email;
+      }}
       inputValue={searchQuery}
-      onInputValueChange={setSearchQuery}
+      onInputValueChange={(value, { reason }) => {
+        // Picking fills the input with the pick's label, and the field empties for the next one
+        if (reason !== 'item-press') setSearchQuery(value);
+      }}
       filter={() => true}
     >
-      <div className="relative flex min-h-10 w-full items-center rounded-md border border-input bg-background p-1.5 pr-10">
-        {/* Lies behind the chip row, whose remove buttons cannot nest in a button, and reads out the selection itself */}
-        <ComboboxPrimitive.Trigger
-          ref={triggerRef}
-          render={<button type="button" className="focus-effect absolute inset-0 cursor-pointer rounded-md" />}
-        >
-          <span className="sr-only">{value.length ? value.join(', ') : t('c:search_users')}</span>
-        </ComboboxPrimitive.Trigger>
-        <div className="pointer-events-none relative flex min-w-0 flex-wrap items-center gap-1">
-          {value.length ? (
-            value.map((email) => (
-              <Chip key={email} onRemove={() => handleUnselect(email)} removeLabel={t('c:remove_resource', { resource: email })} className="max-w-60">
-                <MiddleCut text={email} />
-              </Chip>
-            ))
-          ) : (
-            <span aria-hidden="true" className="ml-1 text-sm">
-              {t('c:search_users')}
-            </span>
-          )}
-        </div>
-        <InputTriggerChevron className="pointer-events-none absolute right-0 mx-2" />
-      </div>
+      <ComboboxInput
+        ref={autoFocus ? focusOnMount : undefined}
+        placeholder={t('c:search_users')}
+        showTrigger={false}
+        className="w-full"
+        autoCapitalize="none"
+        autoComplete="off"
+        spellCheck={false}
+        enterKeyHint="enter"
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter') return;
+          // Without a highlighted result it would submit the surrounding form
+          event.preventDefault();
+          // Results arrive after the typing stops, too late for the combobox to highlight the first
+          const isCurrent = searchQuery && searchQuery === debouncedSearchQuery && !isFetching;
+          if (isCurrent && !highlightedRef.current) pick(items.find(({ email }) => !isLeftOut(email)));
+        }}
+      />
 
       <ComboboxContent>
-        <ComboboxSearchInput
-          value={searchQuery}
-          onClear={() => setSearchQuery('')}
-          isSearching={isFetching}
-          placeholder={t('c:placeholder.type_input', { inputLabel: t('c:name') })}
-        />
         <ComboboxList>
-          <AnimatePresence mode="wait">
-            {!isFetching && !items.length ? (
-              <motion.div key="empty-state" initial="hidden" animate="visible" exit="exit" variants={contentVariants}>
-                <ComboboxEmpty>
-                  {debouncedSearchQuery.length ? (
-                    <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleOptions={{ resource: t('c:user_other') }} />
-                  ) : (
-                    <ContentPlaceholder icon={UsersRoundIcon} title="c:invite_members_search.text" />
-                  )}
-                </ComboboxEmpty>
-              </motion.div>
+          <ComboboxEmpty>
+            {isFetching ? null : debouncedSearchQuery.length ? (
+              <p className="p-2">
+                {t('c:invite_search_none')} <InlineLinkButton onClick={onToEmail}>{t('c:invite_by_email')}</InlineLinkButton>
+              </p>
             ) : (
-              items.length > 0 && (
-                <motion.div key="results" initial="hidden" animate="visible" exit="exit" variants={contentVariants}>
-                  {items.map(({ id, name, email, entityType, thumbnailUrl }) => {
-                    const outcome = outcomeByEmail.get(email.toLowerCase());
-                    const alreadyMember = outcome?.outcome === 'member';
-                    const invitedNote = outcome?.outcome === 'remind' ? inviteNote(outcome, t) : undefined;
-                    return (
-                      <ComboboxItem key={id} value={email} disabled={alreadyMember} className="group/user-item justify-between">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <EntityAvatar type={entityType} className="size-8" id={id} name={name} url={thumbnailUrl} />
-                          <span className="link-decoration group-active/user-item:link-decoration-strong truncate font-medium group-hover/user-item:underline">
-                            {isMobile ? <MiddleCut text={email} /> : name}
-                          </span>
-                        </div>
-
-                        <div className="flex min-w-0 items-center gap-2">
-                          <Badge size="sm" soft className="hidden group-data-disabled/user-item:flex">
-                            <UserIcon />
-                            <span className="max-sm:hidden">{t('c:already_member')}</span>
-                          </Badge>
-                          {invitedNote && (
-                            <Badge size="sm" soft>
-                              <ClockIcon />
-                              <span className="max-sm:hidden">{invitedNote}</span>
-                            </Badge>
-                          )}
-                          <MiddleCut
-                            text={email}
-                            className="group-data-disabled/user-item:hidden group-data-selected/user-item:hidden max-sm:hidden"
-                          />
-                          <ComboboxItemIndicator />
-                        </div>
-                      </ComboboxItem>
-                    );
-                  })}
-                </motion.div>
-              )
+              <ContentPlaceholder icon={UsersRoundIcon} title="c:invite_search_empty" />
             )}
-          </AnimatePresence>
+          </ComboboxEmpty>
+          {items.map(({ id, name, email, entityType, thumbnailUrl }) => {
+            const outcome = outcomeByEmail.get(email.toLowerCase());
+            const view = outcome ? outcomeView(outcome, t) : null;
+            return (
+              <ComboboxItem key={id} value={email} disabled={isLeftOut(email)} className="group/user-item justify-between">
+                <div className="flex min-w-0 items-center gap-2">
+                  <EntityAvatar type={entityType} className="size-8" id={id} name={name} url={thumbnailUrl} />
+                  <span className="link-decoration group-active/user-item:link-decoration-strong truncate font-medium group-hover/user-item:underline">
+                    {isMobile ? <MiddleCut text={email} /> : name}
+                  </span>
+                </div>
+
+                <div className="flex min-w-0 items-center gap-2">
+                  {view && view.group !== 'new' ? (
+                    <span className="flex shrink-0 items-center gap-1.5 text-sm">
+                      <StatusDot tone={view.tone} />
+                      <span className={cn('font-medium max-sm:hidden', tileTones[view.tone].text)}>{view.word}</span>
+                    </span>
+                  ) : (
+                    <MiddleCut text={email} className="max-sm:hidden" />
+                  )}
+                </div>
+              </ComboboxItem>
+            );
+          })}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>

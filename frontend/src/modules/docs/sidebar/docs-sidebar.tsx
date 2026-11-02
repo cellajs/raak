@@ -20,7 +20,7 @@ export function DocsSidebar() {
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <SidebarContent className="min-h-dvh flex-none overflow-visible bg-card pt-2 pb-12">
+    <SidebarContent className="min-h-dvh flex-none overflow-visible pt-2 pb-12">
       <div aria-hidden="true" className="sticky top-0 z-20 -mb-4 h-2 bg-card" />
 
       <div className="my-2 flex items-center gap-2 px-4 pt-2">

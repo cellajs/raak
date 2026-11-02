@@ -8,10 +8,10 @@ import type { NavItemId } from '~/modules/navigation/types';
 import { cn } from '~/utils/cn';
 import { tw } from '~/utils/tw';
 
-/** Places a nav sheet beside the nav bar on sm+, at the screen edge without one; while keepNavOpen it trades its shadow for a border. */
+/** Card-colored; places a nav sheet beside the nav bar on sm+, at the screen edge without one; while keepNavOpen it trades its shadow for a border. */
 const navSheetClassName = cn(
   tw(
-    'xs:max-w-80 max-sm:shadow-[0_0_2px_5px_rgba(0,0,0,0.1)] sm:z-90 sm:w-80 sm:group-[.keep-nav-open]/body:border-r sm:group-[.keep-nav-open]/body:shadow-none dark:max-sm:shadow-[0_0_2px_5px_rgba(255,255,255,0.05)]',
+    'xs:max-w-80 [--sheet-bg:var(--card)] sm:z-90 sm:w-80 sm:group-[.keep-nav-open]/body:border-r sm:group-[.keep-nav-open]/body:shadow-none max-sm:[--sheet-edge-shadow:0_0_2px_5px_rgba(0,0,0,0.1)] dark:max-sm:[--sheet-edge-shadow:0_0_2px_5px_rgba(255,255,255,0.05)]',
   ),
   appConfig.navigation.navBar ? 'sm:left-16' : 'sm:left-0',
 );
@@ -55,7 +55,7 @@ export function openNavSheet(
     sheeter.getState().create(content, { ...data, id: `${id}-sheet`, disablePointerDismissal: true });
     return;
   }
-  // Outside-press is gated by `keepNavOpen` in the sheeter's onOpenChange; disabling it here suppresses the event entirely.
+  // The sheeter disables outside-press while pinned; disabling it here suppresses the event in every state.
   sheeter.getState().replace(content, { ...data, id: navSheetId, disablePointerDismissal: false, autoScrollOnDrag: 'vertical' });
 }
 
@@ -63,6 +63,12 @@ export function openNavSheet(
 export function showMenuOrganization(organization: SheetOrganization) {
   navigationStore.getState().setNavSheetOpen('menu', organization.id);
   sheeter.getState().update(navSheetId, navSheetIdentity('menu', organization));
+}
+
+/** Closes a sheet stacked over the menu sheet, if one is open. */
+export function closeStackedNavSheet() {
+  const { navSheetOpen } = navigationStore.getState();
+  if (navSheetOpen) sheeter.getState().remove(`${navSheetOpen}-sheet`);
 }
 
 /** Closes the nav sheet and clears which nav item has it open. */
