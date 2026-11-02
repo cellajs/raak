@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.2.0](https://github.com/cellajs/raak/compare/0.1.27...0.2.0) (2026-11-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* every project in a workspace, Delivered status retired, public project indicators, phone search ([#251](https://github.com/cellajs/raak/issues/251))
+
+### 🎉 New features
+
+* every project in a workspace, Delivered status retired, public project indicators, phone search ([#251](https://github.com/cellajs/raak/issues/251)) ([6e4da95](https://github.com/cellajs/raak/commit/6e4da95d97a890ec5d981ba8ed00b918f1aa5b91))
+* **task:** public project page splits by status, resizable panels get a must-fit mode ([#253](https://github.com/cellajs/raak/issues/253)) ([af9af23](https://github.com/cellajs/raak/commit/af9af2319a2b9eaf9377d2ad5b3bfac07f713d04))
+
+
+### 🐞 Bug fixes
+
+* **task:** public views are read-only for everyone, members included ([#221](https://github.com/cellajs/raak/issues/221)) ([13a007a](https://github.com/cellajs/raak/commit/13a007adbe88651f98f36f1a0149e33f41222409))
+* **task:** task card header no longer pins while scrolling ([cdb2601](https://github.com/cellajs/raak/commit/cdb2601c9e949ca24361a199cf2d6264ac65bd15))
+
+
+### 🧹 Chores
+
+* upgrade cella to v0.33.0 (f63a22dcb) ([#252](https://github.com/cellajs/raak/issues/252)) ([aadf7cc](https://github.com/cellajs/raak/commit/aadf7cc9bd0713b081e7b6df50c2d3e1193ff21c))
+
 ## [0.1.27](https://github.com/cellajs/raak/compare/0.1.26...0.1.27) (2026-11-01)
 
 
