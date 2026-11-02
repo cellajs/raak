@@ -13,12 +13,12 @@ import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
 import { WorkspaceActionButtons } from '~/modules/workspace/header/action-buttons';
 
-export function BoardHeader({
-  boardId,
-  projects,
-  workspace,
-  publicView,
-}: Pick<ResolvedBoardProps, 'boardId' | 'projects' | 'workspace' | 'publicView'>) {
+interface BoardHeaderProps extends Pick<ResolvedBoardProps, 'boardId' | 'projects' | 'workspace' | 'publicView'> {
+  /** False where only the board can render, such as the about page demo. */
+  viewToggle?: boolean;
+}
+
+export function BoardHeader({ boardId, projects, workspace, publicView, viewToggle = true }: BoardHeaderProps) {
   const isInWorkspace = !!workspace;
   // A project page holds its project's controls in this bar; a workspace in each panel, a public view none
   const pageProject = isInWorkspace || publicView ? undefined : projects[0];
@@ -57,8 +57,9 @@ export function BoardHeader({
               <LabelsDrawerButton entity={workspace ? 'workspace' : 'project'} entityId={workspace?.id ?? boardId} />
             )}
             {pageProject && <StatusPanelsMenu boardId={boardId} className="max-sm:hidden" />}
-            <DisplayOptions className="max-sm:hidden" />
-            <FocusView iconOnly />
+            {viewToggle && <DisplayOptions className="max-sm:hidden" />}
+            {/* Focus view hides app chrome, which public pages do not have */}
+            {!publicView && <FocusView iconOnly />}
           </>
         }
       />

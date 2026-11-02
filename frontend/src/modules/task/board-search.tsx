@@ -41,7 +41,9 @@ export function BoardSearchBar({ projects, isInWorkspace, publicView, total, lea
   } = useSearchParams<BoardSearchParams>();
 
   const isFiltered = isBoardSearchActive(search);
-  const label = t('c:search_in_resource', { resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace') }) : t('c:project') });
+  const label = t('c:search_in_resource', {
+    resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace') }) : t(projects.length > 1 ? 'c:project_other' : 'c:project'),
+  });
   const reset = () => setSearch({ q: '', status: undefined, type: undefined, labels: undefined });
 
   // No bar padding from `sm` up: --board-offset-* leaves room for the field's row alone, and more would scroll the page

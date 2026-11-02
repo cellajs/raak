@@ -16,15 +16,15 @@ import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 
 interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'statuses'> {
-  isInWorkspace: boolean;
+  showProject: boolean;
   isCollapsed: boolean;
   count: number;
 }
 
-function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: PanelLeadingProps) {
+function PanelLeading({ project, statuses, showProject, isCollapsed, count }: PanelLeadingProps) {
   const { t } = useTranslation();
 
-  if (isInWorkspace) {
+  if (showProject) {
     return (
       <PanelDragHandleButton
         name={project.name}
@@ -52,13 +52,13 @@ function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: 
   );
 }
 
-interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses'> {
+interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses' | 'showProject'> {
   panelId: string;
   count: number;
 }
 
 /** A project's panel header. */
-export function TaskPanelHeader({ project, publicView, statuses, panelId, count }: TaskPanelHeaderProps) {
+export function TaskPanelHeader({ project, publicView, statuses, showProject, panelId, count }: TaskPanelHeaderProps) {
   const { t } = useTranslation();
 
   const isInWorkspace = useIsWorkspaceRoute();
@@ -68,7 +68,8 @@ export function TaskPanelHeader({ project, publicView, statuses, panelId, count 
 
   const actionsSlot = !isCollapsed ? (
     <>
-      {isReadOnly && panelId === project.id && (
+      {/* A public board is read-only for every visitor, so the badge would tell nobody anything */}
+      {isReadOnly && !publicView && panelId === project.id && (
         <Badge soft className="font-normal text-xs">
           {t('c:read_only')}
         </Badge>
@@ -81,7 +82,9 @@ export function TaskPanelHeader({ project, publicView, statuses, panelId, count 
   return (
     <BoardPanelHeader
       className="bg-card"
-      leading={<PanelLeading project={project} statuses={statuses} isInWorkspace={isInWorkspace} isCollapsed={isCollapsed} count={count} />}
+      leading={
+        <PanelLeading project={project} statuses={statuses} showProject={isInWorkspace || !!showProject} isCollapsed={isCollapsed} count={count} />
+      }
       actions={actionsSlot}
       isCollapsed={isCollapsed}
     />
