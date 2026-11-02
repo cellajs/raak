@@ -43,6 +43,41 @@ interface CarriedCard {
   height: number;
 }
 
+/** The real divider drag: the panel group follows the pointer on the document, and a scripted pointer has nothing to capture. */
+const playDividerDrag = async (divider: HTMLElement, travel: number, sleep: DemoStage['sleep'], onMove: (clientX: number) => void) => {
+  const { left, width, top, height } = divider.getBoundingClientRect();
+  const startX = left + width / 2;
+  const pointer = (type: string, clientX: number) =>
+    new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+      isPrimary: true,
+      buttons: 1,
+      clientX,
+      clientY: top + height / 2,
+    });
+
+  divider.setPointerCapture = noop;
+  // The group follows any pointer, and the visitor's mouse must not pull the divider around
+  window.addEventListener('pointermove', keepRealPointerOut, true);
+  window.addEventListener('pointerup', keepRealPointerOut, true);
+  divider.dispatchEvent(pointer('pointerdown', startX));
+  try {
+    for (let step = 1; step <= dragSteps; step += 1) {
+      await sleep(16);
+      const clientX = startX + travel * easeInOut(step / dragSteps);
+      document.dispatchEvent(pointer('pointermove', clientX));
+      onMove(clientX);
+    }
+  } finally {
+    document.dispatchEvent(pointer('pointerup', startX + travel));
+    window.removeEventListener('pointermove', keepRealPointerOut, true);
+    window.removeEventListener('pointerup', keepRealPointerOut, true);
+  }
+};
+
 const clearSharedStores = () => {
   useBoardFocusStore.getState().reset();
   useUnseenTasksStore.getState().clear();
@@ -163,40 +198,10 @@ export function DemoBoard() {
         const travel = Math.min(distance, frame.right - start.right - panelMinWidth);
         if (travel <= 0) return;
 
-        const startX = start.left + start.width / 2;
-        const clientY = start.top + start.height / 2;
-        const pointer = (type: string, clientX: number) =>
-          new PointerEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            pointerId: 1,
-            pointerType: 'mouse',
-            isPrimary: true,
-            buttons: 1,
-            clientX,
-            clientY,
-          });
-
-        // The real drag: the group follows the pointer on the document, and a scripted pointer has nothing to capture
-        divider.setPointerCapture = noop;
-        // The group follows any pointer, and the visitor's mouse must not pull the divider around
-        window.addEventListener('pointermove', keepRealPointerOut, true);
-        window.addEventListener('pointerup', keepRealPointerOut, true);
-        divider.dispatchEvent(pointer('pointerdown', startX));
         setCursor((current) => ({ ...current, pressed: true, tracking: true }));
-        try {
-          for (let step = 1; step <= dragSteps; step += 1) {
-            await stage.sleep(16);
-            const clientX = startX + travel * easeInOut(step / dragSteps);
-            document.dispatchEvent(pointer('pointermove', clientX));
-            setCursor((current) => ({ ...current, x: clientX - frame.left }));
-          }
-        } finally {
-          document.dispatchEvent(pointer('pointerup', startX + travel));
-          window.removeEventListener('pointermove', keepRealPointerOut, true);
-          window.removeEventListener('pointerup', keepRealPointerOut, true);
-          setCursor((current) => ({ ...current, pressed: false, tracking: false }));
-        }
+        await playDividerDrag(divider, travel, stage.sleep, (clientX) => setCursor((current) => ({ ...current, x: clientX - frame.left }))).finally(
+          () => setCursor((current) => ({ ...current, pressed: false, tracking: false })),
+        );
       },
       showProject: setPhoneProjectId,
       reset: async () => {
