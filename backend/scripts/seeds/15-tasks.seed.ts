@@ -339,7 +339,7 @@ const tasksSeed = async () => {
       userId: string;
       role: 'admin' | 'member';
       projectIds: string[];
-      archived?: boolean;
+      archivedProjectIds?: string[];
     }>;
   };
 
@@ -382,7 +382,7 @@ const tasksSeed = async () => {
         userId: defaultAdminUser.id,
         role: 'member',
         projectIds: sharedProjectIds,
-        archived: faker.datatype.boolean(0.5),
+        archivedProjectIds: faker.datatype.boolean(0.5) ? sharedProjectIds.slice(0, 1) : [],
       });
       adminSharedOrgIds.add(organization.id);
       for (const projectId of sharedProjectIds) adminFiledProjectIds.add(projectId);
@@ -419,7 +419,6 @@ const tasksSeed = async () => {
       allPass2Memberships.push({
         ...wsMembership,
         role: member.role,
-        ...(member.archived != null && { archived: member.archived }),
         ...(member.role !== 'admin' && { displayOrder: adminDisplayOrder }),
       });
       if (member.role !== 'admin') adminDisplayOrder += 10;
@@ -433,14 +432,15 @@ const tasksSeed = async () => {
         if (seenProjectMemberships.has(key)) continue;
         seenProjectMemberships.add(key);
 
-        allPass2Memberships.push(
-          mockChannelMembership(
+        allPass2Memberships.push({
+          ...mockChannelMembership(
             'project',
             { id: projectId, tenantId: projData.tenantId } as Parameters<typeof mockChannelMembership>[1],
             { id: member.userId },
             { organizationId: projData.organizationId, workspaceId },
           ),
-        );
+          archived: !!member.archivedProjectIds?.includes(projectId),
+        });
       }
     }
   }

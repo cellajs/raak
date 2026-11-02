@@ -1,22 +1,19 @@
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { BaseEntityGrid } from '~/modules/entities/entity-grid';
+import { useMenu } from '~/modules/navigation/menu-sheet/helpers/use-menu';
+import { useCurrentUser } from '~/modules/user/user-store';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { WorkspaceTile } from '~/modules/workspace/workspace-tile';
 
 export function WorkspacesGrid() {
-  const {
-    rows: entities,
-    isLoading,
-    isFetching,
-    error,
-    hasNextPage,
-    fetchMore,
-  } = useInfiniteRows(workspacesListQueryOptions({ excludeArchived: 'true' }));
+  const user = useCurrentUser();
+  const { menu } = useMenu(user.id);
+  const { rows: entities, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(workspacesListQueryOptions({}));
 
   return (
     <BaseEntityGrid
       label="c:workspace"
-      renderTile={(entity) => <WorkspaceTile entity={entity} />}
+      renderTile={(entity) => <WorkspaceTile entity={entity} menuItem={menu.workspace.find((item) => item.id === entity.id)} />}
       skeletonHeight={72}
       entities={entities}
       isLoading={isLoading}

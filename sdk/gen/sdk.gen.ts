@@ -3034,7 +3034,7 @@ export const createWorkspaces = <ThrowOnError extends boolean = true>(
 /**
  * Get list of workspaces
  *
- * Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.
+ * Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, and q to search by workspace name.
  *
  * **GET /workspaces** ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/workspaces) ·· _workspaces · app · channel_
  *
@@ -3046,7 +3046,6 @@ export const createWorkspaces = <ThrowOnError extends boolean = true>(
  * @param {integer=} options.query.limit - `integer` (optional)
  * @param {string=} options.query.organizationId - `string` (optional)
  * @param {enum=} options.query.role - `enum` (optional)
- * @param {enum | boolean=} options.query.excludeArchived - `enum | boolean` (optional)
  * @param {string=} options.query.include - `string` (optional)
  * @returns Possible status codes: 200, 400, 401
  */

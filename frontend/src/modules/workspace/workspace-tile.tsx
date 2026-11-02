@@ -1,23 +1,26 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
+import { CountBadge } from '~/modules/common/count-badge';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { ChannelTileCard, ChannelTileHeading, ChannelTileRow } from '~/modules/entities/entity-grid/channel-tile';
-import { projectsListQueryOptions } from '~/modules/project/query';
+import type { UserMenuItem } from '~/modules/me/types';
+import { sortAndFilterMenu } from '~/modules/navigation/menu-sheet/helpers/sort-and-filter-menu';
+import { menuUnseenChannelIds } from '~/modules/navigation/menu-sheet/helpers/use-menu-item-unseen-count';
+import { useUnseenCount } from '~/modules/seen/use-unseen-count';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 
 interface WorkspaceTileProps {
   entity: Workspace;
+  /** Its row in the user's menu, which holds its projects and decides what counts as unseen. */
+  menuItem?: UserMenuItem;
 }
 
-/** Reads the all-projects query the menu already fetched, so there is no per-workspace fetch. */
-export function WorkspaceTile({ entity }: WorkspaceTileProps) {
+export function WorkspaceTile({ entity, menuItem }: WorkspaceTileProps) {
   const { t } = useTranslation();
 
-  const { data: projects = [] } = useInfiniteQuery({
-    ...projectsListQueryOptions({}),
-    select: (data) => data.pages.flatMap((page) => page.items).filter((project) => project.membership?.workspaceId === entity.id),
-  });
+  const projects = sortAndFilterMenu(menuItem?.submenu ?? [], false);
+  const archivedCount = (menuItem?.submenu?.length ?? 0) - projects.length;
+  const unseenCount = useUnseenCount(menuItem ? menuUnseenChannelIds(menuItem, true) : []);
 
   const leading = (
     <div className="flex min-w-14 items-center justify-center">
@@ -43,7 +46,11 @@ export function WorkspaceTile({ entity }: WorkspaceTileProps) {
 
   const meta = (
     <div className="truncate text-muted-foreground text-xs sm:text-sm">
-      {projects.length > 0 ? projects.map((project) => project.name).join(', ') : t('c:no_resource_yet', { resource: t('c:project_other') })}
+      {projects.length > 0
+        ? projects.map((project) => project.name).join(', ')
+        : archivedCount > 0
+          ? `${t('c:archived')} · ${archivedCount}`
+          : t('c:no_resource_yet', { resource: t('c:project_other') })}
     </div>
   );
 
@@ -51,6 +58,7 @@ export function WorkspaceTile({ entity }: WorkspaceTileProps) {
     <ChannelTileCard entity={entity}>
       <ChannelTileRow>
         <ChannelTileHeading leading={leading} meta={meta} />
+        {unseenCount > 0 && <CountBadge count={unseenCount} className="shrink-0" />}
       </ChannelTileRow>
     </ChannelTileCard>
   );

@@ -48,12 +48,11 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
     order = defaultOrderFor(sort),
     organizationId,
     role,
-    excludeArchived,
     include,
     limit = appConfig.requestLimits.default,
   } = params;
 
-  const filters = { q, sort, order, organizationId, role, excludeArchived };
+  const filters = { q, sort, order, organizationId, role };
   return infiniteQueryOptions({
     queryKey: keys.list.filtered(filters),
     ...offsetPaging(limit, (offset, signal) => getWorkspaces({ query: { ...filters, include, ...pageQuery(limit, offset) }, signal })),
