@@ -69,7 +69,7 @@ export function BoardSkeleton({
   // The row sizes itself like the live panel group (resizable-panels.md, G6): it fills its parent when every open panel
   // fits at its ideal width, and otherwise scrolls at the ideal or the stored total, whichever is wider.
   const gaps = Math.max(0, panels.length - 1) * columnGap;
-  // A public board fits its parent instead, with the live group's own function, so the same panels load closed
+  // A public board fits its parent, with the live group's own function, so the same panels load closed
   const fitted =
     publicView && !isMobile && rowFrame.width > 0
       ? fitPanels({
