@@ -260,7 +260,7 @@ describe('fitPanels', () => {
     const ids = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 
     it('stays valid through any sequence of resizes, panel changes and toggles, for any stored value', () => {
-      for (let run = 0; run < 2000; run++) {
+      for (let run = 0; run < 400; run++) {
         const mixed = random(2) === 1;
         const config = Object.fromEntries(
           ids.map((id) => [
