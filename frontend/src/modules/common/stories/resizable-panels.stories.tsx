@@ -427,19 +427,29 @@ export const ArrowGrowerIsUncappedInOverflow = scenario(
   },
 );
 
-export const GapCancelledPointerKeepsDragging = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
+export const CancelledPointerAbortsDrag = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
   await board.pointerDown();
   board.pointerMove(-20);
   board.cancelPointer();
   board.pointerMove(-120);
-  await expect(board.widths()).toEqual({ a: 480, b: 713 });
+  await expect(board.widths()).toEqual({ a: 600, b: 593 });
+  await board.pointerUp();
+  await expect(board.saves).toHaveLength(0);
+});
+
+export const OtherPointerIsIgnored = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
+  await board.pointerDown();
+  board.pointerMove(-100, 2);
+  await expect(board.widths()).toEqual({ a: 600, b: 593 });
+  board.pointerMove(-50);
+  await expect(board.widths()).toEqual({ a: 550, b: 643 });
   await board.pointerUp();
 });
 
-export const GapSecondaryButtonStartsDrag = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
+export const SecondaryButtonIsIgnored = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
   await board.pointerDown(0, 2);
   board.pointerMove(-100);
-  await expect(board.widths()).toEqual({ a: 500, b: 693 });
+  await expect(board.widths()).toEqual({ a: 600, b: 593 });
   await board.pointerUp();
 });
 

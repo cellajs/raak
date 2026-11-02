@@ -25,7 +25,7 @@ interface PanelGroupContextValue {
   unregisterPanel: (id: string) => void;
   registerSeparator: (index: number, element: HTMLDivElement) => void;
   unregisterSeparator: (index: number) => void;
-  startDrag: (separatorIndex: number, startX: number) => void;
+  startDrag: (separatorIndex: number, startX: number, pointerId: number) => void;
   applyKeyboardStep: (separatorIndex: number, delta: number, toLimit?: boolean) => void;
   toggleCollapseAtSeparator: (separatorIndex: number) => void;
 }
@@ -156,7 +156,7 @@ export function ResizablePanelGroup({
 }: ResizablePanelGroupProps) {
   const panelsRef = useRef<PanelEntry[]>([]);
   const widthsRef = useRef<Record<string, number>>({});
-  const dragRef = useRef<DragState | null>(null);
+  const dragRef = useRef<(DragState & { pointerId: number }) | null>(null);
   const expandedWidthsRef = useRef<Record<string, number>>({});
   const refitPendingRef = useRef(false);
   const separatorsRef = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -274,7 +274,7 @@ export function ResizablePanelGroup({
     if (leftPanel) togglePanel(leftPanel.id);
   };
 
-  const startDrag = (separatorIndex: number, startX: number) => {
+  const startDrag = (separatorIndex: number, startX: number, pointerId: number) => {
     sortPanels();
     const collapsedAtStart = new Set<string>();
     const initialWidths: Record<string, number> = {};
@@ -284,7 +284,7 @@ export function ResizablePanelGroup({
       if (isCollapsed(panel)) collapsedAtStart.add(panel.id);
     }
 
-    dragRef.current = { separatorIndex, startX, autoFill: computeAutoFill(), initialWidths, collapsedAtStart };
+    dragRef.current = { separatorIndex, startX, pointerId, autoFill: computeAutoFill(), initialWidths, collapsedAtStart };
 
     // clientWidth leaves out the border, which the board draws in the background color
     const separatorWidth = separatorsRef.current.get(separatorIndex)?.clientWidth;
@@ -523,15 +523,25 @@ export function ResizablePanelGroup({
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
       const drag = dragRef.current;
-      if (!drag) return;
+      if (drag?.pointerId !== event.pointerId) return;
       applyLayoutResult(resolveLayout(panelsRef.current, drag, event.clientX - drag.startX), event.clientY);
     };
 
+    const handlePointerUp = (event: PointerEvent) => {
+      if (dragRef.current?.pointerId === event.pointerId) endDrag();
+    };
+
+    const handlePointerCancel = (event: PointerEvent) => {
+      if (dragRef.current?.pointerId === event.pointerId) abortDrag();
+    };
+
     document.addEventListener('pointermove', handlePointerMove);
-    document.addEventListener('pointerup', endDrag);
+    document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerCancel);
     return () => {
       document.removeEventListener('pointermove', handlePointerMove);
-      document.removeEventListener('pointerup', endDrag);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerCancel);
       clearCursorOverride();
     };
   }, []);
@@ -627,7 +637,7 @@ export function ResizableSeparator({ index, className, 'aria-label': ariaLabel }
   const lastPointerDownRef = useRef(0);
 
   const handlePointerDown: PointerEventHandler<HTMLDivElement> = (event) => {
-    if (!context || !separatorRef.current) return;
+    if (!context || !separatorRef.current || event.button !== 0) return;
     event.preventDefault();
 
     const now = Date.now();
@@ -641,7 +651,7 @@ export function ResizableSeparator({ index, className, 'aria-label': ariaLabel }
     separatorRef.current.setPointerCapture(event.pointerId);
     separatorRef.current.setAttribute('data-separator', 'drag');
     separatorRef.current.focus();
-    context.startDrag(index, event.clientX);
+    context.startDrag(index, event.clientX, event.pointerId);
   };
 
   const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {

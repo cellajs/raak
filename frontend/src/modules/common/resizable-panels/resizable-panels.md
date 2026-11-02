@@ -1,6 +1,6 @@
 # Resizable panels: rules & visual examples
 
-These rules state what the component does and is meant to do. Where the code still differs, the rule says so and [Known gaps](#known-gaps) lists it. Rule ids are stable: code comments refer to them, so a removed rule leaves a gap in the numbering. Rule ids name their tests.
+These rules state what the component does and is meant to do. Rule ids are stable: code comments refer to them, so a removed rule leaves a gap in the numbering. Rule ids name their tests.
 
 Diagram conventions:
 
@@ -192,6 +192,7 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 - **L4, reorder:** widths stay with their panels and a separator stays at its index, so it now sits between other panels. Every separator-index lookup re-sorts by DOM order. A reorder saves nothing.
 - **L5, group `id`:** a new `id` re-registers every panel against `defaultLayout`. With the same `id`, a changed `defaultLayout` is only read when a panel registers.
 - **L6, panel set changes during a drag:** the drag aborts. Widths go back to the drag's start, nothing is saved, and the rest of that pointer gesture is ignored.
+- **L8, pointer:** only the primary button starts a drag, only the pointer that started it moves it, and a `pointercancel` aborts it as in L6.
 - **L7, observers:** a `ResizeObserver` watches the container and its parent, on both axes, and refits unless a drag runs. On a board whose height follows its lists, a list changing height therefore refits too.
 
 ## Refit (redistributePanels)
@@ -230,9 +231,3 @@ The expand cost (`minWidth - collapsedWidth`) is subtracted from the remaining d
 - **C2, sizes:** `minWidth` and `collapsedWidth` are per panel, and `collapsible` can be off. The API supports mixing them, and they follow the same rules, but every consumer today uses one size and collapsible panels.
 - **C3, direction:** left to right only.
 - **C4, separators:** separator `i` sits between panels `i` and `i + 1`, so `index` has no gaps.
-
-## Known gaps
-
-Where the code differs from the rules above. The commit that fixes one removes its line.
-
-- **Pointer:** `pointercancel` does not end a drag, a secondary button starts one, and moves are not filtered by pointer id.
