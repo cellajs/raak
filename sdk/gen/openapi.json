@@ -17938,7 +17938,7 @@
         "operationId": "handleMcp",
         "tags": ["mcp", "cella"],
         "summary": "MCP endpoint",
-        "description": "Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to; in a batch it gets its own insufficient_scope error, the other calls keep their results, and the 200 carries the challenge.",
+        "description": "Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A missing or invalid token answers 401 with a WWW-Authenticate challenge naming where to find the authorization server metadata. A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to; in a batch it gets its own insufficient_scope error, the other calls keep their results, and the 200 carries the challenge.",
         "x-enabled-by": {
           "service": "mcp"
         },
@@ -18002,6 +18002,16 @@
           },
           "403": {
             "description": "Insufficient scope: the call needs a scope the token lacks, which the WWW-Authenticate challenge names",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string",
+                  "description": "The scope to step up to, and where to find the authorization server's metadata."
+                },
+                "required": true,
+                "description": "The scope to step up to, and where to find the authorization server's metadata."
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -19279,6 +19289,7 @@
                       "role": "member",
                       "createdAt": "2024-11-21T01:19:53.533Z",
                       "remindedAt": "2024-11-21T01:19:53.533Z",
+                      "linkExpiresAt": "2024-11-21T01:19:53.533Z",
                       "createdBy": {
                         "id": "617f1449-7605-4cc9-8f52-1e3f100f6db2",
                         "kind": "user",
@@ -19293,6 +19304,7 @@
                       "role": "member",
                       "createdAt": "2024-10-29T04:35:17.725Z",
                       "remindedAt": "2024-10-29T04:35:17.725Z",
+                      "linkExpiresAt": "2024-10-29T04:35:17.725Z",
                       "createdBy": {
                         "id": "ba7cf4de-5ede-48cc-9fef-453bf074c2ef",
                         "kind": "user",
@@ -19330,6 +19342,9 @@
                           "remindedAt": {
                             "type": ["string", "null"]
                           },
+                          "linkExpiresAt": {
+                            "type": ["string", "null"]
+                          },
                           "createdBy": {
                             "anyOf": [
                               {
@@ -19341,7 +19356,7 @@
                             ]
                           }
                         },
-                        "required": ["id", "email", "role", "createdAt", "remindedAt", "createdBy"]
+                        "required": ["id", "email", "role", "createdAt", "remindedAt", "linkExpiresAt", "createdBy"]
                       }
                     },
                     "total": {

@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { BriefcaseIcon, SearchIcon } from 'lucide-react';
+import { BriefcaseIcon, ChevronDownIcon, SearchIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,6 @@ import { useDebounce } from '~/hooks/use-debounce';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { InputTriggerChevron } from '~/modules/common/form-fields/input-trigger-button';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Badge } from '~/modules/ui/badge';
@@ -108,7 +107,7 @@ export function ProjectSuggestionCombobox({
             </span>
           )}
         </div>
-        <InputTriggerChevron className="pointer-events-none absolute right-0 mx-2" />
+        <ChevronDownIcon className="pointer-events-none absolute right-0 mx-2 shrink-0 text-faint-foreground" />
       </div>
 
       <ComboboxContent className="p-0">

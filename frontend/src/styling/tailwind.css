@@ -371,6 +371,56 @@
   }
 }
 
+/* In a FormActions row on a phone, the two wrappers of a button that slides in from the row's edge and pushes the submit
+   button narrower. The fr track animates to the button's own width; closed, the margin takes back the row's gap. The
+   inner wrapper clips, its 4px of padding keeps the focus ring inside the clip, and matching margins keep it out of the layout. */
+@utility form-actions-reveal {
+  &,
+  & > * {
+    display: contents;
+  }
+
+  @variant max-sm {
+    @variant in-data-form-actions {
+      display: grid;
+      grid-template-columns: 0fr;
+      margin: -0.25rem -0.25rem -0.25rem -0.75rem;
+      opacity: 0;
+      transition:
+        grid-template-columns 160ms cubic-bezier(0.4, 0, 0.2, 1),
+        margin-left 160ms cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 100ms linear,
+        visibility 160ms;
+
+      &[data-open] {
+        grid-template-columns: 1fr;
+        margin-left: -0.25rem;
+        opacity: 1;
+        transition:
+          grid-template-columns 220ms cubic-bezier(0.32, 0.72, 0, 1),
+          margin-left 220ms cubic-bezier(0.32, 0.72, 0, 1),
+          opacity 120ms linear;
+      }
+
+      & > * {
+        display: flex;
+        overflow: hidden;
+        min-width: 0;
+        padding: 0.25rem;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        &,
+        &[data-open] {
+          transition:
+            opacity 120ms linear,
+            visibility 120ms;
+        }
+      }
+    }
+  }
+}
+
 /* An installed app (home screen, PWA window). Its chrome links skip the long-press preview, which a browser tab keeps
    for "Open in New Tab". */
 @custom-variant standalone (@media (display-mode: standalone));
