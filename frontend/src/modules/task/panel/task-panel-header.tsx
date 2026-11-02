@@ -58,13 +58,13 @@ function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: 
   );
 }
 
-interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses'> {
+interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses' | 'windowScroll'> {
   panelId: string;
   count: number;
 }
 
 /** A project's panel header. */
-export function TaskPanelHeader({ project, publicView, statuses, panelId, count }: TaskPanelHeaderProps) {
+export function TaskPanelHeader({ project, publicView, statuses, panelId, windowScroll, count }: TaskPanelHeaderProps) {
   const { t } = useTranslation();
 
   const isInWorkspace = useIsWorkspaceRoute();
@@ -87,7 +87,7 @@ export function TaskPanelHeader({ project, publicView, statuses, panelId, count 
 
   return (
     <BoardPanelHeader
-      className="bg-card"
+      className={cn('bg-card', windowScroll && 'sticky top-0')}
       leading={<PanelLeading project={project} statuses={statuses} isInWorkspace={isInWorkspace} isCollapsed={isCollapsed} count={count} />}
       actions={actionsSlot}
       isCollapsed={isCollapsed}
