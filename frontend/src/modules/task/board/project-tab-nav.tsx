@@ -1,3 +1,5 @@
+import { GlobeIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { TKey } from '~/lib/i18n-locales';
 import { type PageTab, PageTabNav } from '~/modules/common/page/tab-nav';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -10,6 +12,7 @@ interface ProjectTabNavProps {
 
 /** Project tabs of the mobile workspace board, also drawn by its skeleton so the bar does not shift when the board loads. */
 export function ProjectTabNav({ projects }: ProjectTabNavProps) {
+  const { t } = useTranslation();
   const projectSlug = workspaceRouteApi.useSearch({ select: (search) => search.projectSlug });
 
   const tabs = sortByMembership(projects).map(
@@ -17,6 +20,7 @@ export function ProjectTabNav({ projects }: ProjectTabNavProps) {
       id: project.id,
       // Project names are display strings, not keys; PageTabNav's t() falls back to the raw name.
       label: project.name as TKey,
+      icon: project.public ? <GlobeIcon role="img" aria-label={t('c:public_project')} className="size-4 shrink-0" /> : undefined,
       path: '/$tenantId/$organizationSlug/workspace/$slug',
       search: { projectSlug: project.slug },
       activeOptions: { exact: false, includeSearch: true },

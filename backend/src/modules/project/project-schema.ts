@@ -27,7 +27,6 @@ import { toolsConfigSchema } from '#/schemas/tools-config';
 const taskStatusCountsSchema = z.object({
   accepted: z.number(),
   reviewed: z.number(),
-  delivered: z.number(),
   finished: z.number(),
   started: z.number(),
   unstarted: z.number(),

@@ -5,29 +5,28 @@ import { tw } from '~/utils/tw';
 export const taskCardVariants = cva('', {
   variants: {
     status: {
-      0: 'border-b-green-500/25 to-green-500/30',
-      1: 'border-b-orange-500/25 to-orange-500/30',
-      2: 'border-b-yellow-500/25 to-yellow-500/30',
-      3: 'border-b-lime-500/25 to-lime-500/30',
-      4: 'border-b-slate-500/40 to-slate-500/30',
+      0: 'border-b-green-500/25 to-green-500/26 dark:to-green-500/22',
+      1: 'border-b-orange-500/25 to-orange-500/26 dark:to-orange-500/22',
+      3: 'border-b-lime-500/25 to-lime-500/26 dark:to-lime-500/22',
+      4: 'border-b-slate-500/40 to-slate-500/26 dark:to-slate-500/22',
       5: '',
-      6: 'border-b-sky-500/30 to-sky-500/30',
+      6: 'border-b-sky-500/30 to-sky-500/26 dark:to-sky-500/22',
     },
   },
 });
 
+// --sc tints the fill. --se draws the edge: a darker step in light mode, where the 500 steps stay under 3:1 on white.
 export const statusButtonVariants = cva(
-  'border-[rgb(var(--sc)_/_0.4)] bg-[rgb(var(--sc)_/_0.03)] hover:border-[rgb(var(--sc)_/_0.7)] hover:bg-[rgb(var(--sc)_/_0.15)] group-hover/task:border-[rgb(var(--sc)_/_0.5)] group-hover/task:bg-[rgb(var(--sc)_/_0.08)] group-[.is-focused]/task:border-[rgb(var(--sc)_/_0.5)] group-[.is-focused]/task:bg-[rgb(var(--sc)_/_0.08)]',
+  'border-[rgb(var(--se))] bg-[rgb(var(--sc)_/_0.12)] hover:border-[rgb(var(--se))] hover:bg-[rgb(var(--sc)_/_0.25)] group-hover/task:bg-[rgb(var(--sc)_/_0.17)] group-[.is-focused]/task:bg-[rgb(var(--sc)_/_0.17)]',
   {
     variants: {
       status: {
-        0: 'text-green-700 [--sc:34_197_94] dark:text-green-500',
-        1: '[--sc:249_115_22]',
-        2: '[--sc:234_179_8]',
-        3: '[--sc:132_204_22]',
-        4: '[--sc:100_116_139]',
-        5: '[--sc:100_116_139]',
-        6: 'text-sky-700 [--sc:14_165_233] dark:text-sky-500',
+        0: 'text-green-800 [--sc:34_197_94] [--se:22_163_74] dark:text-green-300 dark:[--se:34_197_94]',
+        1: 'text-orange-800 [--sc:249_115_22] [--se:234_88_12] dark:text-orange-300 dark:[--se:249_115_22]',
+        3: 'text-lime-800 [--sc:132_204_22] [--se:101_163_13] dark:text-lime-300 dark:[--se:132_204_22]',
+        4: 'text-foreground-soft [--sc:100_116_139] [--se:100_116_139]',
+        5: 'text-foreground-soft [--sc:100_116_139] [--se:100_116_139]',
+        6: 'text-sky-800 [--sc:14_165_233] [--se:2_132_199] dark:text-sky-300 dark:[--se:14_165_233]',
       },
     },
   },
@@ -46,8 +45,19 @@ export const taskCardFocusBarClass = tw(
   'group-focus-within/task:before:opacity-100 group-has-[[aria-haspopup][aria-expanded=true]]/task:before:opacity-100 group-has-data-dropdowner-active/task:before:opacity-100',
 );
 
+/** A ghost button on a task card: a solid grey fill goes dead over the status gradient, a translucent one lets it through. */
+export const taskCardGhostClass = tw('hover:bg-foreground/7 aria-expanded:bg-foreground/7 dark:hover:bg-foreground/7');
+
 /** Dims a task card's own buttons until the card is hovered or current. */
 export const taskCardDimClass = tw('opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100');
+
+/** Greys the avatars of a collapsed task card until it is hovered or holds focus. */
+export const taskCardAvatarRestClass = tw('group-[[data-state=collapsed]:not(:hover,:focus-within,.is-focused)]/task:resting-avatar');
+
+/** A task card's metadata, which brightens with the card on hover or focus. */
+export const taskCardMetaClass = tw(
+  'text-muted-foreground transition-colors group-focus-within/task:text-foreground-soft group-hover/task:text-foreground-soft group-[.is-focused]/task:text-foreground-soft',
+);
 
 /** Reveals a task card's action buttons on hover or focus; keep in step with `.task-summary-fade` in card-glow.css. */
 export const taskCardActionsRevealClass = tw(
@@ -65,13 +75,15 @@ export const taskBarClass = tw('z-85 flex items-center bg-background max-sm:just
 /** Shared by the panel section headers, the collapsed panel and the board skeleton, so a strip keeps its fill through a collapse. */
 export const statusSectionColors = {
   accepted: {
-    fill: 'bg-green-50 dark:bg-green-950',
-    text: 'text-green-700 dark:text-green-400',
-    border: { top: 'border-b border-b-green-500/10', bottom: 'border-t border-t-green-500/10' },
+    fill: 'bg-background bg-linear-to-b from-green-500/18 to-green-500/26 dark:from-green-500/15 dark:to-green-500/22',
+    /** Under the bar in an open tile: the shade `fill` ends on, so bar and note read as one surface. */
+    tileBody: 'bg-background bg-linear-to-b from-green-500/26 to-green-500/26 dark:from-green-500/22 dark:to-green-500/22',
+    text: 'text-green-800 dark:text-green-300',
+    border: { top: 'border-b border-b-green-600/30 dark:border-b-green-400/20', bottom: 'border-t border-t-green-600/30 dark:border-t-green-400/20' },
   },
   iced: {
-    fill: 'bg-sky-50 dark:bg-sky-950',
-    text: 'text-sky-700 dark:text-sky-400',
-    border: { top: 'border-b border-b-sky-500/10', bottom: 'border-t border-t-sky-500/10' },
+    fill: 'bg-background bg-linear-to-b from-sky-500/18 to-sky-500/26 dark:from-sky-500/15 dark:to-sky-500/22',
+    text: 'text-sky-800 dark:text-sky-300',
+    border: { top: 'border-b border-b-sky-600/30 dark:border-b-sky-400/20', bottom: 'border-t border-t-sky-600/30 dark:border-t-sky-400/20' },
   },
 } as const;

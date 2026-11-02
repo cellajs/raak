@@ -1,22 +1,16 @@
 import { create } from 'zustand';
 
 interface LabelTileState {
-  expandedIds: Record<string, true>;
-  /** `exclusive` collapses every other tile. */
-  expand: (id: string, exclusive?: boolean) => void;
+  expandedId: string | null;
+  expand: (id: string) => void;
   collapse: (id: string) => void;
 }
 
-/** Which label tiles are expanded: view state like a task card's, so it stays out of the URL. */
+/** The expanded label tile, one at a time: view state like a task card's, so it stays out of the URL. */
 export const useLabelTileStore = create<LabelTileState>()((set) => ({
-  expandedIds: {},
-  expand: (id, exclusive) => set((state) => ({ expandedIds: exclusive ? { [id]: true } : { ...state.expandedIds, [id]: true } })),
-  collapse: (id) =>
-    set((state) => {
-      if (!state.expandedIds[id]) return state;
-      const { [id]: _, ...rest } = state.expandedIds;
-      return { expandedIds: rest };
-    }),
+  expandedId: null,
+  expand: (id) => set({ expandedId: id }),
+  collapse: (id) => set((state) => (state.expandedId === id ? { expandedId: null } : state)),
 }));
 
 export { useLabelTileStore as labelTileStore };

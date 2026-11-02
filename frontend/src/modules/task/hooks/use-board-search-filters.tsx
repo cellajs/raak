@@ -1,34 +1,37 @@
-import { useSyncExternalStore } from 'react';
+import { TagIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { foldText } from 'shared/utils/text-match';
 import { useSearchParams } from '~/hooks/use-search-params';
-import type { SearchFilters } from '~/modules/common/search-chips-field';
+import type { SearchFilters } from '~/modules/common/search-chips/types';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
-import { useNavigationStore } from '~/modules/navigation/navigation-store';
 import type { EnrichedProject } from '~/modules/project/types';
-import { subscribeToTaskCache } from '~/modules/task/helpers/active-task';
+import { type RecentBoardSearch, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import {
   boardSearchParts,
+  isBoardSearchActive,
   isWorthRecalling,
   type ParsedBoardSearch,
   replaceFilterValue,
   toggleFilterValue,
 } from '~/modules/task/helpers/search-filter';
 import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
+import { useTaskListsSnapshot } from '~/modules/task/hooks/use-task-lists-snapshot';
 import { publicTasksBoardQueryOptions } from '~/modules/task/public-query';
 import { taskKeys } from '~/modules/task/query';
 import { statusOptions } from '~/modules/task/task-properties';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
-import { isQueryData } from '~/query/basic/mutate-query';
-import { queryClient } from '~/query/query-client';
-import type { RecentListSearch } from '~/utils/recent-searches';
 
-const recentsKey = 'task-board';
-const noRecents: RecentListSearch[] = [];
+const noRecents: RecentBoardSearch[] = [];
+const noCounts = { statuses: {}, types: {}, labels: {} };
 const popularLabelCount = 12;
 
 // Backlog and started, the statuses people filter on most, come near the start
 const statusesToPick = [...statusOptions].reverse();
+
+// Status colors are svg attributes, which any CSS outranks. A knockout takes the chip's own fill, or it would vanish into the shape around it.
+const statusChipIconClass =
+  '[&_[fill]:not([fill=none])]:fill-current [&_[stroke]:not([data-knockout])]:stroke-current [&_[data-knockout]]:stroke-foreground-soft';
 
 interface CountedLabel {
   name: string;
@@ -66,29 +69,36 @@ const countOptions = (tasks: Task[], search: ParsedBoardSearch) => {
   return { statuses, types, labels };
 };
 
-/** The status, type and label filters of the board search, and its recent searches, counted over the board's cached tasks. */
-export function useBoardSearchFilters(projects: Pick<EnrichedProject, 'id' | 'organizationId'>[], publicView?: boolean): SearchFilters {
+/**
+ * The status, type and label filters of the board search, and the recent searches of `channelId`, counted over the board's cached tasks; counts leave out `typingWord`, which a picked suggestion replaces.
+ * Counting starts with `isFieldUsed` or a search in the URL: nothing else reads the counts.
+ */
+export function useBoardSearchFilters(
+  channelId: string,
+  projects: Pick<EnrichedProject, 'id' | 'organizationId'>[],
+  typingWord: string,
+  isFieldUsed: boolean,
+  publicView?: boolean,
+): SearchFilters {
   const { t } = useTranslation();
   const search = useBoardSearch();
+  const foldedTypingWord = foldText(typingWord);
+  const countedSearch = { ...search, terms: search.terms.filter((term) => term !== foldedTypingWord) };
   const {
     search: { q = '' },
     setSearch,
   } = useSearchParams<BoardSearchParams>();
 
-  const recents = useNavigationStore((state) => state.recentListSearches[recentsKey] ?? noRecents);
-  const saveRecent = useNavigationStore((state) => state.saveRecentListSearch);
-  const removeRecent = useNavigationStore((state) => state.removeRecentListSearch);
+  const recents = useTaskBoardStore((state) => state.recentSearches[channelId] ?? noRecents);
+  const saveRecent = useTaskBoardStore((state) => state.saveRecentSearch);
+  const removeRecent = useTaskBoardStore((state) => state.removeRecentSearch);
 
-  // Joined into one string: useSyncExternalStore compares snapshots by value
-  const counted = useSyncExternalStore(subscribeToTaskCache, () => {
-    const tasks = projects.flatMap(({ id, organizationId }) => {
-      const queryKey = publicView ? publicTasksBoardQueryOptions(id).queryKey : taskKeys.list.home(organizationId, id);
-      const data = queryClient.getQueryData(queryKey);
-      return isQueryData<Task>(data) ? data.items : [];
-    });
-    return JSON.stringify(countOptions(tasks, search));
-  });
-  const { statuses, types, labels }: ReturnType<typeof countOptions> = JSON.parse(counted);
+  const counted = useTaskListsSnapshot(
+    projects.map(({ id, organizationId }) => (publicView ? publicTasksBoardQueryOptions(id).queryKey : taskKeys.list.home(organizationId, id))),
+    isFieldUsed || isBoardSearchActive(search) ? JSON.stringify(countedSearch) : null,
+    (tasks) => JSON.stringify(countOptions(tasks, countedSearch)),
+  );
+  const { statuses, types, labels }: ReturnType<typeof countOptions> = counted ? JSON.parse(counted) : noCounts;
 
   const statusName = (status: (typeof statusOptions)[number]['status']) => t(`c:${status}`);
   const write = (key: 'status' | 'type' | 'labels', value: string | undefined) => setSearch({ [key]: value });
@@ -130,6 +140,7 @@ export function useBoardSearchFilters(projects: Pick<EnrichedProject, 'id' | 'or
         key: 'labels',
         label: t('c:label_other'),
         isCompact: true,
+        matchIcon: <TagIcon className="size-3.5 shrink-0 text-muted-foreground" />,
         rowLimit: popularLabelCount,
         options: labelSlugs.map((slug) => ({
           value: slug,
@@ -150,11 +161,12 @@ export function useBoardSearchFilters(projects: Pick<EnrichedProject, 'id' | 'or
         icon: types[slug] && <PrimaryLabelIcon label={types[slug]} className="text-current!" />,
         onRemove: () => write('type', toggleFilterValue(search.types.join(','), slug)),
       })),
-      ...statusChips.map(({ status }) => ({
+      ...statusChips.map(({ status, icon: Icon }) => ({
         key: `status:${status}`,
         group: 'status',
         value: status,
         label: statusName(status),
+        icon: <Icon className={statusChipIconClass} />,
         onRemove: () => write('status', toggleFilterValue(search.statuses.join(','), status)),
       })),
       ...search.labels.map((slug) => ({
@@ -165,30 +177,29 @@ export function useBoardSearchFilters(projects: Pick<EnrichedProject, 'id' | 'or
         onRemove: () => write('labels', toggleFilterValue(search.labels.join(','), slug)),
       })),
     ],
-    // Filtered here too: browsers still hold such searches from before they were skipped
-    recents: recents.filter(isWorthRecalling).map((recent) => ({
+    recents: recents.map((recent) => ({
       key: JSON.stringify(recent),
       text: recent.q,
       chips: [
-        ...(recent.filters.type ?? []).map((slug) => ({
+        ...recent.type.map((slug) => ({
           label: types[slug]?.name ?? slug,
           icon: types[slug] && <PrimaryLabelIcon label={types[slug]} />,
         })),
-        ...statusesToPick.filter(({ status }) => recent.filters.status?.includes(status)).map(({ status }) => ({ label: statusName(status) })),
-        ...(recent.filters.labels ?? []).map((slug) => ({ label: labels[slug]?.name ?? slug })),
+        ...statusesToPick.filter(({ status }) => recent.status.includes(status)).map(({ status }) => ({ label: statusName(status) })),
+        ...recent.labels.map((slug) => ({ label: labels[slug]?.name ?? slug })),
       ],
       onPick: () =>
         setSearch({
           q: recent.q,
-          status: recent.filters.status?.join(',') || undefined,
-          type: recent.filters.type?.join(',') || undefined,
-          labels: recent.filters.labels?.join(',') || undefined,
+          status: recent.status.join(',') || undefined,
+          type: recent.type.join(',') || undefined,
+          labels: recent.labels.join(',') || undefined,
         }),
-      onRemove: () => removeRecent(recentsKey, recent),
+      onRemove: () => removeRecent(channelId, recent),
     })),
     onSearchEnd: (next) => {
-      const recent = { q: next || q, filters: { status: search.statuses, type: search.types, labels: search.labels } };
-      if (isWorthRecalling(recent)) saveRecent(recentsKey, recent);
+      const recent = { q: next || q, status: search.statuses, type: search.types, labels: search.labels };
+      if (isWorthRecalling(recent)) saveRecent(channelId, recent);
     },
   };
 }

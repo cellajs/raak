@@ -28,7 +28,8 @@ interface SearchFieldProps {
   className?: string;
 }
 
-const typingPause = 250;
+/** How long a search waits after a keystroke before it applies. */
+export const typingPause = 250;
 
 /**
  * The input of an in-page search with words only: a list without filters, or a find in content. It applies the query once
@@ -103,8 +104,8 @@ export function SearchField({
         onKeyDown={handleKeyDown}
       />
 
-      <InputGroupAddon className="pl-1.5">
-        <SearchSpinner value={inputValue} isSearching={isSearching} />
+      <InputGroupAddon className="pl-1.5 sm:pl-[calc(1rem-1px)]">
+        <SearchSpinner hasSearch={!!inputValue} isSearching={isSearching} />
       </InputGroupAddon>
 
       <InputGroupAddon className="gap-0.5 pr-1.5 has-[>button]:mr-0" align="inline-end">

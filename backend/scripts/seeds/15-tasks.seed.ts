@@ -11,7 +11,7 @@ import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
 import { type InsertWorkspaceModel, workspacesTable } from '#/modules/workspace/workspace-db';
 import { createServerStx } from '#/core/stx/create-server-stx';
 import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
-import { TaskStatus } from '#/modules/task/task-properties';
+import { TaskStatus, taskStatuses } from '#/modules/task/task-properties';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
 import { type DescriptionBlock, findSummarySource } from 'shared/utils/derive-description-core';
 import { nanoid } from 'shared/utils/nanoid';
@@ -33,8 +33,9 @@ const projectsPerOrg = { min: 2, max: 5 };
 const membersPerProject = { min: 5, max: 10 };
 const avgTasksPerProject = 3000;
 const labelsPerProject = 20;
-const adminWorkspaceMembershipCap = 5;
-const adminProjectMembershipCap = adminWorkspaceMembershipCap * 3;
+const adminProjectsPerOrg = { min: 6, max: 10 };
+const adminProjectsPerWorkspace = 3;
+const adminProjectsInSharedWorkspace = 2;
 const insertBatchSize = 500;
 
 // Seed scripts use admin connection for privileged operations
@@ -74,6 +75,12 @@ const seedSuffix = () => faker.string.alphanumeric(6);
 const phrasePool = Array.from({ length: 200 }, () => faker.hacker.phrase());
 const randomPhrase = () => phrasePool[Math.floor(Math.random() * phrasePool.length)];
 
+/** Spreads projects evenly over as many workspaces as can hold `adminProjectsPerWorkspace` each. */
+const splitOverWorkspaces = (projectIds: string[]) => {
+  const count = Math.max(1, Math.floor(projectIds.length / adminProjectsPerWorkspace));
+  return Array.from({ length: count }, (_, workspace) => projectIds.filter((_, index) => index % count === workspace));
+};
+
 /**
  * Seeds the database with workspaces, projects, tasks, and labels.
  */
@@ -93,7 +100,6 @@ const tasksSeed = async () => {
   }
 
   const organizations = await db.select().from(organizationsTable);
-  const memberships = await db.select().from(membershipsTable).where(eq(membershipsTable.channelType, 'organization'));
 
   // Make sure admin user has admin or member role in organizations (not guest)
   await db
@@ -107,6 +113,8 @@ const tasksSeed = async () => {
       ),
     );
 
+  const memberships = await db.select().from(membershipsTable).where(eq(membershipsTable.channelType, 'organization'));
+
   const adminMemberships = await db
     .select()
     .from(membershipsTable)
@@ -119,7 +127,6 @@ const tasksSeed = async () => {
   let tasksCount = 0;
   let labelsCount = 0;
   let membershipsCount = 0;
-  let adminProjectMembershipCount = 0;
 
   // Track which projects each user belongs to per org: `userId:organizationId` → projectId[]
   const userProjectsMap = new Map<string, string[]>();
@@ -131,7 +138,8 @@ const tasksSeed = async () => {
     const orgMemberships = memberships.filter((m) => m.organizationId === organization.id && m.role !== 'guest');
     if (orgMemberships.length === 0) continue;
 
-    const numProjects = faker.number.int(projectsPerOrg);
+    const isAdminOrg = adminOrgIds.includes(organization.id);
+    const numProjects = faker.number.int(isAdminOrg ? adminProjectsPerOrg : projectsPerOrg);
 
     // Projects draw from one vocabulary per organization, so labels recur across projects and a name keeps one color, as label creation does.
     const orgLabelVocabulary = mockLabelNames(labelsPerProject * 2).map((name) => ({ name, color: faker.color.rgb() }));
@@ -149,14 +157,12 @@ const tasksSeed = async () => {
       // Ensure creator is included
       const projectOrgMembers = [creator, ...shuffled.filter((m) => m.userId !== creator.userId)].slice(0, numMembers);
 
-      // Ensure admin is a project member in their orgs (up to cap)
-      const includeAdmin = adminOrgIds.includes(organization.id) && adminProjectMembershipCount < adminProjectMembershipCap;
-      if (includeAdmin && !projectOrgMembers.some((m) => m.userId === defaultAdminUser.id)) {
+      // Ensure admin is a project member in their orgs
+      if (isAdminOrg && !projectOrgMembers.some((m) => m.userId === defaultAdminUser.id)) {
         // Find admin's org membership to add them
         const adminOrgMembership = orgMemberships.find((m) => m.userId === defaultAdminUser.id);
         if (adminOrgMembership) projectOrgMembers.push(adminOrgMembership);
       }
-      if (includeAdmin) adminProjectMembershipCount++;
 
       const proj = mockProject(seedSuffix());
       const insertProject: InsertProjectModel = {
@@ -302,7 +308,7 @@ const tasksSeed = async () => {
           assignedTo,
           labels: [...labelSet],
           displayOrder: index * 10,
-          status: isOldAccepted ? TaskStatus.Accepted : Math.floor(Math.random() * 7),
+          status: isOldAccepted ? TaskStatus.Accepted : faker.helpers.arrayElement(taskStatuses),
           statusChangedAt: isOldAccepted ? oldDate : mockPastIsoDate(),
           primaryLabelId: faker.helpers.arrayElement(primaryLabelsPerProjectMap.get(projectId) ?? [mockUuid()]),
           description,
@@ -338,41 +344,48 @@ const tasksSeed = async () => {
   };
 
   const workspacePlans: WorkspacePlan[] = [];
-  let adminWorkspaceMembershipCount = 0;
+  // A user has one membership per project, so a project filed in one of the admin's workspaces cannot fill another
+  const adminFiledProjectIds = new Set<string>();
+  const adminSharedOrgIds = new Set<string>();
+
+  const planWorkspace = (organization: (typeof organizations)[number], userId: string, projectIds: string[]): WorkspacePlan => ({
+    workspace: {
+      ...mockWorkspace(seedSuffix()),
+      tenantId: organization.tenantId,
+      organizationId: organization.id,
+      createdBy: userId,
+      updatedBy: userId,
+    },
+    members: [{ userId, role: 'admin', projectIds }],
+  });
 
   for (const [key, projectIds] of userProjectsMap) {
     const [userId, organizationId] = key.split(':');
     const organization = organizations.find((o) => o.id === organizationId);
     if (!organization) continue;
 
-    const ws = mockWorkspace(seedSuffix());
-    const plan: WorkspacePlan = {
-      workspace: {
-        ...ws,
-        tenantId: organization.tenantId,
-        organizationId: organization.id,
-        createdBy: userId,
-        updatedBy: userId,
-      },
-      members: [{ userId, role: 'admin', projectIds }],
-    };
+    const adminProjectIds = userProjectsMap.get(`${defaultAdminUser.id}:${organizationId}`) ?? [];
+    const adminUnfiledProjectIds = adminProjectIds.filter((projectId) => !adminFiledProjectIds.has(projectId));
 
-    // Add admin as additional member only if they share projects in this workspace
-    const isAdminOrg = adminOrgIds.includes(organization.id);
-    if (isAdminOrg && userId !== defaultAdminUser.id && adminWorkspaceMembershipCount < adminWorkspaceMembershipCap) {
-      const adminKey = `${defaultAdminUser.id}:${organizationId}`;
-      const adminProjectIds = userProjectsMap.get(adminKey) ?? [];
-      const sharedProjectIds = projectIds.filter((pid) => adminProjectIds.includes(pid));
+    if (userId === defaultAdminUser.id) {
+      for (const ids of splitOverWorkspaces(adminUnfiledProjectIds)) workspacePlans.push(planWorkspace(organization, userId, ids));
+      for (const projectId of adminUnfiledProjectIds) adminFiledProjectIds.add(projectId);
+      continue;
+    }
 
-      if (sharedProjectIds.length > 0) {
-        plan.members.push({
-          userId: defaultAdminUser.id,
-          role: 'member',
-          projectIds: sharedProjectIds,
-          archived: faker.datatype.boolean(0.5),
-        });
-        adminWorkspaceMembershipCount++;
-      }
+    const plan = planWorkspace(organization, userId, projectIds);
+
+    // One workspace per org where the admin is a plain member of someone else's workspace
+    const sharedProjectIds = adminUnfiledProjectIds.slice(0, adminProjectsInSharedWorkspace);
+    if (!adminSharedOrgIds.has(organization.id) && sharedProjectIds.length > 0) {
+      plan.members.push({
+        userId: defaultAdminUser.id,
+        role: 'member',
+        projectIds: sharedProjectIds,
+        archived: faker.datatype.boolean(0.5),
+      });
+      adminSharedOrgIds.add(organization.id);
+      for (const projectId of sharedProjectIds) adminFiledProjectIds.add(projectId);
     }
 
     workspacePlans.push(plan);

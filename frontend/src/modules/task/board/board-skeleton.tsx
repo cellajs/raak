@@ -55,6 +55,8 @@ export function BoardSkeleton({
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
 
+  const windowScroll = projectPage && publicView;
+
   const showExplainer = useShowExplainer(isInWorkspace);
   const extraPanels = buildBoardExtraPanels({ showExplainer, publicView });
 
@@ -87,13 +89,13 @@ export function BoardSkeleton({
         );
       case 'labels':
         return (
-          <LocalPanelShell panelId={panel.panelId} icon={<TagIcon />} title={t('c:label_other').toLowerCase()} windowScroll={projectPage}>
+          <LocalPanelShell panelId={panel.panelId} icon={<TagIcon />} title={t('c:label_other')} windowScroll={windowScroll}>
             <LocalPanelBodySkeleton />
           </LocalPanelShell>
         );
       case 'explainer':
         return (
-          <LocalPanelShell panelId={panel.panelId} icon={<InfoIcon />} title={t('c:getting_started')} windowScroll={projectPage}>
+          <LocalPanelShell panelId={panel.panelId} icon={<InfoIcon />} title={t('c:getting_started')} windowScroll={windowScroll}>
             <LocalPanelBodySkeleton />
           </LocalPanelShell>
         );
@@ -122,7 +124,7 @@ export function BoardSkeleton({
       <div
         className={cn(
           'overflow-x-clip',
-          !projectPage && 'sm:h-[calc(100dvh-var(--board-offset-sm,4rem))] md:h-[calc(100dvh-var(--board-offset-md,4.88rem))]',
+          !windowScroll && 'sm:h-[calc(100dvh-var(--board-offset-sm,4rem))] md:h-[calc(100dvh-var(--board-offset-md,4.88rem))]',
         )}
       >
         <div className="flex h-full" style={{ gap: columnGap, minWidth: rowMinWidth }}>
@@ -161,10 +163,13 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
   return (
     <div className={taskBarClass} aria-hidden="true" inert>
       {showsProjectControls && (
-        <Button variant="secondary" className={newTaskButtonClass}>
-          <PlusIcon className="size-4.5" />
-          <span>{t('c:task')}</span>
-        </Button>
+        <>
+          <Button variant="ghost" size="icon" className="max-sm:hidden" />
+          <Button variant="secondary" className={newTaskButtonClass}>
+            <PlusIcon className="size-4.5" />
+            <span>{t('c:task')}</span>
+          </Button>
+        </>
       )}
 
       <SearchField value="" onSearch={() => {}} label={t('c:placeholder.search')} className="edgeless sm:min-w-44" />
@@ -240,7 +245,7 @@ interface PanelBodySkeletonProps {
 
 function PanelBodySkeleton({ rowHeight = desktopRowHeight, showAccepted = true, showIced = true }: PanelBodySkeletonProps) {
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden sm:border">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden border-panel-edge sm:border">
       {showAccepted && (
         <div
           className={cn('h-9 shrink-0 border-t border-t-transparent', statusSectionColors.accepted.border.top, statusSectionColors.accepted.fill)}

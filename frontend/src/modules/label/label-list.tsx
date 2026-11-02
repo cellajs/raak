@@ -12,8 +12,9 @@ import { LabelTile, labelTileDomId } from '~/modules/label/label-tile';
 import { labelTileStore } from '~/modules/label/label-tile-store';
 import { labelsCanonicalOptions } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps, LabelsScopeProps } from '~/modules/label/types';
-import { type LabelTotals, type LabelUsage, useLabelTotals, useLabelUsage } from '~/modules/label/use-label-usage';
+import { type LabelUsage, useBoardLabelUsage } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
+import { useReadOnlyProjectIds } from '~/modules/project/use-read-only';
 import { firstItemInView, registerPanelNav } from '~/modules/task/helpers/panel-nav-registry';
 import { ListFocusScope } from '~/modules/task/panel/list-focus-scope';
 import { ScrollArea } from '~/modules/ui/scroll-area';
@@ -41,10 +42,9 @@ function ProjectLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
     ...labelsCanonicalOptions({ organizationId, tenantId, projectId: entityId }),
     select: (result) => result.items.filter((label) => isPanelLabel(label.mode)),
   });
-  const usage = useLabelUsage([entityId]);
-  const totals = useLabelTotals([entityId]);
+  const usage = useBoardLabelUsage([entityId]);
 
-  return <LabelListView labels={data ?? []} usage={usage} totals={totals} isLoading={isLoading} {...hostProps} />;
+  return <LabelListView labels={data ?? []} usage={usage} isLoading={isLoading} {...hostProps} />;
 }
 
 /** Aggregates each project's canonical list client-side, so a just-created label shows without a refetch. */
@@ -52,7 +52,7 @@ function WorkspaceLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
 
   const { data: projectIds } = useInfiniteQuery({
-    ...projectsListQueryOptions({ workspaceId: entityId }),
+    ...projectsListQueryOptions({ workspaceId: entityId, excludeArchived: 'true' }),
     select: (data) => data.pages.flatMap((page) => page.items.map((project) => project.id)),
   });
 
@@ -60,30 +60,27 @@ function WorkspaceLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
     queries: (projectIds ?? []).map((projectId) => labelsCanonicalOptions({ organizationId, tenantId, projectId })),
     combine: combinePanelLabels,
   });
-  const usage = useLabelUsage(projectIds ?? []);
-  const totals = useLabelTotals(projectIds ?? []);
+  const usage = useBoardLabelUsage(projectIds ?? []);
 
-  return (
-    <LabelListView labels={labels} usage={usage} totals={totals} isLoading={projectIds === undefined || pending} showProjectUsage {...hostProps} />
-  );
+  return <LabelListView labels={labels} usage={usage} isLoading={projectIds === undefined || pending} showProjectUsage {...hostProps} />;
 }
 
 interface LabelListViewProps extends LabelsHostProps {
   labels: Label[];
   usage: LabelUsage;
-  totals: LabelTotals;
   isLoading: boolean;
   showProjectUsage?: boolean;
 }
 
-function LabelListView({ labels, usage, totals, isLoading, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
+function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
 
   const viewportRef = useRef<HTMLDivElement>(null);
-  const rows = groupLabelRows(labels, { usage, totals }).sort(byCreatedAtDesc);
+  const rows = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
   const itemIds = rows.map((row) => labelTileDomId(row.id));
+  const readOnlyProjectIds = useReadOnlyProjectIds([...new Set(rows.flatMap((row) => row.projectIds))]);
 
   // Every tile is mounted, so bringing one into view is a plain scroll
   useEffect(() => {
@@ -100,7 +97,7 @@ function LabelListView({ labels, usage, totals, isLoading, windowScroll, navPane
     if (!labelPageId || isLoading) return;
     const row = rows.find((candidate) => candidate.siblingIds.includes(labelPageId));
     if (row) {
-      labelTileStore.getState().expand(row.id, tileProps.singleExpand);
+      labelTileStore.getState().expand(row.id);
       requestAnimationFrame(() => document.getElementById(labelTileDomId(row.id))?.scrollIntoView({ block: 'nearest' }));
     }
     navigate({ to: '.', replace: true, resetScroll: false, search: (prev) => ({ ...prev, labelPageId: undefined }) });
@@ -112,7 +109,13 @@ function LabelListView({ labels, usage, totals, isLoading, windowScroll, navPane
   const list = (
     <ul aria-label={t('c:label_other')}>
       {rows.map((row) => (
-        <LabelTile key={row.id} row={row} onBoard={!!navPanelId} {...tileProps} />
+        <LabelTile
+          key={row.id}
+          row={row}
+          lockedByProjectIds={row.projectIds.filter((projectId) => readOnlyProjectIds.includes(projectId))}
+          onBoard={!!navPanelId}
+          {...tileProps}
+        />
       ))}
     </ul>
   );

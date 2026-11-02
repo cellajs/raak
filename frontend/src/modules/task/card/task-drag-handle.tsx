@@ -6,6 +6,7 @@ import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getRelativeTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { usePanelTasks } from '~/modules/task/panel/panel-tasks-context';
 import { useTaskUpdateMutation } from '~/modules/task/query';
+import { taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { buttonVariants } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
@@ -68,7 +69,7 @@ export function TaskDragHandle({ task }: TaskDragHandleProps) {
           index={index}
           total={statusTasks.length}
           onMove={move}
-          className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), 'focus-inset size-8')}
+          className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), taskCardGhostClass, 'focus-inset size-8')}
         >
           <GripVerticalIcon className="size-3.5" />
         </ReorderHandle>

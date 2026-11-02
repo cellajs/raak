@@ -32,16 +32,24 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
       defaultLayout={defaultLayout}
       onLayoutChanged={handleLayoutChanged}
       panelFade="marked"
-      autoHeight
+      autoHeight={publicView}
       reorderable={!publicView}
       onPanelReorder={handlePanelReorder}
     >
       {(panelId) => {
         const panel = panels.find((candidate) => candidate.panelId === panelId);
-        if (panel?.kind === 'labels') return <LabelsPanel entity="project" entityId={boardId} windowScroll />;
+        if (panel?.kind === 'labels') return <LabelsPanel entity="project" entityId={boardId} />;
         if (panel?.kind !== 'project') return null;
 
-        return <ProjectBoardPanel project={panel.project} panelId={panel.panelId} publicView={publicView} statuses={panel.statuses} windowScroll />;
+        return (
+          <ProjectBoardPanel
+            project={panel.project}
+            panelId={panel.panelId}
+            publicView={publicView}
+            statuses={panel.statuses}
+            windowScroll={publicView}
+          />
+        );
       }}
     </BoardLayout>
   );

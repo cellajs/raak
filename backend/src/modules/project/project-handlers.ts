@@ -6,7 +6,6 @@ import { deleteProjectsOp } from '#/modules/project/operations/delete-projects';
 import { getProjectOp } from '#/modules/project/operations/get-project';
 import { getProjectsOp } from '#/modules/project/operations/get-projects';
 import { moveProjectToWorkspaceOp } from '#/modules/project/operations/move-project-to-workspace';
-import { removeProjectWorkspaceOp } from '#/modules/project/operations/remove-project-workspace';
 import { updateProjectOp } from '#/modules/project/operations/update-project';
 import { projectRoutes } from '#/modules/project/project-routes';
 import { defaultHook } from '#/utils/default-hook';
@@ -41,12 +40,6 @@ app.openapi(projectRoutes.assignProjectWorkspace, async (ctx) => {
   const { id } = ctx.req.valid('param');
   const { workspaceId } = ctx.req.valid('query');
   const data = await assignProjectWorkspaceOp(ctx, id, workspaceId);
-  return ctx.json(data, 200);
-});
-
-app.openapi(projectRoutes.removeProjectWorkspace, async (ctx) => {
-  const { id } = ctx.req.valid('param');
-  const data = await removeProjectWorkspaceOp(ctx, id);
   return ctx.json(data, 200);
 });
 

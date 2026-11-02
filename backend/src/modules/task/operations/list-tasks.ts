@@ -21,7 +21,6 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
 const statusByName: Record<string, TaskStatus> = {
   accepted: TaskStatus.Accepted,
   reviewed: TaskStatus.Reviewed,
-  delivered: TaskStatus.Delivered,
   finished: TaskStatus.Finished,
   started: TaskStatus.Started,
   unstarted: TaskStatus.Unstarted,

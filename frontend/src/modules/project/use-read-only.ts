@@ -32,6 +32,13 @@ export const useIsProjectReadOnly = (projectId: string | undefined): boolean => 
   return useSyncExternalStore(subscribeToQueryCache, getSnapshot, getSnapshot);
 };
 
+/** Those of `projectIds` that are read-only, on one subscription: a list of many rows would otherwise run a cache lookup per row on every query event. */
+export const useReadOnlyProjectIds = (projectIds: string[]): string[] => {
+  const getSnapshot = () => projectIds.filter(isProjectReadOnly).join();
+  const joined = useSyncExternalStore(subscribeToQueryCache, getSnapshot, getSnapshot);
+  return joined ? joined.split(',') : [];
+};
+
 /** Props to spread on elements that are disabled in read-only mode. */
 export const useReadOnlyInert = (projectId: string | undefined) => {
   const isReadOnly = useIsProjectReadOnly(projectId);

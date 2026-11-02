@@ -2548,9 +2548,6 @@
                       "reviewed": {
                         "type": "number"
                       },
-                      "delivered": {
-                        "type": "number"
-                      },
                       "finished": {
                         "type": "number"
                       },
@@ -2564,7 +2561,7 @@
                         "type": "number"
                       }
                     },
-                    "required": ["accepted", "reviewed", "delivered", "finished", "started", "unstarted", "iced"]
+                    "required": ["accepted", "reviewed", "finished", "started", "unstarted", "iced"]
                   }
                 },
                 "required": ["membership", "entities", "entitiesSelf", "activity"]
@@ -2768,7 +2765,7 @@
           },
           "status": {
             "type": "integer",
-            "enum": [6, 5, 4, 3, 2, 1, 0]
+            "enum": [6, 5, 4, 3, 1, 0]
           },
           "statusChangedAt": {
             "type": "string"
@@ -10433,7 +10430,7 @@
                       "summaryLength": 43,
                       "primaryLabelId": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
                       "displayOrder": 608.18,
-                      "status": 2,
+                      "status": 1,
                       "statusChangedAt": "2024-01-16T07:26:20.219Z",
                       "checkboxCount": 8,
                       "checkedCount": 1,
@@ -13369,9 +13366,6 @@
                                           "reviewed": {
                                             "type": "number"
                                           },
-                                          "delivered": {
-                                            "type": "number"
-                                          },
                                           "finished": {
                                             "type": "number"
                                           },
@@ -13385,7 +13379,7 @@
                                             "type": "number"
                                           }
                                         },
-                                        "required": ["accepted", "reviewed", "delivered", "finished", "started", "unstarted", "iced"]
+                                        "required": ["accepted", "reviewed", "finished", "started", "unstarted", "iced"]
                                       }
                                     },
                                     "required": ["membership", "entities", "entitiesSelf", "activity"]
@@ -14273,9 +14267,6 @@
                                     "reviewed": {
                                       "type": "number"
                                     },
-                                    "delivered": {
-                                      "type": "number"
-                                    },
                                     "finished": {
                                       "type": "number"
                                     },
@@ -14289,299 +14280,7 @@
                                       "type": "number"
                                     }
                                   },
-                                  "required": ["accepted", "reviewed", "delivered", "finished", "started", "unstarted", "iced"]
-                                }
-                              },
-                              "required": ["membership", "entities", "entitiesSelf", "activity"]
-                            },
-                            "members": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/UserMinimalBase"
-                              }
-                            }
-                          },
-                          "required": ["membership"]
-                        }
-                      }
-                    }
-                  ],
-                  "description": "A project that organizes tasks and members within an organization.",
-                  "example": {
-                    "createdAt": "2024-12-23T15:24:26.607Z",
-                    "id": "443206fd-844c-4621-b306-2eb1788f0c15",
-                    "entityType": "project",
-                    "tenantId": "1ibx0c",
-                    "name": "Intelligent Silk Cheese",
-                    "updatedAt": "2024-12-23T15:24:26.607Z",
-                    "slug": "intelligent-silk-cheese",
-                    "thumbnailUrl": null,
-                    "bannerUrl": null,
-                    "createdBy": null,
-                    "updatedBy": null,
-                    "publishedAt": "2024-12-23T15:24:26.607Z",
-                    "public": true,
-                    "toolsConfig": {},
-                    "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
-                    "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
-                    "included": {
-                      "membership": {
-                        "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
-                        "tenantId": "1ibx0c",
-                        "channelType": "project",
-                        "channelId": "443206fd-844c-4621-b306-2eb1788f0c15",
-                        "userId": "3ad0fc15-fbb7-4d93-be21-d3cf138d6429",
-                        "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
-                        "workspaceId": null,
-                        "projectId": "443206fd-844c-4621-b306-2eb1788f0c15",
-                        "role": "member",
-                        "displayOrder": 49,
-                        "muted": false,
-                        "archived": false
-                      }
-                    }
-                  },
-                  "x-tags": ["data", "projects", "app"]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      }
-    },
-    "/{tenantId}/{organizationId}/projects/{id}/workspace": {
-      "delete": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "removeProjectWorkspace",
-        "tags": ["projects", "app", "channel"],
-        "summary": "Remove project from workspace",
-        "description": "Removes the current user's project membership from its assigned workspace without leaving the project.",
-        "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "tenantId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "organizationId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Project removed from workspace",
-            "content": {
-              "application/json": {
-                "example": {
-                  "createdAt": "2024-12-23T15:24:26.607Z",
-                  "id": "443206fd-844c-4621-b306-2eb1788f0c15",
-                  "entityType": "project",
-                  "tenantId": "1ibx0c",
-                  "name": "Intelligent Silk Cheese",
-                  "updatedAt": "2024-12-23T15:24:26.607Z",
-                  "slug": "intelligent-silk-cheese",
-                  "thumbnailUrl": null,
-                  "bannerUrl": null,
-                  "createdBy": null,
-                  "updatedBy": null,
-                  "publishedAt": "2024-12-23T15:24:26.607Z",
-                  "public": true,
-                  "toolsConfig": {},
-                  "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
-                  "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
-                  "included": {
-                    "membership": {
-                      "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
-                      "tenantId": "1ibx0c",
-                      "channelType": "project",
-                      "channelId": "443206fd-844c-4621-b306-2eb1788f0c15",
-                      "userId": "3ad0fc15-fbb7-4d93-be21-d3cf138d6429",
-                      "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
-                      "workspaceId": null,
-                      "projectId": "443206fd-844c-4621-b306-2eb1788f0c15",
-                      "role": "member",
-                      "displayOrder": 49,
-                      "muted": false,
-                      "archived": false
-                    }
-                  }
-                },
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Project"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "included": {
-                          "type": "object",
-                          "properties": {
-                            "membership": {
-                              "$ref": "#/components/schemas/MembershipBase"
-                            },
-                            "counts": {
-                              "type": "object",
-                              "properties": {
-                                "membership": {
-                                  "type": "object",
-                                  "properties": {
-                                    "admin": {
-                                      "type": "number"
-                                    },
-                                    "member": {
-                                      "type": "number"
-                                    },
-                                    "guest": {
-                                      "type": "number"
-                                    },
-                                    "pending": {
-                                      "type": "number"
-                                    },
-                                    "total": {
-                                      "type": "number"
-                                    }
-                                  },
-                                  "required": ["admin", "member", "guest", "pending", "total"]
-                                },
-                                "entities": {
-                                  "type": "object",
-                                  "properties": {
-                                    "task": {
-                                      "type": "number"
-                                    },
-                                    "label": {
-                                      "type": "number"
-                                    },
-                                    "attachment": {
-                                      "type": "number"
-                                    }
-                                  },
-                                  "required": ["task", "label", "attachment"]
-                                },
-                                "entitiesSelf": {
-                                  "type": "object",
-                                  "properties": {
-                                    "task": {
-                                      "type": "number"
-                                    },
-                                    "label": {
-                                      "type": "number"
-                                    },
-                                    "attachment": {
-                                      "type": "number"
-                                    }
-                                  },
-                                  "required": ["task", "label", "attachment"]
-                                },
-                                "activity": {
-                                  "type": "object",
-                                  "properties": {
-                                    "task": {
-                                      "type": "object",
-                                      "properties": {
-                                        "created": {
-                                          "type": ["number", "null"]
-                                        },
-                                        "updated": {
-                                          "type": ["number", "null"]
-                                        }
-                                      },
-                                      "required": ["created", "updated"]
-                                    },
-                                    "label": {
-                                      "type": "object",
-                                      "properties": {
-                                        "created": {
-                                          "type": ["number", "null"]
-                                        },
-                                        "updated": {
-                                          "type": ["number", "null"]
-                                        }
-                                      },
-                                      "required": ["created", "updated"]
-                                    },
-                                    "attachment": {
-                                      "type": "object",
-                                      "properties": {
-                                        "created": {
-                                          "type": ["number", "null"]
-                                        },
-                                        "updated": {
-                                          "type": ["number", "null"]
-                                        }
-                                      },
-                                      "required": ["created", "updated"]
-                                    }
-                                  },
-                                  "required": ["task", "label", "attachment"]
-                                },
-                                "taskStatusCounts": {
-                                  "type": "object",
-                                  "properties": {
-                                    "accepted": {
-                                      "type": "number"
-                                    },
-                                    "reviewed": {
-                                      "type": "number"
-                                    },
-                                    "delivered": {
-                                      "type": "number"
-                                    },
-                                    "finished": {
-                                      "type": "number"
-                                    },
-                                    "started": {
-                                      "type": "number"
-                                    },
-                                    "unstarted": {
-                                      "type": "number"
-                                    },
-                                    "iced": {
-                                      "type": "number"
-                                    }
-                                  },
-                                  "required": ["accepted", "reviewed", "delivered", "finished", "started", "unstarted", "iced"]
+                                  "required": ["accepted", "reviewed", "finished", "started", "unstarted", "iced"]
                                 }
                               },
                               "required": ["membership", "entities", "entitiesSelf", "activity"]
@@ -14866,9 +14565,6 @@
                                     "reviewed": {
                                       "type": "number"
                                     },
-                                    "delivered": {
-                                      "type": "number"
-                                    },
                                     "finished": {
                                       "type": "number"
                                     },
@@ -14882,7 +14578,7 @@
                                       "type": "number"
                                     }
                                   },
-                                  "required": ["accepted", "reviewed", "delivered", "finished", "started", "unstarted", "iced"]
+                                  "required": ["accepted", "reviewed", "finished", "started", "unstarted", "iced"]
                                 }
                               },
                               "required": ["membership", "entities", "entitiesSelf", "activity"]
@@ -15251,7 +14947,7 @@
         "operationId": "deleteWorkspaces",
         "tags": ["workspaces", "app", "channel"],
         "summary": "Delete workspaces",
-        "description": "Deletes one or more workspaces by ID.",
+        "description": "Deletes one or more workspaces by ID. A user's last workspace in the organization is refused; projects filed under a deleted workspace move to the user's next one.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -20819,7 +20515,7 @@
                     },
                     "status": {
                       "type": "integer",
-                      "enum": [6, 5, 4, 3, 2, 1, 0]
+                      "enum": [6, 5, 4, 3, 1, 0]
                     },
                     "primaryLabelId": {
                       "type": "string",
@@ -20904,7 +20600,7 @@
                       "summaryLength": 114,
                       "primaryLabelId": "ddcecd06-5676-46c7-9644-024d1a2df88c",
                       "displayOrder": 322.41,
-                      "status": 2,
+                      "status": 1,
                       "statusChangedAt": "2024-05-08T15:34:56.983Z",
                       "checkboxCount": 8,
                       "checkedCount": 8,
@@ -21120,7 +20816,7 @@
                       "summaryLength": 114,
                       "primaryLabelId": "ddcecd06-5676-46c7-9644-024d1a2df88c",
                       "displayOrder": 322.41,
-                      "status": 2,
+                      "status": 1,
                       "statusChangedAt": "2024-05-08T15:34:56.983Z",
                       "checkboxCount": 8,
                       "checkedCount": 8,
@@ -21532,7 +21228,7 @@
                       "summaryLength": 43,
                       "primaryLabelId": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
                       "displayOrder": 608.18,
-                      "status": 2,
+                      "status": 1,
                       "statusChangedAt": "2024-01-16T07:26:20.219Z",
                       "checkboxCount": 8,
                       "checkedCount": 1,
@@ -22052,7 +21748,7 @@
                       },
                       "status": {
                         "type": "integer",
-                        "enum": [6, 5, 4, 3, 2, 1, 0]
+                        "enum": [6, 5, 4, 3, 1, 0]
                       },
                       "primaryLabelId": {
                         "type": "string",

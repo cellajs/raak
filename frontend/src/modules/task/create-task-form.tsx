@@ -110,6 +110,11 @@ export function CreateTaskForm({
     };
   }, [initialStatus, formId, form.setValue, form.getValues, resetDraftForm]);
 
+  // After the draft's restore: a draft can hold a retired status
+  useEffect(() => {
+    if (!statusOptionsByValue[form.getValues('status')]) form.setValue('status', newTaskFormDefaults.status);
+  }, [form.getValues, form.setValue]);
+
   // Subscribe for render: the form only re-renders when isDirty *toggles*, so
   // render-time form.getValues() reads of these fields go stale once dirty
   const watchedStatus = useWatch({ control: form.control, name: 'status' });

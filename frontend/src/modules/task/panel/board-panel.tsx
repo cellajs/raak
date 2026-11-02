@@ -20,6 +20,7 @@ import { TaskPanelContent } from '~/modules/task/panel/task-panel-content';
 import { TaskPanelHeader } from '~/modules/task/panel/task-panel-header';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskCounts } from '~/modules/task/types';
+import { WorkspaceArrivalBalloon } from '~/modules/workspace/workspace-arrival-balloon';
 import { cn } from '~/utils/cn';
 
 export interface BoardPanelProps {
@@ -99,6 +100,7 @@ export const BoardPanel = memo(function BoardPanel({
               className={showFab ? 'opacity-100' : 'pointer-events-none translate-y-16 scale-50 opacity-0'}
             />
           )}
+          <WorkspaceArrivalBalloon project={project} />
         </div>
       ) : (
         <div ref={panelRef} className={cn('relative flex h-full flex-col', windowScroll && 'min-h-[80vh]')}>
@@ -109,6 +111,7 @@ export const BoardPanel = memo(function BoardPanel({
             panelId={panelId}
             count={filteredTasks.filter((task) => !isDraftTask(task)).length}
           />
+          <WorkspaceArrivalBalloon project={project} />
           <div className="flex min-h-0 flex-1 flex-col">
             <BoardPanelContent
               isCollapsed={isCollapsed}

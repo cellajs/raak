@@ -9,10 +9,6 @@ import { CreateProjectForm } from '~/modules/project/create-project-form';
 import { SelectProjectForm } from '~/modules/project/select-project-form';
 import { Button } from '~/modules/ui/button';
 
-interface AddProjectsProps {
-  mode?: 'create' | 'select';
-}
-
 interface AddProjectsOptionProps {
   onClick: () => void;
   icon: IconComponent;
@@ -79,10 +75,10 @@ function AddProjectsTitle({ mode, onBack }: AddProjectsTitleProps) {
   );
 }
 
-export function AddProjects({ mode: baseMode }: AddProjectsProps) {
+export function AddProjects() {
   const { t } = useTranslation();
 
-  const [createMode, setCreateMode] = useState<'create' | 'select' | null>(baseMode ?? null);
+  const [createMode, setCreateMode] = useState<'create' | 'select' | null>(null);
 
   const updateMode = (mode: 'create' | 'select' | null) => {
     setCreateMode(mode);

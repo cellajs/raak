@@ -86,7 +86,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   const bottomSlot = foldsSection('iced', counts) ? (
     statusSection('iced')
   ) : showsOlderHint ? (
-    <OlderAcceptedHint i18nKey="c:older_accepted_in_table" count={counts.acceptedCutOff} />
+    <OlderAcceptedHint count={counts.acceptedCutOff} />
   ) : undefined;
 
   // Keyboard focus scrolls a card only to the viewport edge, under a pinned section bar (h-9). The margin holds even
@@ -120,7 +120,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
                   </WindowVirtualizer>
                 </ListFocusScope>
               ) : (
-                <TaskPanelEmpty projectId={project.id} />
+                <TaskPanelEmpty project={project} />
               )}
             </div>
 
@@ -161,7 +161,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
                   </Virtualizer>
                 </ListFocusScope>
               ) : (
-                <TaskPanelEmpty projectId={project.id} />
+                <TaskPanelEmpty project={project} />
               )}
             </div>
 

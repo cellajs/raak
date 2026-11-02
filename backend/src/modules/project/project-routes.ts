@@ -82,16 +82,6 @@ const projectRoutes = createXRoutes(['projects', 'app', 'channel'], {
     request: { params: idInTenantOrgParamSchema, query: projectWorkspaceQuerySchema },
     responses: { 200: json('Project assigned to the new workspace', projectWithMembershipSchema, mockProjectResponse()) },
   }),
-  removeProjectWorkspace: xRoute({
-    method: 'delete',
-    path: '/{tenantId}/{organizationId}/projects/{id}/workspace',
-    xGuard: [userGuard, tenantGuard, orgGuard],
-    xRateLimiter: [singlePointsLimiter],
-    summary: 'Remove project from workspace',
-    description: "Removes the current user's project membership from its assigned workspace without leaving the project.",
-    request: { params: idInTenantOrgParamSchema },
-    responses: { 200: json('Project removed from workspace', projectWithMembershipSchema, mockProjectResponse()) },
-  }),
   moveProjectToWorkspace: xRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}/move',

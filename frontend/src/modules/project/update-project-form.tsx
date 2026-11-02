@@ -1,4 +1,3 @@
-import { CircleAlertIcon } from 'lucide-react';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
@@ -14,9 +13,9 @@ import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { toaster } from '~/modules/common/toaster/toaster';
+import { PublicAccessCard } from '~/modules/project/public-access-card';
 import { useProjectUpdateMutation } from '~/modules/project/query';
-import { Checkbox } from '~/modules/ui/checkbox';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
+import { Form, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { cleanUrl } from '~/utils/clean-url';
 import { formResolver } from '~/utils/form-resolver';
 
@@ -80,15 +79,8 @@ export function UpdateProjectForm({ project }: UpdateProjectFormProps) {
           control={form.control}
           name="public"
           render={({ field }) => (
-            <FormItem className="flex-row items-center" name="public">
-              <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(checked === true)} />
-              </FormControl>
-              <FormLabel>{t('c:public_access')}</FormLabel>
-              <p className="flex items-center gap-2">
-                <CircleAlertIcon className="size-3.5 shrink-0 text-amber-500" />
-                <span className="text-muted-foreground text-sm">{t('c:public_access_warn.text')}</span>
-              </p>
+            <FormItem name="public">
+              <PublicAccessCard checked={field.value} onCheckedChange={field.onChange} />
               <FormMessage />
             </FormItem>
           )}

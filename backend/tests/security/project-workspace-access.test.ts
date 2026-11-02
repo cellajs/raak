@@ -9,7 +9,6 @@ import {
   getPublicProject,
   getWorkspace,
   moveProjectToWorkspace,
-  removeProjectWorkspace,
   updateProject,
   updateWorkspace,
 } from 'sdk';
@@ -175,10 +174,6 @@ describe('Project and workspace access', async () => {
         call(moveProjectToWorkspace, { path: { ...path, id: projectB.id }, query: { workspaceId: workspaceB.id }, headers: headers(as) }),
     },
     {
-      route: 'removeProjectWorkspace',
-      attempt: (as: User) => call(removeProjectWorkspace, { path: { ...path, id: projectB.id }, headers: headers(as) }),
-    },
-    {
       route: 'createProjects',
       attempt: (as: User) =>
         call(createProjects, {
@@ -258,13 +253,6 @@ describe('Project and workspace access', async () => {
     {
       route: 'moveProjectToWorkspace with a foreign project',
       attempt: (as, id) => call(moveProjectToWorkspace, { path: { ...pathA, id }, query: { workspaceId: workspaceA.id }, headers: headers(as) }),
-      foreignId: () => projectB.id,
-      missingId: generateId,
-      unchanged: async () => expect(await filedUnder(insider.id, projectB.id)).toBe(workspaceB.id),
-    },
-    {
-      route: 'removeProjectWorkspace with a foreign project',
-      attempt: (as, id) => call(removeProjectWorkspace, { path: { ...pathA, id }, headers: headers(as) }),
       foreignId: () => projectB.id,
       missingId: generateId,
       unchanged: async () => expect(await filedUnder(insider.id, projectB.id)).toBe(workspaceB.id),
@@ -419,6 +407,8 @@ describe('Project and workspace access', async () => {
     expect(rename.response.status).toBe(200);
 
     expect((await call(deleteProjects, { path: pathA, body: { ids: [projectA.id] }, headers: headers(admin) })).response.status).toBe(200);
+    // The caller's last workspace in the organization stays
+    await newWorkspace(pathA, owner);
     expect((await call(deleteWorkspaces, { path: pathA, body: { ids: [ownerWorkspace.id] }, headers: headers(owner) })).response.status).toBe(200);
     expect(await projectRow(projectA.id)).toBeUndefined();
     expect(await workspaceRow(ownerWorkspace.id)).toBeUndefined();

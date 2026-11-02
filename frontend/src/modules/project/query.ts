@@ -15,9 +15,6 @@ import {
   type MoveProjectToWorkspaceResponse,
   moveProjectToWorkspace,
   type Project,
-  type RemoveProjectWorkspaceData,
-  type RemoveProjectWorkspaceResponse,
-  removeProjectWorkspace,
   type UpdateProjectData,
   type UpdateProjectResponse,
   updateProject,
@@ -225,19 +222,6 @@ export const useProjectMoveMutation = () => {
     },
     onSettled: () => {
       invalidateIfLastMutation(queryClient, keys.all, listKey);
-    },
-  });
-};
-
-export const useProjectRemoveWorkspaceMutation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<RemoveProjectWorkspaceResponse, ApiError, MutationData<RemoveProjectWorkspaceData>>({
-    mutationFn: ({ path }) => removeProjectWorkspace({ path }),
-    onSuccess: (updatedProject) => {
-      const membership = getApiIncludedMembership(updatedProject);
-      if (membership) upsertMyMembershipCache(membership);
-      queryClient.invalidateQueries({ queryKey: keys.list.base, refetchType: 'active' });
     },
   });
 };

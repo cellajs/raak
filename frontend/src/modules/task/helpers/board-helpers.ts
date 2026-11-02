@@ -36,15 +36,7 @@ export const sortTasksAsOnBoard = (tasks: Task[], projects: EnrichedProject[]) =
 };
 
 // The path a task takes, with iced off the end of it. Panel titles read in this order.
-export const statusPath: TaskStatus[] = [
-  TaskStatus.Unstarted,
-  TaskStatus.Started,
-  TaskStatus.Finished,
-  TaskStatus.Delivered,
-  TaskStatus.Reviewed,
-  accepted,
-  iced,
-];
+export const statusPath: TaskStatus[] = [TaskStatus.Unstarted, TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed, accepted, iced];
 
 /** The statuses as a panel lists them from the bottom up, iced first: the order of the mobile tabs. */
 export const statusesBottomUp = statusPath.toSorted((a, b) => b - a);

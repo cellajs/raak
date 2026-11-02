@@ -1,12 +1,17 @@
-import { type ReactNode, Suspense } from 'react';
+import { type CSSProperties, type ReactNode, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization } from 'sdk';
+import { useBreakpointBelow } from '~/hooks/use-breakpoints';
+import { useMeasure } from '~/hooks/use-measure';
 import { FocusViewContainer } from '~/modules/common/focus-view';
 import { PageHeader } from '~/modules/common/page/header';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
+import { PublicBadge, PublicProjectLabel } from '~/modules/project/public-project-indicators';
 import { useProjectUpdateMutation } from '~/modules/project/query';
+import { ProjectReadOnlyBadge } from '~/modules/project/read-only-badge';
 import type { EnrichedProject } from '~/modules/project/types';
+import { useProjectHeaderShown } from '~/modules/task/board/task-board-store';
 import { useTaskDropMonitor } from '~/modules/task/hooks/use-task-drop-monitor';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 import { TasksHotkeys } from '~/modules/task/tasks-hotkeys';
@@ -27,6 +32,11 @@ export function ProjectPage({ project, organization, children }: ProjectPageProp
   const resolveCan = useResolveCan();
   const canUpdate = resolveCan(project.can?.project?.update, project.createdBy);
 
+  const isMobile = useBreakpointBelow('sm');
+  const isHeaderShown = useProjectHeaderShown(project);
+  // Measured: a cover's height follows the viewport and whether it has an image, and focus view hides the header
+  const { ref: headerRef, bounds: headerBounds } = useMeasure<HTMLDivElement>();
+
   const updateProject = useProjectUpdateMutation();
 
   useTaskDropMonitor(project.tenantId, project.organizationId);
@@ -40,25 +50,37 @@ export function ProjectPage({ project, organization, children }: ProjectPageProp
 
   return (
     <>
-      <PageHeader
-        entity={project}
-        canUpdate={canUpdate}
-        organizationId={project.organizationId}
-        parents={[organization]}
-        onCoverUpdate={onCoverUpdate}
-        panel={
-          project.membership && (
-            <Suspense>
-              <div className="flex items-center p-2">
-                <JoinedButton channel={project} role={project.membership.role} iconOnlyOnPhone />
-              </div>
-            </Suspense>
-          )
-        }
-      />
+      <div ref={headerRef}>
+        {(isHeaderShown || isMobile) && (
+          <PageHeader
+            entity={project}
+            canUpdate={canUpdate}
+            organizationId={project.organizationId}
+            parents={[organization]}
+            onCoverUpdate={onCoverUpdate}
+            avatarBadge={project.public && <PublicBadge large />}
+            typeLabel={project.public ? <PublicProjectLabel editableProject={canUpdate ? project : undefined} /> : undefined}
+            panel={
+              project.membership && (
+                <Suspense>
+                  <div className="flex items-center gap-2 p-2">
+                    <ProjectReadOnlyBadge projectId={project.id} />
+                    <JoinedButton channel={project} role={project.membership.role} iconOnlyOnPhone />
+                  </div>
+                </Suspense>
+              )
+            }
+          />
+        )}
+      </div>
       <TaskSheetHandler />
       <TasksHotkeys projects={[project]} />
-      <FocusViewContainer className="max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">{children}</FocusViewContainer>
+      {/* sm:min-h-0: a full-height container below the header would scroll the page, and wheel events over a column would then fight the column's own scroll */}
+      <FocusViewContainer className="max-w-none gap-0 p-0 sm:min-h-0 sm:gap-2 sm:p-3 md:gap-3">
+        <div className="project-board-offsets contents" style={{ '--project-header-h': `${headerBounds.height}px` } as CSSProperties}>
+          {children}
+        </div>
+      </FocusViewContainer>
     </>
   );
 }

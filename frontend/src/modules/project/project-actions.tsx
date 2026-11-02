@@ -43,9 +43,10 @@ export const openProjectSettingsSheet = (project: EnrichedProject, triggerRef?: 
   );
 };
 
-const openAddProjectsDialog = (mode?: 'select') => {
+/** Opens the add-projects dialog, where a project is created or an existing one selected. */
+export const createNewProject = () => {
   const title = i18n.t('c:add_resource', { resource: i18n.t('c:project') });
-  dialoger.getState().create(<AddProjects mode={mode} />, {
+  dialoger.getState().create(<AddProjects />, {
     triggerRef: { current: null },
     className: 'md:max-w-4xl',
     id: 'create-project',
@@ -54,9 +55,3 @@ const openAddProjectsDialog = (mode?: 'select') => {
     description: i18n.t('c:add_projects.text'),
   });
 };
-
-/** Opens the add-projects dialog, where a project is created or an existing one selected. */
-export const createNewProject = () => openAddProjectsDialog();
-
-/** Opens the add-projects dialog directly on the "select existing projects" step. */
-export const selectExistingProjects = () => openAddProjectsDialog('select');

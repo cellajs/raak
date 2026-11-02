@@ -15,6 +15,15 @@
   --task-sheet-offset-sm: 3.25rem;
 }
 
+/* A project page's header stands above the board row, and its filing banner below the search bar, so the same offsets
+   grow by their measured heights. */
+.project-board-offsets {
+  --board-offset-sm: calc(4.63rem + var(--project-header-h) + var(--project-banner-h, 0px));
+  --board-offset-md: calc(4.88rem + var(--project-header-h) + var(--project-banner-h, 0px));
+  --board-panel-offset: calc(146px + var(--project-header-h) + var(--project-banner-h, 0px));
+  --local-panel-offset: calc(78px + var(--project-header-h) + var(--project-banner-h, 0px));
+}
+
 /* Pinned section bars animate this registered offset. Consumers follow it through calc()
    while their own top property switches immediately. */
 @property --sticky-stack-top {

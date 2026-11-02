@@ -19,7 +19,7 @@ import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
 import { filterWithRejection } from '#/utils/rejection-utils';
 
-const zeroTaskStatusCounts = { accepted: 0, reviewed: 0, delivered: 0, finished: 0, started: 0, unstarted: 0, iced: 0 };
+const zeroTaskStatusCounts = { accepted: 0, reviewed: 0, finished: 0, started: 0, unstarted: 0, iced: 0 };
 
 type CreateProjectItem = z.infer<typeof projectCreateBodySchema>[number];
 

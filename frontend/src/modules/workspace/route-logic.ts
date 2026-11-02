@@ -31,12 +31,12 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
     buildSlugOverrides: (entity) => ({ slug: entity.slug }),
   });
 
-  // Labels are project-homed, so they are prefetched per project with the tasks. The board uses excludeArchived='true'
-  // as a separate cache key, so both project lists are prefetched. Restore first, so synced lists make these no-ops.
+  // Labels are project-homed, so they are prefetched per project with the tasks, for the board's projects: an archived one has no panel.
+  // The table uses the list with archived projects, a separate cache key, so both are prefetched. Restore first, so synced lists make these no-ops.
   await cacheRestored;
-  const projectsQueryOptions = projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' });
+  const projectsQueryOptions = projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' });
   const projectsPrefetch = queryClient.prefetchInfiniteQuery(projectsQueryOptions);
-  queryClient.prefetchInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }));
+  queryClient.prefetchInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }));
 
   const prefetchPerProjectQueries = () => {
     const cachedProjects = queryClient.getQueryData(projectsQueryOptions.queryKey);

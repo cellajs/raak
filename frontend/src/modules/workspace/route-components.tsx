@@ -16,7 +16,7 @@ export function WorkspaceRouteComponent() {
 
   // The frame sits outside the Suspense boundaries, so the skeleton renders where the board will.
   return (
-    <FocusViewContainer className="group/workspace h-full max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
+    <FocusViewContainer className="h-full max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
       <Suspense fallback={view === 'table' ? <Spinner size="lg" className="mt-[45vh]" /> : boardSkeleton}>
         <WorkspacePage key={workspace.slug} workspaceId={workspace.id} organizationId={workspace.organizationId} tenantId={tenantId}>
           {view === 'table' ? (

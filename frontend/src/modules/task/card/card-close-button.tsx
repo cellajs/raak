@@ -3,6 +3,7 @@ import { MotionConfig, motion, type Variants } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { taskCardGhostClass } from '~/modules/task/task-styles';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
@@ -48,7 +49,7 @@ export function CardCloseExit() {
     <MotionConfig reducedMotion="user">
       <motion.span
         aria-hidden
-        className={buttonVariants({ variant: 'ghost', size: 'xs', className: 'size-8' })}
+        className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), 'size-8', taskCardGhostClass)}
         variants={slide}
         initial="shown"
         animate="gone"

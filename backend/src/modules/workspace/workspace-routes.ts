@@ -71,7 +71,8 @@ const workspaceRoutes = createXRoutes(['workspaces', 'app', 'channel'], {
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     summary: 'Delete workspaces',
-    description: 'Deletes one or more workspaces by ID.',
+    description:
+      "Deletes one or more workspaces by ID. A user's last workspace in the organization is refused; projects filed under a deleted workspace move to the user's next one.",
     request: { params: tenantOrgParamSchema, body: jsonBody(idsBodySchema()) },
     responses: { 200: json('Success', batchResponseSchema()) },
   }),

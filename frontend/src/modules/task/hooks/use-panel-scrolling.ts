@@ -152,6 +152,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, counts, isMobile,
     const frame = requestAnimationFrame(() => {
       const index = tasksRef.current.findIndex(isDraftTask);
       if (index !== -1) virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
+      scrollViewportRef.current?.closest('[data-panel]')?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     });
     return () => cancelAnimationFrame(frame);
   }, [draftPlacement]);

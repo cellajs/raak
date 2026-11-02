@@ -3,6 +3,7 @@ import { LabelsDrawerButton } from '~/modules/label/labels-drawer';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { NewTaskButton } from '~/modules/task/board/new-task-button';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
+import { ProjectHeaderToggle } from '~/modules/task/board/project-header-toggle';
 import { StatusPanelsMenu } from '~/modules/task/board/status-panels-menu';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { BoardSearchBar } from '~/modules/task/board-search';
@@ -45,10 +46,17 @@ export function BoardHeader({
 
       <BoardSearchBar
         projects={projects}
-        isInWorkspace={isInWorkspace}
+        workspaceId={workspace?.id}
         publicView={publicView}
         total={total}
-        leading={pageProject && <NewTaskButton project={pageProject} size="default" />}
+        leading={
+          pageProject && (
+            <>
+              <ProjectHeaderToggle project={pageProject} />
+              <NewTaskButton project={pageProject} size="default" />
+            </>
+          )
+        }
         controls={
           <>
             {isInWorkspace && <WorkspaceActionButtons />}
