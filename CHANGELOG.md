@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1](https://github.com/cellajs/raak/compare/0.2.0...0.2.1) (2026-11-03)
+
+
+### 🎉 New features
+
+* **workspace:** workspaces stop being archivable, unseen counts roll up, board and footer fixes ([#255](https://github.com/cellajs/raak/issues/255)) ([c1c8151](https://github.com/cellajs/raak/commit/c1c815195e6276119c159e363895000bc78c2214))
+
+
+### 🧹 Chores
+
+* upgrade cella to v0.34.0 (a83ad2071) ([#254](https://github.com/cellajs/raak/issues/254)) ([03cd982](https://github.com/cellajs/raak/commit/03cd982efef3042dc7e5c1fe69a1849b34e9e8c2))
+
 ## [0.2.0](https://github.com/cellajs/raak/compare/0.1.27...0.2.0) (2026-11-02)
 
 
