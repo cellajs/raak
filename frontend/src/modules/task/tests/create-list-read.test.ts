@@ -133,6 +133,8 @@ describe('a task list read that races a create', () => {
         },
       ],
     });
+    // The queue restores with the cache its delete left: the row is already out of the list, so only the carry could bring it back.
+    queryClient.setQueryData(homeKey, { items: [task('t-old')], total: 1 });
     const page = deferred<Page>();
     getTasks.mockReturnValueOnce(page.promise);
     const read = readList();

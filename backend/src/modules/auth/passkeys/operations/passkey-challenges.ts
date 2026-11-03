@@ -26,7 +26,9 @@ import { isExpiredDate } from '#/utils/is-expired-date';
 import { isoDateIn } from '#/utils/iso-date';
 import { TimeSpan } from '#/utils/time-span';
 
-const relyingPartyId = appConfig.mode === 'development' ? 'localhost' : appConfig.domain;
+// The host the app is served on: a passkey registered on one host never answers on another, staging's on production's included.
+// fork: production passkeys are registered under the apex raak.dev; a host-bound id would orphan every one of them
+const relyingPartyId = appConfig.domain || new URL(appConfig.frontendUrl).hostname;
 const expectedOrigin = appConfig.frontendUrl;
 
 /** Challenges and passkeys are read and written on the base pool, whatever the route's context holds. */
