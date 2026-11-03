@@ -565,6 +565,7 @@ export const zTask = z.object({
   deletedBy: zActorRef.nullable(),
   public: z.boolean(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+  number: z.int().gte(-2147483648).lte(2147483647),
   expandable: z.boolean(),
   summary: z.string().max(1000000),
   summaryLength: z.int().gte(-2147483648).lte(2147483647),
@@ -909,6 +910,7 @@ export const zLabel = z.object({
   deletedBy: z.uuid().nullable(),
   public: z.boolean(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+  number: z.int().gte(-2147483648).lte(2147483647),
   color: z.string().max(255).nullable(),
   mode: z.enum(['primary', 'secondary', 'epic']),
   slug: z.string().max(255),
@@ -1978,7 +1980,7 @@ export const zGetPublicTaskResponse = zTask;
 
 export const zGetPublicTasksQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
+  sort: z.enum(['number', 'projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(1000).optional().default(40),
@@ -2018,8 +2020,36 @@ export const zGetTaskCoverPath = z.object({
   id: z.string().max(50),
 });
 
+export const zResolveTaskLinkByNumberPath = z.object({
+  tenantId: z.string().max(50),
+  number: z.int().gt(0),
+});
+
+/**
+ * Task link resolution data
+ */
+export const zResolveTaskLinkByNumberResponse = z.object({
+  taskId: z.string(),
+  projectId: z.string(),
+  projectSlug: z.string(),
+  organizationId: z.string(),
+  organizationSlug: z.string(),
+  tenantId: z.string(),
+  public: z.boolean(),
+});
+
+export const zGetTaskCoverByNumberPath = z.object({
+  tenantId: z.string().max(50),
+  number: z.int().gt(0),
+});
+
 export const zRedirectToTaskPath = z.object({
   id: z.string().max(50),
+});
+
+export const zRedirectToTaskByNumberPath = z.object({
+  tenantId: z.string().max(50),
+  number: z.int().gt(0),
 });
 
 export const zGetTenantsQuery = z.object({
@@ -3695,7 +3725,7 @@ export const zGetTasksPath = z.object({
 
 export const zGetTasksQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
+  sort: z.enum(['number', 'projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(1000).optional().default(40),

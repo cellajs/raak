@@ -15,6 +15,7 @@ import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
+import { ProductRef } from '~/modules/task/product-ref';
 import { itemFocusBarClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
 import { Input } from '~/modules/ui/input';
@@ -215,6 +216,7 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
                 </span>
               </button>
             )}
+            {expanded && <ProductRef number={row.number} />}
             {!expanded && (
               <span className="ml-1 shrink-0 whitespace-nowrap text-muted-foreground text-xs tabular-nums">{formatCount(row.usedCount)}</span>
             )}

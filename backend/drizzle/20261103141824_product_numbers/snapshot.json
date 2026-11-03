@@ -1,0 +1,381 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "5c225ed6-c292-4e7b-91ba-e0dfa0914e33",
+  "prevIds": [
+    "bd6177ef-8328-4d24-a2f1-41c5901f93ad"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "product_numbering"
+      ],
+      "writes": [
+        "s|tbl|public.product_numbering",
+        "n|tbl|public.product_numbering",
+        "e|tbl|public.product_numbering",
+        "n|rel|public.product_numbering",
+        "n|type|public.product_numbering",
+        "n|rel|public.product_numbering_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "labels",
+        "number"
+      ],
+      "writes": [
+        "s|col|public.labels.number",
+        "n|col|public.labels.number",
+        "e|col|public.labels.number"
+      ],
+      "reads": [
+        "n|tbl|public.labels",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "tasks",
+        "number"
+      ],
+      "writes": [
+        "s|col|public.tasks.number",
+        "n|col|public.tasks.number",
+        "e|col|public.tasks.number"
+      ],
+      "reads": [
+        "n|tbl|public.tasks",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "labels",
+        "labels_organization_number_unique"
+      ],
+      "writes": [
+        "s|idx|public.labels_organization_number_unique",
+        "n|idx|public.labels_organization_number_unique",
+        "e|idx|public.labels_organization_number_unique",
+        "n|rel|public.labels_organization_number_unique"
+      ],
+      "reads": [
+        "n|tbl|public.labels",
+        "n|sch|public",
+        "n|col|public.labels.organization_id",
+        "n|col|public.labels.number"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "tasks",
+        "tasks_organization_number_unique"
+      ],
+      "writes": [
+        "s|idx|public.tasks_organization_number_unique",
+        "n|idx|public.tasks_organization_number_unique",
+        "e|idx|public.tasks_organization_number_unique",
+        "n|rel|public.tasks_organization_number_unique"
+      ],
+      "reads": [
+        "n|tbl|public.tasks",
+        "n|sch|public",
+        "n|col|public.tasks.organization_id",
+        "n|col|public.tasks.number"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "product_numbering"
+      ],
+      "writes": [
+        "s|fk|public.product_numbering.product_numbering_tenant_id_tenants_id_fkey",
+        "n|fk|public.product_numbering.product_numbering_tenant_id_tenants_id_fkey",
+        "e|fk|public.product_numbering.product_numbering_tenant_id_tenants_id_fkey",
+        "n|con|public.product_numbering.product_numbering_tenant_id_tenants_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.product_numbering",
+        "n|sch|public",
+        "n|tbl|public.tenants",
+        "n|sch|public",
+        "n|col|public.product_numbering.tenant_id",
+        "n|col|public.tenants.id",
+        "e|uniqueness|public.tenants.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "product_numbering"
+      ],
+      "writes": [
+        "s|fk|public.product_numbering.product_numbering_itamjET4RDM6_fkey",
+        "n|fk|public.product_numbering.product_numbering_itamjET4RDM6_fkey",
+        "e|fk|public.product_numbering.product_numbering_itamjET4RDM6_fkey",
+        "n|con|public.product_numbering.product_numbering_itamjET4RDM6_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.product_numbering",
+        "n|sch|public",
+        "n|tbl|public.organizations",
+        "n|sch|public",
+        "n|col|public.product_numbering.tenant_id",
+        "n|col|public.product_numbering.organization_id",
+        "n|col|public.organizations.tenant_id",
+        "n|col|public.organizations.id",
+        "e|uniqueness|public.organizations.id.tenant_id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "product_numbering",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "labels",
+        "name": "number",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "product_numbering",
+        "name": "tenant_id",
+        "type": "varchar(24)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "product_numbering",
+        "name": "organization_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "product_numbering",
+        "name": "product_type",
+        "type": "varchar",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "product_numbering",
+        "name": "last_number",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tasks",
+        "name": "number",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "labels",
+        "name": "labels_organization_number_unique",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "organization_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "number",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tasks",
+        "name": "tasks_organization_number_unique",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "organization_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "number",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "product_numbering",
+        "name": "product_numbering_tenant_id_tenants_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "tenant_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "tenants",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "NO ACTION",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "product_numbering",
+        "name": "product_numbering_itamjET4RDM6_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "tenant_id",
+          "organization_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organizations",
+        "columnsTo": [
+          "tenant_id",
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "product_numbering",
+        "name": "product_numbering_pkey",
+        "columns": [
+          "organization_id",
+          "product_type"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

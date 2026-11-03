@@ -81,7 +81,7 @@ const taskListQueryShape = {
   status: taskFilterValuesSchema,
   type: taskFilterValuesSchema,
   labels: taskFilterValuesSchema,
-  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
+  sort: z.enum(['number', 'projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('asc'),
   acceptedCutOff: z.coerce.number().positive().optional(),
   projectId: validIdSchema.optional(),

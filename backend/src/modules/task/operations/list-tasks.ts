@@ -37,6 +37,9 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
   const [tasksUsers, tasksLabels] = await Promise.all([findProjectMembers(ctx, { projectIds }), findLabelsByProjects(ctx, { projectIds })]);
 
   const keywordFilters = parseTerms(q).map((word) => {
+    // `#123` names a task by number; search-filter.ts is the client leg of the same rule
+    const number = word.match(/^#(\d+)$/);
+    if (number) return eq(tasksTable.number, Number(number[1]));
     const wordFilters: SQL[] = [textSearchFilter(tasksTable.keywords, word)];
 
     const filteredLabels = tasksLabels.filter(({ name }) => foldText(name).includes(word)).map(({ id }) => id);
@@ -61,7 +64,7 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
       sort,
       order,
       fallback: ['createdAt', 'asc'],
-      columns: pick(tasksTable, ['status', 'projectId', 'createdAt', 'createdBy', 'updatedAt']),
+      columns: pick(tasksTable, ['number', 'status', 'projectId', 'createdAt', 'createdBy', 'updatedAt']),
       append: [desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number)), asc(tasksTable.id)],
     });
 

@@ -7,6 +7,7 @@ import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { cachedTasks, subscribeToTaskCache } from '~/modules/task/helpers/active-task';
 import { focusItem } from '~/modules/task/helpers/focus-item';
+import { productRef } from '~/modules/task/helpers/product-ref';
 import { suppressGlowAttr, triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { taskKeys } from '~/modules/task/query';
 import { taskSheetParam } from '~/modules/task/search-params-schemas';
@@ -21,11 +22,13 @@ interface TaskSheetTitleProps {
 function TaskSheetTitle({ taskId }: TaskSheetTitleProps) {
   const { t } = useTranslation();
   const projectId = useSyncExternalStore(subscribeToTaskCache, () => cachedTasks().find((task) => task.id === taskId)?.projectId);
+  const number = useSyncExternalStore(subscribeToTaskCache, () => cachedTasks().find((task) => task.id === taskId)?.number);
   const isReadOnly = useIsProjectReadOnly(projectId);
 
   return (
     <span className="flex items-center gap-2">
       {t('c:task')}
+      {!!number && <span className="font-normal text-muted-foreground">{productRef(number)}</span>}
       {isReadOnly && (
         <Badge soft className="font-normal">
           {t('c:read_only')}

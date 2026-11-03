@@ -31,7 +31,7 @@ export function LabelOptionsButton({ row, canManage, className }: LabelOptionsBu
   const deleteIds = row.mode === 'epic' ? [row.id] : row.siblingIds;
 
   const handleCopyLink = async () => {
-    const link = `${window.location.origin}${window.location.pathname}?labelPageId=${row.id}`;
+    const link = `${window.location.origin}${window.location.pathname}?labelPageId=${row.number > 0 ? row.number : row.id}`;
     if (await copyToClipboard(link)) dropdowner.getState().complete(t('c:copied'));
   };
 
