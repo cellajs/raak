@@ -15059,7 +15059,7 @@
         "operationId": "getWorkspaces",
         "tags": ["workspaces", "app", "channel"],
         "summary": "Get list of workspaces",
-        "description": "Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.",
+        "description": "Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, and q to search by workspace name.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -15132,23 +15132,6 @@
             },
             "required": false,
             "name": "role",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
-            },
-            "required": false,
-            "name": "excludeArchived",
             "in": "query"
           },
           {

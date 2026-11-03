@@ -2835,10 +2835,6 @@ export const zGetWorkspacesQuery = z.object({
   limit: z.int().gte(1).lte(1000).optional().default(40),
   organizationId: z.string().max(50).optional(),
   role: z.enum(['admin', 'member', 'guest']).optional(),
-  excludeArchived: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
   include: z.string().max(255).optional(),
 });
 

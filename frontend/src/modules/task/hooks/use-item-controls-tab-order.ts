@@ -32,6 +32,8 @@ export function useItemControlsTabOrder(
     const removeControls = () => {
       for (const el of container.querySelectorAll<HTMLElement>(focusableSelector)) {
         if (el.id === mainId || el.tabIndex < 0) continue;
+        // An attribute written inside an editor rebuilds that block, and its new control fires the observer below: an endless loop
+        if (el.parentElement?.closest('.ProseMirror')) continue;
         el.setAttribute('tabindex', '-1');
         removedRef.current.add(el);
       }

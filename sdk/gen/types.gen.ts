@@ -5913,7 +5913,6 @@ export type GetWorkspacesData = {
     limit?: number;
     organizationId?: string;
     role?: 'admin' | 'member' | 'guest';
-    excludeArchived?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/workspaces';

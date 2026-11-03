@@ -52,7 +52,7 @@ interface EnsureUserWorkspaceOpts {
 }
 
 /**
- * The id of the user's first unarchived workspace in the organization, or of a new one named after the organization.
+ * The id of the user's first workspace in the organization, or of a new one named after the organization.
  * Call it inside a transaction. A new workspace skips the quota and permission checks of `createWorkspacesOp`: the
  * caller may be someone else, and an invitation must not fail on a limit the invitee has no say in.
  */

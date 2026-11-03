@@ -56,7 +56,7 @@ interface FindUserWorkspaceIdOpts {
   exceptIds?: string[];
 }
 
-/** The id of the user's first unarchived workspace in the organization, by their own order. */
+/** The id of the user's first workspace in the organization, by their own order. */
 export const findUserWorkspaceId = async (ctx: DbContext, { userId, organizationId, exceptIds = [] }: FindUserWorkspaceIdOpts) => {
   const [first] = await ctx.var.db
     .select({ id: membershipsTable.channelId })
@@ -66,7 +66,6 @@ export const findUserWorkspaceId = async (ctx: DbContext, { userId, organization
         eq(membershipsTable.userId, userId),
         eq(membershipsTable.organizationId, organizationId),
         eq(membershipsTable.channelType, 'workspace'),
-        eq(membershipsTable.archived, false),
         notInArray(membershipsTable.channelId, exceptIds),
       ),
     )
@@ -117,7 +116,6 @@ interface FindWorkspacesPaginatedOpts {
   offset: number;
   limit: number;
   organizationId?: string;
-  excludeArchived?: boolean;
   role?: EntityRole;
   includeCounts: boolean;
 }
@@ -125,7 +123,7 @@ interface FindWorkspacesPaginatedOpts {
 /** Get paginated list of workspaces with total count, membership, optional entity counts. */
 export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspacesPaginatedOpts) => {
   const { db } = ctx.var;
-  const { userId, isSystemAdmin, q, sort, order, offset, limit, organizationId, excludeArchived, role, includeCounts } = opts;
+  const { userId, isSystemAdmin, q, sort, order, offset, limit, organizationId, role, includeCounts } = opts;
 
   const entityType = 'workspace';
 
@@ -135,10 +133,7 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
     eq(membershipsTable.channelType, entityType),
   );
 
-  const membershipFilterOn = and(
-    ...(excludeArchived ? [eq(membershipsTable.archived, false)] : []),
-    ...(role ? [eq(membershipsTable.role, role)] : []),
-  );
+  const membershipFilterOn = and(...(role ? [eq(membershipsTable.role, role)] : []));
 
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 

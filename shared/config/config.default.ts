@@ -74,7 +74,10 @@ export const config = {
    * User menu structure of channel entities with optional nested subentities.
    * If subentityType is set, the table must include `${entity}Id` foreign key.
    */
-  menuStructure: [{ entityType: 'organization', subentityType: null } as const, { entityType: 'workspace', subentityType: 'project' } as const],
+  menuStructure: [
+    { entityType: 'organization', subentityType: null } as const,
+    { entityType: 'workspace', subentityType: 'project', archivable: false } as const,
+  ],
 
   /** Nav bar, how the menu groups channels and where page tabs show: `NavigationConfig`. */
   navigation: { navBar: true, menu: 'perOrganization', pageTabs: {} } as NavigationConfig<(typeof hierarchy.channelTypes)[number]>,

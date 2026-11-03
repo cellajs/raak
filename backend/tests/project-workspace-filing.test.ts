@@ -1,5 +1,13 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { assignProjectWorkspace, createProjects, createWorkspaces, deleteWorkspaces, handleMembershipInvitation, membershipInvite } from 'sdk';
+import {
+  assignProjectWorkspace,
+  createProjects,
+  createWorkspaces,
+  deleteWorkspaces,
+  handleMembershipInvitation,
+  membershipInvite,
+  updateMembership,
+} from 'sdk';
 import { generateId } from 'shared/utils/entity-id';
 import { afterEach, describe, expect, it } from 'vitest';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
@@ -99,32 +107,33 @@ describe('Filing projects under workspaces', async () => {
     expect(membership.workspaceId).toBe(held[0].id);
   });
 
-  it("files a direct add under the person's first unarchived workspace", async () => {
+  it("files a direct add under the person's first workspace", async () => {
     const { admin, member, path, headersOf } = await orgWithUsers();
     const projectId = await createProject(path, headersOf(admin), await createWorkspace(path, headersOf(admin)));
-    const archivedId = await createWorkspace(path, headersOf(member));
-    const firstUnarchivedId = await createWorkspace(path, headersOf(member));
+    const firstId = await createWorkspace(path, headersOf(member));
     await createWorkspace(path, headersOf(member));
-    await adminDb.update(membershipsTable).set({ archived: true }).where(eq(membershipsTable.channelId, archivedId));
 
     await addDirectly(path, headersOf(admin), projectId, member.email);
 
-    expect((await workspacesHeldBy(member.id)).length).toBe(3);
+    expect((await workspacesHeldBy(member.id)).length).toBe(2);
     const [membership] = await projectMembershipsOf(member.id, projectId);
-    expect(membership.workspaceId).toBe(firstUnarchivedId);
+    expect(membership.workspaceId).toBe(firstId);
   });
 
-  it('creates a workspace rather than file a direct add under an archived one', async () => {
-    const { admin, member, path, headersOf } = await orgWithUsers();
-    const projectId = await createProject(path, headersOf(admin), await createWorkspace(path, headersOf(admin)));
-    const archivedId = await createWorkspace(path, headersOf(member));
-    await adminDb.update(membershipsTable).set({ archived: true }).where(eq(membershipsTable.channelId, archivedId));
+  it('refuses to archive a workspace and archives a project', async () => {
+    const { admin, path, headersOf } = await orgWithUsers();
+    const workspaceId = await createWorkspace(path, headersOf(admin));
+    const projectId = await createProject(path, headersOf(admin), workspaceId);
+    const [workspaceMembership] = await adminDb
+      .select()
+      .from(membershipsTable)
+      .where(and(eq(membershipsTable.userId, admin.id), eq(membershipsTable.channelId, workspaceId)));
+    const [projectMembership] = await projectMembershipsOf(admin.id, projectId);
 
-    await addDirectly(path, headersOf(admin), projectId, member.email);
+    const archive = (id: string) => call(updateMembership, { path: { ...path, id }, body: { archived: true }, headers: headersOf(admin) });
 
-    const [membership] = await projectMembershipsOf(member.id, projectId);
-    expect(membership.workspaceId).not.toBe(archivedId);
-    expect(await workspacesHeldBy(member.id)).toContainEqual(expect.objectContaining({ id: membership.workspaceId, archived: false }));
+    expect((await archive(workspaceMembership.id)).response.status).toBe(400);
+    expect((await archive(projectMembership.id)).response.status).toBe(200);
   });
 
   it('files an accepted invitation, bringing the organization membership along, and reuses the workspace for the next', async () => {
