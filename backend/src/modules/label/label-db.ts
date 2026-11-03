@@ -23,6 +23,7 @@ export const labelsTable = snakeCase.table(
     slug: varchar({ length: maxLength.field }).notNull(),
     icon: varchar({ length: maxLength.field }),
     organizationTracked: boolean().notNull().default(false),
+    /** A primary label's place in the organization's order; a tag's or epic's heat rank (helpers/label-heat.ts), highest first. */
     displayOrder: doublePrecision(),
     ...channelRelationColumns('label'),
   },

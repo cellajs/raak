@@ -1,17 +1,22 @@
+import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { BirdIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
+import { useLatestRef } from '~/hooks/use-latest-ref';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
+import { compareLabelHeat, getDroppedLabelRank, isLabelData } from '~/modules/label/label-order';
 import { LabelTile, labelTileDomId } from '~/modules/label/label-tile';
 import { labelTileStore } from '~/modules/label/label-tile-store';
-import { labelsCanonicalOptions } from '~/modules/label/query';
-import type { LabelRow, LabelsHostProps, LabelsScopeProps } from '~/modules/label/types';
+import { labelsCanonicalOptions, useLabelUpdateMutation } from '~/modules/label/query';
+import type { LabelsHostProps, LabelsScopeProps } from '~/modules/label/types';
 import { type LabelUsage, useBoardLabelUsage } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { useReadOnlyProjectIds } from '~/modules/project/use-read-only';
@@ -31,8 +36,6 @@ const combinePanelLabels = (results: { data?: { items: Label[] }; isLoading: boo
 interface LabelListScopeProps extends LabelsHostProps {
   entityId: string;
 }
-
-const byCreatedAtDesc = (a: LabelRow, b: LabelRow) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0);
 
 /** Reads the canonical per-project list the optimistic create splices into, so a just-created label shows without a refetch. */
 function ProjectLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
@@ -75,12 +78,38 @@ interface LabelListViewProps extends LabelsHostProps {
 function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
   const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
+  const { mutate: updateLabel } = useLabelUpdateMutation(tenantId, organizationId);
 
   const viewportRef = useRef<HTMLDivElement>(null);
-  const rows = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
+  const rows = groupLabelRows(labels, { usage }).sort(compareLabelHeat);
   const itemIds = rows.map((row) => labelTileDomId(row.id));
   const readOnlyProjectIds = useReadOnlyProjectIds([...new Set(rows.flatMap((row) => row.projectIds))]);
+  const rowsRef = useLatestRef(rows);
+  const updateLabelRef = useLatestRef(updateLabel);
+
+  // A dropped or stepped row takes a rank between its new neighbours, written to every sibling, so it lands there on every device
+  const placeRow = (sourceId: string, targetId: string, edge: Edge) => {
+    const displayOrder = getDroppedLabelRank(rowsRef.current, sourceId, targetId, edge);
+    const source = rowsRef.current.find((row) => row.id === sourceId);
+    if (displayOrder === null || !source) return;
+    for (const id of source.siblingIds) updateLabelRef.current({ id, ops: { displayOrder } });
+  };
+
+  // The tiles register the drag and the drop targets; the drop lands through this monitor
+  useEffect(() => {
+    if (!navPanelId) return;
+    return monitorForElements({
+      canMonitor: ({ source }) => isLabelData(source.data),
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets.find((dropTarget) => isLabelData(dropTarget.data));
+        if (!isLabelData(source.data) || !target || !isLabelData(target.data)) return;
+        const edge = extractClosestEdge(target.data);
+        if (edge) placeRow(source.data.id, target.data.id, edge);
+      },
+    });
+  }, [navPanelId]);
 
   // Every tile is mounted, so bringing one into view is a plain scroll
   useEffect(() => {
@@ -108,12 +137,17 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
 
   const list = (
     <ul aria-label={t('c:label_other')}>
-      {rows.map((row) => (
+      {rows.map((row, index) => (
         <LabelTile
           key={row.id}
           row={row}
           lockedByProjectIds={row.projectIds.filter((projectId) => readOnlyProjectIds.includes(projectId))}
           onBoard={!!navPanelId}
+          position={navPanelId ? { index, total: rows.length } : undefined}
+          onMove={(step) => {
+            const target = rows[index + step];
+            if (target) placeRow(row.id, target.id, step < 0 ? 'top' : 'bottom');
+          }}
           {...tileProps}
         />
       ))}

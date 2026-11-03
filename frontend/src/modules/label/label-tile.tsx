@@ -1,10 +1,16 @@
+import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import { GripVerticalIcon } from 'lucide-react';
 import { AnimatePresence, cancelFrame, frame, motion } from 'motion/react';
 import { type FocusEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelName } from 'shared/config/labels-config';
+import { DropIndicator } from '~/modules/common/drop-indicator';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
+import { ReorderHandle, type ReorderPosition } from '~/modules/common/reorder-handle/reorder-handle';
 import { LabelFilterButton } from '~/modules/label/label-filter-button';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
+import { isLabelData, labelDragData } from '~/modules/label/label-order';
 import { LabelTileDetails } from '~/modules/label/label-tile-details';
 import { labelTileReveal } from '~/modules/label/label-tile-reveal';
 import { labelTileStore, useLabelTileStore } from '~/modules/label/label-tile-store';
@@ -17,6 +23,7 @@ import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } f
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
 import { itemFocusBarClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
+import { buttonVariants } from '~/modules/ui/button';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
 import { formatCount } from '~/utils/format-count';
@@ -62,13 +69,16 @@ interface LabelTileProps extends Pick<LabelsHostProps, 'onAction'> {
   /** A tile in the board panel is a board item: one Tab stop for the list, arrow keys between tiles. */
   onBoard?: boolean;
   showProjectUsage?: boolean;
+  /** Its place in the list, when a drag or an arrow press on its grip can move it. */
+  position?: ReorderPosition;
+  onMove?: (step: -1 | 1) => void;
 }
 
 /** DOM id of a label tile, so a label link can scroll its tile into view. */
 export const labelTileDomId = (labelId: string) => `label-tile-${labelId}`;
 
 /** A click expands the tile in place, like a task card; a click or Tab on the expanded name renames it, and on the board Enter does both. */
-export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProjectUsage }: LabelTileProps) {
+export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProjectUsage, position, onMove }: LabelTileProps) {
   const { t } = useTranslation();
 
   const expanded = useLabelTileStore((state) => state.expandedId === row.id);
@@ -83,6 +93,39 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
   // Off the board (the mobile drawer) a tile keeps its controls in the Tab order. On it, as with a task card, a collapsed
   // tile is one Tab stop: Enter opens it, and only then does Tab reach its controls, cycling inside it.
   useItemControlsTabOrder(tileRef, domId, onBoard ? isCurrent && expanded : true, { trap: onBoard });
+
+  const gripRef = useRef<HTMLButtonElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+  const canReorder = !!onBoard && !isReadOnly && !!position;
+
+  // A collapsed tile drags as a whole, as a task card does; an open one by its grip, so its name and fields keep text selection
+  useEffect(() => {
+    const element = tileRef.current;
+    const dragHandle = expanded ? gripRef.current : element;
+    if (!canReorder || !element || !dragHandle) return;
+    return draggable({
+      element,
+      dragHandle,
+      getInitialData: () => labelDragData(row.id),
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
+    });
+  }, [canReorder, expanded, row.id]);
+
+  useEffect(() => {
+    const element = tileRef.current;
+    if (!onBoard || !element) return;
+    return dropTargetForElements({
+      element,
+      canDrop: ({ source }) => isLabelData(source.data) && source.data.id !== row.id,
+      getIsSticky: () => true,
+      getData: ({ input }) => attachClosestEdge(labelDragData(row.id), { element, input, allowedEdges: ['top', 'bottom'] }),
+      onDrag: ({ self }) => setClosestEdge(extractClosestEdge(self.data)),
+      onDragLeave: () => setClosestEdge(null),
+      onDrop: () => setClosestEdge(null),
+    });
+  }, [onBoard, row.id]);
 
   // Mounting as the current tile: take the focus a keypress left for it, and hold the list's Tab stop
   useEffect(() => {
@@ -172,6 +215,7 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
             'outline-none before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary before:opacity-0',
           onBoard && itemFocusBarClass,
           'focus-within:bg-muted/50 hover:bg-muted/50',
+          isDragging && 'opacity-30',
           !expanded && !(onBoard && isCurrent) && 'resting-text transition-[color]',
         )}
       >
@@ -228,6 +272,19 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
           {/* Floating and in-flow actions share the row's right padding, so they keep their place when the tile
               expands; close joins on their left */}
           <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : ['absolute inset-y-0 right-4', restingActionsPointer])}>
+            {expanded && canReorder && position && onMove && (
+              <ReorderHandle
+                ref={gripRef}
+                id={row.id}
+                name={row.name}
+                index={position.index}
+                total={position.total}
+                onMove={onMove}
+                className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), actionClass, 'focus-inset size-8')}
+              >
+                <GripVerticalIcon className="size-3.5" />
+              </ReorderHandle>
+            )}
             <AnimatePresence initial={false}>
               {expanded && (
                 <CardCloseButton
@@ -252,6 +309,7 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
             </motion.div>
           )}
         </AnimatePresence>
+        {closestEdge && <DropIndicator edge={closestEdge} gap={0.25} />}
       </div>
     </li>
   );

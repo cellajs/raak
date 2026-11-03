@@ -70,6 +70,16 @@ describe('propagateEmbeddedProduct', () => {
     expect(after?.pages[0].items[0]).toEqual({ id: 't1', labels: [label('l1', 'new', '2026-02-01'), label('l2', 'local edit', '2026-01-01')] });
   });
 
+  it('keeps the host itself when every copy is as new as the fresh row', () => {
+    queryClient.setQueryData(labelKeys.detail.byId('l1'), label('l1', 'moved', '2026-01-01'));
+    queryClient.setQueryData(flatKey, { items: [{ id: 't1', labels: [label('l1', 'same age', '2026-01-01')] }], total: 1 });
+    const before = queryClient.getQueryData<{ items: ItemData[] }>(flatKey)?.items[0];
+
+    propagateEmbeddedProduct(labelType, ['l1'], 'update');
+
+    expect(queryClient.getQueryData<{ items: ItemData[] }>(flatKey)?.items[0]).toBe(before);
+  });
+
   it('strips a removed id from id arrays, embedded copies and single object columns', () => {
     queryClient.setQueryData(flatKey, {
       items: [
