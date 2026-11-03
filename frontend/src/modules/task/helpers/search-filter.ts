@@ -34,6 +34,18 @@ const searchFields = (task: Task) => [
   ...task.assignedTo.map(({ name }) => foldText(name)),
 ];
 
+// `#123` names a task by number; list-tasks.ts is the server leg of the same rule
+const numberTerm = (term: string) => {
+  const match = term.match(/^#(\d+)$/);
+  return match ? Number(match[1]) : null;
+};
+
+const matchesSearchTerms = (task: Task, terms: string[]) => {
+  const numbers = terms.map(numberTerm).filter((number): number is number => number !== null);
+  const words = terms.filter((term) => numberTerm(term) === null);
+  return numbers.every((number) => task.number === number) && (!words.length || matchesTerms(searchFields(task), words));
+};
+
 /** A board search as it stands in the URL: words in `q`, each filter's values comma-separated. */
 export interface BoardSearch {
   q?: string;
@@ -79,7 +91,7 @@ export const isWorthRecalling = ({ q, status, type, labels }: RecentBoardSearch)
 
 /** Whether a task passes each part of the search, so a filter's counts can leave that filter out. */
 export const boardSearchParts = (search: ParsedBoardSearch, task: Task) => ({
-  words: !search.terms.length || matchesTerms(searchFields(task), search.terms),
+  words: !search.terms.length || matchesSearchTerms(task, search.terms),
   status: !search.statuses.length || search.statuses.includes(statusOptionsByValue[task.status].status),
   type: !search.types.length || (!!task.primaryLabel && search.types.includes(task.primaryLabel.slug)),
   labels: !search.labels.length || task.labels.some(({ slug }) => search.labels.includes(slug)),

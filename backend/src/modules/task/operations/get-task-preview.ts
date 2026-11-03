@@ -4,11 +4,11 @@ import type { DbContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { withActorRef } from '#/modules/actors/actor-refs';
 import { findLabelNameById } from '#/modules/label/label-queries';
-import { findLiveTaskById, findTaskLinkTarget } from '#/modules/task/task-queries';
+import { findLinkedTask, findTaskLinkTarget, type TaskLinkRef } from '#/modules/task/task-queries';
 
 /** The unfurl of a task link: page title, type and description, plus the frontend url the page sends the visitor to. */
-export async function getTaskPreviewOp(ctx: DbContext, id: string) {
-  const found = await findLiveTaskById(ctx, { id });
+export async function getTaskPreviewOp(ctx: DbContext, ref: TaskLinkRef) {
+  const found = await findLinkedTask(ctx, ref);
   if (!found) throw new AppError(404, 'not_found', 'warn', { entityType: 'task', willRedirect: true });
 
   const task = await withActorRef(ctx, found);
@@ -21,12 +21,12 @@ export async function getTaskPreviewOp(ctx: DbContext, id: string) {
   const sameYear = createdAtDate.getFullYear() === new Date().getFullYear();
   const formattedDate = createdAtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
 
-  const taskType = (await findLabelNameById(ctx, task.primaryLabelId)) ?? 'Task';
+  const taskType = `${(await findLabelNameById(ctx, task.primaryLabelId)) ?? 'Task'} #${task.number}`;
 
   return {
     taskType,
     title: `${taskType} in ${project.name || 'Project'} - ${formattedDate}${task.createdBy ? ` by ${task.createdBy.name}` : ''}`,
     description: fullText.length > 200 ? `${fullText.slice(0, 197)}...` : fullText,
-    redirectUrl: new URL(`${appConfig.frontendUrl}/t/${id}`).toString(),
+    redirectUrl: new URL(`${appConfig.frontendUrl}/t/${task.id}`).toString(),
   };
 }

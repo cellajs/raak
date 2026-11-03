@@ -2742,6 +2742,11 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "number": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
           "expandable": {
             "type": "boolean"
           },
@@ -2879,6 +2884,7 @@
           "deletedBy",
           "public",
           "seq",
+          "number",
           "expandable",
           "summary",
           "summaryLength",
@@ -2929,6 +2935,7 @@
           "deletedBy": null,
           "public": false,
           "seq": 24,
+          "number": 218,
           "expandable": false,
           "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Pauper cognatus mollitia ipsum videlicet color.\",\"styles\":{}}],\"children\":[]}]",
           "summaryLength": 47,
@@ -4353,6 +4360,11 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "number": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
           "color": {
             "type": ["string", "null"],
             "maxLength": 255
@@ -4402,6 +4414,7 @@
           "deletedBy",
           "public",
           "seq",
+          "number",
           "color",
           "mode",
           "slug",
@@ -4431,6 +4444,7 @@
           "deletedBy": null,
           "public": false,
           "seq": 136,
+          "number": 786,
           "color": "#1d181f",
           "mode": "secondary",
           "slug": "paradigm",
@@ -10302,7 +10316,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["projectId", "status", "createdBy", "updatedAt", "createdAt"],
+              "enum": ["number", "projectId", "status", "createdBy", "updatedAt", "createdAt"],
               "default": "createdAt"
             },
             "required": false,
@@ -10425,6 +10439,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 293,
+                      "number": 748,
                       "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Patria itaque spes crudelis tandem eveniet.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 43,
@@ -10481,6 +10496,7 @@
                       "deletedBy": null,
                       "public": true,
                       "seq": 40,
+                      "number": 3,
                       "expandable": false,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Umquam voluntarius tyrannus quis peccatus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 42,
@@ -10652,6 +10668,138 @@
         }
       }
     },
+    "/t/{tenantId}/{number}/resolve": {
+      "get": {
+        "security": [],
+        "operationId": "resolveTaskLinkByNumber",
+        "tags": ["tasks", "app", "product"],
+        "summary": "Resolve task link by number",
+        "description": "Returns routing metadata for a task named by its number in a tenant.",
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["syncReadLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "tenantId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "required": true,
+            "name": "number",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task link resolution data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "taskId": "23e5529d-4682-4055-b05d-ce85317e6ffe",
+                  "projectId": "2395428f-2644-4455-9afe-0ff9981a3da2",
+                  "projectSlug": "awesome-marble-shoes",
+                  "organizationId": "301b2584-56a0-4f38-a9c9-f87af1510ae6",
+                  "organizationSlug": "swaniawski-and-sons",
+                  "tenantId": "ptcupj",
+                  "public": true
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "taskId": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "projectSlug": {
+                      "type": "string"
+                    },
+                    "organizationId": {
+                      "type": "string"
+                    },
+                    "organizationSlug": {
+                      "type": "string"
+                    },
+                    "tenantId": {
+                      "type": "string"
+                    },
+                    "public": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["taskId", "projectId", "projectSlug", "organizationId", "organizationSlug", "tenantId", "public"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/t/{tenantId}/{number}/cover": {
+      "get": {
+        "security": [],
+        "operationId": "getTaskCoverByNumber",
+        "tags": ["tasks", "app", "product"],
+        "summary": "Get task cover by number",
+        "description": "Retrieves the cover image for a task named by its number in a tenant.",
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["syncReadLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "tenantId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "required": true,
+            "name": "number",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
     "/t/{id}": {
       "get": {
         "security": [],
@@ -10670,6 +10818,52 @@
             },
             "required": true,
             "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/t/{tenantId}/{number}": {
+      "get": {
+        "security": [],
+        "operationId": "redirectToTaskByNumber",
+        "tags": ["tasks", "app", "product"],
+        "summary": "Redirect to task by number",
+        "description": "Redirects to the canonical route for a task by its number in a tenant.",
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["syncReadLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "tenantId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "required": true,
+            "name": "number",
             "in": "path"
           }
         ],
@@ -16949,6 +17143,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 354,
+                      "number": 754,
                       "color": "#7deecd",
                       "mode": "secondary",
                       "slug": "mindshare",
@@ -16976,6 +17171,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 187,
+                      "number": 820,
                       "color": "#ed83ab",
                       "mode": "secondary",
                       "slug": "automotive",
@@ -17044,6 +17240,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 354,
+                      "number": 754,
                       "color": "#7deecd",
                       "mode": "secondary",
                       "slug": "mindshare",
@@ -17071,6 +17268,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 187,
+                      "number": 820,
                       "color": "#ed83ab",
                       "mode": "secondary",
                       "slug": "automotive",
@@ -17300,6 +17498,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 215,
+                      "number": 748,
                       "color": "#e31dfa",
                       "mode": "secondary",
                       "slug": "archive",
@@ -17327,6 +17526,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 118,
+                      "number": 3,
                       "color": "#eaafed",
                       "mode": "secondary",
                       "slug": "automotive",
@@ -20593,6 +20793,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 178,
+                      "number": 754,
                       "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Consectetur speculum ambitus ambitus paulatim condico defessus tergum sodalitas cernuus apostolus convoco stultus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 114,
@@ -20687,6 +20888,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 162,
+                      "number": 820,
                       "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Aegrus avarus verbum alienus adaugeo canonicus tabernus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 56,
@@ -20809,6 +21011,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 178,
+                      "number": 754,
                       "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Consectetur speculum ambitus ambitus paulatim condico defessus tergum sodalitas cernuus apostolus convoco stultus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 114,
@@ -20903,6 +21106,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 162,
+                      "number": 820,
                       "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Aegrus avarus verbum alienus adaugeo canonicus tabernus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 56,
@@ -21067,7 +21271,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["projectId", "status", "createdBy", "updatedAt", "createdAt"],
+              "enum": ["number", "projectId", "status", "createdBy", "updatedAt", "createdAt"],
               "default": "createdAt"
             },
             "required": false,
@@ -21221,6 +21425,7 @@
                       "deletedBy": null,
                       "public": false,
                       "seq": 293,
+                      "number": 748,
                       "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Patria itaque spes crudelis tandem eveniet.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 43,
@@ -21277,6 +21482,7 @@
                       "deletedBy": null,
                       "public": true,
                       "seq": 40,
+                      "number": 3,
                       "expandable": false,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Umquam voluntarius tyrannus quis peccatus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 42,

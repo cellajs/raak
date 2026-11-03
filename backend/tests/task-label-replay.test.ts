@@ -15,7 +15,7 @@ import { setTestConfig } from './test-utils';
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
-type Created = { data: { id: string; primaryLabel?: { id: string } | null }[] };
+type Created = { data: { id: string; number: number; primaryLabel?: { id: string } | null }[] };
 
 // The suite runs without the CDC worker, so only the lookup by row id can recognise a replay.
 describe('Replayed task and label creates', async () => {
@@ -75,14 +75,17 @@ describe('Replayed task and label creates', async () => {
     return row.total;
   };
 
-  it('answers a replayed task create with its hydrated row', async () => {
+  it('answers a replayed task create with its hydrated row, the number it was given included', async () => {
     const body = [taskBody(crypto.randomUUID())];
-    expect((await sendTasks(body)).status).toBe(201);
+    const first = await sendTasks(body);
+    expect(first.status).toBe(201);
+    expect(first.data[0].number).toBeGreaterThan(0);
 
     const { status, data } = await sendTasks(body);
     expect(status).toBe(200);
     expect(data.map((row) => row.id)).toEqual([body[0].id]);
     expect(data[0].primaryLabel?.id).toBeTruthy();
+    expect(data[0].number).toBe(first.data[0].number);
   });
 
   it('creates only the new tasks of a batch that repeats one', async () => {
@@ -95,10 +98,13 @@ describe('Replayed task and label creates', async () => {
     expect(data.map((row) => row.id).sort()).toEqual([first.id, second.id].sort());
   });
 
-  it('answers two attempts of one task create sent at the same time with its row', async () => {
+  it('answers two attempts of one task create sent at the same time with its row, one number between them', async () => {
     const body = [taskBody(crypto.randomUUID())];
     const answers = await Promise.all([sendTasks(body), sendTasks(body)]);
     for (const { data } of answers) expect(data.map((row) => row.id)).toEqual([body[0].id]);
+    const numbers = new Set(answers.map(({ data }) => data[0].number));
+    expect(numbers.size).toBe(1);
+    expect([...numbers][0]).toBeGreaterThan(0);
   });
 
   it('answers a replayed label create with its row and creates the new ones beside it', async () => {
@@ -108,6 +114,7 @@ describe('Replayed task and label creates', async () => {
     const replay = await sendLabels([first]);
     expect(replay.status).toBe(200);
     expect(replay.data.map((row) => row.id)).toEqual([first.id]);
+    expect(replay.data[0].number).toBeGreaterThan(0);
 
     const second = labelBody(crypto.randomUUID());
     const batch = await sendLabels([first, second]);

@@ -95,7 +95,9 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
   // A label link opens its tile once, then leaves the URL: closing the tile must not leave a stale link behind
   useEffect(() => {
     if (!labelPageId || isLoading) return;
-    const row = rows.find((candidate) => candidate.siblingIds.includes(labelPageId));
+    // A link names a label by number, or by id from before numbers
+    const linkedId = /^\d+$/.test(labelPageId) ? labels.find((label) => label.number === Number(labelPageId))?.id : labelPageId;
+    const row = linkedId ? rows.find((candidate) => candidate.siblingIds.includes(linkedId)) : undefined;
     if (row) {
       labelTileStore.getState().expand(row.id);
       requestAnimationFrame(() => document.getElementById(labelTileDomId(row.id))?.scrollIntoView({ block: 'nearest' }));

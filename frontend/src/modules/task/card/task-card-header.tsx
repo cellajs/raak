@@ -10,6 +10,7 @@ import { TaskDragHandle } from '~/modules/task/card/task-drag-handle';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
 import { focusItem } from '~/modules/task/helpers/focus-item';
+import { ProductRef } from '~/modules/task/product-ref';
 import { taskCardActionsRevealClass, taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { useOpenUserSheet } from '~/modules/user/use-open-user-sheet';
@@ -47,6 +48,7 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
         <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
       </div>
       <div className="ml-1 flex w-full items-center gap-1">
+        <ProductRef number={task.number} className="mr-1" />
         {createdBy && (
           <>
             <TooltipButton toolTipContent={createdBy.name} side="bottom" sideOffset={5} hideWhenDetached>

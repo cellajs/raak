@@ -353,6 +353,8 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
   onSuccess: (createdTasks, variables) => {
     // An in-place update keeps the DOM element and its glow; it inserts nothing, so a row an SSE delete removed mid-POST stays gone.
     cacheUpdate(taskKeys.list.org(variables.organizationId), createdTasks);
+    // The open sheet reads the detail, which the stored row completes: the number for one
+    for (const task of createdTasks) writeKeepingMark<Task>(queryClient, taskKeys.detail.byId(task.id), (cached) => cached && task);
   },
   // Error-only: onSuccess patches the cache, SSE handles other users
   onSettled: (_data, error, variables) => {
