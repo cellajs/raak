@@ -1,9 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { PanelDragHandleButton } from '~/modules/common/board/panel-drag-handle-button';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { EntityChip } from '~/modules/common/entity-chip';
+import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { PublicBadge } from '~/modules/project/public-badge';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { NewTaskButton } from '~/modules/task/board/new-task-button';
@@ -14,6 +16,7 @@ import { PanelStatusIcon, PanelStatusTitle } from '~/modules/task/panel/panel-st
 import { panelHandleClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
+import { findMembership } from '~/query/enrichment/helpers';
 import { cn } from '~/utils/cn';
 
 interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'statuses'> {
@@ -24,9 +27,14 @@ interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'statuses'
 
 function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: PanelLeadingProps) {
   const { t } = useTranslation();
+  // Off outside a workspace: a public board may have no session to ask with
+  const { data: role } = useQuery({
+    ...myMembershipsQueryOptions(),
+    enabled: isInWorkspace,
+    select: (data) => findMembership(data.items, project.id)?.role,
+  });
 
   if (isInWorkspace) {
-    const role = project.membership?.role;
     return (
       <PanelDragHandleButton
         name={project.name}

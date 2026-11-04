@@ -20,7 +20,7 @@ const persistedStx = (mutationId: string) => ({ mutationId, sourceId: 'tab-1', f
 
 describe('task and label updates replayed from the offline queue', () => {
   it('a live task edit carries no replay flag, so the server orders it by arrival', async () => {
-    await updateTaskMutationFn({ ...ctx, id: 'task-1', ops: { name: 'Renamed' } });
+    await updateTaskMutationFn({ ...ctx, id: 'task-1', ops: { name: 'Renamed' }, stx: persistedStx('task-live') });
     expect(updateTask.mock.lastCall?.[0].body.stx.replayed).toBeUndefined();
   });
 

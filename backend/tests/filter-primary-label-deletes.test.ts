@@ -3,8 +3,8 @@ import type { ActorContext } from '#/core/context';
 
 const databaseError = new Error('connection terminated unexpectedly');
 
-vi.mock('#/permissions', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('#/permissions')>()),
+vi.mock('#/permissions/get-valid-channel', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('#/permissions/get-valid-channel')>()),
   getValidChannel: async () => {
     throw databaseError;
   },

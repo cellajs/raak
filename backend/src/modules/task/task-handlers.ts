@@ -30,7 +30,6 @@ app.openapi(taskRoutes.getUnseenTaskIds, async (ctx) => {
 app.openapi(taskRoutes.getTask, async (ctx) => {
   const { id } = ctx.req.valid('param');
   const result = await getTaskOp(ctx, id);
-  ctx.set('productCacheData', result);
   return ctx.json(result, 200);
 });
 

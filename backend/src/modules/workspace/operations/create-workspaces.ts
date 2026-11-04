@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import { hierarchy } from 'shared';
+import { buildSubject, hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { userActorRef, withActorRefs } from '#/modules/actors/actor-refs';
@@ -9,7 +9,6 @@ import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { assertTenantQuota } from '#/modules/tenants/tenant-restrictions';
 import { insertHeldWorkspaces } from '#/modules/workspace/operations/ensure-workspace';
 import { workspaceContract } from '#/modules/workspace/workspace-schema';
-import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
 import { createRejectionState } from '#/utils/rejection-utils';

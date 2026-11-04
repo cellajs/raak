@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
@@ -9,9 +10,11 @@ import { FormActions } from '~/modules/common/form-fields/form-actions';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
+import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { useProjectMoveMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Form } from '~/modules/ui/field';
+import { findMembership } from '~/query/enrichment/helpers';
 import { formResolver } from '~/utils/form-resolver';
 
 const formSchema = z.object({ workspaceId: zMoveProjectToWorkspaceQuery.shape.workspaceId.min(1) });
@@ -26,11 +29,14 @@ interface MoveProjectFormProps {
 export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectFormProps) {
   const { t } = useTranslation();
 
+  const { data: myMemberships } = useQuery(myMembershipsQueryOptions());
+  const currentWorkspaceId = findMembership(myMemberships?.items ?? [], project.id)?.workspaceId;
+
   const options = workspaces.map(({ id: value, name: label, thumbnailUrl: url }) => ({ value, label, url }));
 
   const formOptions: UseFormProps<FormValues> = {
     resolver: formResolver(formSchema),
-    defaultValues: { workspaceId: project.membership?.workspaceId ?? '' },
+    defaultValues: { workspaceId: currentWorkspaceId ?? '' },
   };
 
   const form = useFormWithDraft<FormValues>(`move-project-${project.id}`, { formOptions });
@@ -41,7 +47,7 @@ export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectF
       {
         path: { id: project.id, organizationId: project.organizationId, tenantId: project.tenantId },
         query: { workspaceId: values.workspaceId },
-        currentWorkspaceId: project.membership?.workspaceId ?? values.workspaceId,
+        currentWorkspaceId: currentWorkspaceId ?? values.workspaceId,
       },
       {
         onSuccess: () => {

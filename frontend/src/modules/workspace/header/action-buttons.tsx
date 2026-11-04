@@ -10,6 +10,7 @@ import { useChannelSettingsSections } from '~/modules/entities/use-channel-setti
 import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
+import { useWithMembership } from '~/modules/project/use-with-membership';
 import { useTabProject } from '~/modules/task/board/board-hooks';
 import { DrawerDisplayOptions } from '~/modules/task/board/display-options';
 import { Button } from '~/modules/ui/button';
@@ -28,7 +29,7 @@ export function WorkspaceActionButtons() {
   const { data: projectsData } = useSuspenseInfiniteQuery(
     projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }),
   );
-  const tabProject = useTabProject(flattenInfiniteData<EnrichedProject>(projectsData));
+  const tabProject = useTabProject(useWithMembership(flattenInfiniteData<EnrichedProject>(projectsData)));
   const searchQuery = workspaceRouteApi.useSearch({ select: (search) => search.q });
   const view = workspaceRouteApi.useSearch({ select: (search) => search.view });
 

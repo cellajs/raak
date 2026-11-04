@@ -15,6 +15,7 @@ import { SearchField } from '~/modules/common/search-field';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import { PublicBadge } from '~/modules/project/public-badge';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
+import { useWithMembership } from '~/modules/project/use-with-membership';
 import { buildBoardExtraPanels, usePanelLayout, useShowExplainer, useStatusTabList } from '~/modules/task/board/board-hooks';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
@@ -66,7 +67,8 @@ export function BoardSkeleton({
   const showExplainer = useShowExplainer(isInWorkspace);
   const extraPanels = buildBoardExtraPanels({ showExplainer, publicView });
 
-  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, projects, extraPanels, publicView);
+  const boardProjects = useWithMembership(projects);
+  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, boardProjects, extraPanels, publicView);
   const fit = useBoardStore((state) => state.boardFits[boardId] ?? false);
   const panels: SkeletonColumn[] = isMobile ? [{ kind: 'mobile', panelId: 'mobilePanel' }] : boardPanels;
   const { ref: rowFrameRef, bounds: rowFrame } = useMeasure<HTMLDivElement>();
@@ -107,7 +109,11 @@ export function BoardSkeleton({
       case 'mobile':
         return (
           <>
-            {isInWorkspace ? <ProjectTabNav projects={projects} /> : projects[0] && <StatusTabNav project={projects[0]} publicView={publicView} />}
+            {isInWorkspace ? (
+              <ProjectTabNav projects={boardProjects} />
+            ) : (
+              projects[0] && <StatusTabNav project={projects[0]} publicView={publicView} />
+            )}
             <MobilePanelSkeleton />
           </>
         );

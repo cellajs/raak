@@ -13,7 +13,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { DeleteQuestion } from '~/modules/common/popconfirm';
 import { openEditSheet } from '~/modules/common/sheeter/open-edit-sheet';
-import { useResolveCan } from '~/modules/entities/use-resolve-can';
+import { useCan } from '~/modules/entities/use-can';
 import type { EnrichedOrganization } from '~/modules/organization/types';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -27,7 +27,7 @@ const projectProducts = hierarchy.getOrderedDescendants('project').filter(isProd
 
 export const useColumns = (organization: EnrichedOrganization) => {
   const { t } = useTranslation();
-  const resolveCan = useResolveCan();
+  const can = useCan();
   const organizationSlug = organization.slug;
 
   const columns: ColumnOrColumnGroup<EnrichedProject>[] = [
@@ -59,7 +59,7 @@ export const useColumns = (organization: EnrichedOrganization) => {
     },
     ellipsisColumn<EnrichedProject>((row) => {
       const options: EllipsisOption<EnrichedProject>[] = [];
-      if (resolveCan(row.can?.project?.update, row.createdBy)) {
+      if (can('update', 'project', row)) {
         options.push({
           label: t('c:edit'),
           icon: PencilIcon,
@@ -74,7 +74,7 @@ export const useColumns = (organization: EnrichedOrganization) => {
           },
         });
       }
-      if (resolveCan(row.can?.project?.delete, row.createdBy)) {
+      if (can('delete', 'project', row)) {
         options.push({
           label: t('c:delete'),
           icon: TrashIcon,

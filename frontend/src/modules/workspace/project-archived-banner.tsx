@@ -1,14 +1,16 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { InfoIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { AlertBanner } from '~/modules/common/alerter/alert-banner';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
+import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Button } from '~/modules/ui/button';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { useRestoreProject } from '~/modules/workspace/use-restore-project';
+import { findMembership } from '~/query/enrichment/helpers';
 
 /** Below a project page's search bar while the project is archived. Closing it is remembered per project. */
 export function ProjectArchivedBanner({ project }: { project: EnrichedProject }) {
@@ -18,7 +20,9 @@ export function ProjectArchivedBanner({ project }: { project: EnrichedProject })
   const { restoreProject, isPending } = useRestoreProject({ project, organization }, { open: false });
   const { rows: workspaces } = useInfiniteRows({ ...workspacesListQueryOptions({ organizationId }), refetchOnMount: false });
 
-  const membership = project.membership;
+  const { data: myMemberships } = useQuery(myMembershipsQueryOptions());
+
+  const membership = findMembership(myMemberships?.items ?? [], project.id);
   if (!membership?.archived || !membership.workspaceId || !workspaces) return null;
 
   const name = workspaces.find(({ id }) => id === membership.workspaceId)?.name ?? t('c:workspace');

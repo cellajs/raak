@@ -4,7 +4,7 @@ import { AppError } from '#/core/error';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { insertMembershipRows } from '#/modules/memberships/memberships-queries';
 import { deleteProjectMembership, findMaxDisplayOrder } from '#/modules/project/project-queries';
-import { getValidChannel } from '#/permissions';
+import { getValidChannel } from '#/permissions/get-valid-channel';
 
 type ProjectMembership = UserContext['var']['memberships'][number] & { channelType: 'project'; projectId: string };
 

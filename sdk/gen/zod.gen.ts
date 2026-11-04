@@ -97,27 +97,33 @@ export const zStxBase = z.object({
 });
 
 /**
- * A live change of product rows, naming the rows, their path and sequence range but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
+ * A live change of product rows, naming each row with its sequence position and the write that changed it, but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
  */
 export const zStreamChange = z.object({
   action: z.enum(['create', 'update', 'delete', 'moveOut']),
   productType: z.enum(['task', 'label', 'attachment']),
-  subjectId: z.string(),
   organizationId: z.string(),
   tenantId: z.string().nullable(),
-  path: z.string().nullable(),
-  seq: z.int().nullable(),
   channelId: z.string().nullable(),
-  stx: zStxBase.nullable(),
-  actorId: z.string().nullable(),
-  batchUntilSeq: z.int().nullable(),
-  count: z.int().nullable(),
+  rows: z.array(
+    z.object({
+      subjectId: z.string(),
+      seq: z.int().nullable(),
+      stx: zStxBase.nullable(),
+      actorId: z.string().nullable(),
+    }),
+  ),
+  overflow: z
+    .object({
+      afterSeq: z.int().nullable(),
+      untilSeq: z.int().nullable(),
+      subjectIds: z.array(z.string()).nullable(),
+    })
+    .nullable(),
   spreadWindow: z.int().nullable(),
   propagation: z
     .object({
       embeddedProduct: z.enum(['task', 'label', 'attachment']),
-      hostProduct: z.enum(['task', 'label', 'attachment']),
-      hostColumn: z.string(),
       update: z.array(z.string()),
       remove: z.array(z.string()),
     })
@@ -131,7 +137,7 @@ export const zStreamSignal = z.object({
   type: z.string(),
   organizationId: z.string().nullable(),
   subjectId: z.string().nullable(),
-  version: z.int().nullable(),
+  version: z.int().optional(),
 });
 
 /**
@@ -1463,18 +1469,11 @@ export const zCheckSlugPath = z.object({
 export const zCheckSlugResponse = z.void();
 
 export const zPostAppCatchupBody = z.object({
-  cursor: z.string().max(50).optional(),
   views: z
     .array(
       z.object({
-        key: z.string().max(512),
         organizationId: z.string().max(50),
-        prefixes: z.array(z.string().max(512)).min(1).max(64),
-        entityTypes: z
-          .array(z.enum(['task', 'label', 'attachment']))
-          .min(1)
-          .max(64),
-        depth: z.enum(['self', 'subtree']).optional(),
+        entityType: z.enum(['task', 'label', 'attachment']),
         cursor: z.int().gte(0),
       }),
     )
@@ -1494,10 +1493,10 @@ export const zPostAppCatchupResponse = z.object({
         .array(
           z.object({
             embeddedProduct: z.enum(['task', 'label', 'attachment']),
-            hostProduct: z.enum(['task', 'label', 'attachment']),
-            hostColumn: z.string(),
             update: z.array(z.string()),
             remove: z.array(z.string()),
+            overflow: z.boolean().optional(),
+            untilSeq: z.int().optional(),
           }),
         )
         .optional(),
@@ -1506,14 +1505,13 @@ export const zPostAppCatchupResponse = z.object({
   views: z
     .array(
       z.object({
-        key: z.string(),
+        organizationId: z.string(),
+        entityType: z.enum(['task', 'label', 'attachment']),
         status: z.enum(['ok', 'opaque', 'forbidden']),
-        frontiers: z.record(z.string(), z.int()).optional(),
-        counts: z.record(z.string(), z.int()).optional(),
+        frontier: z.int().optional(),
       }),
     )
     .optional(),
-  cursor: z.string().nullable(),
   generation: z.int().optional(),
 });
 

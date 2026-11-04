@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { type CSSProperties, type ReactNode, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization } from 'sdk';
@@ -6,7 +7,8 @@ import { useMeasure } from '~/hooks/use-measure';
 import { FocusViewContainer } from '~/modules/common/focus-view';
 import { PageHeader } from '~/modules/common/page/header';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { useResolveCan } from '~/modules/entities/use-resolve-can';
+import { useCan } from '~/modules/entities/use-can';
+import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { PublicBadge } from '~/modules/project/public-badge';
 import { useProjectUpdateMutation } from '~/modules/project/query';
 import { ProjectReadOnlyBadge } from '~/modules/project/read-only-badge';
@@ -15,6 +17,7 @@ import { useProjectHeaderShown } from '~/modules/task/board/task-board-store';
 import { useTaskDropMonitor } from '~/modules/task/hooks/use-task-drop-monitor';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 import { TasksHotkeys } from '~/modules/task/tasks-hotkeys';
+import { findMembership } from '~/query/enrichment/helpers';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const JoinedButton = lazyNamed(() => import('~/modules/memberships/joined-button'), 'JoinedButton');
@@ -29,11 +32,13 @@ export function ProjectPage({ project, organization, children }: ProjectPageProp
   const { t } = useTranslation();
 
   // From the policy, so an organization admin without a project admin membership gets the same affordances the API grants.
-  const resolveCan = useResolveCan();
-  const canUpdate = resolveCan(project.can?.project?.update, project.createdBy);
+  const can = useCan();
+  const canUpdate = can('update', 'project', project);
+  const { data: myMemberships } = useQuery(myMembershipsQueryOptions());
+  const membership = findMembership(myMemberships?.items ?? [], project.id);
 
   const isMobile = useBreakpointBelow('sm');
-  const isHeaderShown = useProjectHeaderShown(project);
+  const isHeaderShown = useProjectHeaderShown(project.id);
   // Measured: a cover's height follows the viewport and whether it has an image, and focus view hides the header
   const { ref: headerRef, bounds: headerBounds } = useMeasure<HTMLDivElement>();
 
@@ -60,11 +65,11 @@ export function ProjectPage({ project, organization, children }: ProjectPageProp
             onCoverUpdate={onCoverUpdate}
             avatarBadge={project.public && <PublicBadge size="lg" />}
             panel={
-              project.membership && (
+              membership && (
                 <Suspense>
                   <div className="flex items-center gap-2 p-2">
                     <ProjectReadOnlyBadge projectId={project.id} />
-                    <JoinedButton channel={project} role={project.membership.role} iconOnlyOnPhone />
+                    <JoinedButton channel={project} role={membership.role} iconOnlyOnPhone />
                   </div>
                 </Suspense>
               )

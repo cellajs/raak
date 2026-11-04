@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { EnrichedProject } from '~/modules/project/types';
+import type { ProjectWithMembership } from '~/modules/project/types';
 import {
   countTasksByStatus,
   foldsStatus,
@@ -19,7 +19,7 @@ vi.mock('i18next', () => ({
   default: { t: (key: string, values?: Record<string, string>) => (values ? Object.values(values).join(` ${key} `) : key.replace('c:', '')) },
 }));
 
-const project = { id: 'p' } as EnrichedProject;
+const project = { id: 'p' } as ProjectWithMembership;
 
 describe('statusPath', () => {
   it('holds every status once', () => {

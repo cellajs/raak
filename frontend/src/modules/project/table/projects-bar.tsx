@@ -5,7 +5,7 @@ import { TableBarShell, useTableBarFilters } from '~/modules/common/data-table/t
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { openDeleteDialog } from '~/modules/common/open-confirm';
 import { EntityViewToggle } from '~/modules/entities/entity-grid/entity-view-toggle';
-import { useResolveCan } from '~/modules/entities/use-resolve-can';
+import { useCan } from '~/modules/entities/use-can';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import type { EnrichedProject, ProjectsRouteSearchParams } from '~/modules/project/types';
 import { useListQueryTotal } from '~/query/basic/use-list-query-total';
@@ -19,7 +19,7 @@ export function ProjectsTableBar({
   setColumns,
   clearSelection,
 }: BaseTableBarProps<EnrichedProject, ProjectsRouteSearchParams>) {
-  const resolveCan = useResolveCan();
+  const can = useCan();
 
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -27,7 +27,7 @@ export function ProjectsTableBar({
   const barFilters = useTableBarFilters({ searchVars, setSearch, clearSelection, reset: { q: '' } });
 
   // Bulk delete acts only on rows this user may delete; the badge shows that count when it differs from the selection.
-  const deletable = selected.filter((row) => resolveCan(row.can?.project?.delete, row.createdBy));
+  const deletable = selected.filter((row) => can('delete', 'project', row));
 
   const confirmDelete = () =>
     openDeleteDialog({

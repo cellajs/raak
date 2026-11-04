@@ -6,7 +6,7 @@ import { seenByTable } from '#/modules/seen/seen-by-db';
 import { seenWindowStart } from '#/modules/seen/seen-queries';
 import { tasksTable } from '#/modules/task/task-db';
 import { TaskStatus } from '#/modules/task/task-properties';
-import { actorFrom } from '#/permissions/access';
+import { accessFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 
@@ -21,10 +21,10 @@ const unseenTaskIdsLimit = 200;
 export async function getUnseenTaskIdsOp(ctx: UserContext) {
   const user = ctx.var.user;
   const organization = ctx.var.organization;
-  const actor = actorFrom(ctx);
+  const access = accessFrom(ctx);
 
-  const readFilter = resolveCollectionReadFilter(ctx.var.memberships, 'task', organization.id, actor);
-  const scopeWhere = buildCollectionReadWhere(readFilter, tasksTable, 'task', actor);
+  const readFilter = resolveCollectionReadFilter(access, 'task', organization.id);
+  const scopeWhere = buildCollectionReadWhere(readFilter, tasksTable, access);
   if (scopeWhere.kind === 'none') return { items: [] };
 
   const joinedAt = (channelId: SQL | string) =>

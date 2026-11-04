@@ -2,6 +2,7 @@ import { createContext, useContext, useSyncExternalStore } from 'react';
 import { projectQueryKeys } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { findInCache } from '~/query/basic/find-in-list-cache';
+import { findMembership, getCachedMemberships } from '~/query/enrichment/helpers';
 import { queryClient } from '~/query/query-client';
 
 /** Read-only for a guest membership or a project loaded through the public endpoint; read from the query cache, so it works in portals like the task sheet. */
@@ -9,7 +10,7 @@ export const isProjectReadOnly = (projectId: string | undefined): boolean => {
   if (!projectId) return false;
 
   const project = findInCache<EnrichedProject>('project', projectId);
-  if (project) return project.membership?.role === 'guest';
+  if (project) return findMembership(getCachedMemberships() ?? [], projectId)?.role === 'guest';
 
   // Known only through the public endpoint, which has no membership.
   if (queryClient.getQueryData(projectQueryKeys.detail.public(projectId))) return true;
@@ -34,7 +35,7 @@ export const useIsProjectReadOnly = (projectId: string | undefined): boolean => 
 
 /** True for a guest membership only: a public view is read-only without one. */
 export const useIsProjectGuest = (projectId: string | undefined): boolean => {
-  const getSnapshot = () => !!projectId && findInCache<EnrichedProject>('project', projectId)?.membership?.role === 'guest';
+  const getSnapshot = () => !!projectId && findMembership(getCachedMemberships() ?? [], projectId)?.role === 'guest';
   return useSyncExternalStore(subscribeToQueryCache, getSnapshot, getSnapshot);
 };
 

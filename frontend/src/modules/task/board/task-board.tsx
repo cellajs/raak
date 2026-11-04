@@ -9,7 +9,8 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { SearchScope } from '~/modules/common/match-highlight/match-scope';
 import { projectsListQueryOptions } from '~/modules/project/query';
-import type { EnrichedProject } from '~/modules/project/types';
+import type { EnrichedProject, ProjectWithMembership } from '~/modules/project/types';
+import { useWithMembership } from '~/modules/project/use-with-membership';
 import { BoardEmpty } from '~/modules/task/board/board-empty';
 import { BoardHeader } from '~/modules/task/board/board-header';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
@@ -30,7 +31,7 @@ export interface BoardProps {
 }
 
 export interface ResolvedBoardProps extends Omit<BoardProps, 'projects'> {
-  projects: EnrichedProject[];
+  projects: ProjectWithMembership[];
 }
 
 interface BoardViewProps extends ResolvedBoardProps {
@@ -58,7 +59,7 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
     ...projectsListQueryOptions({ workspaceId: workspace?.id, include: 'counts', excludeArchived: 'true' }),
     enabled: !projectsProp,
   });
-  const projects = projectsProp ?? flattenInfiniteData<EnrichedProject>(fetchedData);
+  const projects = useWithMembership(projectsProp ?? flattenInfiniteData<EnrichedProject>(fetchedData));
   const isLoadingProjects = !projectsProp && isPending;
   const pageProject = workspace || publicView ? undefined : projects[0];
   const { ref: bannerRef, bounds: bannerBounds } = useMeasure<HTMLDivElement>();

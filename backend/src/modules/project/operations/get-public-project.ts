@@ -1,6 +1,6 @@
 import type { ActorContext } from '#/core/context';
 import { withActorRef } from '#/modules/actors/actor-refs';
-import { getValidChannel } from '#/permissions';
+import { getValidChannel } from '#/permissions/get-valid-channel';
 
 /**
  * A public project by id, or by slug with `bySlug`. `publicGuard` sets no actor, so `getValidChannel` reads as an

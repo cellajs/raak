@@ -1,4 +1,5 @@
 import type { z } from '@hono/zod-openapi';
+import { buildSubject } from 'shared';
 import type { OrgContext, UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
@@ -13,7 +14,6 @@ import { projectRelationFilter } from '#/modules/task/operations/project-relatio
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { updateTask } from '#/modules/task/task-queries';
 import { taskContract, type taskUpdateStxBodySchema } from '#/modules/task/task-schema';
-import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { getValidProduct } from '#/permissions/get-valid-product';
 import { resolvePlacement } from '#/permissions/product-placement';
@@ -24,19 +24,15 @@ type UpdateTaskInput = z.infer<typeof taskUpdateStxBodySchema>;
 /** A session or a user token carries the editor's row; a service account's call only its actor. */
 type UpdateTaskContext = { var: OrgContext['var'] & Partial<Pick<UserContext['var'], 'user'>> };
 
-/**
- * Also the task's Yjs materializer: `materializeDescriptionOp` calls it with `materialized` for a collaborative
- * description the relay posts. `serverOrigin` stamps the fields with the server clock, for a transaction the server
- * built (the Yjs relay).
- */
+/** Also the task's Yjs materializer: `materializeDescriptionOp` calls it for a collaborative description the relay posts. */
 export async function updateTaskOp(
   ctx: UpdateTaskContext,
   id: string,
   input: UpdateTaskInput,
-  opts: { fullResponse?: boolean; serverOrigin?: boolean; materialized?: boolean },
+  opts: { fullResponse?: boolean } = {},
 ): Promise<TaskResponse> {
   const { ops: rawOps, stx } = input;
-  const { fullResponse, serverOrigin, materialized } = opts;
+  const { fullResponse } = opts;
   const user = ctx.var.user;
 
   // A cleared description derives empty counts and an empty attachments array, so the
@@ -48,7 +44,7 @@ export async function updateTaskOp(
 
     taskContract.assertBlockFields(rawOps, entity.organizationId);
 
-    const resolved = serverOrigin ? taskContract.resolveServerUpdateOps(entity, rawOps) : taskContract.resolveUpdateOps(entity, rawOps, stx);
+    const resolved = taskContract.resolveUpdateOps(entity, rawOps, stx);
 
     if (!resolved.changed) {
       if (!fullResponse) return hydrateTaskLite(entity, user);
@@ -116,7 +112,7 @@ export async function updateTaskOp(
     }
 
     const updatedTaskRecord = await updateTask(txCtx, { id, values: updateValues });
-    await dispatchMutation(txCtx, 'task.updated', { before: [entity], after: [updatedTaskRecord], materialized });
+    await dispatchMutation(txCtx, 'task.updated', { before: [entity], after: [updatedTaskRecord] });
 
     // The lite response serves the client's optimistic cache; a move rewrites relations server-side, so it hydrates them
     if (!fullResponse && !isProjectMove) return hydrateTaskLite(updatedTaskRecord, user);

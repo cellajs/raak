@@ -1,9 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import type { EnrichedProject } from '~/modules/project/types';
+import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { statusOptionsByValue, type TaskStatus } from '~/modules/task/task-properties';
+import { findMembership } from '~/query/enrichment/helpers';
 import { idbKvStorage } from '~/query/idb-kv-storage';
 
 const defaultPanelPrefs = { expandAccepted: false, expandIced: false };
@@ -135,8 +137,11 @@ export { useTaskBoardStore as taskBoardStore };
 export const useStartWith = (boardId: string): TogglableStatusType => useTaskBoardStore((state) => state.startWith[boardId]) ?? 'accepted';
 
 /** Whether a project page shows its header. Until the viewer chooses, only a guest gets it: anyone else comes to work on the board. */
-export const useProjectHeaderShown = (project: Pick<EnrichedProject, 'id' | 'membership'>): boolean =>
-  useTaskBoardStore((state) => state.projectHeaderShown[project.id]) ?? project.membership?.role === 'guest';
+export const useProjectHeaderShown = (projectId: string): boolean => {
+  const shown = useTaskBoardStore((state) => state.projectHeaderShown[projectId]);
+  const { data: myMemberships } = useQuery(myMembershipsQueryOptions());
+  return shown ?? findMembership(myMemberships?.items ?? [], projectId)?.role === 'guest';
+};
 
 /** The active board's expand preferences of a project's accepted and iced sections. */
 export const useProjectPanelPrefs = (projectId: string) => {

@@ -1,0 +1,193 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "0a969c5a-4591-4e6b-9caf-5c92435014e5",
+  "prevIds": [
+    "5c225ed6-c292-4e7b-91ba-e0dfa0914e33"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "notifications",
+        "notifications_user_activity_index"
+      ],
+      "writes": [
+        "s|idx|public.notifications_user_activity_index",
+        "n|idx|public.notifications_user_activity_index",
+        "e|idx|public.notifications_user_activity_index",
+        "n|rel|public.notifications_user_activity_index"
+      ],
+      "reads": [
+        "e|tbl|public.notifications",
+        "n|sch|public",
+        "e|col|public.notifications.user_id",
+        "e|col|public.notifications.activity_id",
+        "e|col|public.notifications.type"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "channel_counters",
+        "path"
+      ],
+      "writes": [
+        "s|col|public.channel_counters.path",
+        "n|col|public.channel_counters.path",
+        "e|col|public.channel_counters.path"
+      ],
+      "reads": [
+        "n|tbl|public.channel_counters",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "notifications",
+        "digested_at"
+      ],
+      "writes": [
+        "s|col|public.notifications.digested_at",
+        "n|col|public.notifications.digested_at",
+        "e|col|public.notifications.digested_at"
+      ],
+      "reads": [
+        "n|tbl|public.notifications",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "sync_incidents",
+        "position_to"
+      ],
+      "writes": [
+        "s|col|public.sync_incidents.position_to",
+        "n|col|public.sync_incidents.position_to",
+        "e|col|public.sync_incidents.position_to"
+      ],
+      "reads": [
+        "n|tbl|public.sync_incidents",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "tokens",
+        "tokens_inactive_membership_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.tokens_inactive_membership_id_idx",
+        "n|idx|public.tokens_inactive_membership_id_idx",
+        "e|idx|public.tokens_inactive_membership_id_idx",
+        "n|rel|public.tokens_inactive_membership_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.tokens",
+        "n|sch|public",
+        "n|col|public.tokens.inactive_membership_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "tokens"
+      ],
+      "writes": [
+        "s|fk|public.tokens.tokens_inactive_membership_id_inactive_memberships_id_fkey",
+        "n|fk|public.tokens.tokens_inactive_membership_id_inactive_memberships_id_fkey",
+        "e|fk|public.tokens.tokens_inactive_membership_id_inactive_memberships_id_fkey",
+        "n|con|public.tokens.tokens_inactive_membership_id_inactive_memberships_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.tokens",
+        "n|sch|public",
+        "n|tbl|public.inactive_memberships",
+        "n|sch|public",
+        "n|col|public.tokens.inactive_membership_id",
+        "n|col|public.inactive_memberships.id",
+        "e|uniqueness|public.inactive_memberships.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tokens",
+        "name": "tokens_inactive_membership_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "inactive_membership_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"inactive_membership_id\" is not null",
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tokens",
+        "name": "tokens_inactive_membership_id_inactive_memberships_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "inactive_membership_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "inactive_memberships",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"channel_counters\",\"path\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"notifications\",\"digested_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"sync_incidents\",\"position_to\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"notifications_user_activity_index\"]"
+    }
+  ]
+}
