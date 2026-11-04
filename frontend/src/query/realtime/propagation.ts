@@ -120,13 +120,18 @@ function patchSingleHost(
     const needsPatch = embedded.some((item: { id?: string }) => item.id && (updateSet.has(item.id) || removeSet.has(item.id)));
     if (!needsPatch) return host;
 
+    let replaced = false;
     const patched = embedded
       .filter((item: { id?: string }) => !item.id || !removeSet.has(item.id))
       .map((item: { id?: string; updatedAt?: string }) => {
         const fresh = item.id && updateSet.has(item.id) ? freshEmbedded.get(item.id) : undefined;
-        return fresh && isFresher(item, fresh) ? fresh : item;
+        if (!fresh || !isFresher(item, fresh)) return item;
+        replaced = true;
+        return fresh;
       });
 
+    // Every copy kept keeps the host too: a rewrite would re-render it for nothing
+    if (!replaced && patched.length === embedded.length) return host;
     return { ...host, [hostColumn]: patched };
   }
 

@@ -13,7 +13,6 @@ import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-co
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { useInDropdownerDrawer } from '~/modules/common/dropdowner/drawer';
 import { deduplicateLabels } from '~/modules/label/group-labels';
-import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
 import { useLabelUsage } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
@@ -134,16 +133,13 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     return () => scrollParent.removeEventListener('scroll', onScroll);
   };
 
-  const trackUsage = useLabelRecencyStore((state) => state.trackUsage);
-  const getScore = useLabelRecencyStore((state) => state.getScore);
-
   const focusInput = () => {
     if (!isTouchInteraction()) inputRef.current?.focus();
   };
 
   const projectLabels = labels.filter((label) => label.projectId === projectId);
 
-  const allLabels = deduplicateLabels(labels, projectId, organizationId, usage);
+  const allLabels = deduplicateLabels(labels, projectId, usage);
 
   const searchSlug = labelSlug(searchValue);
   // Labels are meant to be lowercase, but older and seeded names carry capitals and spaces: normalize them as the input is.
@@ -154,18 +150,9 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
       )
     : [];
 
-  // Top labels by recency, then usedCount, then name, excluding the selected
+  // The hottest labels, the selected left out
   const selectedSlugs = new Set(selectedLabels.map((label) => label.slug));
-  const suggestedLabels = allLabels
-    .filter((label) => !selectedSlugs.has(label.slug))
-    .sort((a, b) => {
-      const recency = getScore(organizationId, b.slug) - getScore(organizationId, a.slug);
-      if (recency !== 0) return recency;
-      const usageDiff = b.usedCount - a.usedCount;
-      if (usageDiff !== 0) return usageDiff;
-      return a.name.localeCompare(b.name);
-    })
-    .slice(0, suggestedLabelCount);
+  const suggestedLabels = allLabels.filter((label) => !selectedSlugs.has(label.slug)).slice(0, suggestedLabelCount);
 
   const visibleLabels = searchValue ? searchResults : [...selectedLabels, ...suggestedLabels];
 
@@ -208,7 +195,6 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
       const updatedLabels = getItemsSortedByName([...selectedLabels, newLabel]);
       setSelectedLabels(updatedLabels);
       onChange(updatedLabels);
-      trackUsage(organizationId, [newLabel.slug]);
       return;
     }
 
@@ -254,7 +240,6 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     const finalLabels = updatedLabels.map((label) => (label.id === newLabel.id ? createdLabels[0] : label));
     setSelectedLabels(finalLabels);
     onChange(finalLabels);
-    trackUsage(organizationId, [newLabelData.slug]);
   };
 
   // flushSync: iOS raises the keyboard only for a field focused within the tap itself

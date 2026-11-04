@@ -1,13 +1,16 @@
-import { and, asc, count, eq, inArray, isNull, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull, ne, type SQL, sql } from 'drizzle-orm';
 import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import type { ActorContext, DbContext } from '#/core/context';
+import { createServerStx } from '#/core/stx/create-server-stx';
 import type { ActorId } from '#/db/utils/ids';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { requestScopeWhere } from '#/db/utils/request-scope';
 import { deleteStamps, updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
+import { productCacheStore } from '#/middlewares/product-cache/product-cache-store';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
+import { heatClock } from '#/modules/label/helpers/label-heat';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { projectsTable } from '#/modules/project/project-db';
 import type { StxBase } from '#/schemas/sync-transaction-schemas';
@@ -51,6 +54,31 @@ export const updateLabel = async (ctx: ActorContext, { id, values }: UpdateLabel
     .where(and(eq(labelsTable.id, id), requestScopeWhere(ctx, labelsTable, 'label')))
     .returning();
   return updated;
+};
+
+/**
+ * Adds heat to secondary and epic labels, each `displayOrder` first decayed to now (see label-heat.ts); an epic takes
+ * double. No edit stamps: a bump is not an edit, and a client keeps an embedded copy whose `updatedAt` did not move.
+ * The stx takes the server's ids, or the tab that last edited the label would take the bump for its own echo.
+ */
+export const bumpLabelHeat = async (ctx: ActorContext, bumps: Map<string, number>) => {
+  if (bumps.size === 0) return;
+  const { db } = ctx.var;
+  const clock = heatClock();
+  const { mutationId, sourceId } = createServerStx();
+  productCacheStore.holdForWrite('label', [...bumps.keys()]);
+  for (const [id, heat] of bumps) {
+    await db
+      .update(labelsTable)
+      .set({
+        // greatest skips a null rank, and floors the exponent where power would underflow
+        displayOrder: sql`ln(power(2, greatest(${labelsTable.displayOrder} - ${clock}::float8, -1000)) + ${heat}::float8 * (case when ${labelsTable.mode} = 'epic' then 2 else 1 end)) / ln(2.0) + ${clock}::float8`,
+        stx: stripChangedFields(labelsTable.stx, { mutationId, sourceId }),
+      })
+      .where(
+        and(eq(labelsTable.id, id), ne(labelsTable.mode, 'primary'), isNull(labelsTable.deletedAt), requestScopeWhere(ctx, labelsTable, 'label')),
+      );
+  }
 };
 
 interface DeleteLabelsByIdsOpts {

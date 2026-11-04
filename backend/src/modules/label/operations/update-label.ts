@@ -36,10 +36,10 @@ export async function updateLabelOp(
   return tenantContext(ctx, async (txCtx) => {
     const { entity: before } = await getValidProduct(txCtx, id, 'label', 'update', { forUpdate: true });
 
-    // Epic documentation and secondary <-> epic transitions are member-level: any project
-    // member may document an epic or toggle a label's epic mode. Ops limited to those fields
+    // Epic documentation, secondary <-> epic transitions and a move in the labels list are member-level: any project
+    // member may document an epic, toggle a label's epic mode or drag it. Ops limited to those fields
     // skip the project-admin gate below. Only epics accept a description.
-    const memberLevelOnly = Object.keys(rawOps).every((key) => key === 'description' || key === 'mode');
+    const memberLevelOnly = Object.keys(rawOps).every((key) => key === 'description' || key === 'mode' || key === 'displayOrder');
     if ('description' in rawOps && before.mode !== 'epic') {
       throw new AppError(409, 'label_description_epic_only', 'warn', { entityType: 'label' });
     }
