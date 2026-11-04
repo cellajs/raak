@@ -11,6 +11,7 @@ import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { TaskCard } from '~/modules/task/card/task-card';
 import { publicTaskQueryOptions } from '~/modules/task/public-query';
 import { taskQueryOptions } from '~/modules/task/query';
+import { TaskGuestAlert } from '~/modules/task/task-guest-alert';
 import { isTouchInteraction } from '~/utils/input-modality';
 
 interface TaskSheetProps {
@@ -59,7 +60,8 @@ export function TaskSheet({ id, organizationId }: TaskSheetProps) {
 
   return (
     <SearchScope q={q}>
-      <div>
+      <div className="flex min-h-[calc(100vh-var(--task-sheet-offset))] flex-col sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]">
+        <TaskGuestAlert projectId={task.projectId} className="mx-3 mb-3 sm:mx-4" />
         <TaskCard task={task} state={taskState} isSelected={false} isFocused isSheet onEdit={() => setIsEditing(true)} />
       </div>
     </SearchScope>

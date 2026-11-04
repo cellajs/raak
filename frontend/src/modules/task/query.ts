@@ -74,7 +74,7 @@ type TaskUpdateFullVars = UpdateVariables<UpdateTaskOps> & Partial<OptimisticCac
 type TaskDeleteFullVars = DeleteVariables<Task>;
 
 /** Retains API literal unions for task-list sorting and matching filters. */
-type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'status' | 'type' | 'labels' | 'sort' | 'order'>;
+type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'status' | 'type' | 'labels' | 'assigned' | 'sort' | 'order'>;
 /** Separate key space for public (unauthenticated) task queries. */
 type PublicTaskListFilters = TaskListFilters & { public: true };
 
@@ -282,19 +282,21 @@ const tasksTableQueryKey = ({
   status,
   type,
   labels,
+  assigned,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
   projectId,
   workspaceId,
   organizationId,
 }: Omit<GetTasksParam, 'acceptedCutOff' | 'tenantId'>) =>
-  taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, q, status, type, labels });
+  taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, q, status, type, labels, assigned });
 
 export const tasksTableQueryOptions = ({
   q,
   status,
   type,
   labels,
+  assigned,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
   projectId,
@@ -303,11 +305,11 @@ export const tasksTableQueryOptions = ({
   tenantId,
   limit = appConfig.requestLimits.tasksTable,
 }: Omit<GetTasksParam, 'acceptedCutOff'> & { limit?: number }) => {
-  const filters = { q, status, type, labels, sort, order, organizationId, projectId, workspaceId };
+  const filters = { q, status, type, labels, assigned, sort, order, organizationId, projectId, workspaceId };
 
   return syncedListOptions(
     infiniteQueryOptions({
-      queryKey: tasksTableQueryKey({ q, status, type, labels, sort, order, projectId, workspaceId, organizationId }),
+      queryKey: tasksTableQueryKey({ q, status, type, labels, assigned, sort, order, projectId, workspaceId, organizationId }),
       ...offsetPaging(limit, (offset, signal) =>
         getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }).then(liveItems),
       ),

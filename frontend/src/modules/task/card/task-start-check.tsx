@@ -1,23 +1,35 @@
-import { motion } from 'motion/react';
+import { CheckIcon } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
+import { Tooltip, TooltipContent } from '~/modules/ui/tooltip';
 import { cn } from '~/utils/cn';
 
 const checkDuration = 1600;
+const closeDuration = 200; // the tooltip's fade-out, before it unmounts
 
-const useStartChecks = create<{ checks: Record<string, number> }>(() => ({ checks: {} }));
+/** Per task: true while "Copied" shows, false while it fades. */
+const useStartChecks = create<{ checks: Record<string, boolean> }>(() => ({ checks: {} }));
 
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
+
+const setCheck = (taskId: string, open: boolean) => useStartChecks.setState(({ checks }) => ({ checks: { ...checks, [taskId]: open } }));
 
 /** Shows "Copied" on a task's status button. Kept in a store: Start re-sorts the list, which can remount the card mid-check. */
 export const showStartCheck = (taskId: string) => {
   clearTimeout(timers.get(taskId));
-  useStartChecks.setState(({ checks }) => ({ checks: { ...checks, [taskId]: (checks[taskId] ?? 0) + 1 } }));
+  setCheck(taskId, true);
   timers.set(
     taskId,
     setTimeout(() => {
-      timers.delete(taskId);
-      useStartChecks.setState(({ checks: { [taskId]: _, ...rest } }) => ({ checks: rest }));
+      setCheck(taskId, false);
+      timers.set(
+        taskId,
+        setTimeout(() => {
+          timers.delete(taskId);
+          useStartChecks.setState(({ checks: { [taskId]: _, ...rest } }) => ({ checks: rest }));
+        }, closeDuration),
+      );
     }, checkDuration),
   );
 };
@@ -27,41 +39,23 @@ interface TaskStartCheckProps {
   className?: string;
 }
 
-/** Says Start copied the task, over the whole status control. Too narrow without a chevron, it grows left over its neighbour: nothing shifts. */
+/** Says Start copied the task, in a tooltip over the status control it sits in. */
 export function TaskStartCheck({ taskId, className }: TaskStartCheckProps) {
   const { t } = useTranslation();
   const check = useStartChecks((state) => state.checks[taskId]);
-  if (!check) return null;
+  const [anchor, setAnchor] = useState<HTMLSpanElement | null>(null);
+  if (check === undefined) return null;
 
   return (
-    <motion.span
-      key={check}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: [0, 1, 1, 0] }}
-      transition={{ duration: checkDuration / 1000, times: [0, 0.1, 0.85, 1], ease: 'easeOut' }}
-      className={cn(
-        'pointer-events-none absolute inset-y-0 right-0 z-10 flex w-max min-w-full items-center justify-center gap-1 rounded-md border border-success/80 bg-[color-mix(in_oklab,var(--success)_10%,var(--background))] px-1.5 font-medium text-sm text-success',
-        className,
-      )}
-    >
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-3.5 shrink-0"
-      >
-        <motion.path
-          d="M20 6 9 17l-5-5"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ delay: 0.1, duration: 0.25, ease: 'easeOut' }}
-        />
-      </svg>
-      {t('c:copied')}
-    </motion.span>
+    <>
+      <span ref={setAnchor} aria-hidden="true" className={cn('pointer-events-none absolute inset-y-0 right-0 left-0', className)} />
+      <Tooltip open={check && !!anchor}>
+        {/* Unlike a hover tooltip it shows on a phone too: Start is a tap there */}
+        <TooltipContent anchor={anchor} side="top" sideOffset={8} className="flex items-center gap-1.5 max-sm:flex">
+          <CheckIcon aria-hidden="true" className="size-3.5 text-green-400 dark:text-green-800" strokeWidth={3} />
+          {t('c:copied')}
+        </TooltipContent>
+      </Tooltip>
+    </>
   );
 }

@@ -9,7 +9,7 @@ import { FocusView } from '~/modules/common/focus-view';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
 import { ProjectHeaderToggle } from '~/modules/task/board/project-header-toggle';
-import { BoardSearchBar } from '~/modules/task/board-search';
+import { BoardSearchBar, pageSearchScope } from '~/modules/task/board-search';
 import { configureForExport } from '~/modules/task/helpers/export-helpers';
 import { deriveTasksQueryParams, fetchTasksForExport } from '~/modules/task/query';
 import type { ResolvedTasksTableProps } from '~/modules/task/table/tasks-table';
@@ -41,7 +41,7 @@ export function TasksTableBar({
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
-  const { q, sort, order, status, type, labels } = searchVars;
+  const { q, sort, order, status, type, labels, assigned } = searchVars;
 
   const fetchExport = async (limit: number, offset: number) => {
     if (!queryParams) return [];
@@ -63,13 +63,12 @@ export function TasksTableBar({
       )}
 
       <BoardSearchBar
-        projects={projects}
-        workspaceId={workspace?.id}
+        scope={pageSearchScope(projects, workspace?.id)}
         publicView={publicView}
         total={total}
         leading={!workspace && !publicView && projects[0] && <ProjectHeaderToggle project={projects[0]} />}
         // Only what changes the list: the search also carries the open task sheet, which must not scroll the page
-        searchVars={{ q, sort, order, status, type, labels }}
+        searchVars={{ q, sort, order, status, type, labels, assigned }}
         controls={
           <>
             {isMobile &&

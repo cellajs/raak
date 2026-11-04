@@ -47,7 +47,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   });
   const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
 
-  const { q, sort, order, status, type, labels } = search;
+  const { q, sort, order, status, type, labels, assigned } = search;
   const parsedSearch = parseBoardSearch(search);
 
   const [columns, setColumns] = useColumnVisibility(useColumns({ hideProject: !workspace, organization, tenantId, projects }));
@@ -55,7 +55,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const [isCompact, setIsCompact] = useState(true);
 
   // Here, not at the writes: the field, its chips, a recent search and the back button all change these
-  useEffect(() => setSelected([]), [q, status, type, labels]);
+  useEffect(() => setSelected([]), [q, status, type, labels, assigned]);
 
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 

@@ -23,14 +23,15 @@ export function WorkspaceTile({ entity, menuItem }: WorkspaceTileProps) {
   const unseenCount = useUnseenCount(menuItem ? menuUnseenChannelIds(menuItem, true) : []);
 
   const leading = (
-    <div className="flex min-w-14 items-center justify-center">
+    // Exactly two overlapping avatars wide, so names line up from tile to tile and a pair sits a plain gap from its name
+    <div className="flex w-12 shrink-0 items-center justify-center sm:w-16">
       {!!projects.length && (
-        <AvatarGroup limit={2}>
+        <AvatarGroup limit={2} className="-space-x-4">
           <AvatarGroupList>
             {projects.map((project) => (
               <EntityAvatar
                 key={project.id}
-                className="-ml-2 size-8 border-2 border-black/25 more-contrast:border-black/85 sm:size-10"
+                className="size-8 border-2 border-black/25 more-contrast:border-black/85 sm:size-10"
                 type="project"
                 id={project.id}
                 name={project.name}
@@ -38,7 +39,7 @@ export function WorkspaceTile({ entity, menuItem }: WorkspaceTileProps) {
               />
             ))}
           </AvatarGroupList>
-          <AvatarOverflowIndicator className="-ml-2 size-8 rounded-md border-2 border-black/25 more-contrast:border-black/85 bg-muted font-semibold more-contrast:text-foreground text-faint-foreground text-xs tracking-tighter shadow-none sm:size-10" />
+          <AvatarOverflowIndicator className="size-8 rounded-md border-2 border-black/25 more-contrast:border-black/85 bg-muted font-semibold more-contrast:text-foreground text-faint-foreground text-xs tracking-tighter shadow-none sm:size-10" />
         </AvatarGroup>
       )}
     </div>

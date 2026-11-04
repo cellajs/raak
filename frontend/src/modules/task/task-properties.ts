@@ -5,7 +5,7 @@ import { ReviewedIcon } from '~/modules/task/dropdowns/status-icons/reviewed';
 import { StartedIcon } from '~/modules/task/dropdowns/status-icons/started';
 import { UnstartedIcon } from '~/modules/task/dropdowns/status-icons/unstarted';
 
-/** Task status in workflow order: Accepted is completed, Unstarted is not started. The values are stored, so 2 (Delivered, retired) stays a gap. */
+/** Task status in workflow order: Accepted is completed, Unstarted is not started. The values are stored, so 2 (an older Delivered step, retired) stays a gap. */
 export enum TaskStatus {
   Iced = 6,
   Unstarted = 5,
@@ -18,13 +18,47 @@ export enum TaskStatus {
 /** Accepted tasks past this many days are left out of the board query. */
 export const boardAcceptedCutOffDays = 14;
 
+// status: the id in URLs, the API and saved searches, so a rename changes name only (Finished reads as Delivered, Accepted as Done).
+// action: the next step from a status, on its card's button. verb: the step that moves a task into it, as the status menu lists it; Backlog keeps its name.
 export const statusOptions = [
-  { value: TaskStatus.Accepted, action: 'accepted', next: TaskStatus.Accepted, status: 'accepted', icon: AcceptedIcon },
-  { value: TaskStatus.Reviewed, action: 'accept', next: TaskStatus.Accepted, status: 'reviewed', icon: ReviewedIcon },
-  { value: TaskStatus.Finished, action: 'review', next: TaskStatus.Reviewed, status: 'finished', icon: FinishedIcon },
-  { value: TaskStatus.Started, action: 'finish', next: TaskStatus.Finished, status: 'started', icon: StartedIcon },
-  { value: TaskStatus.Unstarted, action: 'start', next: TaskStatus.Started, status: 'unstarted', icon: UnstartedIcon },
-  { value: TaskStatus.Iced, action: 'iced', next: TaskStatus.Unstarted, status: 'iced', icon: IcedIcon },
+  {
+    value: TaskStatus.Accepted,
+    action: 'done',
+    next: TaskStatus.Accepted,
+    status: 'accepted',
+    name: 'done',
+    verb: 'accept',
+    icon: AcceptedIcon,
+  },
+  {
+    value: TaskStatus.Reviewed,
+    action: 'accept',
+    next: TaskStatus.Accepted,
+    status: 'reviewed',
+    name: 'reviewed',
+    verb: 'review',
+    icon: ReviewedIcon,
+  },
+  {
+    value: TaskStatus.Finished,
+    action: 'review',
+    next: TaskStatus.Reviewed,
+    status: 'finished',
+    name: 'delivered',
+    verb: 'deliver',
+    icon: FinishedIcon,
+  },
+  { value: TaskStatus.Started, action: 'deliver', next: TaskStatus.Finished, status: 'started', name: 'started', verb: 'start', icon: StartedIcon },
+  {
+    value: TaskStatus.Unstarted,
+    action: 'start',
+    next: TaskStatus.Started,
+    status: 'unstarted',
+    name: 'unstarted',
+    verb: 'unstarted',
+    icon: UnstartedIcon,
+  },
+  { value: TaskStatus.Iced, action: 'iced', next: TaskStatus.Unstarted, status: 'iced', name: 'iced', verb: 'ice', icon: IcedIcon },
 ] as const;
 
 /** Value-keyed lookup: the enum values have a gap, so `statusOptions[value]` misses. */

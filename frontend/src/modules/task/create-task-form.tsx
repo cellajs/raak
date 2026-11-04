@@ -1,4 +1,4 @@
-import { ChevronDownIcon, TagIcon, UserXIcon } from 'lucide-react';
+import { ChevronDownIcon, TagIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { type KeyboardEvent, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
@@ -29,11 +29,12 @@ import {
   newTaskFormIsDirty,
 } from '~/modules/task/helpers/create-task';
 import { createTaskUploadPersister } from '~/modules/task/helpers/create-task-upload-persister';
-import { setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
+import { focusWhenMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { revealTask } from '~/modules/task/helpers/panel-scroll-registry';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
+import { NoAssigneeAvatar } from '~/modules/task/no-assignee-avatar';
 import { useTaskCreateMutation } from '~/modules/task/query';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import { itemFocusBarClass } from '~/modules/task/task-styles';
@@ -150,7 +151,13 @@ export function CreateTaskForm({
     pendingCloseRef.current = false;
     handleCloseForm();
     // The dialog's scroll lock puts the board back where it was as the dialog unmounts
-    if (isDialog) requestAnimationFrame(() => revealTask(projectId, defaultId));
+    requestAnimationFrame(() => {
+      if (isDialog) revealTask(projectId, defaultId);
+      // The created task takes the closing form's place as the board's current item, as a closing task sheet does.
+      // Not focusItem: its scroll would re-run the one above, and a second scrollToIndex remounts the row mid-glow.
+      setCurrentItem(defaultId);
+      focusWhenMounted(defaultId);
+    });
   };
 
   const handleFormSubmit = async (values: NewTaskFormValues) => {
@@ -380,8 +387,7 @@ export function CreateTaskForm({
                         </>
                       ) : (
                         <>
-                          <UserXIcon className="size-4 text-faint-foreground" />{' '}
-                          <span className="ml-0.5 font-normal text-faint-foreground">{t('c:assign_to')}</span>
+                          <NoAssigneeAvatar className="size-5" /> <span className="ml-0.5 font-normal text-faint-foreground">{t('c:assign_to')}</span>
                         </>
                       )}
                     </span>
@@ -397,7 +403,7 @@ export function CreateTaskForm({
               <Button type="submit" disabled={!isDirty} press={false} className="grow rounded-none rounded-l">
                 <span>
                   {t('c:create')}
-                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${t(`c:${statusOptionsByValue[watchedStatus].status}`)}`}
+                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${t(`c:${statusOptionsByValue[watchedStatus].verb}`)}`}
                 </span>
               </Button>
 

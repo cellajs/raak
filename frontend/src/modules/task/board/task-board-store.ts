@@ -17,6 +17,7 @@ export interface RecentBoardSearch {
   status: string[];
   type: string[];
   labels: string[];
+  assigned: string[];
 }
 
 const maxRecentSearches = 5;
@@ -105,11 +106,11 @@ export const useTaskBoardStore = create<TaskBoardState>()(
         reset: () => set(initStore),
       })),
       {
-        version: 3,
+        version: 4,
         name: 'task-board',
         skipHydration: true,
         storage: createJSONStorage(() => idbKvStorage('task-board')),
-        // v1 held split columns, and which bars were unfolded: not worth carrying over. v2 can hold a panel of the retired Delivered (2).
+        // v1 held split columns, and which bars were unfolded: not worth carrying over. v2 can hold a panel of the retired Delivered (2), and has no recent searches. Before v4 a recent search had no members.
         migrate: (persisted, version) => {
           if (version < 2) return initStore;
           const state = persisted as typeof initStore;
@@ -117,7 +118,11 @@ export const useTaskBoardStore = create<TaskBoardState>()(
             boardId,
             statuses.filter((status) => status in statusOptionsByValue),
           ]);
-          return { ...state, statusPanels: Object.fromEntries(statusPanels) };
+          const recentSearches = Object.entries(state.recentSearches ?? {}).map(([channelId, searches]) => [
+            channelId,
+            searches.map((search) => ({ ...search, assigned: search.assigned ?? [] })),
+          ]);
+          return { ...state, statusPanels: Object.fromEntries(statusPanels), recentSearches: Object.fromEntries(recentSearches) };
         },
       },
     ),

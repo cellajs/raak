@@ -79,7 +79,9 @@ export const BoardPanel = memo(function BoardPanel({
 
   const counts = {
     total: filteredTasks.length,
-    acceptedCutOff: !statuses || statuses.includes(TaskStatus.Accepted) ? hiddenAccepted : 0,
+    // A status filter without accepted rules out the older accepted tasks too, though the board never fetched them
+    acceptedCutOff:
+      (!statuses || statuses.includes(TaskStatus.Accepted)) && (!search.statuses.length || search.statuses.includes('accepted')) ? hiddenAccepted : 0,
     showAccepted,
     showIced,
     accepted: showAccepted ? acceptedCount : 0,

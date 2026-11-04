@@ -44,6 +44,13 @@ export const statusesBottomUp = statusPath.toSorted((a, b) => b - a);
 /** The mobile status tabs by their search param. The lists are stable, so a tab switch alone re-renders the memoized panel. */
 export const statusTabLists = new Map<string, TaskStatus[]>(statusPath.map((status) => [statusOptionsByValue[status].status, [status]]));
 
+/** How many tasks of a board list each status holds, for the mobile status tabs. */
+export const countTasksByStatus = ({ items }: { items: Task[] }) => {
+  const counts: Partial<Record<TaskStatus, number>> = {};
+  for (const task of items) if (!isDraftTask(task)) counts[task.status] = (counts[task.status] ?? 0) + 1;
+  return counts;
+};
+
 /** A status panel's place on a board that starts with this status. */
 const statusListIndex = (status: TaskStatus, startWith: TogglableStatusType) => (startWith === 'iced' ? iced - status : status);
 
@@ -87,12 +94,12 @@ export const publicBoardPanels = (tasks?: { status: TaskStatus }[]) => {
 export const foldsStatus = (statuses: TaskStatus[] | undefined, status: TaskStatus) =>
   !statuses || (statuses.length > 1 && statuses.includes(status));
 
-const statusNames = (statuses: TaskStatus[]) => statuses.map((status) => i18n.t(`c:${statusOptionsByValue[status].status}`));
+const statusNames = (statuses: TaskStatus[]) => statuses.map((status) => i18n.t(`c:${statusOptionsByValue[status].name}`));
 
 /** Every status of a panel by name, where its title abbreviates them. */
 export const listStatusNames = (statuses: TaskStatus[]) => statusNames(statuses).join(', ');
 
-/** A panel's title: "Started" for one status, "Backlog and iced" for two, "Finished … accepted" for more. Its icons tell which are in between. */
+/** A panel's title: "Started" for one status, "Backlog and iced" for two, "Delivered … done" for more. Its icons tell which are in between. */
 export const formatStatusesLabel = (statuses: TaskStatus[]): string => {
   const names = statusNames(statuses);
   if (names.length < 2) return names.join();

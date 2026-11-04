@@ -40,14 +40,14 @@ export function StatusPanelsMenu({ boardId, className }: StatusPanelsMenuProps) 
           onChange={changeStartWith}
           options={[
             { value: 'iced', label: t('c:iced') },
-            { value: 'accepted', label: t('c:accepted') },
+            { value: 'accepted', label: t('c:done') },
           ]}
         />
       </DropdownActionGroup>
       <DropdownActionSeparator />
       <DropdownActionGroup label={t('c:status_panels')}>
         {statusRows.map((status) => {
-          const { icon, status: name } = statusOptionsByValue[status];
+          const { icon, name } = statusOptionsByValue[status];
           return (
             <DropdownToggleItem
               key={status}

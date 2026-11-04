@@ -83,7 +83,7 @@ export function LabelOptionsButton({ row, canManage, className }: LabelOptionsBu
         size="xs"
         className={cn('size-8 data-dropdowner-active:bg-muted', className)}
       >
-        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-3.5" />
+        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4.5" />
       </Button>
     </TooltipButton>
   );
