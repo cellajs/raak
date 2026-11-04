@@ -1,5 +1,5 @@
 import { appConfig } from 'shared';
-import type { EnrichedProject } from '~/modules/project/types';
+import type { ProjectWithMembership } from '~/modules/project/types';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
 
@@ -19,7 +19,7 @@ export const people = {
 
 type PersonKey = keyof typeof people;
 
-const project = (slug: string, name: string): EnrichedProject => ({
+const project = (slug: string, name: string): ProjectWithMembership => ({
   id: `demo-project-${slug}`,
   entityType: 'project',
   tenantId,
@@ -75,18 +75,20 @@ export const summaryOf = (text: string) =>
 
 interface TaskSeed {
   id: string;
+  number: number;
   name: string;
   type: string;
   status: TaskStatus;
   order: number;
-  in?: EnrichedProject;
+  in?: ProjectWithMembership;
   by?: PersonKey;
   labels?: string[];
   assigned?: PersonKey[];
 }
 
-const task = ({ id, name, type, status, order, in: taskProject = website, by = 'lena', labels = [], assigned = [] }: TaskSeed): Task => ({
+const task = ({ id, number, name, type, status, order, in: taskProject = website, by = 'lena', labels = [], assigned = [] }: TaskSeed): Task => ({
   id: `demo-task-${id}`,
+  number,
   entityType: 'task',
   tenantId,
   name,
@@ -122,6 +124,7 @@ const { Unstarted, Started, Finished, Reviewed } = TaskStatus;
 
 const heroImagesTask = task({
   id: 'images',
+  number: 12,
   name: 'Compress the hero images',
   type: 'chore',
   status: Finished,
@@ -130,31 +133,51 @@ const heroImagesTask = task({
 });
 export const darkModeTask = task({
   id: 'dark-mode',
+  number: 18,
   name: 'Dark mode for the settings page',
   type: 'feature',
   status: Unstarted,
   order: 900,
   assigned: ['noor'],
 });
-export const typoTask = task({ id: 'typo', name: 'Typo on the pricing page', type: 'bug', status: Unstarted, order: 800, by: 'sam' });
+export const typoTask = task({ id: 'typo', number: 19, name: 'Typo on the pricing page', type: 'bug', status: Unstarted, order: 800, by: 'sam' });
 export const syncStateTask = task({
   id: 'sync-state',
+  number: 21,
   name: 'Show the sync state in the header',
   type: 'feature',
   status: Unstarted,
   order: 800,
   in: mobileApp,
 });
-export const exportTask = task({ id: 'export', name: 'Export tasks to a spreadsheet', type: 'feature', status: Unstarted, order: 2000, by: 'noor' });
+export const exportTask = task({
+  id: 'export',
+  number: 23,
+  name: 'Export tasks to a spreadsheet',
+  type: 'feature',
+  status: Unstarted,
+  order: 2000,
+  by: 'noor',
+});
 
 /** What the board starts from: few rows, as everything that changes must stand on the first screen, and on a phone in the three its frame holds. */
 export const demoSeed = (isPhone: boolean) => [
   ...(isPhone ? [] : [heroImagesTask]),
   darkModeTask,
   typoTask,
-  task({ id: 'offline', name: 'Offline mode for the task list', type: 'feature', status: Reviewed, order: 900, in: mobileApp, assigned: ['sam'] }),
+  task({
+    id: 'offline',
+    number: 9,
+    name: 'Offline mode for the task list',
+    type: 'feature',
+    status: Reviewed,
+    order: 900,
+    in: mobileApp,
+    assigned: ['sam'],
+  }),
   task({
     id: 'magic-link',
+    number: 11,
     name: 'Sign in with a magic link',
     type: 'feature',
     status: Started,
@@ -163,6 +186,15 @@ export const demoSeed = (isPhone: boolean) => [
     labels: ['auth'],
     assigned: ['tom'],
   }),
-  task({ id: 'push', name: 'Push notification opens the wrong task', type: 'bug', status: Unstarted, order: 900, in: mobileApp, assigned: ['tom'] }),
+  task({
+    id: 'push',
+    number: 16,
+    name: 'Push notification opens the wrong task',
+    type: 'bug',
+    status: Unstarted,
+    order: 900,
+    in: mobileApp,
+    assigned: ['tom'],
+  }),
   syncStateTask,
 ];
