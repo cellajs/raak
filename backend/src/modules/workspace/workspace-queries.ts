@@ -111,8 +111,8 @@ interface FindWorkspacesPaginatedOpts {
   /** Lists the workspaces of archived tenants too. */
   isSystemAdmin: boolean;
   q?: string;
-  sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
-  order?: 'asc' | 'desc';
+  sort: 'id' | 'name' | 'createdAt' | 'displayOrder';
+  order: 'asc' | 'desc';
   offset: number;
   limit: number;
   organizationId?: string;
@@ -160,7 +160,6 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
   const orderBy = getOrderColumns({
     sort,
     order,
-    fallback: ['displayOrder', 'asc'],
     columns: {
       id: workspacesTable.id,
       name: workspacesTable.name,

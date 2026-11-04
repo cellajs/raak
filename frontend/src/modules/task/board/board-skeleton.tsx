@@ -7,12 +7,11 @@ import { collapsedPanelMinWidth, panelMinWidth } from '~/modules/common/board/bo
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
-import { TableCount } from '~/modules/common/data-table/table-count';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { fitPanels } from '~/modules/common/resizable-panels/panel-layout';
 import { idealWidthFactor } from '~/modules/common/resizable-panels/resizable-panels';
 import { SearchField } from '~/modules/common/search-field';
-import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
+import { FloatingAction } from '~/modules/navigation/floating-nav/floating-action';
 import { PublicBadge } from '~/modules/project/public-badge';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { useWithMembership } from '~/modules/project/use-with-membership';
@@ -216,8 +215,6 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
         className="edgeless sm:min-w-44"
       />
 
-      <TableCount count={hasProjects ? 0 : null} label="c:task" className="mr-3 max-sm:hidden" />
-
       {isInWorkspace ? (
         <>
           <Button className="max-md:hidden" variant="secondary">
@@ -263,6 +260,7 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
 
 /** The mobile panel while its tasks load, with an inert create button where the live one sits. */
 export function MobilePanelSkeleton() {
+  const { t } = useTranslation();
   const statuses = useStatusTabList();
 
   return (
@@ -273,7 +271,7 @@ export function MobilePanelSkeleton() {
         showIced={foldsStatus(statuses, TaskStatus.Iced)}
       />
       <div inert>
-        <FloatingNavButton id="create-task-placeholder" icon={PlusIcon} onClick={() => {}} />
+        <FloatingAction icon={PlusIcon} label={t('c:create_resource', { resource: t('c:task') })} onClick={() => {}} />
       </div>
     </>
   );

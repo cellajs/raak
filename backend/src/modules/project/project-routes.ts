@@ -80,7 +80,7 @@ const projectRoutes = createXRoutes(['projects', 'app', 'channel'], {
     summary: 'Assign project to workspace',
     description: "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
     request: { params: idInTenantOrgParamSchema, query: projectWorkspaceQuerySchema },
-    responses: { 200: json('Project assigned to the new workspace', projectWithMembershipSchema, mockProjectResponse()) },
+    responses: { 200: json('Project assigned\n\nThe project, now in the new workspace.', projectWithMembershipSchema, mockProjectResponse()) },
   }),
   moveProjectToWorkspace: xRoute({
     method: 'put',

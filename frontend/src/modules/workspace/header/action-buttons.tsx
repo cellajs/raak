@@ -20,6 +20,8 @@ import { flattenInfiniteData } from '~/query/basic/flatten';
 import { cn } from '~/utils/cn';
 
 export function WorkspaceActionButtons() {
+  // Reads refs during render: the action list carries the trigger refs into the mobile menu.
+  'use no memo';
   const { t } = useTranslation();
   const navigate = useNavigate();
 

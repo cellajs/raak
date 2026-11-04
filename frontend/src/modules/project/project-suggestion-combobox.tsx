@@ -116,7 +116,6 @@ export function ProjectSuggestionCombobox({
       <ComboboxContent className="p-0">
         <ComboboxSearchInput
           value={searchQuery}
-          onClear={() => setSearchQuery('')}
           isSearching={isFetching}
           placeholder={t('c:placeholder.type_input', { inputLabel: t('c:project') })}
         />

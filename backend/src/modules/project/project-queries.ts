@@ -156,8 +156,8 @@ interface FindProjectsPaginatedOpts {
   /** Lists the projects of archived tenants too. */
   isSystemAdmin: boolean;
   q?: string;
-  sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
-  order?: 'asc' | 'desc';
+  sort: 'id' | 'name' | 'createdAt' | 'displayOrder';
+  order: 'asc' | 'desc';
   offset: number;
   limit: number;
   organizationId?: string;
@@ -239,7 +239,6 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
   const orderBy = getOrderColumns({
     sort,
     order,
-    fallback: ['displayOrder', 'asc'],
     columns: { id: projectsTable.id, name: projectsTable.name, createdAt: projectsTable.createdAt, displayOrder: membershipsTable.displayOrder },
     tieBreaker: projectsTable.id,
   });

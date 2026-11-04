@@ -35,7 +35,7 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     request: { params: tenantOrgParamSchema, body: jsonBody(taskCreateManyStxBodySchema) },
     responses: {
       200: json(
-        'Nothing created: rows an earlier attempt created (idempotent), and rejected ids',
+        'Nothing created\n\nThis request inserted no row. The body returns the rows an earlier attempt created (an idempotent replay) and lists the ids it rejected.',
         taskCreateResponseSchema,
         mockBatchTasksResponse(),
       ),

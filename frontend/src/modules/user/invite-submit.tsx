@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
-import { CircleQuestionMarkIcon, ClockIcon, SendIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ClockIcon, SendIcon } from 'lucide-react';
+import { Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 // biome-ignore lint/style/noRestrictedImports: colocated mutation for system-level invite called from stepper flow.
 import { systemInvite as baseSystemInvite } from 'sdk';
@@ -20,29 +20,31 @@ import type { EnrichedChannel } from '~/modules/entities/types';
 import { sendInBatches } from '~/modules/memberships/query';
 import { useInviteMemberMutation } from '~/modules/memberships/query-mutations';
 import { Alert, AlertDescription } from '~/modules/ui/alert';
-import { Button } from '~/modules/ui/button';
-import { FormField, FormItem } from '~/modules/ui/field';
-import { Popover, PopoverContent, PopoverTrigger } from '~/modules/ui/popover';
+import { FormField, FormItem, FormLabel } from '~/modules/ui/field';
 import { type InviteResultData, inviteResultNeedsScreen, inviteResultTitle } from '~/modules/user/invite-result';
 import type { InviteCheck } from '~/modules/user/use-invite-check';
-import type { InviteList } from '~/modules/user/use-invite-list';
+import type { InviteList, InvitePerson } from '~/modules/user/use-invite-list';
 import { formResolver } from '~/utils/form-resolver';
 
 /** The invite dialog's id, which the form marks as unsaved and closes by. */
 export const inviteDialogId = 'invite-users';
 
 /**
- * The invite body with no limit on addresses, since they go out in batches, plus the text a list held that is no address
- * and the text on its way in: what the email field holds, and a paste nobody asked to check yet.
+ * The invite body with no limit on addresses, since they go out in batches, plus the text a list held that is no address,
+ * the text on its way in (what the email field holds, and a paste nobody asked to check yet) and who an address was
+ * picked as, so a restored draft still shows the person.
  */
 const inviteFormSchema = zMembershipInviteBody.extend({
   emails: z.array(zMembershipInviteBody.shape.emails.element).min(1),
   unparsed: z.array(z.string()),
   typed: z.string().optional(),
   pasted: z.string().optional(),
+  people: z.array(z.custom<InvitePerson>()).optional(),
 });
 
 type InviteFormValues = z.infer<typeof inviteFormSchema>;
+
+export type InviteRole = InviteFormValues['role'];
 
 /** The target vocabulary's least-privileged role; without an entity type, the organization's. */
 const defaultInviteRole = (entityType?: ChannelEntityType): InviteFormValues['role'] =>
@@ -54,7 +56,7 @@ export function useInviteFormDraft(entityId?: string, entityType?: ChannelEntity
     formContainerId: inviteDialogId,
     formOptions: {
       resolver: formResolver(inviteFormSchema),
-      defaultValues: { emails: [], unparsed: [], typed: '', pasted: '', role: defaultInviteRole(entityType) },
+      defaultValues: { emails: [], unparsed: [], typed: '', pasted: '', people: [], role: defaultInviteRole(entityType) },
     },
   });
 }
@@ -99,7 +101,7 @@ export function useInviteSubmit({ channel, onSent, onResult, onClose }: UseInvit
     mutationFn: ({ emails }: { emails: string[] }) => sendInBatches(emails, (batch) => baseSystemInvite({ body: { emails: batch } })),
   });
 
-  const onSubmit = ({ unparsed, typed: _typed, pasted: _pasted, ...body }: InviteFormValues) => {
+  const onSubmit = ({ unparsed, typed: _typed, pasted: _pasted, people: _people, ...body }: InviteFormValues) => {
     if (!channel) {
       return systemInvite(body, {
         onSuccess: ({ results, unsent }) => {
@@ -141,34 +143,63 @@ const submitLabel = ({ invite, remind, isEmpty, held }: SubmitLabelOptions): TKe
   return remind ? 'c:remind' : 'c:invite';
 };
 
-/** What every role of the channel may do, on request. It only explains: the role is picked beside it. */
+/** What every role of the channel may do, as the role field's help. */
 function RoleHelp({ entityType }: { entityType: ChannelEntityType }) {
   const { t } = useTranslation();
 
   return (
-    <Popover>
-      <PopoverTrigger
-        render={
-          <Button type="button" variant="ghost" size="icon" press={false} aria-label={t('c:role_help')} className="size-6 text-muted-foreground">
-            <CircleQuestionMarkIcon />
-          </Button>
-        }
-      />
-      <PopoverContent align="start" aria-label={t('c:role_help')} className="flex w-80 max-w-(--available-width) flex-col gap-2.5 p-3 text-sm">
-        {hierarchy.getRoles(entityType).map((role) => (
-          <div key={role}>
-            <p className="font-medium">{t(`c:${role}`)}</p>
-            <p className="text-muted-foreground">{t(`c:role_description.${role}`)}</p>
-          </div>
-        ))}
-      </PopoverContent>
-    </Popover>
+    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pt-1">
+      {hierarchy.getRoles(entityType).map((role) => (
+        <Fragment key={role}>
+          <dt className="font-medium">{t(`c:${role}`)}</dt>
+          <dd>{t(`c:role_description.${role}`)}</dd>
+        </Fragment>
+      ))}
+    </dl>
+  );
+}
+
+interface InviteRoleFieldProps {
+  form: InviteForm;
+  channel: EnrichedChannel;
+  /** The picked role's email waits for its draft channel's publish. */
+  held: boolean;
+}
+
+/** Role choice for a channel invite, with when its email goes out in a draft channel. */
+export function InviteRoleField({ form, channel, held }: InviteRoleFieldProps) {
+  const { t } = useTranslation();
+
+  return (
+    <FormField
+      control={form.control}
+      name="role"
+      render={({ field: { value, onChange } }) => (
+        <FormItem>
+          <FormLabel nativeLabel={false} help={<RoleHelp entityType={channel.entityType} />}>
+            {t('c:join_as')}
+          </FormLabel>
+          <SelectRoleRadio value={value} onChange={onChange} entityType={channel.entityType} />
+          {isUnpublishedDraft(channel) && (
+            <Alert variant="info">
+              <ClockIcon />
+              <AlertDescription>
+                <NamedText
+                  i18nKey={held ? 'c:invite_held.text' : 'c:invite_prepare.text'}
+                  name={channel.name}
+                  values={{ roles: t(`c:${value}`, { count: 2 }) }}
+                />
+              </AlertDescription>
+            </Alert>
+          )}
+        </FormItem>
+      )}
+    />
   );
 }
 
 interface InviteFormFooterProps {
   form: InviteForm;
-  channel?: EnrichedChannel;
   check: InviteCheck;
   list: InviteList;
   /** The picked role's email waits for its draft channel's publish. */
@@ -179,8 +210,8 @@ interface InviteFormFooterProps {
   children?: ReactNode;
 }
 
-/** Role choice for a channel invite, with when its email goes out in a draft channel, then the submit button. */
-export function InviteFormFooter({ form, channel, check, list, held, loading, onCancel, children }: InviteFormFooterProps) {
+/** The submit button, named for what it sends, and the cancel button. */
+export function InviteFormFooter({ form, check, list, held, loading, onCancel, children }: InviteFormFooterProps) {
   const { t } = useTranslation();
 
   // An address the check could not answer for still goes: the send decides, and its result says what happened.
@@ -189,42 +220,13 @@ export function InviteFormFooter({ form, channel, check, list, held, loading, on
   const isEmpty = !list.hasList && !list.typed.trim();
 
   return (
-    <>
-      {channel && (
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field: { value, onChange } }) => (
-            <FormItem className="gap-3">
-              <div className="flex items-center gap-2">
-                <SelectRoleRadio value={value} onChange={onChange} entityType={channel.entityType} label={t('c:join_as')} />
-                <RoleHelp entityType={channel.entityType} />
-              </div>
-              {isUnpublishedDraft(channel) && (
-                <Alert variant="info">
-                  <ClockIcon />
-                  <AlertDescription>
-                    <NamedText
-                      i18nKey={held ? 'c:invite_held.text' : 'c:invite_prepare.text'}
-                      name={channel.name}
-                      values={{ roles: t(`c:${value}`, { count: 2 }) }}
-                    />
-                  </AlertDescription>
-                </Alert>
-              )}
-            </FormItem>
-          )}
-        />
-      )}
-
-      <FormActions>
-        <SubmitButton disabled={!invite && !remind} loading={loading}>
-          <SendIcon />
-          {t(submitLabel({ invite, remind, isEmpty, held }))}
-        </SubmitButton>
-        {!children && <CancelButton dirty={form.isDirty} onClick={onCancel} />}
-        {children}
-      </FormActions>
-    </>
+    <FormActions>
+      <SubmitButton disabled={!invite && !remind} loading={loading}>
+        <SendIcon />
+        {t(submitLabel({ invite, remind, isEmpty, held }))}
+      </SubmitButton>
+      {!children && <CancelButton dirty={form.isDirty} onClick={onCancel} />}
+      {children}
+    </FormActions>
   );
 }

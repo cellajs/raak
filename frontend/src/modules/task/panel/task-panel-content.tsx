@@ -96,8 +96,12 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   // Keyboard focus scrolls a card only to the viewport edge, under a pinned section bar (h-9). The margin holds even
   // while a bar is slid away: it slides in on the scroll that focus makes, too late for a margin that followed it.
   const cardScrollMargin = cn(
-    windowScroll && !foldsSection('accepted', counts) && '[&_[data-task-card-id]]:scroll-mt-(--sticky-stack-nav)',
-    foldsSection('accepted', counts) && !hostsDraft && '[&_[data-task-card-id]]:scroll-mt-[calc(var(--sticky-stack-nav)+--spacing(9))]',
+    windowScroll &&
+      !foldsSection('accepted', counts) &&
+      '[&_[data-task-card-id]]:scroll-mt-[calc(var(--sticky-stack-nav)+var(--sticky-stack-pin,0px))]',
+    foldsSection('accepted', counts) &&
+      !hostsDraft &&
+      '[&_[data-task-card-id]]:scroll-mt-[calc(var(--sticky-stack-nav)+var(--sticky-stack-pin,0px)+--spacing(9))]',
     foldsSection('iced', counts) && !hostsDraft && '[&_[data-task-card-id]]:scroll-mb-9',
   );
 

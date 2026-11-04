@@ -1,29 +1,28 @@
 import { faker } from '@faker-js/faker';
-import { appConfig } from 'shared';
 import { and, eq } from 'drizzle-orm';
-
-import { getSeedDb } from '#/db/db';
-import { type InsertLabelModel, labelsTable } from '#/modules/label/label-db';
-import { type InsertMembershipModel, membershipsTable } from '#/modules/memberships/memberships-db';
-import { organizationsTable } from '#/modules/organization/organization-db';
-import { type InsertProjectModel, projectsTable } from '#/modules/project/project-db';
-import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
-import { type InsertWorkspaceModel, workspacesTable } from '#/modules/workspace/workspace-db';
-import { createServerStx } from '#/core/stx/create-server-stx';
-import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
-import { TaskStatus, taskStatuses } from '#/modules/task/task-properties';
-import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
+import { appConfig } from 'shared';
 import { type DescriptionBlock, findSummarySource } from 'shared/utils/derive-description-core';
 import { nanoid } from 'shared/utils/nanoid';
-import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
-import { mockLabel, mockLabelNames } from '#/modules/label/label-mocks';
-import { mockChannelMembership } from '#/modules/memberships/memberships-mocks';
-import { mockProject } from '#/modules/project/project-mocks';
-import { paragraphBlock, text as inlineText } from './description-document';
-import { mockWorkspace } from '#/modules/workspace/workspace-mocks';
+import { createServerStx } from '#/core/stx/create-server-stx';
+import { getSeedDb } from '#/db/db';
 import { mockPastIsoDate, mockUuid, setMockContext } from '#/mocks';
+import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
+import { type InsertLabelModel, labelsTable } from '#/modules/label/label-db';
+import { mockLabel, mockLabelNames } from '#/modules/label/label-mocks';
+import { type InsertMembershipModel, membershipsTable } from '#/modules/memberships/memberships-db';
+import { mockChannelMembership } from '#/modules/memberships/memberships-mocks';
+import { organizationsTable } from '#/modules/organization/organization-db';
+import { type InsertProjectModel, projectsTable } from '#/modules/project/project-db';
+import { mockProject } from '#/modules/project/project-mocks';
+import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
+import { TaskStatus, taskStatuses } from '#/modules/task/task-properties';
+import { type InsertWorkspaceModel, workspacesTable } from '#/modules/workspace/workspace-db';
+import { mockWorkspace } from '#/modules/workspace/workspace-mocks';
+import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
+import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
 import { defaultAdminUser } from '../fixtures';
 import type { SeedScript } from '../types';
+import { text as inlineText, paragraphBlock } from './description-document';
 
 // Set mock context for seed script - UUIDs get '00000000-' prefix, nanoids get 'gen-' prefix (CDC worker skips these on catch-up)
 setMockContext('script');
@@ -106,11 +105,7 @@ const tasksSeed = async () => {
     .update(membershipsTable)
     .set({ role: faker.helpers.arrayElement(['admin', 'member']) })
     .where(
-      and(
-        eq(membershipsTable.userId, defaultAdminUser.id),
-        eq(membershipsTable.channelType, 'organization'),
-        eq(membershipsTable.role, 'guest'),
-      ),
+      and(eq(membershipsTable.userId, defaultAdminUser.id), eq(membershipsTable.channelType, 'organization'), eq(membershipsTable.role, 'guest')),
     );
 
   const memberships = await db.select().from(membershipsTable).where(eq(membershipsTable.channelType, 'organization'));
@@ -235,13 +230,19 @@ const tasksSeed = async () => {
         createdBy: getRandomMember(),
       }).map((row) => ({ ...row, id: mockUuid() }));
       allOrgLabels.push(...primaryRows);
-      primaryLabelsPerProjectMap.set(projectId, primaryRows.map((row) => row.id));
+      primaryLabelsPerProjectMap.set(
+        projectId,
+        primaryRows.map((row) => row.id),
+      );
     }
 
     // Phase D: Batch-insert all labels for this org
     labelsCount += allOrgLabels.length;
     for (let i = 0; i < allOrgLabels.length; i += insertBatchSize) {
-      await db.insert(labelsTable).values(allOrgLabels.slice(i, i + insertBatchSize)).onConflictDoNothing();
+      await db
+        .insert(labelsTable)
+        .values(allOrgLabels.slice(i, i + insertBatchSize))
+        .onConflictDoNothing();
     }
 
     // Phase E: Prepare tasks for all inserted projects
@@ -276,7 +277,9 @@ const tasksSeed = async () => {
         const checkedCount = 0;
 
         const isOldAccepted = index < oldAcceptedCount;
-        const oldDate = faker.date.between({ from: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), to: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }).toISOString();
+        const oldDate = faker.date
+          .between({ from: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), to: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) })
+          .toISOString();
 
         // Pick random assignees and labels by index sampling (avoids full-array sort per task)
         const assigneeCount = Math.floor(Math.random() * 2) + 1;
@@ -328,7 +331,10 @@ const tasksSeed = async () => {
     // Phase F: Batch-insert all tasks for this org (chunked)
     tasksCount += allOrgTasks.length;
     for (let i = 0; i < allOrgTasks.length; i += insertBatchSize) {
-      await db.insert(tasksTable).values(allOrgTasks.slice(i, i + insertBatchSize)).onConflictDoNothing();
+      await db
+        .insert(tasksTable)
+        .values(allOrgTasks.slice(i, i + insertBatchSize))
+        .onConflictDoNothing();
     }
   }
 
@@ -395,7 +401,10 @@ const tasksSeed = async () => {
   const allWorkspaceInserts = workspacePlans.map((p) => p.workspace);
   workspacesCount = allWorkspaceInserts.length;
   for (let i = 0; i < allWorkspaceInserts.length; i += insertBatchSize) {
-    await db.insert(workspacesTable).values(allWorkspaceInserts.slice(i, i + insertBatchSize)).onConflictDoNothing();
+    await db
+      .insert(workspacesTable)
+      .values(allWorkspaceInserts.slice(i, i + insertBatchSize))
+      .onConflictDoNothing();
   }
 
   // Materialize all memberships (workspace + project) from plans
@@ -448,10 +457,15 @@ const tasksSeed = async () => {
   // Batch-insert all memberships
   membershipsCount = allPass2Memberships.length;
   for (let i = 0; i < allPass2Memberships.length; i += insertBatchSize) {
-    await db.insert(membershipsTable).values(allPass2Memberships.slice(i, i + insertBatchSize)).onConflictDoNothing();
+    await db
+      .insert(membershipsTable)
+      .values(allPass2Memberships.slice(i, i + insertBatchSize))
+      .onConflictDoNothing();
   }
 
-  succeedSpinner(`Created ${workspacesCount} workspaces, ${projectsCount} projects, ${tasksCount} tasks, ${labelsCount} labels, ${membershipsCount} memberships`);
+  succeedSpinner(
+    `Created ${workspacesCount} workspaces, ${projectsCount} projects, ${tasksCount} tasks, ${labelsCount} labels, ${membershipsCount} memberships`,
+  );
 };
 
 export const seedConfig: SeedScript = { name: 'tasks', run: tasksSeed, allowProduction: false };

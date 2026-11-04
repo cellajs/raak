@@ -21,7 +21,14 @@ import { InviteEmailField } from '~/modules/user/invite-email-field';
 import { InviteGroups } from '~/modules/user/invite-groups';
 import { focusOnMount, InviteResult, type InviteResultData } from '~/modules/user/invite-result';
 import { InviteSearchField } from '~/modules/user/invite-search-field';
-import { type InviteFieldProps, InviteFormFooter, inviteDialogId, useInviteFormDraft, useInviteSubmit } from '~/modules/user/invite-submit';
+import {
+  type InviteFieldProps,
+  InviteFormFooter,
+  InviteRoleField,
+  inviteDialogId,
+  useInviteFormDraft,
+  useInviteSubmit,
+} from '~/modules/user/invite-submit';
 import { useInviteCheck } from '~/modules/user/use-invite-check';
 import { useInviteList } from '~/modules/user/use-invite-list';
 import { tw } from '~/utils/tw';
@@ -39,7 +46,7 @@ interface OpenInviteDialogOptions {
 
 /** Opens the invite form in a dialog under a table bar, from the bar's invite button. */
 export function openInviteDialog({ channel, description, triggerRef, containerRef }: OpenInviteDialogOptions) {
-  dialoger.getState().create(<InviteUsers channel={channel} dialog />, {
+  dialoger.getState().create(<InviteUsers channel={channel} dialog description={description} />, {
     id: inviteDialogId,
     triggerRef,
     drawerOnMobile: false,
@@ -51,12 +58,12 @@ export function openInviteDialog({ channel, description, triggerRef, containerRe
   });
 }
 
-/** Per mode: its name on the chooser and in the dialog title, the line under it on the chooser, its icon and its field. */
+/** Per mode: its name on the chooser, its crumb in the dialog title, the situation it suits under its name, its icon and its field. */
 const inviteModes: Record<InviteMode, { label: TKey; crumb: TKey; text: TKey; icon: IconComponent; Field: ComponentType<InviteFieldProps> }> = {
-  email: { label: 'c:invite_mode_email', crumb: 'c:invite_mode_email', text: 'c:invite_mode_email.text', icon: MailIcon, Field: InviteEmailField },
+  email: { label: 'c:invite_mode_email', crumb: 'c:email', text: 'c:invite_mode_email.text', icon: MailIcon, Field: InviteEmailField },
   search: {
     label: 'c:invite_mode_search',
-    crumb: 'c:invite_mode_search',
+    crumb: 'c:people',
     text: 'c:invite_mode_search.text',
     icon: UsersRoundIcon,
     Field: InviteSearchField,
@@ -72,6 +79,8 @@ interface InviteUsersProps {
   channel?: EnrichedChannel;
   /** Rendered in the `invite-users` dialog, which a sent invite closes. */
   dialog?: boolean;
+  /** The dialog's line under its title, shown with the chooser only. */
+  description?: ReactNode;
   /** Skips the chooser. Without the dialog's title there is no way back to it. */
   mode?: InviteMode;
   /** Takes the place of the cancel button, as the onboarding footer does. */
@@ -79,7 +88,7 @@ interface InviteUsersProps {
 }
 
 /** The invite form. The mode only swaps its field, so the form, its draft and a running send outlive a switch. */
-export function InviteUsers({ channel, dialog, mode: initialMode, children }: InviteUsersProps) {
+export function InviteUsers({ channel, dialog, description, mode: initialMode, children }: InviteUsersProps) {
   const { t } = useTranslation();
   const { nextStep } = useStepper();
   const formRef = useRef<HTMLFormElement>(null);
@@ -92,7 +101,7 @@ export function InviteUsers({ channel, dialog, mode: initialMode, children }: In
   const role = useWatch({ control: form.control, name: 'role' });
 
   const held = !!channel && isUnpublishedDraft(channel) && !hierarchy.getPrepareRoles(channel.entityType).includes(role);
-  const check = useInviteCheck(channel, list.emails, list.unparsed, held);
+  const check = useInviteCheck(channel, list.emails, list.unparsed, held, list.people);
 
   const close = () => {
     if (dialog) dialoger.getState().remove(inviteDialogId);
@@ -101,14 +110,14 @@ export function InviteUsers({ channel, dialog, mode: initialMode, children }: In
 
   const { onSubmit, isPending } = useInviteSubmit({ channel, onSent: list.reset, onResult: setResult, onClose: close });
 
-  // The crumb names where the form is and goes back to the chooser. The list stays, and so does a paste nobody checked yet.
+  // The crumb names where the form is and goes back to the chooser. The list stays.
   const chooseMode = (mode: InviteMode | null) => {
     list.leaveField();
-    list.setPasteOpen(mode === 'bulk');
     setResult(null);
     setInviteMode(mode);
     if (!dialog) return;
     dialoger.getState().update(inviteDialogId, {
+      description: mode ? undefined : description,
       titleContent: mode ? (
         <span className="flex items-center gap-2">
           <button type="button" className="text-muted-foreground hover:text-foreground hover:underline" onClick={() => chooseMode(null)}>
@@ -140,11 +149,10 @@ export function InviteUsers({ channel, dialog, mode: initialMode, children }: In
   // Searching people needs a channel to check them against.
   const modes: InviteMode[] = channel ? ['email', 'search', 'bulk'] : ['email', 'bulk'];
   const Field = inviteMode ? inviteModes[inviteMode].Field : null;
-  const boxOpen = inviteMode === 'bulk' && (list.pasteOpen || !list.hasList);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (list.commitTyped()) form.handleSubmit(onSubmit)(event);
+    if (list.commitTyped() && list.commitPasted()) form.handleSubmit(onSubmit)(event);
   };
 
   const cancel = () => {
@@ -153,7 +161,7 @@ export function InviteUsers({ channel, dialog, mode: initialMode, children }: In
   };
 
   return (
-    <MotionConfig transition={modeTransition}>
+    <MotionConfig transition={modeTransition} reducedMotion="user">
       <Form {...form}>
         <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col gap-6">
           {inviteMode && Field ? (
@@ -163,7 +171,7 @@ export function InviteUsers({ channel, dialog, mode: initialMode, children }: In
           ) : (
             // What held focus is gone: the pressed crumb, or the trigger behind the dialog on arrival
             <motion.div key="invite-initial" ref={focusOnMount} tabIndex={-1} {...modeEntrance} className="outline-hidden">
-              <div className="grid w-full gap-2 py-3 sm:grid-cols-3 sm:gap-3">
+              <div className="grid w-full gap-2 py-3 sm:auto-cols-fr sm:grid-flow-col sm:gap-3">
                 {modes.map((mode) => {
                   const { label, text, icon: Icon } = inviteModes[mode];
                   return (
@@ -184,9 +192,12 @@ export function InviteUsers({ channel, dialog, mode: initialMode, children }: In
               </div>
             </motion.div>
           )}
-          {list.hasList && <InviteGroups check={check} list={list} held={held} />}
-          {(inviteMode ? !boxOpen : list.hasList) && (
-            <InviteFormFooter form={form} channel={channel} check={check} list={list} held={held} loading={isPending} onCancel={cancel}>
+          {/* Who, as what, then what each address gets: the tiles sum up the send right above its button */}
+          {inviteMode && channel && <InviteRoleField form={form} channel={channel} held={held} />}
+          {/* The chooser stands alone: a list kept from a draft or an earlier mode shows once a mode is picked */}
+          {inviteMode && list.hasList && <InviteGroups check={check} list={list} held={held} role={channel ? role : undefined} />}
+          {inviteMode && (
+            <InviteFormFooter form={form} check={check} list={list} held={held} loading={isPending} onCancel={cancel}>
               {children}
             </InviteFormFooter>
           )}

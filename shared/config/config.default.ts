@@ -139,6 +139,14 @@ export const config = {
   description: 'A TypeScript template to build collaborative web apps with sync engine. MIT licensed.',
   keywords:
     'starter kit, fullstack, monorepo, typescript, hono, honojs, drizzle, shadcn, react, postgres, pwa, offline, instant updates, realtime data, sync engine',
+  /** Startup banner in the browser console and the API log, one string per line; empty prints none. */
+  asciiArt: [
+    '                         _ _',
+    '   ▒▓█████▓▒     ___ ___| | | __ _',
+    '   ▒▓█   █▓▒    / __/ _ \\ | |/ _` |',
+    '   ▒▓█   █▓▒   | (_|  __/ | | (_| |',
+    '   ▒▓█████▓▒    \\___\\___|_|_|\\__,_|',
+  ],
 
   // Origin & services
 
@@ -217,7 +225,7 @@ export const config = {
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
   cookieVersion: 'v3',
-  clientCacheVersion: 'v30-mechanism-review',
+  clientCacheVersion: 'v31-always-present-fields',
 
   // Authentication
 
@@ -231,7 +239,7 @@ export const config = {
    * Maximum concurrent sessions per user. On sign-in, the oldest sessions beyond the cap are
    * hard-deleted (Hanko-style eviction). Keep comfortably above a realistic device count. This is
    * bloat/abuse protection (bursts of sign-ins with stolen passwords, unbounded session accumulation), not a UX
-   * feature. Regular and `mfa` sessions count together; `impersonation` sessions are left alone.
+   * feature. Regular and `mfa` sessions count together.
    */
   maxSessionsPerUser: 10,
 

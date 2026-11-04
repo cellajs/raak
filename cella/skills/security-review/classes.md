@@ -29,11 +29,11 @@ One class is one review iteration. The scout verifies every path below at the re
 
 ### A2 Sessions and cookies
 - **Gain:** account takeover.
-- **Merges:** the cookie MAC, attributes, injection through a name or attribute value, fixation at sign-in, the session cap, sign-out ending the stream and the cache entry, impersonation, last-seen, session cache races.
+- **Merges:** the cookie MAC, attributes, injection through a name or attribute value, fixation at sign-in, the session cap, sign-out ending the stream and the cache entry, last-seen, session cache races.
 - **Advisories:** 5 (hono cookie name and attribute injection, NBSP prefix on read).
 - **Files:**
   - `backend/src/modules/auth/general/helpers/cookie.ts`: the only module importing `hono/cookie` (`setCookie`, `getCookie`, `deleteCookie`).
-  - `backend/src/modules/auth/sessions/`: `operations/{create-session,resolve-session,sign-out,impersonation,revoke-sessions}.ts`, `helpers/sign-in-context.ts`, `sessions-queries.ts`, `session-listeners.ts`.
+  - `backend/src/modules/auth/sessions/`: `operations/{create-session,resolve-session,sign-out,revoke-sessions}.ts`, `helpers/sign-in-context.ts`, `sessions-queries.ts`, `session-listeners.ts`.
   - `backend/src/middlewares/guard/session-cache.ts` (TTL 10 s), `backend/src/middlewares/update-last-seen.ts`.
   - Other session writers: `modules/me/me-handlers.ts`, `modules/me/operations/{revoke-my-sessions,toggle-mfa}.ts`, `modules/user/operations/delete-accounts.ts`, `modules/entities/entities-listeners.ts`, `modules/entities/operations/stream-session-sweep.ts`.
   - `backend/src/modules/oauth-server/provider.ts`: oidc-provider's own cookies, signed with `cookieSecrets`.
@@ -41,11 +41,10 @@ One class is one review iteration. The scout verifies every path below at the re
   - `cella/authentication/SESSIONS.md`. The `Set-Cookie` mentions in `auth/{oauth,totps,passkeys,general}/*-routes.ts` are OpenAPI header documentation only.
 - **Holds:**
   - `cookie-integrity`: an unsigned cookie, a value signed for another cookie name, a past max age, a foreign secret.
-  - `session-model`: a forged secret via a cached session id, the stored hash replayed as a cookie, an expired session via a warm cache, a failed lookup that must not sign out, a forged `adminUserId` at stop.
+  - `session-model`: a forged secret via a cached session id, the stored hash replayed as a cookie, an expired session via a warm cache, a failed lookup that must not sign out.
   - `session-cache-race`: a revoked session kept by an in-flight lookup.
-  - `session-endings`: sign-out, revoke from another device, MFA on, cap eviction, same-browser replace, stopped impersonation, deleted account; the open stream and cache entry die with the session.
-  - `session-sweep`: a session revoked on another instance, expired, user deleted outside the API, impersonation whose admin lost session or role.
-  - `impersonation` (cookie without the admin session, disallowed address, no second impersonation, role loss) and `impersonation-last-seen`.
+  - `session-endings`: sign-out, revoke from another device, MFA on, cap eviction, same-browser replace, deleted account; the open stream and cache entry die with the session.
+  - `session-sweep`: a session revoked on another instance, expired, user deleted outside the API.
   - `tests/sign-in/session-cap` (oldest beyond the cap evicted) and `tests/sign-in/sign-out` (a forged cookie naming the victim's session id revokes nothing).
   - `auth/tokens/token-policies.test.ts`: SameSite per policy.
 - **Asks:** every `setCookie` call's name and attribute values against the five advisories (does any value come from a request?); a new session id at sign-in; what a stolen cookie does after sign-out.
@@ -53,7 +52,7 @@ One class is one review iteration. The scout verifies every path below at the re
 
 ### A3 Second factors and step-up
 - **Gain:** account takeover.
-- **Merges:** WebAuthn verification (origin, rpId, one purpose and one answer per challenge, counter, attestation), TOTP (encrypted secret, lockout in every process, replay), the step-up window and its methods, the factor race, MFA on and off, the lost-factor path, no step-up under impersonation.
+- **Merges:** WebAuthn verification (origin, rpId, one purpose and one answer per challenge, counter, attestation), TOTP (encrypted secret, lockout in every process, replay), the step-up window and its methods, the factor race, MFA on and off, the lost-factor path.
 - **Advisories:** 1 (simplewebauthn attestation chain).
 - **Files:**
   - `backend/src/modules/auth/{passkeys,totps,mfa,step-up}/`. `auth/mfa` has no routes file: `mfa-queries.ts`, `operations/{factor-rules,mfa-challenge}.ts`; the toggle route is in `me-routes.ts` with `modules/me/operations/toggle-mfa.ts`.
@@ -69,8 +68,8 @@ One class is one review iteration. The scout verifies every path below at the re
   - `mfa-challenge`: a second session via a completed challenge's cookie; a wrong factor keeps the challenge open.
   - `totp-replay`: a replayed code on MFA, a sign-in code reused as step-up, a setup code reused as second factor, one code sent twice at once.
   - `brute-force-limits`: guessing codes via `/auth/step-up`, many accounts from one address, one account from many addresses, a lockout ended in the database but still held in a process.
-  - `step-up`: a sign-in or MFA passkey response used as step-up, a wrong code, impersonation with a factor or emailed code, a code mailed to another session, no mail code with MFA on.
-  - `step-up-routes`: stale session, impersonation, another session's step-up, expired window, recent sign-in without a held factor, SSO without MFA, for every guarded route.
+  - `step-up`: a sign-in or MFA passkey response used as step-up, a wrong code, a code mailed to another session, no mail code with MFA on.
+  - `step-up-routes`: stale session, another session's step-up, expired window, recent sign-in without a held factor, SSO without MFA, for every guarded route.
   - `step-up-db-failure`: a pool timeout or deadlock answers 503 or 409, never a 401 that counts as a wrong code, and stamps nothing.
   - `mfa-factor-race` (factor delete racing the MFA toggle), `mfa-step-up` (the toggle needs step-up, MFA on needs both factors, an SSO session cannot turn MFA on).
   - `tests/sign-in/{totp,passkey}` (another user's passkey id on delete, a second key refused); `tests/sign-in/devices*` and `device-id` cover new-browser notices and device cookies.
@@ -140,14 +139,14 @@ One class is one review iteration. The scout verifies every path below at the re
   - `backend/src/lib/listeners.ts` (`internalSourceRefusal`), `backend/src/lib/request-details.ts` (country, browser, os; no address), `backend/src/lib/geoip.ts`, `backend/src/middlewares/rate-limiter/` (`helpers.ts`, `core.ts`).
   - Added files: `backend/src/utils/get-ip.ts` (the one function that yields the client address), `backend/src/utils/system-access.ts` (allowlist parsing and `isSystemAccessAllowed`), `backend/src/utils/ip-subnet.ts` (`toRateLimitIp`, `isPublicIp`, `unmapIPv4`).
   - Other call sites: `middlewares/guard/user-guard.ts` (sets `isSystemAdmin`), `modules/auth/sessions/operations/{resolve-session,create-session}.ts`, `modules/entities/entities-handlers.ts` (reports `systemAccessAllowed`), `modules/mcp/mcp-tools.ts` (copies `x-forwarded-for` and `authorization` into the in-process request), `modules/oauth-server/interaction-policy.ts` (rebuilds a Context from `cookie`, `x-forwarded-for` and the node socket).
-  - Infra: `infra/caddy/Caddyfile` is the SPA proxy and reads no client address; the API VMs sit behind the Scaleway load balancer (`infra/resources/loadbalancer.ts`, `forwardProtocol: 'http'`, no proxy protocol); VMs take no inbound (`infra/resources/compute.ts`, `inboundDefaultPolicy: 'drop'`); internal frontends admit private-network sources only.
+  - Infra: `infra/caddy/Caddyfile` is the SPA proxy and reads no client address; the API machines sit behind the Scaleway load balancer (`infra/resources/loadbalancer.ts`, `forwardProtocol: 'http'`, no proxy protocol); machines take no inbound but the load balancer's address on the service and agent ports (`infra/resources/security-groups.ts`, `inboundDefaultPolicy: 'drop'`); internal frontends admit private-network sources only.
 - **Holds:**
   - `backend/src/utils/get-ip.test.ts`: forged left-most entries ignored, `x-real-ip` ignored, rightmost entry, trimming, null.
   - `system-admin-ip`: a session cached from the allowlisted address gives no system scope from another (`x-forwarded-for` varied), and the reverse order.
   - `internal-listener`: a public peer is refused on every route and on the CDC upgrade, secret or not; the public listener and dot-segment paths cannot reach the internal routes.
   - `backend/tests/emails/request-details.test.ts`: request details appear only in mail about the recipient's own action, never the inviter's.
   - `backend/src/utils/ip-subnet.test.ts`: mapped and differently spelled forms share a bucket; private, loopback and ULA are not public.
-  - The VMs drop all inbound, so no client reaches the API without the load balancer.
+  - The machines drop all inbound but the load balancer's address, so no client reaches the API without the load balancer.
 - **Asks:** one function that yields the client address, its inputs per deployment (load balancer, dev, test), and a test with a forged forwarded header; canonical form of allowlist entries; the hono version minimum for the three fixes.
 - **Not this class:** rate-limit budgets per route belong to E1. Header and body parsing differentials belong to C7. The CDC and relay shared secrets after the peer check belong to the class of their module (B5 for the relay). Network ACLs, security groups and load balancer IAM belong to the infra review (F3).
 
@@ -185,7 +184,7 @@ One class is one review iteration. The scout verifies every path below at the re
 
 ### B2 Roles and function-level access
 - **Gain:** escalation inside a tenant.
-- **Merges:** role escalation on a membership update, the last admin, invitations (role against the inviter's, resend, pending, rejected, draft), the service-account role cap and bindings, `system_roles` written by the admin connection only, the system role in user lists, tenant lifecycle actions, impersonation scope, app-defined roles (`elevated`, `prepareRoles`).
+- **Merges:** role escalation on a membership update, the last admin, invitations (role against the inviter's, resend, pending, rejected, draft), the service-account role cap and bindings, `system_roles` written by the admin connection only, the system role in user lists, tenant lifecycle actions, app-defined roles (`elevated`, `prepareRoles`).
 - **Advisories:** 2 (hono improper authorization, JWT scheme).
 - **Files:**
   - `backend/src/modules/memberships/` (also holds the invitation routes in `memberships-routes.ts`).
@@ -193,7 +192,7 @@ One class is one review iteration. The scout verifies every path below at the re
   - `backend/src/modules/service-accounts/`, `backend/src/modules/system/` (`system-schema.ts` has no role field; `system_roles` has no app writer, only seeds and migrations: `backend/scripts/seeds/00-init.seed.ts`, `backend/scripts/migrations/10-rls.migration.ts`), `backend/src/modules/tenants/`.
   - Guards in `backend/src/middlewares/guard/`: `sys-admin-guard.ts`, `relatable-guard.ts`, `tenant-guard.ts`, `user-guard.ts`, `step-up-guard.ts`.
   - `shared/config/hierarchy-config.ts`.
-  - Call sites: `startImpersonation` in `auth/general/general-routes.ts`; `deleteMyMembership` in `me/me-routes.ts` and `me/operations/delete-my-membership.ts`; account deletion in `user/operations/delete-accounts.ts` (last admin by cascade).
+  - Call sites: `deleteMyMembership` in `me/me-routes.ts` and `me/operations/delete-my-membership.ts`; account deletion in `user/operations/delete-accounts.ts` (last admin by cascade).
 - **Holds:**
   - `last-admin`: demote, remove, leave, delete the account, two admins removed concurrently: all 409 `last_admin`, with a positive control.
   - `membership-update`: a member cannot promote self. `permission-enforcement`: a member session cannot update the org, invite as admin, resend or delete memberships.
@@ -201,7 +200,6 @@ One class is one review iteration. The scout verifies every path below at the re
   - `tests/invitations/*`: draft invites held, only `prepareRoles` dispatch, a member cannot publish; invite and accept flows.
   - `tests/service-accounts`: a member cannot create an account, key scopes mask grants, revoke through another account, no grant at the tenant door, quota.
   - `tests/integration/system-roles-write-guard`: `runtime_role` cannot insert, update or delete `system_roles` even with the grant open; the admin connection and the user-delete cascade still work.
-  - `impersonation`: the cookie alone does nothing, a second impersonation is refused, it ends with the admin session or role.
   - `user-list-system-role` (B3 field visibility, listed because the plan names it); `tests/system-update-user`; `tests/tenants`.
 - **Asks:** every write that carries a role or a binding, who may set it and the cap, as a table.
 - **Not this class:** field visibility of `role` and the system role in user lists belongs to B3. Cross-tenant and object reads belong to B1. Invitation address takeover belongs to C7. API key hashing and token signing belong to A5. Session cache and bindings cache staleness belong to C8. SSE and catchup grants belong to B1 and B4.
@@ -242,8 +240,8 @@ One class is one review iteration. The scout verifies every path below at the re
   - `sendSignal` callers: `entities-listeners.ts`, `modules/notification/operations/{fan-out,mark-read}.ts`; declarations in `modules/memberships/memberships-module.ts` and `modules/notification/notification-module.ts`.
   - Catchup: `modules/entities/operations/{app-catchup,propagation-hints}.ts`, `backend/src/permissions/view-read-status.ts`.
 - **Holds:**
-  - `session-endings`: a signed-out, revoked, evicted, replaced, MFA-superseded, impersonation or deleted-account session keeps streaming.
-  - `session-sweep`: a session revoked on another instance, expired, deleted outside the API, a removed system role, a gained role, an impersonation whose admin lost the session; a stalled reader stalls the sweep.
+  - `session-endings`: a signed-out, revoked, evicted, replaced, MFA-superseded or deleted-account session keeps streaming.
+  - `session-sweep`: a session revoked on another instance, expired, deleted outside the API, a removed system role, a gained role; a stalled reader stalls the sweep.
   - `outside-writes`: a removed member keeps reading through a cached session after a CDC membership event; the bindings version moves at every membership write.
   - `entities/stream/dispatch-mirror.test.ts`: a removed member still receives, draft rows reach anyone, a several-row event misses its second-row reader.
   - `entities/stream/send-signal.test.ts`: a signal reaching another user, a stream whose membership is gone, another organization or an undeclared type.
@@ -427,7 +425,7 @@ One class is one review iteration. The scout verifies every path below at the re
   - `deleted-storage` and `replaced-images`: a sweep or release deleting a key a live row, a seed or another holder names.
   - A missing storage key in the bucket is refused (`storedFileSize` HEADs every variant, 400 `missing_object`). Signed upload params expire in 15 minutes with a nonce per token; the token route is limited per user (`limiters.ts`).
 - **Asks:** a presigned URL for another tenant's key; a key with `..`; a file declared `text/html` on the public bucket; what the bucket origin shares with the app origin (with C4).
-- **Not this class:** content-type rendering, CSP, SVG in the editor and the `img-src https:` beacon belong to C4. Tombstone range reads leaking `keys` and filenames to later members belong to B1. Storage keys and S3 secrets in logs, and `S3_ACCESS_KEY_*` at rest, belong to D1. Bucket policies, `minimumReleaseAge`, the frontend bucket's hashed paths and the builder key belong to the infra review (G1). Rate limiter bypass of the upload-token limiter belongs to A6 and B4. Transloadit's own fetching through `/document/convert` belongs to C5.
+- **Not this class:** content-type rendering, CSP, SVG in the editor and the `img-src https:` beacon belong to C4. Tombstone range reads leaking `keys` and filenames to later members belong to B1. Storage keys and S3 secrets in logs, and `S3_ACCESS_KEY_*` at rest, belong to D1. Bucket policies, `minimumReleaseAge`, the frontend bucket's hashed paths and the builder's links belong to the infra review (G1). Rate limiter bypass of the upload-token limiter belongs to A6 and B4. Transloadit's own fetching through `/document/convert` belongs to C5.
 
 ### C7 Request parsing, routing and cross-site differentials
 - **Gain:** guard bypass, reaching internal routes.
@@ -439,7 +437,7 @@ One class is one review iteration. The scout verifies every path below at the re
   - `backend/src/middlewares/app.ts`: chain order is request-log context, invoke-token `Referrer-Policy`, `secureHeaders`, otel, request id, logger, CSRF (with skips), client version, body limit, compress (GET only).
   - `backend/src/middlewares/is-no-bot.ts` (used on `metrics-routes.ts`, `magic-routes.ts` and the auth routes in `general-routes.ts`).
   - `backend/src/middlewares/guard/service-guard.ts` (an API-key request carrying `Origin` is refused 403 `browser_origin`); `backend/src/modules/service-accounts/helpers/api-key.ts` (`hasApiKeyHeader`).
-  - Infra: `infra/resources/loadbalancer.ts` (path routes with `matchPathBegin`, host routes, internal frontends and ACLs, apex redirect), `infra/caddy/Caddyfile` (frontend only). Prefixes `/api`, `/yjs`, `/mcp`, `/oauth` in `infra/config/services.config.ts`; mcp and oauth reuse the backend image under `SERVICE`, and `backend/src/routes.ts` mounts every registered module in every mode.
+  - Infra: `infra/resources/loadbalancer.ts` (path routes with `matchPathBegin`, internal frontends and ACLs, apex redirect), `infra/caddy/Caddyfile` (frontend only). Prefixes `/api`, `/yjs`, `/mcp`, `/oauth` in `infra/config/services.config.ts`; mcp and oauth reuse the backend image under `SERVICE`, and `backend/src/routes.ts` mounts every registered module in every mode.
   - Tests: `backend/tests/prefix-mount.test.ts` and `backend/tests/request-id.test.ts` at `backend/tests/`; `csrf`, `malformed-ids`, `internal-listener` under `backend/tests/security/`.
 - **Holds:**
   - `internal-listener`: the CDC socket is not reachable from the public listener under `/internal/cdc`, `/api/%2e%2e/internal/cdc`, `/api/../internal/cdc` or `/api/internal/cdc`; `/internal/yjs/materialize` is a 404 on the public listener under plain, `/api` and `/api/%2e%2e` prefixes even with the relay secret; `isCdcUpgradePath` matches only the exact raw target; dot-segment paths to the CDC socket on the internal listener are 404; an empty or missing secret is refused; a non-private peer is refused on every internal route; the health path stays served.
@@ -470,7 +468,7 @@ One class is one review iteration. The scout verifies every path below at the re
   - Session expiry is rechecked outside the cache (`resolve-session.ts`); the token grant is read per use (`service-guard.ts`).
   - `points-cache.test.ts`: window and debt.
 - **Asks:** a cache inventory: key, what the answer depends on, invalidation source, TTL, test; a grep for module-level mutable state in request paths.
-- **Not this class:** who may read an entity belongs to B1. Token lifetimes and the key cache TTL belong to A5. Session lifecycle, impersonation and revoke belong to A2. Yjs relay socket authorization held for a socket's life (`yjs/src/sync/session-manager.ts`) belongs to B5. SSE subscriber state (`entities/stream/subscriber-manager.ts`) belongs to B4 and A2. HLC state belongs to C1 and E2.
+- **Not this class:** who may read an entity belongs to B1. Token lifetimes and the key cache TTL belong to A5. Session lifecycle and revoke belong to A2. Yjs relay socket authorization held for a socket's life (`yjs/src/sync/session-manager.ts`) belongs to B5. SSE subscriber state (`entities/stream/subscriber-manager.ts`) belongs to B4 and A2. HLC state belongs to C1 and E2.
 
 ## D. What comes out
 
@@ -534,7 +532,7 @@ One class is one review iteration. The scout verifies every path below at the re
   - `backend/src/modules/push/{push-sender,push-queries,push-schema,push-routes,push-handlers}.ts`, `helpers/push-service-endpoint.ts`.
   - `backend/src/modules/requests/helpers/send-matrix-message.ts` (caller `requests/operations/create-request.ts`).
   - `mailer.sendEmails` callers: `send-invitation-mails.ts`, `send-magic-link.ts`, `send-step-up-code.ts`, `send-oauth-verification-email.ts`, `send-account-security-email.ts`, `confirm-invitation-address.ts`, `create-request.ts`, `remove-archived-tenants.ts`, `send-newsletter.ts`, `run-digest.ts`, `send-instant-emails.ts`.
-  - `sendInvitationMails` callers: `mail-invitations.ts`, `create-memberships.ts` (added members), `resend-invitation.ts`, `create-invite.ts`. `sendAccountSecurityEmail` callers: `handle-oauth-callback.ts`, `totp-budget.ts`, `totps-handlers.ts`, `passkeys-handlers.ts`, `connect-sso-identity.ts`, `notify-sign-in.ts`, `toggle-mfa.ts`. `sendSecurityInboxEmail` callers: `sys-admin-guard.ts`, `impersonation.ts`, `notify-sign-in.ts`, `create-tenant.ts`, `system-listeners.ts`.
+  - `sendInvitationMails` callers: `mail-invitations.ts`, `create-memberships.ts` (added members), `resend-invitation.ts`, `create-invite.ts`. `sendAccountSecurityEmail` callers: `handle-oauth-callback.ts`, `totp-budget.ts`, `totps-handlers.ts`, `passkeys-handlers.ts`, `connect-sso-identity.ts`, `notify-sign-in.ts`, `toggle-mfa.ts`. `sendSecurityInboxEmail` callers: `sys-admin-guard.ts`, `notify-sign-in.ts`, `create-tenant.ts`, `system-listeners.ts`.
   - CSRF skip: `backend/src/middlewares/app.ts`. Limiters: `backend/src/middlewares/rate-limiter/limiters.ts` (`spamLimiter`), `core.ts`.
 - **Holds:**
   - Brevo tag injection: `neutralizeBrevoTags` breaks every opener except the mailer's nonce-keyed placeholders (`tests/emails/brevo-send`).
@@ -560,11 +558,11 @@ One class is one review iteration. The scout verifies every path below at the re
   - Declared in routes through `xRateLimiter` and exported to the OpenAPI document as `x-rate-limiter` (`backend/src/core/openapi-extensions.ts`); `route-guards.test.ts` reads `x-guard` and `x-enabled-by` from `app.getOpenAPI31Document`. `insertEntityLock` is listed as a rate limiter (`backend/src/middlewares/insert-entity-lock.ts`).
   - Limiters outside routes: `serviceBurstLimiter` in `service-guard.ts`; `totp-budget.ts` (account tier); `create-request.ts` (one account-exists mail per address per day); `notify-sign-in.ts` (daily sign-in notice budget per user); `clientMetadataFetchLimiter` through `chargeLimiter`.
 - **Holds:**
-  - `brute-force-limits`: a magic-link mail flood from new client addresses; the cap telling no account from none and letting the owner sign in; step-up guessing and impersonation refusals not spending the budget; check-email lookups; many accounts from one address, with a shared-address positive control; one account from many addresses; a parallel burst on TOTP; a lockout ended in the database but held in a process; navigation past the budget redirects.
+  - `brute-force-limits`: a magic-link mail flood from new client addresses; the cap telling no account from none and letting the owner sign in; step-up guessing; check-email lookups; many accounts from one address, with a shared-address positive control; one account from many addresses; a parallel burst on TOTP; a lockout ended in the database but held in a process; navigation past the budget redirects.
   - `rate-limiter/tests/burst-budgets.test.ts`: a parallel burst cannot pass a failure, send or points budget. `budget-enforcement.test.ts`: tenant budget exact, clamped to the ceiling, 0 means ceiling, no second budget inside a window.
   - `tiers.test.ts`: failures counted in hourly and daily tiers, the 24 h tier holds, a failing store gives no 500 (attempt uncounted), error redirects counted.
   - `identifier-validation.test.ts`: no address in the clear in the key, IPv6 /64 and case share one bucket, an empty key refused. `points-cache.test.ts`: fast-path accounting. `limiter-scope.test.ts`: `chargeLimiter` outside a request refuses.
-  - `tests/sign-in/session-cap`: the per-user session cap evicts the oldest sessions, counts MFA sessions, spares impersonation.
+  - `tests/sign-in/session-cap`: the per-user session cap evicts the oldest sessions, counts MFA sessions.
   - `tests/tenants` (a retry of `selfCreateTenant` reuses the orphan tenant).
 - **Asks:** route x limiter from the OpenAPI document, as route-guards.test does, with the reason each unlimited route is cheap; the store-down decision; budgets against code spaces.
 - **Not this class:** entropy and guessability of tokens belong to A1 and A5. The TOTP window and daily restart belong to A3. The stream cap belongs to B4. MCP tool charges belong to B6. Body and batch caps belong to C1. Invitation address takeover belongs to C7. Upload content and size belong to C6.
@@ -614,7 +612,7 @@ One class is one review iteration. The scout verifies every path below at the re
   - `failed-query-redaction` (D1): logs and spans carry no request value from a failed query.
   - In code: a session read failure stays the request's failure, never "signed out" (`resolve-session.ts`); the cookie is kept on a failed read. Yjs authorization failure closes the socket 4503; its connection limiter refuses on any error. CDC: an unknown flush failure never acknowledges; the setup check keeps the stream stopped while replica identity or the publication is wrong. The Matrix helper never throws; a failed mail send throws to its caller, and a request that stored its rows before the mail logs it. `@hono/node-server` answers an unparsable Host with 400, not a throw.
 - **Asks:** a dependency outage table (dependency -> request outcome -> closed or open -> test); process-level handlers; what pages an operator.
-- **Not this class:** limiter budget values and the TOTP guessing ceiling belong to A3. Sign-out ordering belongs to A2. Invitation takeover and TRACE belong to C7. Cache staleness windows belong to C8. SQL and secrets in logs belong to D1. Outbound fetch limits and the geoip download belong to C5. Relay tokens and backpressure belong to B5, B4 and C1. Federation address proof belongs to A4. Deploy health gate, rollout and runbooks belong to the infra review.
+- **Not this class:** limiter budget values and the TOTP guessing ceiling belong to A3. Sign-out ordering belongs to A2. Invitation takeover and TRACE belong to C7. Cache staleness windows belong to C8. SQL and secrets in logs belong to D1. Outbound fetch limits and the geoip download belong to C5. Relay tokens and backpressure belong to B5, B4 and C1. Federation address proof belongs to A4. Deploy health checks, switches and runbooks belong to the infra review.
 
 ## F. Platform
 
@@ -627,7 +625,7 @@ One class is one review iteration. The scout verifies every path below at the re
   - `package.json` (`packageManager`).
   - `.github/workflows/ci.yml`, `.github/workflows/release.yml` (no `.github/actions`); `lefthook.yaml`.
   - `infra/config/frontend-csp.config.ts`, set by `infra/caddy/Caddyfile` from `{$FRONTEND_CSP}`.
-  - Dockerfiles: `Dockerfile`, `infra/boot/Dockerfile`, `infra/caddy/Dockerfile`, `backend/db/Dockerfile`.
+  - Dockerfiles: `Dockerfile`, `infra/agent/Dockerfile`, `infra/caddy/Dockerfile`, `backend/db/Dockerfile`.
   - `pnpm cella audit` lives in `@cellajs/cli` (not in this repo; `cella/SECURITY.md` names it); the repo config is the `updateConfig` block in `pnpm-workspace.yaml`. Root `SECURITY.md` exists.
   - CI has no merge queue (`ci.yml` says so).
 - **Holds:**
@@ -636,10 +634,10 @@ One class is one review iteration. The scout verifies every path below at the re
   - Install scripts: only esbuild and lefthook may build; images install with `--ignore-scripts` and `--frozen-lockfile`.
   - CI: `permissions: {}` at the top; jobs `contents: read`; every third-party `uses:` is a 40-character SHA with a tag comment; the trigger is `pull_request` only (no `pull_request_target`); heavy jobs run only for same-repo branches; `privileged-changes` holds no secret.
   - Browser: `script-src 'self' *.gleap.io`, no `unsafe-inline` for scripts, `object-src 'none'`, `font-src 'self' data:`. Fonts are self-hosted (`frontend/index.html`). Gleap, onedollarstats and Maple are npm packages bundled by Vite (`frontend/src/modules/common/gleap-support.ts`, `root.tsx`, `frontend/src/lib/maple.ts`), so they carry lockfile integrity, not a script tag.
-  - The infra review (`INFRA_ADVERSARIAL_REVIEW.md`, F2 line on build machine keys, G1, G12), cited and not redone.
+  - The infra review (`INFRA_ADVERSARIAL_REVIEW.md`: the F2 line on a compromised build dependency, which reaches a builder that holds no key; G1; G12), cited and not redone.
   - The workspace settings, the audit and cella#1549.
 - **Asks:** an inventory of code that runs from the network at install, build, CI and in the browser, and what a compromised package in each tier reaches (the infra review's F2 line).
-- **Not this class:** dev server exposure, Storybook and `.env` on disk belong to F2. Build-machine keys and deploy key handling belong to the infra review (F3). CSP `connect-src` breadth for exfiltration after XSS belongs to C4; here only the third-party script cover is counted.
+- **Not this class:** dev server exposure, Storybook and `.env` on disk belong to F2. The builder's links and deploy key handling belong to the infra review (F3). CSP `connect-src` breadth for exfiltration after XSS belongs to C4; here only the third-party script cover is counted.
 
 ### F2 Dev-time exposure
 - **Gain:** a developer laptop, which the infra review rates as the observer and operator keys (F6, F7).
@@ -649,13 +647,12 @@ One class is one review iteration. The scout verifies every path below at the re
   - `frontend/vite.config.ts`: `server.host`, `strictPort`, proxy to `localhost` ports, tunnel-only `allowedHosts` and `hmr`, `basicSsl()` when `frontendUrl` is https and not tunneled; no `server.fs`, no `server.cors`.
   - `frontend/.storybook/main.ts` (`viteFinal` adds a proxy `/api/dev/emails` to the API), `frontend/.storybook/start-storybook.ts` (`storybook dev -p <frontend port + 3006> --quiet --no-open`, no `--host`).
   - `frontend/vitest.config.ts` (storybook project in headless Chromium via the playwright provider).
-  - `backend/scripts/drizzle-studio/start.ts`, `port.ts` (port is backend port + 983; runs `drizzle-kit studio --port` with no `--host`; the studio page is a website talking to the local port). The root `package.json` has no `studio` script; it is `studio/package.json` (`pnpm --filter studio dev`).
+  - `backend/scripts/drizzle-studio/start.ts` (`pnpm studio`; port is the frontend port + 983; runs `drizzle-kit studio --port` with no `--host`; the studio page is a website talking to the local port).
   - `shared/README.md` (dev ports).
   - `backend/compose.yaml` (services `db`, `db_test`, `db_a11y`; no `network_mode: host`); `backend/.env.example` (postgres superuser, `runtime_role`, `admin_role`).
   - Listeners: API `serveApi` and internal `serveInternal` in `backend/src/lib/listeners.ts` (default `0.0.0.0`), called from `backend/src/main.api.ts`; relay `yjs/src/server/ws-server.ts`; cdc health `cdc/src/index.ts`; mcp `backend/src/modules/mcp/worker/mcp-worker-entry.ts`; jobs health `backend/src/lib/jobs-worker.ts`.
   - Seeds: `backend/scripts/seeds/00-init.seed.ts` (admin user is magic link by email, no password); `backend/scripts/mint-session.ts` (mints a signed cookie, refuses outside development and test); `backend/src/routes.ts` mounts `/dev/emails` whenever mode is not production.
   - `a11y/src/run.ts` (ports shifted by 70, its own database `DB_A11Y_PORT`), `bench/src/config.ts` (default admin URL).
-  - `pnpm dev:proxy` in `package.json` filters `--filter proxy`; no `proxy/` directory exists in this checkout.
 - **Holds:**
   - Vite's default `allowedHosts` refuses a non-IP, non-localhost `Host`: DNS rebinding of an attacker name to the dev server answers 403.
   - Vite `server.fs.strict: true` and the `.env*`, `*.pem`, `*.key` deny list are the unmodified defaults; `vite.config.ts` does not set `fs`.
@@ -664,7 +661,7 @@ One class is one review iteration. The scout verifies every path below at the re
   - Vitest runs in CI and dev without `--ui` or `api`.
   - The internal listener refuses public peers before any route reads its secret.
   - The mint-session script refuses outside development and test. The seeded admin has no password.
-- **Asks:** what `pnpm dev`, `pnpm story` and `pnpm --filter studio dev` bind to (loopback or every interface) and what a malicious page in the developer's browser reaches; one rule; the version minimums. These are the bulk of live advisories over time, so the rule matters more than any single bump.
+- **Asks:** what `pnpm dev`, `pnpm story` and `pnpm studio` bind to (loopback or every interface) and what a malicious page in the developer's browser reaches; one rule; the version minimums. These are the bulk of live advisories over time, so the rule matters more than any single bump.
 - **Not this class:** the supply chain of installing these packages, the lockfile, `minimumReleaseAge` and third-party scripts belong to F1. The `/dev/emails` preview route, request handling on the API listener and internal-route secrets belong to the A and C classes (A6 for the address check, B5 for the relay). Vite and Storybook build output shipped to production belongs to F1 and D1.
 
 ### F3 Deployment and infrastructure
@@ -678,4 +675,35 @@ One class is one review iteration. The scout verifies every path below at the re
 
 ## Classifier rules
 
-The advisory-to-class mapping lives in `tools/classify.mjs` beside this file (by package, then by CWE), and a new advisory enters the class its rule names. An advisory the rules do not place is read by a person.
+A new advisory enters the class of its first matching rule, read in this order; one no rule places is read by a person.
+
+1. **Malicious code**: CWE-506, and playwright with CWE-347, go to F1.
+2. **A tooling package** goes to F2: vite, storybook and `@storybook/*`, vitest and `@vitest/*`, playwright, `@vitejs/*`, `@faker-js/*`, `@hey-api/*`, `@tanstack/router-generator` and `-plugin`, `@rolldown/*`, `@biomejs/*`, knip, tsx, typescript, `@mdx-js/rollup`, rollup-plugin-visualizer.
+3. **A library feature this repo does not mount** (hono's serveStatic, toSSG, JSX and SSR, the Lambda, Cloudflare, Deno and Bun adapters, proxy helper, language middleware, CORS middleware, API gateway, TrieRouter, ErrorBoundary, `cx()`, named path parameters) is n/a, except as a pattern lesson: JWT and JWK middleware A5, cache middleware C8, conninfo and IP spoofing A6, CORS middleware C7.
+4. **By summary**: a hono cookie advisory A2; SSE B4; an `app.mount` prefix advisory C7.
+5. **By package**: dompurify, sanitize-html, maplibre-gl, jspdf, react-pdf, react, react-dom and i18next C4; pg and drizzle-orm C3; ws C1 on a resource CWE (400, 770, 476, 1050, 345) and otherwise B5; jose C1 on CWE-400 or 834 and otherwise A5; nanoid A1; zod C1; dexie and immer C2; yaml E3 on CWE-248 and otherwise C1; i18next-http-backend C5 on CWE-918 and otherwise C4; `@simplewebauthn/*` A3; `@opentelemetry/*` D1 on CWE-532, C1 on CWE-770, otherwise F1; `@hono/node-server` E3 on CWE-755, C1 on CWE-401 or 770, otherwise C7.
+6. **By CWE**, first match over the advisory's CWE list:
+
+| Class | CWEs |
+| --- | --- |
+| C4 | 79, 80, 116, 94, 95, 96, 74 |
+| C3 | 89 |
+| C6 | 22, 23, 35, 73 |
+| C1 | 400, 770, 1333, 407, 834, 835, 674, 1050, 401 |
+| C2 | 1321, 915, 471, 1285 |
+| C5 | 918 |
+| A6 | 185, 1289, 180, 290, 350 |
+| A5 | 347, 1284 |
+| C7 | 352, 444, 174, 50, 706, 348, 942, 113 |
+| A2 | 613, 294, 640, 384, 1004, 614 |
+| A3 | 295, 296, 287, 308 |
+| A4 | 601 |
+| B1 | 284, 862, 863, 639 |
+| B2 | 269, 285 |
+| D1 | 200, 201, 538, 541, 532, 522, 908 |
+| D2 | 203, 208, 696 |
+| C8 | 524, 488, 362 |
+| B5 | 1385, 346 |
+| B6 | 441 |
+| E3 | 248, 755, 476 |
+| F1 | 506 |

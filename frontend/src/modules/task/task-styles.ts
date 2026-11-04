@@ -75,8 +75,8 @@ export const taskCardFocusBarClass = tw(
   'pointer-fine:group-focus-within/task:before:opacity-100 group-focus-visible/task:before:opacity-100 group-has-[:focus-visible]/task:before:opacity-100 group-has-[[aria-haspopup][aria-expanded=true]]/task:before:opacity-100 group-has-data-dropdowner-active/task:before:opacity-100',
 );
 
-/** A ghost button on a task card: a solid grey fill goes dead over the status gradient, a translucent one lets it through. */
-export const taskCardGhostClass = tw('hover:bg-foreground/7 aria-expanded:bg-foreground/7 dark:hover:bg-foreground/7');
+/** A ghost button on a task card: its open fill stays translucent like its hover, since a solid grey goes dead over the status gradient. */
+export const taskCardGhostClass = tw('aria-expanded:bg-hover');
 
 /** Dims a task card's own buttons until the card is hovered or current. */
 export const taskCardDimClass = tw('opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100');

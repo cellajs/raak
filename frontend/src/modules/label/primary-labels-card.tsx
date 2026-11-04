@@ -88,7 +88,7 @@ function ColorCell({ row, tabIndex, onRowChange }: PickerCellProps) {
                 setOpen(false);
                 onRowChange({ ...row, color: token });
               }}
-              className={cn('flex items-center justify-center rounded-md p-1.5 hover:bg-accent', row.color === token && 'bg-accent ring-1 ring-ring')}
+              className={cn('flex items-center justify-center rounded-md p-1.5 hover:bg-hover', row.color === token && 'bg-accent ring-1 ring-ring')}
             >
               <span className={cn('size-4 rounded-full', labelPalette[token].dot)} />
             </button>

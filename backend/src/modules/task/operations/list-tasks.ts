@@ -74,7 +74,6 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
     getOrderColumns({
       sort,
       order,
-      fallback: ['createdAt', 'asc'],
       columns: pick(tasksTable, ['number', 'status', 'projectId', 'createdAt', 'createdBy', 'updatedAt']),
       append: [desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number)), asc(tasksTable.id)],
     });

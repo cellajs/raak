@@ -75,13 +75,13 @@ The frontend only needs `frontend/.env` for debug toggles (`VITE_DEBUG_MODE`, `V
 
 ## Self-hosting
 
-Raak deploys as immutable VM generations on [Scaleway](https://www.scaleway.com/) via [Pulumi](https://www.pulumi.com/), driven by an interactive infra CLI. Merging your automated release PR to `main` rolls out a new deployment automatically, fully as Infrastructure as Code.
+Raak deploys to [Scaleway](https://www.scaleway.com/), driven by an interactive infra CLI: [Pulumi](https://www.pulumi.com/) keeps the foundation (network, database, load balancer, buckets, DNS), and each deploy makes and deletes the machines through the Scaleway API. Merging your automated release PR to `main` rolls out a new deployment automatically, fully as Infrastructure as Code.
 
 The complete deployment guide lives in the infra package README at `infra/README.md`. It covers the full lifecycle:
 
 - **Fresh installation.** Prerequisites (a domain, Pulumi, the GitHub CLI, a Scaleway project), generating a short-lived bootstrap key, and running `pnpm infra` to provision state, credentials, and the first `pulumi up`.
-- **The deploy flow.** How a push to `main` builds images, provisions a new VM generation, health-gates the cutover on the load balancer, and retires the old generation.
-- **Credentials.** The three descending-privilege Scaleway keys and the Pulumi passphrase, and how to rotate each.
+- **The deploy flow.** How a push to `main` builds images, makes each role's new machine, moves traffic once its agent answers the load balancer's health check, and deletes the old machine.
+- **Credentials.** A one-day operator key made at each sitting, the deploy key each environment deploys with, and the Pulumi passphrase, and how to rotate each.
 - **Creating the first admin.** A fresh production database has no users; seed one admin by hand via the serial console or a break-glass DB exposure.
 - **Day-two operations.** Changing infra config, resizing the database, resetting the database, repairing certificates, and rolling back.
 

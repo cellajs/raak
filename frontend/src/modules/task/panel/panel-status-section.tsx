@@ -96,7 +96,9 @@ export function PanelStatusSection({
     const host = wrapper?.parentElement;
     if (!host) return;
     // Fold in the page-level nav offset (mobile tabs) so consumers stack below both bars
-    const navPx = Number.parseFloat(getComputedStyle(wrapper).getPropertyValue('--sticky-stack-nav')) || 0;
+    const style = getComputedStyle(wrapper);
+    const navPx =
+      (Number.parseFloat(style.getPropertyValue('--sticky-stack-nav')) || 0) + (Number.parseFloat(style.getPropertyValue('--sticky-stack-pin')) || 0);
     host.style.transition = '--sticky-stack-top 300ms ease-in-out';
     host.style.setProperty('--sticky-stack-top', `${navPx + (isPinned && !isTile ? (buttonRef.current?.offsetHeight ?? 0) : 0)}px`);
     return () => {
@@ -129,7 +131,7 @@ export function PanelStatusSection({
           : [
               'sticky',
               // The top bar pins below a page-level sticky nav (mobile tabs); the other to the bottom
-              isTop ? (isPinned ? 'top-(--sticky-stack-nav)' : '-top-9') : isPinned ? 'bottom-0' : '-bottom-9',
+              isTop ? (isPinned ? 'top-[calc(var(--sticky-stack-nav)+var(--sticky-stack-pin,0px))]' : '-top-9') : isPinned ? 'bottom-0' : '-bottom-9',
               isTop ? 'text-editing:-top-9' : 'text-editing:-bottom-9',
             ],
       )}

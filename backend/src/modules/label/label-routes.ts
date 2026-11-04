@@ -25,7 +25,7 @@ const labelRoutes = createXRoutes(['labels', 'app', 'product'], {
     request: { params: tenantOrgParamSchema, body: jsonBody(labelCreateManyStxBodySchema) },
     responses: {
       200: json(
-        'Nothing created: rows an earlier attempt created (idempotent), and rejected ids',
+        'Nothing created\n\nThis request inserted no row. The body returns the rows an earlier attempt created (an idempotent replay) and lists the ids it rejected.',
         labelCreateResponseSchema,
         mockBatchLabelsResponse(),
       ),
@@ -52,7 +52,9 @@ const labelRoutes = createXRoutes(['labels', 'app', 'product'], {
     summary: 'Get older accepted task counts per label',
     description: 'Returns, per label id, how many tasks of a project were accepted before the cut-off of `acceptedCutOff` days ago.',
     request: { params: tenantOrgParamSchema, query: labelOlderAcceptedCountsQuerySchema },
-    responses: { 200: json('Older accepted task counts per label id', labelOlderAcceptedCountsResponseSchema) },
+    responses: {
+      200: json('Older accepted counts\n\nPer label id, the tasks accepted before the `acceptedCutOff`.', labelOlderAcceptedCountsResponseSchema),
+    },
   }),
   getLabel: xRoute({
     method: 'get',

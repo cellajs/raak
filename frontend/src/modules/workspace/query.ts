@@ -11,15 +11,16 @@ import {
   updateWorkspace,
   type Workspace,
 } from 'sdk';
+import { zGetWorkspacesQuery } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
+import { listSearchDefaults } from '~/modules/common/search-params-schemas';
 import { addMyMembershipCache, getApiIncludedMembership } from '~/modules/memberships/query-mutations';
 import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesOnceUnobserved } from '~/query/basic/cache-mutations';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { defaultOrderFor } from '~/query/basic/get-query-key-sort-order';
 import { offsetPaging, pageQuery, refetchOnMountForIncluded } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { preserveIncluded } from '~/query/basic/preserve-included';
@@ -40,12 +41,14 @@ export const findWorkspaceByIdOrSlug = (idOrSlug: string, tenantId: string): Wor
 
 type WorkspacesListParams = WorkspaceFilters & { limit?: number };
 
+const workspacesListSearchDefaults = listSearchDefaults(zGetWorkspacesQuery);
+
 /** `include` is left out of the cache key. */
 export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) => {
   const {
     q = '',
-    sort = 'displayOrder',
-    order = defaultOrderFor(sort),
+    sort = workspacesListSearchDefaults.sort,
+    order = workspacesListSearchDefaults.order,
     organizationId,
     role,
     include,

@@ -20,6 +20,8 @@ interface ProjectBoardPanelProps {
 
 /** Fetches a project's canonical tasks and merges the open draft task. */
 export function ProjectBoardPanel({ project, publicView, panelId, statuses, windowScroll }: ProjectBoardPanelProps) {
+  // Reads and writes refs during render: stableArray keeps the previous task arrays so a panel whose tasks did not change skips re-rendering.
+  'use no memo';
   const queryOptions = publicView
     ? publicTasksBoardQueryOptions(project.id)
     : tasksCanonicalOptions({ organizationId: project.organizationId, tenantId: project.tenantId, projectId: project.id });

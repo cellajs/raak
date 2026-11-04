@@ -9,7 +9,7 @@ import {
 } from '../../lib/deploy/boot-accounts';
 import { findJobDefinition, type JobDefinitionFacts, type JobRun, listJobRuns, readJobDefinition, runEnded } from '../../lib/deploy/job-runs';
 import { mainJobOutcome } from '../../lib/deploy/main-job';
-import { type RunRecord, runSummaryLine } from '../../lib/deploy/run-record';
+import { type Growth, type RunRecord, rewriteNote, runSummaryLine } from '../../lib/deploy/run-record';
 import { bucketRunStore, type RunStore } from '../../lib/deploy/run-store';
 import { deriveInfra } from '../../lib/naming';
 import { actionCommand, actionLabel } from '../../lib/operator-actions';
@@ -25,12 +25,12 @@ import { autoAcceptDefaults, endAction, type InfraContext } from '../shared';
 const LIST_LENGTH = 10;
 const LOG_TAIL = 40;
 
-/** The machines' boot accounts a failed rollout's record names: a failed one's error and the end of its log, a missing one said plainly. */
+/** The machines' boot accounts a failed switch's record names: a failed one's error and the end of its log, a missing one said plainly. */
 async function bootLines(record: RunRecord, store: RunStore): Promise<string[]> {
   const lines: string[] = [];
   for (const entry of record.boot ?? []) {
     if (!entry.key) {
-      lines.push('', `  ${warningMark} ${entry.service}: no account of this release: its boot runner never finished (its serial console says more)`);
+      lines.push('', `  ${warningMark} ${entry.service}: no account of this release: its agent never finished (its serial console says more)`);
       continue;
     }
     if (!entry.failed) continue;
@@ -41,11 +41,21 @@ async function bootLines(record: RunRecord, store: RunStore): Promise<string[]> 
   return lines;
 }
 
-/** One run in full: its steps with their durations, how it ended, a failed machine's boot account, and the end of its log. */
-async function runDetailLines(record: RunRecord, store: RunStore): Promise<string[]> {
+/** A record or a log whose versions stopped growing: what is shown is the newest version before that. */
+function rewriteLines(what: string, growth: Growth<unknown> | undefined): string[] {
+  return growth?.rewrite ? [`  ${warningMark} ${what} ${rewriteNote(growth.rewrite)}; shown as it stood before`] : [];
+}
+
+/**
+ * One run in full: its steps with their durations, how it ended, a failed machine's boot account, and the end of its log, each read by its
+ * first version.
+ */
+async function runDetailLines(reading: Growth<RunRecord>, store: RunStore): Promise<string[]> {
+  const record = reading.newest;
   const log = await store.readLog(record.run);
   return [
     `${pc.bold(record.run)}: ${record.target} to ${record.environment}, ${record.outcome}${record.failedStep ? ` at "${record.failedStep}"` : ''}`,
+    ...rewriteLines('the record was', reading),
     ...record.steps.map((step) => `  ${step.outcome === 'ok' ? ' ' : crossMark} ${step.title.padEnd(40)} ${String(step.seconds).padStart(4)} s`),
     ...(record.error ? ['', `  ${record.error}`] : []),
     ...(await bootLines(record, store)),
@@ -53,7 +63,8 @@ async function runDetailLines(record: RunRecord, store: RunStore): Promise<strin
       ? [
           '',
           pc.dim(`  The end of its log (${LOG_TAIL} lines):`),
-          ...log
+          ...rewriteLines('the log was', log),
+          ...log.newest
             .trimEnd()
             .split('\n')
             .slice(-LOG_TAIL)
@@ -64,7 +75,7 @@ async function runDetailLines(record: RunRecord, store: RunStore): Promise<strin
 }
 
 /**
- * A job run that left no record (D27), by Scaleway's state, exit code and message: one that runs still, or one that ended before the engine
+ * A job run that left no record, by Scaleway's state, exit code and message: one that runs still, or one that ended before the engine
  * could write its record (in the fetch or the install).
  */
 function runWithoutRecordLine(run: JobRun, environment: string): string {
@@ -88,7 +99,9 @@ function wroteRecord(run: JobRun, record: RunRecord): boolean {
 function disagreement(record: RunRecord, run: JobRun | undefined): string {
   if (!run || !runEnded(run)) return '';
   const outcome = mainJobOutcome(run);
-  return outcome === record.outcome ? '' : `  ${warningMark} the job run ended ${outcome} (${run.state})`;
+  // A run that found the target serving exits as a deploy does, one that needs an apply as a blocked one.
+  const recorded = record.outcome === 'unchanged' ? 'deployed' : record.outcome === 'apply needed' ? 'blocked' : record.outcome;
+  return outcome === recorded ? '' : `  ${warningMark} the job run ended ${outcome} (${run.state})`;
 }
 
 /** A run started with values or a command of its own, which no start of the engine sets (D-b): flagged, as only a key holder's start does it. */
@@ -98,26 +111,29 @@ function ownValues(run: JobRun | undefined, definition: JobDefinitionFacts | und
 }
 
 /**
- * List the last runs and show one: the newest record, or the one picked when a person is at the prompt. The environment's job runs that left
- * no record are listed beside the records (D27), so a run is never missing from the list. With the main job's definition, a run started with
- * values or a command of its own is flagged.
+ * List the last runs and show one: the newest record, or the one picked when a person is at the prompt. A record is read by its first
+ * version, and one whose versions stopped growing is flagged as rewritten. The environment's job runs that left no record are listed beside
+ * the records, so a run is never missing from the list. With the main job's definition, a run started with values or a command of its
+ * own is flagged.
  */
 export async function showRuns(
   store: RunStore,
   opts: { pick: boolean; print?: (line: string) => void; jobRuns?: readonly JobRun[]; definition?: JobDefinitionFacts; environment?: string },
 ): Promise<void> {
   const print = opts.print ?? ((line: string) => console.info(line));
-  const records = (await Promise.all((await store.listRuns(LIST_LENGTH)).map((run) => store.readRecord(run)))).filter((record): record is RunRecord =>
-    Boolean(record),
+  const readings = (await Promise.all((await store.listRuns(LIST_LENGTH)).map((run) => store.readRecord(run)))).filter(
+    (reading): reading is Growth<RunRecord> => Boolean(reading),
   );
+  const records = readings.map((reading) => reading.newest);
   const jobRuns = opts.jobRuns ?? [];
   // A full list's oldest record bounds the job runs: an older run's record is past the list, not missing.
   const since = records.length === LIST_LENGTH ? (records.at(-1)?.startedAt ?? '') : '';
   const unrecorded = jobRuns.filter((run) => (run.created_at ?? '') >= since && !records.some((record) => wroteRecord(run, record)));
   const rows = [
-    ...records.map((record) => {
+    ...readings.map(({ newest: record, rewrite }) => {
       const run = jobRuns.find((candidate) => wroteRecord(candidate, record));
-      return { at: record.startedAt, line: `${runSummaryLine(record)}${disagreement(record, run)}${ownValues(run, opts.definition)}` };
+      const rewritten = rewrite ? `  ${warningMark} ${rewriteNote(rewrite)}` : '';
+      return { at: record.startedAt, line: `${runSummaryLine(record)}${rewritten}${disagreement(record, run)}${ownValues(run, opts.definition)}` };
     }),
     ...unrecorded.map((run) => ({
       at: run.created_at ?? '',
@@ -126,10 +142,10 @@ export async function showRuns(
   ].sort((a, b) => b.at.localeCompare(a.at));
   if (rows.length === 0) return print('No run has left a record yet.');
   for (const row of rows.slice(0, LIST_LENGTH)) print(`  ${row.line}`);
-  const [newest] = records;
+  const [newest] = readings;
   if (!newest) return;
   const chosen = opts.pick
-    ? await select({ message: 'Show which run?', choices: records.map((record) => ({ name: runSummaryLine(record), value: record })) })
+    ? await select({ message: 'Show which run?', choices: readings.map((reading) => ({ name: runSummaryLine(reading.newest), value: reading })) })
     : newest;
   print('');
   for (const line of await runDetailLines(chosen, store)) print(line);
@@ -137,7 +153,7 @@ export async function showRuns(
 
 /**
  * The machines' own accounts, beside the runs: with `sha`, each service's account of that release and the builder's report; without, each
- * service's newest account, a boot outside any run included (a reboot that could not hydrate).
+ * service's newest account, a boot outside any run included.
  */
 async function showMachines(
   reader: BootAccountReader,
@@ -148,9 +164,7 @@ async function showMachines(
   if (opts.sha) {
     for (const found of await releaseAccounts(reader, services, opts.sha)) {
       if (!found.account) {
-        print(
-          `${warningMark} ${found.service}: no account of ${opts.sha.slice(0, 10)}: its boot runner has not finished (its serial console says more)`,
-        );
+        print(`${warningMark} ${found.service}: no account of ${opts.sha.slice(0, 10)}: its agent has not finished (its serial console says more)`);
         continue;
       }
       print('', pc.bold(`${found.service} (boot-diag/${found.account.key})${found.account.failed ? ': boot failed' : ''}`), found.account.body);
@@ -177,7 +191,7 @@ async function showMachines(
 
 /**
  * The environment's runs, on the observer key: what was deployed when, how it ended and where it stopped, read from the records each deploy
- * writes to the diagnostics bucket (plan §3.8), beside the main job's runs that left none. With `--machines` it shows each service's newest
+ * writes to the diagnostics bucket, beside the main job's runs that left none. With `--machines` it shows each service's newest
  * boot account, and with `--sha <sha>` every account of that release with the builder's report. Reads only.
  */
 export async function runRuns(context: InfraContext): Promise<void> {

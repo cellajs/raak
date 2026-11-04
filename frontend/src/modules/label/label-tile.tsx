@@ -242,7 +242,7 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
                 className={cn(
                   '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0',
                   // Collapsed, an after-overlay stretches the button over the whole tile; the action buttons sit above it
-                  expanded ? 'font-semibold hover:bg-muted focus-visible:bg-muted' : 'after:absolute after:inset-0',
+                  expanded ? 'font-semibold hover:bg-hover focus-visible:bg-hover' : 'after:absolute after:inset-0',
                 )}
               >
                 <span className="truncate">

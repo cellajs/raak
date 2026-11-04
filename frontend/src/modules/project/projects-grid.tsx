@@ -2,11 +2,14 @@ import type { ReactNode } from 'react';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { SearchScope } from '~/modules/common/match-highlight/match-scope';
-import { BaseEntityGrid, ChannelTile, EntityGridBar } from '~/modules/entities/entity-grid';
+import { BaseEntityGrid, ChannelTile, EntityGridBar, gridSortDefaults, gridSortOptions } from '~/modules/entities/entity-grid';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { useUserStore } from '~/modules/user/user-store';
 
-type ProjectSearch = Parameters<typeof projectsListQueryOptions>[0];
+type ProjectSearch = NonNullable<Parameters<typeof projectsListQueryOptions>[0]>;
+type ProjectGridSearch = { q?: string; sort: NonNullable<ProjectSearch['sort']>; order: NonNullable<ProjectSearch['order']> };
+
+const sortOptions = [gridSortOptions.name, gridSortOptions.createdAt] as const;
 
 interface ProjectsGridProps {
   fixedQuery?: Partial<ProjectSearch>;
@@ -17,7 +20,7 @@ interface ProjectsGridProps {
 }
 
 export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, viewToggle }: ProjectsGridProps) {
-  const { search: baseSearch, setSearch } = useSearchParams({ saveDataInSearch });
+  const { search: baseSearch, setSearch } = useSearchParams<ProjectGridSearch>({ saveDataInSearch, defaults: gridSortDefaults(sortOptions) });
 
   const search: ProjectSearch = { ...baseSearch, ...fixedQuery };
   const ofAnotherUser = useUserStore((state) => !!search.relatableUserId && search.relatableUserId !== state.user?.id);
@@ -33,6 +36,7 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, viewTogg
       <EntityGridBar
         queryKey={queryOptions.queryKey}
         searchVars={baseSearch}
+        sortOptions={sortOptions}
         label="c:project"
         entityType="project"
         // The server refuses a role on another user's list (it is theirs) and on an organization-wide one (it narrows to the caller's)
@@ -55,6 +59,7 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, viewTogg
           hasNextPage={hasNextPage}
           fetchMore={fetchMore}
           isFiltered={isFiltered}
+          onResetFilters={() => setSearch({ q: '' })}
         />
       </SearchScope>
     </div>

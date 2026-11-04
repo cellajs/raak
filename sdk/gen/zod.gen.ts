@@ -5,13 +5,22 @@ import * as z from 'zod';
 /**
  * Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone.
  */
-export const zActorRef = z.object({
-  id: z.string(),
-  kind: z.enum(['user', 'service']),
-  name: z.string(),
-  slug: z.string().nullable(),
-  thumbnailUrl: z.string().nullable(),
-});
+export const zActorRef = z.union([
+  z.object({
+    id: z.string(),
+    name: z.string(),
+    thumbnailUrl: z.string().nullable(),
+    kind: z.enum(['user']),
+    slug: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+    name: z.string(),
+    thumbnailUrl: z.string().nullable(),
+    kind: z.enum(['service']),
+    slug: z.null(),
+  }),
+]);
 
 /**
  * The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.
@@ -103,7 +112,7 @@ export const zStreamChange = z.object({
   action: z.enum(['create', 'update', 'delete', 'moveOut']),
   productType: z.enum(['task', 'label', 'attachment']),
   organizationId: z.string(),
-  tenantId: z.string().nullable(),
+  tenantId: z.string(),
   channelId: z.string().nullable(),
   rows: z.array(
     z.object({
@@ -161,7 +170,7 @@ export const zApiError = z.object({
 });
 
 /**
- * The request is malformed or fails validation (400). `type` names the problem, such as `invalid_request`.
+ * The request is malformed or fails validation. `type` names the problem, such as `invalid_request`.
  */
 export const zBadRequestError = zApiError.and(
   z.object({
@@ -170,7 +179,7 @@ export const zBadRequestError = zApiError.and(
 );
 
 /**
- * The request carries no valid session, API key or access token, or it expired (401). Sign in again, or send a valid key or token.
+ * The request carries no valid session, API key or access token, or it expired. Sign in again, or send a valid key or token.
  */
 export const zUnauthorizedError = zApiError.and(
   z.object({
@@ -179,7 +188,7 @@ export const zUnauthorizedError = zApiError.and(
 );
 
 /**
- * The caller is known but may not do this (403): their role denies the action, a recent step-up is required, or the action is refused while impersonating. `type` names the reason, such as `step_up_required`.
+ * The caller is known but may not do this: their role denies the action or a recent step-up is required. `type` names the reason, such as `step_up_required`.
  */
 export const zForbiddenError = zApiError.and(
   z.object({
@@ -188,7 +197,7 @@ export const zForbiddenError = zApiError.and(
 );
 
 /**
- * The resource does not exist, or the caller may not read it (404). Both get the same answer, so a response never confirms that an id exists.
+ * The resource does not exist, or the caller may not read it. Both get the same answer, so a response never confirms that an id exists.
  */
 export const zNotFoundError = zApiError.and(
   z.object({
@@ -197,7 +206,7 @@ export const zNotFoundError = zApiError.and(
 );
 
 /**
- * The request conflicts with the current state (409), such as a link that belongs to another account (`user_mismatch`) or a create already in progress. Reload the current state before retrying. Any write can answer `write_conflict` when a concurrent transaction won: retry as is.
+ * The request conflicts with the current state, such as a link that belongs to another account (`user_mismatch`) or a create already in progress. Reload the current state before retrying. Any write can answer `write_conflict` when a concurrent transaction won: retry as is.
  */
 export const zConflictError = zApiError.and(
   z.object({
@@ -206,7 +215,7 @@ export const zConflictError = zApiError.and(
 );
 
 /**
- * The request body is larger than the limit for its content type (413): a JSON body, a file upload and any other body each have their own.
+ * The request body is larger than the limit for its content type: a JSON body, a file upload and any other body each have their own.
  */
 export const zPayloadTooLargeError = zApiError.and(
   z.object({
@@ -215,7 +224,7 @@ export const zPayloadTooLargeError = zApiError.and(
 );
 
 /**
- * A rate limit refused the request (429). The `Retry-After` header says when to try again; an operation's rate limiters show what is counted.
+ * A rate limit refused the request. The `Retry-After` header says when to try again; an operation's rate limiters show what is counted.
  */
 export const zTooManyRequestsError = zApiError.and(
   z.object({
@@ -264,9 +273,43 @@ export const zConnection = z.object({
     logoUrl: z.url().max(255).optional(),
   }),
   createdAt: z.string(),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   updatedAt: z.string().nullable(),
-  updatedBy: zActorRef.nullable(),
+  updatedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
 });
 
 /**
@@ -297,12 +340,11 @@ export const zUser = z.object({
 });
 
 /**
- * The signed-in user, with whether they have system admin access on this request and, in an impersonation, the system admin acting as them. A client reads it to learn who is signed in.
+ * The signed-in user, with whether they have system admin access on this request. A client reads it to learn who is signed in.
  */
 export const zMe = z.object({
   user: zUser,
   isSystemAdmin: z.boolean(),
-  impersonator: zUserMinimalBase.nullable(),
 });
 
 /**
@@ -343,7 +385,7 @@ export const zMeAuthData = z.object({
   sessions: z.array(
     z.object({
       id: z.uuid(),
-      type: z.enum(['regular', 'impersonation', 'mfa']),
+      type: z.enum(['regular', 'mfa']),
       userId: z.uuid(),
       deviceName: z.string().max(255).nullable(),
       deviceType: z.enum(['desktop', 'mobile']),
@@ -360,8 +402,7 @@ export const zMeAuthData = z.object({
       expiresAt: z.string(),
       revokedAt: z.string().nullable(),
       revokedBy: z.uuid().nullable(),
-      revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced', 'impersonation_stopped']).nullable(),
-      impersonatorSessionId: z.uuid().nullable(),
+      revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced']).nullable(),
       steppedUpAt: z.string().nullable(),
       steppedUpVia: z.enum(['passkey', 'totp', 'email', 'sso']).nullable(),
       isCurrent: z.boolean(),
@@ -396,7 +437,7 @@ export const zInactiveMembership = z.object({
   role: z.enum(['admin', 'member', 'guest']),
   rejectedAt: z.string().nullable(),
   remindedAt: z.string().nullable(),
-  createdBy: zActorRef.nullable(),
+  createdBy: zActorRef,
   organizationId: z.uuid(),
   workspaceId: z.uuid().nullable(),
   projectId: z.uuid().nullable(),
@@ -442,9 +483,43 @@ export const zProject = z.object({
   tenantId: z.string().max(24),
   name: z.string().max(255),
   createdAt: z.string(),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   updatedAt: z.string().nullable(),
-  updatedBy: zActorRef.nullable(),
+  updatedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
@@ -562,13 +637,64 @@ export const zTask = z.object({
   tenantId: z.string().max(24),
   name: z.string().max(255),
   createdAt: z.string(),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   updatedAt: z.string().nullable(),
-  updatedBy: zActorRef.nullable(),
+  updatedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   description: z.string().max(1000000).nullable(),
   keywords: z.string().max(1000000),
   deletedAt: z.string().nullable(),
-  deletedBy: zActorRef.nullable(),
+  deletedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   public: z.boolean(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
   number: z.int().gte(-2147483648).lte(2147483647),
@@ -631,9 +757,43 @@ export const zTenant = z.object({
   subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']),
   subscriptionPlan: z.string().max(255).nullable(),
   createdAt: z.string(),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   updatedAt: z.string().nullable(),
-  updatedBy: zActorRef.nullable(),
+  updatedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   organization: z
     .object({
       id: z.string(),
@@ -665,9 +825,43 @@ export const zOrganization = z.object({
   tenantId: z.string().max(24),
   name: z.string().max(255),
   createdAt: z.string(),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   updatedAt: z.string().nullable(),
-  updatedBy: zActorRef.nullable(),
+  updatedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
@@ -795,9 +989,43 @@ export const zWorkspace = z.object({
   tenantId: z.string().max(24),
   name: z.string().max(255),
   createdAt: z.string(),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   updatedAt: z.string().nullable(),
-  updatedBy: zActorRef.nullable(),
+  updatedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
@@ -872,14 +1100,65 @@ export const zAttachment = z.object({
   tenantId: z.string().max(24),
   name: z.string().max(255),
   createdAt: z.string(),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   updatedAt: z.string().nullable(),
-  updatedBy: zActorRef.nullable(),
+  updatedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   stx: zStxBase,
   description: z.string().max(1000000).nullable(),
   keywords: z.string().max(1000000),
   deletedAt: z.string().nullable(),
-  deletedBy: zActorRef.nullable(),
+  deletedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   public: z.boolean(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
   publicBucket: z.boolean(),
@@ -957,9 +1236,44 @@ export const zServiceAccount = z.object({
   ),
   oauthClientId: z.string().max(255).nullable(),
   createdAt: z.string(),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   updatedAt: z.string().nullable(),
-  updatedBy: zActorRef.nullable(),
+  updatedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
+  role: z.enum(['admin', 'member']),
   lastSeenAt: z.string().nullable(),
 });
 
@@ -994,7 +1308,24 @@ export const zApiKey = z.object({
   expiresAt: z.string().nullable(),
   revokedAt: z.string().nullable(),
   revokedBy: z.uuid().nullable(),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   createdAt: z.string(),
 });
 
@@ -1010,6 +1341,7 @@ export const zGetAuthHealthResponse = z.object({
       label: z.string(),
     }),
   ),
+  emailEnabled: z.boolean(),
 });
 
 export const zCheckEmailBody = z.object({
@@ -1017,14 +1349,18 @@ export const zCheckEmailBody = z.object({
 });
 
 /**
- * Whether this browser is recognized for the address
+ * Browser recognition
+ *
+ * Whether this browser signed in to the account with this address before, by its device cookie.
  */
 export const zCheckEmailResponse = z.object({
   recognized: z.boolean(),
 });
 
 /**
- * The address of the account the held challenge signs in to
+ * Pending sign-in address
+ *
+ * The address of the account the held MFA challenge signs in to.
  */
 export const zGetPendingMfaResponse = z.object({
   email: z.string(),
@@ -1064,30 +1400,20 @@ export const zGetTokenDataResponse = z.object({
 export const zAcceptInvitationTokenResponse = zChannelBase;
 
 /**
- * Confirmation link sent to the invited address
+ * Confirmation link sent
+ *
+ * A new link, bound to the signed-in account, went to the invited address. Every older link stops working.
  */
 export const zConfirmInvitationAddressResponse = z.void();
-
-export const zStartImpersonationBody = z.object({
-  targetUserId: z.string().max(50),
-});
-
-/**
- * Impersonating
- */
-export const zStartImpersonationResponse = z.void();
-
-/**
- * Stopped impersonating
- */
-export const zStopImpersonationResponse = z.void();
 
 export const zResendInvitationWithTokenBody = z.object({
   tokenId: z.uuid(),
 });
 
 /**
- * Invitation email sent when the invitation is pending
+ * Accepted
+ *
+ * An email goes out only when the id names a pending invitation. The answer is the same either way, so it tells nobody which invitations exist.
  */
 export const zResendInvitationWithTokenResponse = z.void();
 
@@ -1102,12 +1428,16 @@ export const zSendMagicLinkBody = z.object({
 });
 
 /**
- * Accepted alike whether a link, a pointer to the institution or nothing was mailed
+ * Accepted
+ *
+ * The same answer whether a sign-in link, a pointer to the institution's sign-in or nothing was mailed, so it does not tell whether the address has an account.
  */
 export const zSendMagicLinkResponse = z.void();
 
 /**
- * The full address the held link signs in, as the confirm page shows it
+ * Pending sign-in address
+ *
+ * The full address the held link signs in to, as the confirm page shows it.
  */
 export const zGetPendingMagicLinkResponse = z.object({
   email: z.string(),
@@ -1301,7 +1631,9 @@ export const zSsoCallbackQuery = z.object({
 });
 
 /**
- * The address the link was sent to
+ * Recovery link sent
+ *
+ * The body names the address the link went to.
  */
 export const zSendSsoRecoveryLinkResponse = z.object({
   email: z.string(),
@@ -1502,17 +1834,15 @@ export const zPostAppCatchupResponse = z.object({
         .optional(),
     }),
   ),
-  views: z
-    .array(
-      z.object({
-        organizationId: z.string(),
-        entityType: z.enum(['task', 'label', 'attachment']),
-        status: z.enum(['ok', 'opaque', 'forbidden']),
-        frontier: z.int().optional(),
-      }),
-    )
-    .optional(),
-  generation: z.int().optional(),
+  views: z.array(
+    z.object({
+      organizationId: z.string(),
+      entityType: z.enum(['task', 'label', 'attachment']),
+      status: z.enum(['ok', 'opaque', 'forbidden']),
+      frontier: z.int().optional(),
+    }),
+  ),
+  generation: z.int(),
 });
 
 /**
@@ -1600,7 +1930,7 @@ export const zRevokeMySessionsResponse = z.object({
   data: z.array(
     z.object({
       id: z.uuid(),
-      type: z.enum(['regular', 'impersonation', 'mfa']),
+      type: z.enum(['regular', 'mfa']),
       userId: z.uuid(),
       deviceName: z.string().max(255).nullable(),
       deviceType: z.enum(['desktop', 'mobile']),
@@ -1617,8 +1947,7 @@ export const zRevokeMySessionsResponse = z.object({
       expiresAt: z.string(),
       revokedAt: z.string().nullable(),
       revokedBy: z.uuid().nullable(),
-      revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced', 'impersonation_stopped']).nullable(),
-      impersonatorSessionId: z.uuid().nullable(),
+      revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced']).nullable(),
       steppedUpAt: z.string().nullable(),
       steppedUpVia: z.enum(['passkey', 'totp', 'email', 'sso']).nullable(),
     }),
@@ -1643,7 +1972,9 @@ export const zGetUploadTokenQuery = z.object({
 });
 
 /**
- * Upload token with a scope for a user or organization
+ * Upload token
+ *
+ * Its storage prefix names the organization, when given, and the user; a newsletter image goes under the system prefix.
  */
 export const zGetUploadTokenResponse = zUploadToken;
 
@@ -1725,7 +2056,9 @@ export const zMarkNotificationsReadBody = z.object({
 });
 
 /**
- * Number of notifications marked read
+ * Marked read
+ *
+ * `updated` is the number of notifications this request marked read.
  */
 export const zMarkNotificationsReadResponse = z.object({
   updated: z.int().gte(0),
@@ -1747,7 +2080,7 @@ export const zUpdateNotificationPreferencesBody = z.object({
 });
 
 /**
- * Updated notification preferences
+ * Preferences updated
  */
 export const zUpdateNotificationPreferencesResponse = z.object({
   mentionEmail: z.boolean(),
@@ -1815,7 +2148,9 @@ export const zDeletePushSubscriptionQuery = z.object({
 });
 
 /**
- * Number of subscriptions removed
+ * Subscriptions removed
+ *
+ * `deleted` is the number removed, 0 when the endpoint belongs to another user.
  */
 export const zDeletePushSubscriptionResponse = z.object({
   deleted: z.int().gte(0),
@@ -1879,7 +2214,9 @@ export const zCreateRequestBody = z.object({
 export const zCreateRequestResponse = z.void();
 
 /**
- * Unseen counts per parent channel entity per entity type
+ * Unseen counts
+ *
+ * Keyed by parent channel entity id, then by product entity type.
  */
 export const zGetUnseenCountsResponse = z.record(z.string(), z.record(z.string(), z.int().gte(0)));
 
@@ -3094,7 +3431,7 @@ export const zLinkAttachmentKeysPath = z.object({
 });
 
 /**
- * Attachment with its stored file
+ * Attachment with stored file
  */
 export const zLinkAttachmentKeysResponse = zAttachment;
 
@@ -3206,7 +3543,9 @@ export const zGetLabelOlderAcceptedCountsQuery = z.object({
 });
 
 /**
- * Older accepted task counts per label id
+ * Older accepted counts
+ *
+ * Per label id, the tasks accepted before the `acceptedCutOff`.
  */
 export const zGetLabelOlderAcceptedCountsResponse = z.record(z.string(), z.int().gte(0));
 
@@ -3340,7 +3679,9 @@ export const zCheckMembershipInviteQuery = z.object({
 });
 
 /**
- * What an invite would do with each address
+ * Invite outcomes
+ *
+ * One outcome per address, judged from the members and invitations the caller can see.
  */
 export const zCheckMembershipInviteResponse = z.object({
   outcomes: z.array(zInviteOutcome),
@@ -3370,9 +3711,43 @@ export const zUpdateMembershipResponse = z.object({
   channelId: z.uuid(),
   userId: z.uuid(),
   role: z.enum(['admin', 'member', 'guest']),
-  createdBy: zActorRef.nullable(),
+  createdBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   updatedAt: z.string().nullable(),
-  updatedBy: zActorRef.nullable(),
+  updatedBy: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['user']),
+        slug: z.string(),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        thumbnailUrl: z.string().nullable(),
+        kind: z.enum(['service']),
+        slug: z.null(),
+      }),
+    ])
+    .nullable(),
   organizationId: z.uuid(),
   workspaceId: z.uuid().nullable(),
   projectId: z.uuid().nullable(),
@@ -3479,7 +3854,7 @@ export const zGetPendingMembershipsResponse = z.object({
       createdAt: z.string(),
       remindedAt: z.string().nullable(),
       linkExpiresAt: z.string().nullable(),
-      createdBy: zActorRef.nullable(),
+      createdBy: zActorRef,
     }),
   ),
   total: z.number(),

@@ -1,6 +1,7 @@
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   type CreateOrganizationsData,
+  type CreateOrganizationsResponse,
   createOrganizations,
   type DeleteOrganizationsData,
   deleteOrganizations,
@@ -16,14 +17,13 @@ import {
 } from 'sdk';
 import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
-import { addMyMembershipCache, getApiIncludedMembership } from '~/modules/memberships/query-mutations';
+import { addMyMembershipCache } from '~/modules/memberships/query-mutations';
 import { organizationsSearchDefaults } from '~/modules/organization/search-params-schemas';
 import type { EnrichedOrganization } from '~/modules/organization/types';
 import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesOnceUnobserved } from '~/query/basic/cache-mutations';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { defaultOrderFor } from '~/query/basic/get-query-key-sort-order';
 import { offsetPaging, pageQuery, refetchOnMountForIncluded } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { preserveIncluded } from '~/query/basic/preserve-included';
@@ -53,11 +53,11 @@ export const organizationQueryOptions = (id: string, tenantId: string) =>
 
 type OrganizationsListParams = OrganizationFilters & { limit?: number };
 
-/** Search filters with the table defaults filled in; `include` is left out, so queries with and without counts share one list key. */
+/** Search filters with the API defaults filled in; `include` is left out, so queries with and without counts share one list key. */
 const withDefaults = ({
   q = organizationsSearchDefaults.q,
   sort = organizationsSearchDefaults.sort,
-  order = defaultOrderFor(sort),
+  order = organizationsSearchDefaults.order,
   relatableUserId,
   excludeArchived,
   role,
@@ -83,25 +83,17 @@ export const useOrganizationCreateMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 
-  return useMutation<EnrichedOrganization, ApiError, MutationData<CreateOrganizationsData>>({
+  return useMutation<CreateOrganizationsResponse['data'][number], ApiError, MutationData<CreateOrganizationsData>>({
     mutationKey: keys.create,
     mutationFn: async ({ path, body }) => {
-      const result = await createOrganizations({ path, body });
-
-      if (!result.data.length) {
-        const reasons = result.rejectionReasons ? Object.keys(result.rejectionReasons) : [];
-        if (reasons.includes('org_limit_reached')) {
-          throw new ApiError({ status: 422, type: 'org_limit_reached', severity: 'warn' });
-        }
-        throw new ApiError({ status: 422, type: 'create_resource', entityType: 'organization', severity: 'error' });
-      }
-
-      // The endpoint creates a list; single creation is the only caller.
-      return result.data[0] as EnrichedOrganization;
+      const { data } = await createOrganizations({ path, body });
+      // A single create comes back empty only when its slug is taken: a tenant without a free slot is refused with a 403.
+      const [created] = data;
+      if (!created) throw new ApiError({ status: 422, type: 'create_resource', entityType: 'organization', severity: 'error' });
+      return created;
     },
     onSuccess: (createdOrganization) => {
-      const membership = getApiIncludedMembership(createdOrganization);
-      if (membership) addMyMembershipCache(membership);
+      addMyMembershipCache(createdOrganization.included.membership);
       cacheCreate(listKey, [createdOrganization]);
     },
     onSettled: () => {
