@@ -24,11 +24,8 @@ export function WorkspaceBoardSkeleton({ workspace, withHeader = true }: Workspa
     enabled: false,
   });
 
-  const joinedMenuProjects = useWithMembership(flattenInfiniteData<EnrichedProject>(menuProjects));
-  const joinedBoardProjects = useWithMembership(flattenInfiniteData<EnrichedProject>(boardProjects));
-  const projects = boardProjects
-    ? joinedBoardProjects
-    : joinedMenuProjects.filter(({ membership }) => membership?.workspaceId === workspace.id && !membership.archived);
+  const listed = useWithMembership(flattenInfiniteData<EnrichedProject>(boardProjects ?? menuProjects));
+  const projects = boardProjects ? listed : listed.filter(({ membership }) => membership?.workspaceId === workspace.id && !membership.archived);
 
   // A menu list with pages still to fetch cannot rule out projects in this workspace.
   const isComplete = !!boardProjects || (!!menuProjects && !menuHasMore);
