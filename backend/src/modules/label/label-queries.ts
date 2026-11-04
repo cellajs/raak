@@ -8,7 +8,6 @@ import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { requestScopeWhere } from '#/db/utils/request-scope';
 import { deleteStamps, updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
-import { productCacheStore } from '#/middlewares/product-cache/product-cache-store';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { heatClock } from '#/modules/label/helpers/label-heat';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
@@ -66,7 +65,6 @@ export const bumpLabelHeat = async (ctx: ActorContext, bumps: Map<string, number
   const { db } = ctx.var;
   const clock = heatClock();
   const { mutationId, sourceId } = createServerStx();
-  productCacheStore.holdForWrite('label', [...bumps.keys()]);
   for (const [id, heat] of bumps) {
     await db
       .update(labelsTable)
