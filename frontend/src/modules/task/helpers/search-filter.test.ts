@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RecentBoardSearch } from '~/modules/task/board/task-board-store';
 import type { Task } from '~/modules/task/types';
-import { isWorthRecalling, matchesBoardSearch, parseBoardSearch, replaceFilterValue } from './search-filter';
+import { fitBoardSearch, isWorthRecalling, matchesBoardSearch, parseBoardSearch, replaceFilterValue } from './search-filter';
 
 const paragraph = (text: string) =>
   JSON.stringify([{ id: '1', type: 'paragraph', props: {}, content: [{ type: 'text', text, styles: {} }], children: [] }]);
@@ -55,6 +55,26 @@ describe('matchesBoardSearch', () => {
     expect(matches({ type: 'bug', labels: 'other' })).toBe(false);
     expect(matches({ q: 'missing', type: 'bug' })).toBe(false);
   });
+
+  it('filters by assignee, and none for a task assigned to no one', () => {
+    expect(matches({ assigned: 'u2,u1' })).toBe(true);
+    expect(matches({ assigned: 'u2' })).toBe(false);
+    expect(matches({ assigned: 'none' })).toBe(false);
+    expect(matches({ assigned: 'none' }, { assignedTo: [] })).toBe(true);
+    expect(matches({ assigned: 'u1', type: 'chore' })).toBe(false);
+  });
+});
+
+describe('fitBoardSearch', () => {
+  it('drops the values no task carries, and keeps You and No one', () => {
+    const tasks = [task(), task({ assignedTo: [] })];
+    expect(fitBoardSearch({ type: 'chore,bug', labels: 'performance,gone', assigned: 'u2,u1,none,me' }, tasks, 'me')).toEqual({
+      type: 'bug',
+      labels: 'performance',
+      assigned: 'u1,none,me',
+    });
+    expect(fitBoardSearch({ type: 'chore', assigned: 'u2' }, tasks)).toEqual({ type: undefined, labels: undefined, assigned: undefined });
+  });
 });
 
 describe('replaceFilterValue', () => {
@@ -65,22 +85,25 @@ describe('replaceFilterValue', () => {
 });
 
 describe('isWorthRecalling', () => {
-  const worth = (q: string, filters: Omit<RecentBoardSearch, 'q'>) => isWorthRecalling({ q, ...filters });
+  const worth = (q: string, filters: Partial<Omit<RecentBoardSearch, 'q'>>) =>
+    isWorthRecalling({ q, status: [], type: [], labels: [], assigned: [], ...filters });
 
-  it('skips a lone status or type', () => {
-    expect(worth('', { status: ['backlog'], type: [], labels: [] })).toBe(false);
-    expect(worth('', { status: [], type: ['bug'], labels: [] })).toBe(false);
+  it('skips a lone status, type or member', () => {
+    expect(worth('', { status: ['backlog'] })).toBe(false);
+    expect(worth('', { type: ['bug'] })).toBe(false);
+    expect(worth('', { assigned: ['u1'] })).toBe(false);
   });
 
   it('skips words under three characters on their own', () => {
-    expect(worth('kk', { status: [], type: [], labels: [] })).toBe(false);
-    expect(worth('kkk', { status: [], type: [], labels: [] })).toBe(true);
+    expect(worth('kk', {})).toBe(false);
+    expect(worth('kkk', {})).toBe(true);
   });
 
   it('keeps words, a label, and any combination', () => {
-    expect(worth('kk', { status: [], type: ['bug'], labels: [] })).toBe(true);
-    expect(worth('', { status: [], type: [], labels: ['garden'] })).toBe(true);
-    expect(worth('', { status: ['finished', 'reviewed'], type: [], labels: [] })).toBe(true);
-    expect(worth('', { status: ['backlog'], type: ['bug'], labels: [] })).toBe(true);
+    expect(worth('kk', { type: ['bug'] })).toBe(true);
+    expect(worth('', { labels: ['garden'] })).toBe(true);
+    expect(worth('', { status: ['finished', 'reviewed'] })).toBe(true);
+    expect(worth('', { status: ['backlog'], type: ['bug'] })).toBe(true);
+    expect(worth('', { status: ['backlog'], assigned: ['u1'] })).toBe(true);
   });
 });

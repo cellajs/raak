@@ -7,5 +7,6 @@ export const useBoardSearch = () => {
   const status = useSearch({ strict: false, select: (search) => search.status });
   const type = useSearch({ strict: false, select: (search) => search.type });
   const labels = useSearch({ strict: false, select: (search) => search.labels });
-  return parseBoardSearch({ q, status, type, labels });
+  const assigned = useSearch({ strict: false, select: (search) => search.assigned });
+  return parseBoardSearch({ q, status, type, labels, assigned });
 };

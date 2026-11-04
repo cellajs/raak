@@ -1987,6 +1987,7 @@ export const zGetPublicTasksQuery = z.object({
   status: z.string().max(1000000).optional(),
   type: z.string().max(1000000).optional(),
   labels: z.string().max(1000000).optional(),
+  assigned: z.string().max(1000000).optional(),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50),
 });
@@ -3734,6 +3735,7 @@ export const zGetTasksQuery = z.object({
   status: z.string().max(1000000).optional(),
   type: z.string().max(1000000).optional(),
   labels: z.string().max(1000000).optional(),
+  assigned: z.string().max(1000000).optional(),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),

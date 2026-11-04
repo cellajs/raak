@@ -1,4 +1,3 @@
-import { env } from '~/env';
 import { CardCloseExit } from '~/modules/task/card/card-close-button';
 import { DescriptionEditButton } from '~/modules/task/card/description-edit-button';
 import { TaskCardSummaryButtons } from '~/modules/task/card/task-card-summary-buttons';
@@ -19,21 +18,21 @@ interface TaskCardContentCollapsedProps {
 }
 
 export function TaskCardContentCollapsed({ task, animateClose = false, onEditRequest }: TaskCardContentCollapsedProps) {
+  // The title starts on the status button's border: the type button keeps the status column, under it
   return (
-    <div className="relative flex w-full gap-1">
+    <div className="relative flex w-full">
       <div className="flex shrink-0 flex-col">
         <TaskPrimaryLabelButton task={task} />
       </div>
       {/* Grows to the card edge so the fade under the options button sits at the edge */}
-      <div className="task-summary-fade mt-1.5 mb-1 ml-1 min-w-0 grow leading-tight">
+      <div className="task-summary-fade mt-1 mb-1 ml-0.5 min-w-0 grow leading-tight">
         <TaskSummaryHtml className="inline leading-tight sm:font-[450]" task={task} />
         <ProductRef number={task.number} className="ml-1.5" />
-        {env.VITE_DEBUG_MODE && <span className="ml-2 text-faint-foreground">order {task.displayOrder}</span>}
         <TaskCardSummaryButtons task={task} />
         <TaskMatchReason task={task} className="mt-1" />
       </div>
       {/* Frames the summary from beside it: the summary's fade mask would clip a ring drawn inside it */}
-      {onEditRequest && <DescriptionEditButton onClick={onEditRequest} className="top-0 -right-2 bottom-0 left-8" />}
+      {onEditRequest && <DescriptionEditButton onClick={onEditRequest} className="top-0 -right-2 bottom-0 left-7.5" />}
       <div className={cn(taskCardActionsRevealClass, 'absolute top-0 right-0 flex items-center gap-1')}>
         {animateClose && <CardCloseExit />}
         <TaskOptionsButton task={task} />

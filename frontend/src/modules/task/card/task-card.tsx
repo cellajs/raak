@@ -177,6 +177,8 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
   }, [isSheet, isFocused, task.id]);
 
   const isCurrent = isFocused && !isSheet;
+  // On a touch screen the current card is just the last one tapped: it keeps its role, not the look of one in hand
+  const showsCurrent = isCurrent && !isTouchInteraction();
   const dropIndicatorEdge = mobileClosestEdge ?? closestEdge ?? landingEdge;
 
   return (
@@ -195,6 +197,8 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         data-project-id={task.projectId}
         data-read-only={isReadOnly || undefined}
         data-sheet={isSheet || undefined}
+        // Ahead of the guest alert's close button above it. An editable sheet card's editor takes focus itself.
+        data-autofocus={(isSheet && isReadOnly) || undefined}
         data-match-current={isCurrent || undefined}
         draggable={!isSheet && !isReadOnly && effectiveState === 'collapsed'}
         tabIndex={isSheet || isFocused ? 0 : -1}
@@ -202,13 +206,13 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         className={cn(
           'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-78% via-transparent py-0 focus-visible:outline-hidden sm:py-0',
           isDragging && 'opacity-30',
-          // Hover and current spread the status gradient; the tint is for unstarted cards, which have no gradient
-          isCurrent && 'is-focused bg-muted/50 via-58%',
-          isSheet
-            ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]'
-            : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-muted/50 hover:via-58%',
+          // Hover, current and an open card spread the status gradient; the tint is for unstarted cards, which have no gradient.
+          // An open card keeps it, so it stands out among the closed ones.
+          showsCurrent && 'is-focused bg-card via-58%',
+          !isSheet && effectiveState !== 'collapsed' && 'bg-card via-58%',
+          isSheet ? 'grow p-3 pt-0 sm:px-5' : 'transition-[background-color,color,--tw-gradient-via-position] hover:bg-card hover:via-58%',
           // A selected card keeps full strength, so it stands out among the resting ones
-          !isSheet && effectiveState === 'collapsed' && !isCurrent && !isSelected && 'resting-text',
+          !isSheet && effectiveState === 'collapsed' && !showsCurrent && !isSelected && 'resting-text',
           // A touch long-press on a collapsed card must start a drag, never a text selection or the iOS callout.
           // The summary's static HTML sets select-text itself, so the card's own select-none does not reach it.
           !isSheet &&
@@ -220,7 +224,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         <CardContent
           id={`${task.id}-content`}
           className={cn(
-            'relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 sm:before:-left-px',
+            'relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 max-sm:px-3! sm:before:-left-px',
             isSheet ? 'group-focus-visible/task:before:opacity-100' : taskCardFocusBarClass,
             // The header's own py-1 makes up the rest, so opening a card leaves its buttons where the collapsed row had them
             !isSheet && effectiveState !== 'collapsed' && 'pt-0.5',

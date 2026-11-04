@@ -4345,6 +4345,7 @@ export type GetPublicTasksData = {
     status?: string;
     type?: string;
     labels?: string;
+    assigned?: string;
     acceptedCutOff?: number;
     projectId: string;
   };
@@ -8149,6 +8150,7 @@ export type GetTasksData = {
     status?: string;
     type?: string;
     labels?: string;
+    assigned?: string;
     acceptedCutOff?: number;
     projectId?: string;
     workspaceId?: string;

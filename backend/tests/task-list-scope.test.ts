@@ -123,6 +123,33 @@ describe('Task list read scope without a project', async () => {
     expect(result.ids).toEqual([taskA, lately.id].sort());
   });
 
+  it('filters by assignee, where one who left the project counts as no one', async () => {
+    const assignedTask = (assignedTo: string[]) => ({
+      tenantId: tenant.tenantId,
+      organizationId: tenant.organization.id,
+      projectId: projectA,
+      id: generateId(),
+      name: 'assigned',
+      summary: '',
+      primaryLabelId: crypto.randomUUID(),
+      displayOrder: 1,
+      status: TaskStatus.Unstarted,
+      assignedTo,
+      stx: mockStxBase(),
+      createdBy: tenant.user.id,
+    });
+    const toMember = assignedTask([member.id]);
+    const toLeaver = assignedTask([generateId()]);
+    await db.insert(tasksTable).values([toMember, toLeaver]);
+
+    const assigned = async (value: string) =>
+      (await listTasks(tenant.sessionCookie, { projectId: projectA, status: 'unstarted', assigned: value })).ids;
+    expect(await assigned(member.id)).toEqual([toMember.id]);
+    expect(await assigned('none')).toEqual([taskA, toLeaver.id].sort());
+    expect(await assigned(`${member.id},none`)).toEqual([taskA, toMember.id, toLeaver.id].sort());
+    expect(await assigned(generateId())).toEqual([]);
+  });
+
   it('an unknown project still answers 404 for tasks and labels', async () => {
     const unknown = generateId();
     expect((await listTasks(tenant.sessionCookie, { projectId: unknown })).status).toBe(404);

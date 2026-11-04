@@ -1,16 +1,17 @@
 import { Link } from '@tanstack/react-router';
 import dayjs from 'dayjs';
 import { ChevronDownIcon, InfoIcon } from 'lucide-react';
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type FocusEvent, type RefObject, useEffect, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import type { VirtualizerHandle } from 'virtua';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
 import { type TogglableStatusType, useProjectPanelPrefs, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { hasSectionBar, sectionBarId } from '~/modules/task/helpers/board-helpers';
 import { setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
-import { useSectionEdgeVisibility } from '~/modules/task/hooks/use-section-edge-visibility';
-import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
+import { useSectionEdgePinned } from '~/modules/task/hooks/use-section-edge-pinned';
+import { boardAcceptedCutOffDays, statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import { statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -27,27 +28,32 @@ interface PanelStatusSectionProps {
   scrollRef: RefObject<HTMLElement | null>;
   /** Uses window scrolling when true and the viewport element when false. */
   windowMode: boolean;
+  virtualizerRef: RefObject<VirtualizerHandle | null>;
   /** Unpins the header: it stays in its place in the list but no longer sticks over the panel's edge. */
   suppressed?: boolean;
 }
 
-/** Sticky header of the Accepted or Iced section, with its count and expand toggle; once pinned it hides on scroll like the floating nav buttons. */
-export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRef, windowMode, suppressed }: PanelStatusSectionProps) {
+/** Sticky header of the Accepted or Iced section, with its count and expand toggle; it pins to its edge only while the list scrolls toward it. */
+export function PanelStatusSection({
+  type,
+  counts,
+  projectId,
+  onToggle,
+  scrollRef,
+  windowMode,
+  virtualizerRef,
+  suppressed,
+}: PanelStatusSectionProps) {
   const { t } = useTranslation();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isActive = hasSectionBar(type, counts);
   const isTop = type === 'accepted';
-  // Visibility lives here so scroll flips re-render only this header, not the panel
-  const isEdgeVisible = useSectionEdgeVisibility({
-    edge: isTop ? 'top' : 'bottom',
-    barRef: wrapperRef,
-    active: isActive,
-    scrollRef,
-    windowMode,
-  });
-  // A focused bar stays visible: keyboard focus never rests on a bar slid out of view
+  // Pinning lives here so scroll flips re-render only this header, not the panel
+  const isEdgePinned = useSectionEdgePinned({ edge: isTop ? 'top' : 'bottom', active: isActive, scrollRef, windowMode, listRef: virtualizerRef });
+  // A bar with keyboard focus stays pinned, so that focus never rests on a bar slid out of view. A click's focus does not
+  // hold it: the bar would stay after the toggle until something else took focus.
   const [hasFocus, setHasFocus] = useState(false);
-  const isVisible = isEdgeVisible || hasFocus;
+  const isPinned = (isEdgePinned || hasFocus) && !suppressed;
 
   const setPanelSectionExpanded = useTaskBoardStore((state) => state.setPanelSectionExpanded);
   const boardId = useBoardStore((state) => state.activeBoardId)!;
@@ -76,8 +82,8 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
     setPanelSectionExpanded(boardId, projectId, type, !isExpanded);
   };
 
-  const handleFocus = () => {
-    setHasFocus(true);
+  const handleFocus = (event: FocusEvent<HTMLButtonElement>) => {
+    setHasFocus(event.currentTarget.matches(':focus-visible'));
     setCurrentItem(barId);
   };
 
@@ -92,32 +98,38 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
     // Fold in the page-level nav offset (mobile tabs) so consumers stack below both bars
     const navPx = Number.parseFloat(getComputedStyle(wrapper).getPropertyValue('--sticky-stack-nav')) || 0;
     host.style.transition = '--sticky-stack-top 300ms ease-in-out';
-    host.style.setProperty('--sticky-stack-top', `${navPx + (isVisible && !suppressed && !isTile ? (buttonRef.current?.offsetHeight ?? 0) : 0)}px`);
+    host.style.setProperty('--sticky-stack-top', `${navPx + (isPinned && !isTile ? (buttonRef.current?.offsetHeight ?? 0) : 0)}px`);
     return () => {
       host.style.removeProperty('--sticky-stack-top');
       host.style.removeProperty('transition');
     };
-  }, [isVisible, suppressed, isTile, isTop, isActive]);
+  }, [isPinned, isTile, isTop, isActive]);
 
   if (!isActive) return null;
 
   return (
-    // The wrapper stays sticky and clips the sliding button: overflow-clip does not create a
-    // scroll container (sticky keeps working) and stops the translated button from extending
-    // the panel's scrollable overflow, which would churn scrollHeight during the animation.
-    // Suppressed, the inset moves one bar height past the edge: a pinned bar slides out of view, one resting in its
-    // own place stays. Folding its space would shift the list, and the browser's scroll anchoring that follows
-    // reads as a scroll to useSectionEdgeVisibility, which then flips the bars.
+    // Unpinned, the inset moves one bar height past the edge: a pinned bar slides out of view, one resting in its own
+    // place stays and leaves with the list. Folding its space would shift the list, and the browser's scroll anchoring
+    // that follows reads as a scroll to useSectionEdgePinned, which then flips the bars.
+    // The wrapper is the surface: bar and note share one fill and one line, so the line rides the note's collapse and a
+    // hover shade fading from the bar never meets the note's.
     <div
       ref={wrapperRef}
       className={cn(
-        'pointer-events-none z-20 shrink-0 overflow-clip transition-[top,bottom] duration-300 ease-in-out motion-reduce:transition-none',
+        'z-20 shrink-0 transition-[top,bottom,--tw-gradient-from,--tw-gradient-to] duration-300 ease-in-out motion-reduce:transition-none',
+        colors.fill,
+        colors.text,
+        colors.border[isTop ? 'top' : 'bottom'],
+        !isTile &&
+          (isIced
+            ? 'hover:from-sky-500/26 hover:to-sky-500/36 dark:hover:from-sky-500/22 dark:hover:to-sky-500/32'
+            : 'hover:from-green-500/26 hover:to-green-500/36 dark:hover:from-green-500/22 dark:hover:to-green-500/32'),
         isTile
           ? 'relative'
           : [
               'sticky',
               // The top bar pins below a page-level sticky nav (mobile tabs); the other to the bottom
-              isTop ? (suppressed ? '-top-9' : 'top-(--sticky-stack-nav)') : suppressed ? '-bottom-9' : 'bottom-0',
+              isTop ? (isPinned ? 'top-(--sticky-stack-nav)' : '-top-9') : isPinned ? 'bottom-0' : '-bottom-9',
               isTop ? 'text-editing:-top-9' : 'text-editing:-bottom-9',
             ],
       )}
@@ -132,46 +144,34 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
         onBlur={() => setHasFocus(false)}
         variant="ghost"
         size="sm"
+        // The press nudges only the text: moved, the button would part from the wrapper's fill and line
+        press={false}
         className={cn(
-          'focus-inset relative flex w-full justify-start gap-1 rounded-none border-0 bg-clip-border px-2 text-sm transition-[translate,opacity,color,background-color,border-color,box-shadow,--tw-gradient-from,--tw-gradient-to] duration-300 ease-in-out hover:bg-background dark:hover:bg-background',
-          isVisible ? 'pointer-events-auto' : isTop ? '-translate-y-full opacity-0' : 'translate-y-full opacity-0',
-          colors.fill,
-          colors.text,
-          isIced
-            ? 'hover:from-sky-500/26 hover:to-sky-500/36 hover:text-sky-900 dark:hover:from-sky-500/22 dark:hover:to-sky-500/32 dark:hover:text-sky-200'
-            : cn(
-                'hover:text-green-900 dark:hover:text-green-200',
-                !isTile && 'hover:from-green-500/26 hover:to-green-500/36 dark:hover:from-green-500/22 dark:hover:to-green-500/32',
-              ),
-          colors.border[isTop ? 'top' : 'bottom'],
-          isTile && 'border-b-0',
+          'group/bar focus-inset flex w-full justify-start rounded-none border-0 bg-transparent px-2 text-sm duration-300 ease-in-out hover:bg-transparent dark:hover:bg-transparent',
+          // The bar overlaps the wrapper's line, so bar and line together stay the h-9 the list's insets are laid out for
+          isTop ? '-mb-px' : '-mt-px',
+          isIced ? 'hover:text-sky-900 dark:hover:text-sky-200' : 'hover:text-green-900 dark:hover:text-green-200',
         )}
       >
-        <span className="min-w-8 text-center">{count}</span>
-        <span className={cn('ml-1.5 flex gap-1', hintFadeOut)}>
-          <span>{t(`c:${type}`).toLowerCase()}</span>
-          {!isIced && (
-            <>
-              <span>{t('c:since')}</span>
-              <span>{dateMini(dayjs().subtract(boardAcceptedCutOffDays, 'day').toISOString())}</span>
-            </>
-          )}
-          <ChevronDownIcon data-rotate={isExpanded} className="absolute right-4.5 transition-transform data-[rotate=true]:rotate-180" />
+        <span className="group-active/bar:press relative flex w-full items-center gap-1">
+          <span className="min-w-8 text-center">{count}</span>
+          <span className={cn('ml-1.5 flex gap-1', hintFadeOut)}>
+            <span>{t(`c:${statusOptionsByValue[isTop ? TaskStatus.Accepted : TaskStatus.Iced].name}`).toLowerCase()}</span>
+            {!isIced && (
+              <>
+                <span>{t('c:since')}</span>
+                <span>{dateMini(dayjs().subtract(boardAcceptedCutOffDays, 'day').toISOString())}</span>
+              </>
+            )}
+            <ChevronDownIcon data-rotate={isExpanded} className="absolute right-2.5 transition-transform data-[rotate=true]:rotate-180" />
+          </span>
         </span>
       </Button>
       {hasOnlyOlderAccepted && (
         <Collapsible open={isTile}>
           <CollapsibleContent className={collapsiblePanelClass}>
             {/* The left padding lines the note up with the bar's label: its padding, the count's min-w-8, the gap and ml-1.5 */}
-            <p
-              className={cn(
-                'pointer-events-auto pt-1 pr-4 pb-4 pl-12.5 text-sm',
-                statusSectionColors.accepted.tileBody,
-                colors.text,
-                colors.border.top,
-                hintFadeOut,
-              )}
-            >
+            <p className={cn('pt-1 pr-4 pb-4 pl-12.5 text-sm', hintFadeOut)}>
               <OlderAcceptedText i18nKey="c:older_accepted_table_only" count={counts.acceptedCutOff} />
             </p>
           </CollapsibleContent>
