@@ -1,12 +1,12 @@
 import { Suspense } from 'react';
 import { FocusViewContainer } from '~/modules/common/focus-view';
 import { Spinner } from '~/modules/common/spinner';
+import { Board } from '~/modules/task/board/lazy-board';
 import { WorkspaceBoardSkeleton } from '~/modules/task/board/workspace-board-skeleton';
 import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const WorkspacePage = lazyNamed(() => import('~/modules/workspace/workspace-page'), 'WorkspacePage');
-const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
 const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
 
 export function WorkspaceRouteComponent() {

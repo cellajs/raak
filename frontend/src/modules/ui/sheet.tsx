@@ -73,7 +73,7 @@ export function SheetContent({
       )}
       {...props}
     >
-      <ScrollArea className="size-full" viewportClassName="touch-pan-y" autoScrollOnDrag={autoScrollOnDrag}>
+      <ScrollArea className="size-full" viewportClassName="touch-pan-y overscroll-contain" autoScrollOnDrag={autoScrollOnDrag}>
         {children}
       </ScrollArea>
     </SheetPrimitive.Popup>

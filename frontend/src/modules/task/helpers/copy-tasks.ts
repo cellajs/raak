@@ -18,7 +18,7 @@ const taskToBlocks = (task: Task): (typeof customSchema.PartialBlock)[] => {
   const meta = [
     productRef(task.number),
     task.primaryLabel?.name,
-    i18n.t(`c:${statusOptionsByValue[task.status].status}`),
+    i18n.t(`c:${statusOptionsByValue[task.status].name}`),
     findInCache<EnrichedProject>('project', task.projectId)?.name,
     taskShareLink(task),
   ];

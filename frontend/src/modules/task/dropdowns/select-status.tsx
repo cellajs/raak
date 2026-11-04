@@ -33,7 +33,8 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
       inline
       openOnInputClick={false}
       items={statusOptions}
-      itemToStringLabel={(item) => t(`c:${item.status}`)}
+      // The rows name the step; a search also finds the state it leads to
+      itemToStringLabel={(item) => (item.verb === item.name ? t(`c:${item.name}`) : `${t(`c:${item.verb}`)} ${t(`c:${item.name}`)}`)}
       itemToStringValue={(item) => item.status}
       value={selectedStatus}
       onValueChange={(item) => {
@@ -64,7 +65,7 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
             return (
               <ComboboxItem key={status.value} value={status} className={comboboxRowClass}>
                 <status.icon />
-                <div className="grow">{t(`c:${status.status}`)}</div>
+                <div className="grow">{t(`c:${status.verb}`)}</div>
                 <ComboboxItemIndicator className="text-success" />
                 <HotkeyIndexBadge index={searchValue ? undefined : index} />
               </ComboboxItem>

@@ -22,7 +22,7 @@ export function ProjectTabNav({ projects }: ProjectTabNavProps) {
       label: project.name as TKey,
       icon: project.public ? <GlobeIcon role="img" aria-label={t('c:public_project')} className="size-4 shrink-0" /> : undefined,
       path: '/$tenantId/$organizationSlug/workspace/$slug',
-      search: { projectSlug: project.slug },
+      search: (prev) => ({ ...prev, projectSlug: project.slug }),
       activeOptions: { exact: false, includeSearch: true },
     }),
   );

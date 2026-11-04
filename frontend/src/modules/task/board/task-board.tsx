@@ -5,8 +5,6 @@ import { type CSSProperties, useEffect, useLayoutEffect } from 'react';
 import type { Workspace } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useMeasure } from '~/hooks/use-measure';
-import { usePreloadLazyComponents } from '~/hooks/use-preload-lazy-components';
-import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { SearchScope } from '~/modules/common/match-highlight/match-scope';
@@ -21,6 +19,7 @@ import { ProjectBoard } from '~/modules/task/board/project-board';
 import { UnseenTasksSnapshot } from '~/modules/task/board/unseen-tasks-snapshot';
 import { WorkspaceBoard } from '~/modules/task/board/workspace-board';
 import { WorkspaceBoardSkeleton } from '~/modules/task/board/workspace-board-skeleton';
+import { TaskGuestAlert } from '~/modules/task/task-guest-alert';
 import { ProjectArchivedBanner } from '~/modules/workspace/project-archived-banner';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
@@ -56,9 +55,6 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
   const setActiveBoard = useBoardStore((state) => state.setActiveBoard);
   const q = useSearch({ strict: false, select: (search) => search.q });
 
-  // Preload BlockNoteFullHtml so expanding a task card doesn't show a spinner
-  usePreloadLazyComponents([BlockNoteFullHtml]);
-
   const { data: fetchedData, isPending } = useInfiniteQuery({
     ...projectsListQueryOptions({ workspaceId: workspace?.id, include: 'counts', excludeArchived: 'true' }),
     enabled: !projectsProp,
@@ -83,8 +79,9 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
         <BoardHeader boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />
         {pageProject && (
           // Its padding stands in for the page's gap, cancelled by the margin, so the measured height holds the space the banner takes from the board
-          <div ref={bannerRef} className="empty:hidden max-sm:px-2 max-sm:pb-2 sm:-mb-2 sm:pb-2 md:-mb-3 md:pb-3">
+          <div ref={bannerRef} className="flex flex-col gap-2 empty:hidden max-sm:px-2 max-sm:pb-2 sm:-mb-2 sm:pb-2 md:-mb-3 md:pb-3">
             <ProjectArchivedBanner key={pageProject.id} project={pageProject} />
+            <TaskGuestAlert projectId={pageProject.id} />
           </div>
         )}
         {/* The offsets are computed where the class is, so this level picks up the banner's height */}

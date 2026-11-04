@@ -6,10 +6,10 @@ import { EntityViewToggle } from '~/modules/entities/entity-grid/entity-view-tog
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { projectQueryOptions } from '~/modules/project/query';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
+import { Board } from '~/modules/task/board/lazy-board';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const ProjectPage = lazyNamed(() => import('~/modules/project/project-page'), 'ProjectPage');
-const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
 const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
 const ProjectsTable = lazyNamed(() => import('~/modules/project/table/projects-table'), 'ProjectsTable');
 const ProjectsGrid = lazyNamed(() => import('~/modules/project/projects-grid'), 'ProjectsGrid');

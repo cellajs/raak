@@ -1,4 +1,4 @@
-import { PalmtreeIcon, SearchIcon } from 'lucide-react';
+import { PalmtreeIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
@@ -27,7 +27,6 @@ export function TaskPanelEmpty({ project }: TaskPanelEmptyProps) {
 
       <ContentPlaceholder
         className="group-data-[search=false]/panel:hidden"
-        icon={SearchIcon}
         title="c:no_resource_found"
         titleOptions={{ resource: t('c:task_other') }}
       />

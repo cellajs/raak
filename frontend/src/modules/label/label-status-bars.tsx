@@ -13,12 +13,12 @@ import { formatCount } from '~/utils/format-count';
 
 // The fills of the status icons. Their started and backlog icons draw in the text color, so those two get slate steps that stay apart.
 const statusBarClass: Record<TaskStatus, string> = {
-  [TaskStatus.Accepted]: 'bg-[#16A34A]',
-  [TaskStatus.Reviewed]: 'bg-[#f97316]',
-  [TaskStatus.Finished]: 'bg-[#97C022]',
+  [TaskStatus.Accepted]: 'bg-[#16a34a] dark:bg-[#22c55e]',
+  [TaskStatus.Reviewed]: 'bg-[#ea580c] dark:bg-[#f97316]',
+  [TaskStatus.Finished]: 'bg-[#ca8a04] dark:bg-[#eab308]',
   [TaskStatus.Started]: 'bg-slate-500 dark:bg-slate-400',
   [TaskStatus.Unstarted]: 'bg-slate-300 dark:bg-slate-600',
-  [TaskStatus.Iced]: 'bg-[#1398E9]',
+  [TaskStatus.Iced]: 'bg-[#0284c7] dark:bg-[#0ea5e9]',
 };
 
 const boardStatusOrder = [...statusOptions].reverse();
@@ -66,7 +66,7 @@ export function LabelStatusBars({ row, showProjects }: LabelStatusBarsProps) {
               type="button"
               aria-expanded={isOpen}
               onClick={() => setOpenProjectId(isOpen ? null : projectId)}
-              className="group-[:not(:hover,:focus-within)]/label-tile:resting-avatar flex h-7 w-full items-center gap-2 rounded-sm outline-0 focus-visible:ring-2 focus-visible:ring-ring max-sm:h-11"
+              className="pointer-fine:group-[:not(:hover,:focus-within)]/label-tile:resting-avatar pointer-coarse:group-[:not(:focus-visible,:has(:focus-visible))]/label-tile:resting-avatar flex h-7 w-full items-center gap-2 rounded-sm outline-0 focus-visible:ring-2 focus-visible:ring-ring max-sm:h-11"
             >
               {project ? (
                 <EntityAvatar type="project" id={project.id} name={project.name} url={project.thumbnailUrl} className="size-5 shrink-0" />
@@ -81,10 +81,10 @@ export function LabelStatusBars({ row, showProjects }: LabelStatusBarsProps) {
                   className="absolute inset-0 flex items-center"
                 >
                   <span className="flex h-full items-center gap-px" style={{ width: `${(total / biggest) * 100}%` }}>
-                    {statuses.map(({ value, status, count }, index) => (
+                    {statuses.map(({ value, name, count }, index) => (
                       <TooltipButton
                         key={value}
-                        toolTipContent={`${project ? `${project.name}: ` : ''}${t(`c:${status}`)} ${formatCount(count)}`}
+                        toolTipContent={`${project ? `${project.name}: ` : ''}${t(`c:${name}`)} ${formatCount(count)}`}
                         side="top"
                         sideOffset={0}
                       >
@@ -122,10 +122,10 @@ export function LabelStatusBars({ row, showProjects }: LabelStatusBarsProps) {
               {isOpen && (
                 <motion.div key="counts" {...labelTileReveal}>
                   <ul className="grid grid-cols-2 gap-x-6 gap-y-1 pt-0.5 pb-2 text-xs tabular-nums">
-                    {statuses.map(({ value, status, icon: Icon, count }) => (
+                    {statuses.map(({ value, name, icon: Icon, count }) => (
                       <li key={value} className="flex items-center gap-1.5">
                         <Icon className="size-3.5 shrink-0" />
-                        <span className="grow truncate text-muted-foreground">{t(`c:${status}`)}</span>
+                        <span className="grow truncate text-muted-foreground">{t(`c:${name}`)}</span>
                         {formatCount(count)}
                       </li>
                     ))}

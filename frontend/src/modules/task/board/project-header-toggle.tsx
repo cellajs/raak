@@ -2,7 +2,7 @@ import { PanelTopCloseIcon, PanelTopOpenIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
-import { PublicBadge } from '~/modules/project/public-project-indicators';
+import { PublicBadge } from '~/modules/project/public-badge';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useProjectHeaderShown, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { Button } from '~/modules/ui/button';

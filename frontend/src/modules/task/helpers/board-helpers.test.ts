@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ProjectWithMembership } from '~/modules/project/types';
 import {
+  countTasksByStatus,
   foldsStatus,
   formatStatusesLabel,
   normalizePanelWidths,
@@ -12,7 +13,7 @@ import {
   statusTabLists,
 } from '~/modules/task/helpers/board-helpers';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import type { ProjectResizablePanel } from '~/modules/task/types';
+import type { ProjectResizablePanel, Task } from '~/modules/task/types';
 
 vi.mock('i18next', () => ({
   default: { t: (key: string, values?: Record<string, string>) => (values ? Object.values(values).join(` ${key} `) : key.replace('c:', '')) },
@@ -105,6 +106,19 @@ describe('prepareBoardPanels without the rest panel', () => {
   });
 });
 
+describe('countTasksByStatus', () => {
+  const items = (...tasks: Partial<Task>[]) => ({ items: tasks as Task[] });
+
+  it('counts each status with tasks and leaves the others out', () => {
+    const counts = countTasksByStatus(items({ status: TaskStatus.Started }, { status: TaskStatus.Started }, { status: TaskStatus.Accepted }));
+    expect(counts).toEqual({ [TaskStatus.Started]: 2, [TaskStatus.Accepted]: 1 });
+  });
+
+  it('leaves out the create-form draft', () => {
+    expect(countTasksByStatus(items({ status: TaskStatus.Unstarted, _draft: true }))).toEqual({});
+  });
+});
+
 describe('publicBoardPanels', () => {
   const tasks = (...statuses: TaskStatus[]) => statuses.map((status) => ({ status }));
 
@@ -151,7 +165,7 @@ describe('formatStatusesLabel', () => {
   it('names one status, a pair and more', () => {
     expect(formatStatusesLabel([TaskStatus.Iced])).toBe('iced');
     expect(formatStatusesLabel([TaskStatus.Unstarted, TaskStatus.Iced])).toBe('unstarted c:status_pair iced');
-    expect(formatStatusesLabel([TaskStatus.Finished, TaskStatus.Reviewed, TaskStatus.Accepted])).toBe('finished c:status_range accepted');
+    expect(formatStatusesLabel([TaskStatus.Finished, TaskStatus.Reviewed, TaskStatus.Accepted])).toBe('delivered c:status_range done');
   });
 });
 

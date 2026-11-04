@@ -10242,6 +10242,15 @@
           },
           {
             "schema": {
+              "type": "string",
+              "maxLength": 1000000
+            },
+            "required": false,
+            "name": "assigned",
+            "in": "query"
+          },
+          {
+            "schema": {
               "type": "number",
               "exclusiveMinimum": 0
             },
@@ -21152,6 +21161,15 @@
             },
             "required": false,
             "name": "labels",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 1000000
+            },
+            "required": false,
+            "name": "assigned",
             "in": "query"
           },
           {

@@ -11,8 +11,8 @@ import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } f
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useWithMembership } from '~/modules/project/use-with-membership';
+import { useTabProject } from '~/modules/task/board/board-hooks';
 import { DrawerDisplayOptions } from '~/modules/task/board/display-options';
-import { sortByMembership } from '~/modules/task/helpers/board-helpers';
 import { Button } from '~/modules/ui/button';
 import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 import { openWorkspaceSettingsSheet } from '~/modules/workspace/workspace-settings';
@@ -25,17 +25,16 @@ export function WorkspaceActionButtons() {
 
   const { workspace, organization, tenantId } = useWorkspaceContext();
 
-  // The board's list: an archived project has no tab, so the fallback below must name the first tab
+  // The board's list: an archived project has no tab, so the fallback must name the first tab
   const { data: projectsData } = useSuspenseInfiniteQuery(
     projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }),
   );
-  const projects = sortByMembership(useWithMembership(flattenInfiniteData<EnrichedProject>(projectsData)));
-  const projectSlug = workspaceRouteApi.useSearch({ select: (search) => search.projectSlug });
+  const tabProject = useTabProject(useWithMembership(flattenInfiniteData<EnrichedProject>(projectsData)));
   const searchQuery = workspaceRouteApi.useSearch({ select: (search) => search.q });
   const view = workspaceRouteApi.useSearch({ select: (search) => search.view });
 
   // The table lists every project, with no tab to say which one the menu's project actions would hit
-  const project = view === 'table' ? undefined : projects.find((candidate) => candidate.slug === projectSlug) || projects[0];
+  const project = view === 'table' ? undefined : tabProject;
   const projectMembership = project?.membership;
 
   const refs = { add: useRef<HTMLButtonElement>(null), workspace: useRef<HTMLButtonElement>(null) };

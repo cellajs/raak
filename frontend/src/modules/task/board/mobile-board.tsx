@@ -2,21 +2,16 @@ import { useSearch } from '@tanstack/react-router';
 import { Suspense, useEffect, useRef } from 'react';
 import { ScrollReset } from '~/modules/common/scroll-reset';
 import type { EnrichedProject, ProjectWithMembership } from '~/modules/project/types';
-import { useStatusTabList } from '~/modules/task/board/board-hooks';
+import { useStatusTabList, useTabProject } from '~/modules/task/board/board-hooks';
 import { MobilePanelSkeleton } from '~/modules/task/board/board-skeleton';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
 import { StatusTabNav } from '~/modules/task/board/status-tab-nav';
-import { sortByMembership } from '~/modules/task/helpers/board-helpers';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 
 /** A phone's workspace board: one project at a time, under its project tabs. */
 export function MobileWorkspaceBoard({ projects }: { projects: ProjectWithMembership[] }) {
-  const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
-
-  const sorted = sortByMembership(projects);
-
-  const currentProject = sorted.find((project) => project.slug === projectSlug) || sorted[0];
+  const currentProject = useTabProject(projects);
 
   // A phone shows one project: a selection in another is out of view, yet it would disable this tab's checkboxes and take the bar's actions
   useEffect(() => {
@@ -55,7 +50,7 @@ export function MobileProjectBoard({ project, publicView }: MobileProjectBoardPr
 
   return (
     <ScrollReset>
-      <StatusTabNav />
+      <StatusTabNav project={project} publicView={publicView} />
       <Suspense fallback={<MobilePanelSkeleton />}>
         {/* Keyed: virtua keeps measured heights by index, and they are another list's on the next tab */}
         <ProjectBoardPanel key={statuses?.[0] ?? 'all'} project={project} publicView={publicView} statuses={statuses} />

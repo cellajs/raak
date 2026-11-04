@@ -9,7 +9,7 @@ import { PageHeader } from '~/modules/common/page/header';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useCan } from '~/modules/entities/use-can';
 import { myMembershipsQueryOptions } from '~/modules/me/query';
-import { PublicBadge, PublicProjectLabel } from '~/modules/project/public-project-indicators';
+import { PublicBadge } from '~/modules/project/public-badge';
 import { useProjectUpdateMutation } from '~/modules/project/query';
 import { ProjectReadOnlyBadge } from '~/modules/project/read-only-badge';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -63,8 +63,7 @@ export function ProjectPage({ project, organization, children }: ProjectPageProp
             organizationId={project.organizationId}
             parents={[organization]}
             onCoverUpdate={onCoverUpdate}
-            avatarBadge={project.public && <PublicBadge large />}
-            typeLabel={project.public ? <PublicProjectLabel editableProject={canUpdate ? project : undefined} /> : undefined}
+            avatarBadge={project.public && <PublicBadge size="lg" />}
             panel={
               membership && (
                 <Suspense>

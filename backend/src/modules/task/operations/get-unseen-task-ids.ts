@@ -1,10 +1,11 @@
-import { and, desc, eq, gt, isNull, type SQL, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, notInArray, type SQL, sql } from 'drizzle-orm';
 import type { UserContext } from '#/core/context';
 import { tenantRead } from '#/db/tenant-context';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { seenByTable } from '#/modules/seen/seen-by-db';
 import { seenWindowStart } from '#/modules/seen/seen-queries';
 import { tasksTable } from '#/modules/task/task-db';
+import { TaskStatus } from '#/modules/task/task-properties';
 import { accessFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
@@ -14,7 +15,8 @@ const unseenTaskIdsLimit = 200;
 
 /**
  * The newest tasks that are new to the user, for the board's unseen mark. The filters mirror `findUnseenCountsByUser`,
- * plus a floor at the user's join date: a new member is not shown the project's whole past as news.
+ * plus a floor at the user's join date: a new member is not shown the project's whole past as news. Tasks no card marks
+ * (the user's own, accepted, iced) are left out too, or they would fill the limit.
  */
 export async function getUnseenTaskIdsOp(ctx: UserContext) {
   const user = ctx.var.user;
@@ -41,6 +43,8 @@ export async function getUnseenTaskIdsOp(ctx: UserContext) {
           gt(tasksTable.createdAt, floor),
           sql`NOT EXISTS (SELECT 1 FROM ${seenByTable} WHERE ${seenByTable.userId} = ${user.id} AND ${seenByTable.productId} = ${tasksTable.id})`,
           isNull(tasksTable.deletedAt),
+          notInArray(tasksTable.status, [TaskStatus.Accepted, TaskStatus.Iced]),
+          sql`${tasksTable.createdBy} IS DISTINCT FROM ${user.id}`,
           scopeWhere.kind === 'where' ? scopeWhere.where : undefined,
         ),
       )

@@ -192,7 +192,7 @@ export const useColumns = (opts: {
         return (
           <>
             <status.icon className="mr-2 size-4 shrink-0" aria-hidden="true" />
-            <span>{t(`c:${status.status}`)}</span>
+            <span>{t(`c:${status.name}`)}</span>
           </>
         );
       },

@@ -47,8 +47,8 @@ const countBoardLabelUsage = (tasks: Task[], search: ParsedBoardSearch): LabelUs
   const isAcceptedAsked = search.statuses.includes('accepted');
   for (const task of tasks) {
     if (isDraftTask(task) || (task.status === TaskStatus.Accepted && !isAcceptedAsked)) continue;
-    const { words, status, type } = boardSearchParts(search, task);
-    if (!words || !status || !type) continue;
+    const { words, status, type, assigned } = boardSearchParts(search, task);
+    if (!words || !status || !type || !assigned) continue;
     for (const label of task.labels) usage[label.id] = (usage[label.id] ?? 0) + 1;
   }
   return usage;
