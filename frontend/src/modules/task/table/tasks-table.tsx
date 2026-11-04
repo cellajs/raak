@@ -127,7 +127,6 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
               rowKeyGetter: rowKeyById,
               columns,
               enableVirtualization: true,
-              enableStickyHeader: true,
               limit: tableLimit,
               error,
               isLoading,

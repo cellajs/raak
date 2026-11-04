@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 /**
  * Starts a lazy component's import without rendering it; settles once it renders without suspending. A failed import
  * settles too: rendering the component then throws to its error boundary as usual.
+ * @public
  */
 // biome-ignore lint/suspicious/noExplicitAny: Any component can be preloaded
 export async function preloadLazyComponent(lazyComponent: LazyExoticComponent<ComponentType<any>>): Promise<void> {

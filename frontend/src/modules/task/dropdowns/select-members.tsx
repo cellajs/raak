@@ -30,6 +30,8 @@ import { isTouchInteraction } from '~/utils/input-modality';
 const initialMembersCount = 6;
 
 export function SelectMembers({ value: currentAssigned, projectId, onChange, taskId, triggerWidth = 320 }: SelectMembersProps) {
+  // Reads and writes a ref during render to freeze the first member list at mount.
+  'use no memo';
   const { t } = useTranslation();
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const inDrawer = useInDropdownerDrawer();

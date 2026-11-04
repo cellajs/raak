@@ -72,6 +72,8 @@ export function CreateTaskForm({
   onStatusChange,
   initialStatus,
 }: CreateTaskFormProps) {
+  // Reads refs during render: form.handleSubmit(handleFormSubmit) is built in render and the submit handler reads pendingCloseRef.
+  'use no memo';
   const { t } = useTranslation();
   const overlay = useOverlayClose();
   const user = useCurrentUser();

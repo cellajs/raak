@@ -5,10 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/generate-sdk.ts --watch",
-    "generate:sdk": "tsx src/generate-sdk.ts",
     "ts": "cd .. && tsgo -p sdk/tsconfig.json --pretty",
     "tsperf": "rm -rf tsconfig.tsbuildinfo && tsgo --noEmit --extendedDiagnostics",
-    "watch": "tsx src/generate-sdk.ts --watch"
+    "generate:sdk": "tsx src/generate-sdk.ts"
   },
   "exports": {
     ".": "./gen/index.ts",

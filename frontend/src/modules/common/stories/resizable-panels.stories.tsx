@@ -23,7 +23,12 @@ interface BoardState {
 }
 
 const specId = (spec: PanelSpec) => (typeof spec === 'string' ? spec : spec.id);
-const settle = () => new Promise((resolve) => setTimeout(resolve, 100));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+// A toggle glides (T6): its widths and its collapse report land once the group drops `data-gliding`
+const settle = async () => {
+  await wait(100);
+  while (document.querySelector('[data-gliding]')) await wait(50);
+};
 
 class Board {
   saves: Layout[] = [];
@@ -32,7 +37,6 @@ class Board {
   api?: PanelGroupApi;
   canvas?: HTMLElement;
   update?: (next: Partial<BoardState>) => void;
-  private lastPress = 0;
 
   constructor(readonly initial: BoardState) {}
 
@@ -89,11 +93,7 @@ class Board {
     await settle();
   }
 
-  async pointerDown(index = 0, button = 0) {
-    // Two presses within 300ms are a double press (T5)
-    const sincePress = Date.now() - this.lastPress;
-    if (sincePress < 310) await new Promise((resolve) => setTimeout(resolve, 310 - sincePress));
-    this.lastPress = Date.now();
+  pointerDown(index = 0, button = 0) {
     this.separator(index).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 1000, clientY: 50, pointerId: 1, button }));
   }
 
@@ -107,15 +107,8 @@ class Board {
   }
 
   async drag(dx: number, index = 0) {
-    await this.pointerDown(index);
+    this.pointerDown(index);
     this.pointerMove(dx);
-    await this.pointerUp();
-  }
-
-  async doublePress(index = 0) {
-    await this.pointerDown(index);
-    await this.pointerUp();
-    this.separator(index).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 1000, clientY: 50, pointerId: 1, button: 0 }));
     await this.pointerUp();
   }
 
@@ -164,7 +157,7 @@ function PanelBoard({ board }: { board: Board }) {
   return (
     <div data-frame style={{ width, height: 200 }} className={parent === 'clip' ? 'overflow-x-clip' : undefined}>
       {parent === 'scroll' ? (
-        <ScrollArea className="h-[200px]" viewportClassName="overflow-y-hidden! overscroll-contain" horizontalScroll>
+        <ScrollArea className="h-[200px]" viewportClassName="overflow-y-hidden! overscroll-x-contain overscroll-y-auto" horizontalScroll>
           {group}
         </ScrollArea>
       ) : (
@@ -268,7 +261,7 @@ export const NewGroupIdRereadsLayout = scenario({ width: 1200, panels: ['a', 'b'
 });
 
 export const PanelChangeAbortsDrag = scenario({ width: 1200, panels: ['a', 'b'], layout: { ...wide, c: 300 } }, async (board) => {
-  await board.pointerDown();
+  board.pointerDown();
   board.pointerMove(-100);
   await expect(board.widths()).toEqual({ a: 500, b: 693 });
   await board.set({ panels: ['a', 'b', 'c'] });
@@ -324,7 +317,7 @@ export const RefitHasNoMemory = scenario({ width: 1600, panels: ['a', 'b'], layo
 });
 
 export const ResizeDuringDragWaitsForDrop = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
-  await board.pointerDown();
+  board.pointerDown();
   board.pointerMove(-50);
   await board.set({ width: 1000 });
   await expect(board.widths()).toEqual({ a: 550, b: 643 });
@@ -364,17 +357,12 @@ export const AllClosedIsAllowed = scenario({ width: 1200, panels: ['a', 'b'], la
   await expect(board.widths()).toEqual({ a: 50, b: 1143 });
 });
 
-export const EnterAndDoublePressToggleLeftPanel = scenario(
-  { width: 1200, panels: ['a', 'b', 'c'], layout: { a: 400, b: 400, c: 386.72 } },
-  async (board) => {
-    await board.press('Enter');
-    await expect(board.widths()).toEqual({ a: 50, b: 578, c: 559 });
-    await board.press('Enter');
-    await expect(board.widths().a).toBeGreaterThan(50);
-    await board.doublePress();
-    await expect(board.widths().a).toBe(50);
-  },
-);
+export const EnterTogglesLeftPanel = scenario({ width: 1200, panels: ['a', 'b', 'c'], layout: { a: 400, b: 400, c: 386.72 } }, async (board) => {
+  await board.press('Enter');
+  await expect(board.widths()).toEqual({ a: 50, b: 578, c: 559 });
+  await board.press('Enter');
+  await expect(board.widths().a).toBeGreaterThan(50);
+});
 
 export const PressWithoutMovingSaves = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
   await board.drag(0);
@@ -383,7 +371,7 @@ export const PressWithoutMovingSaves = scenario({ width: 1200, panels: ['a', 'b'
 });
 
 export const DragReleasedInTheZoneStaysAtMin = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
-  await board.pointerDown();
+  board.pointerDown();
   board.pointerMove(450);
   await expect(board.widths()).toEqual({ a: 1143, b: 50 });
   board.pointerMove(200);
@@ -395,7 +383,7 @@ export const DragReleasedInTheZoneStaysAtMin = scenario({ width: 1200, panels: [
 });
 
 export const DragOpensWithoutFundingThenOverflows = scenario({ width: 500, panels: ['a', 'b'], layout: { a: 443.36, b: 50 } }, async (board) => {
-  await board.pointerDown();
+  board.pointerDown();
   board.pointerMove(-260);
   await expect(board.widths()).toEqual({ a: 300, b: 300 });
   await expect(board.over()).toBe(107);
@@ -456,7 +444,7 @@ export const ArrowGrowerIsUncappedInOverflow = scenario(
 );
 
 export const CancelledPointerAbortsDrag = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
-  await board.pointerDown();
+  board.pointerDown();
   board.pointerMove(-20);
   board.cancelPointer();
   board.pointerMove(-120);
@@ -466,7 +454,7 @@ export const CancelledPointerAbortsDrag = scenario({ width: 1200, panels: ['a', 
 });
 
 export const OtherPointerIsIgnored = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
-  await board.pointerDown();
+  board.pointerDown();
   board.pointerMove(-100, 2);
   await expect(board.widths()).toEqual({ a: 600, b: 593 });
   board.pointerMove(-50);
@@ -475,7 +463,7 @@ export const OtherPointerIsIgnored = scenario({ width: 1200, panels: ['a', 'b'],
 });
 
 export const SecondaryButtonIsIgnored = scenario({ width: 1200, panels: ['a', 'b'], layout: wide }, async (board) => {
-  await board.pointerDown(0, 2);
+  board.pointerDown(0, 2);
   board.pointerMove(-100);
   await expect(board.widths()).toEqual({ a: 600, b: 593 });
   await board.pointerUp();
@@ -596,7 +584,7 @@ export const FitOneStaysOpen = scenario({ ...fitting, width: 1000, panels: ['a',
 });
 
 export const FitDragHoldsThenSwaps = scenario({ ...fitting, width: 500, panels: ['a', 'b'], layout: { a: 443.36, b: 50 } }, async (board) => {
-  await board.pointerDown();
+  board.pointerDown();
   board.pointerMove(-200);
   await expect(board.widths()).toEqual({ a: 443, b: 50 });
   board.pointerMove(-400);
@@ -633,7 +621,7 @@ const roomy = { a: 375, b: 375, c: 375 };
 
 export const EndDragToTheLineFits = scenario({ width: 1000, panels: ['a', 'b', 'c'], layout: roomy, end: true }, async (board) => {
   await expect(board.minWidth()).toBe('1145px');
-  await board.pointerDown(2);
+  board.pointerDown(2);
   board.pointerMove(-60);
   await expect(board.fitLine()).toBe('dashed');
   await expect(board.widths()).toEqual({ a: 375, b: 375, c: 315 });

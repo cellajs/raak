@@ -1,0 +1,158 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "49498b72-7112-41ec-afa8-fbaf962f6acd",
+  "prevIds": [
+    "0a969c5a-4591-4e6b-9caf-5c92435014e5"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "sessions"
+      ],
+      "writes": [
+        "s|fk|public.sessions.sessions_impersonator_session_id_sessions_id_fkey",
+        "n|fk|public.sessions.sessions_impersonator_session_id_sessions_id_fkey",
+        "e|fk|public.sessions.sessions_impersonator_session_id_sessions_id_fkey",
+        "n|con|public.sessions.sessions_impersonator_session_id_sessions_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.sessions",
+        "n|sch|public",
+        "e|col|public.sessions.impersonator_session_id"
+      ]
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "sessions",
+        "sessions_impersonator_session_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.sessions_impersonator_session_id_idx",
+        "n|idx|public.sessions_impersonator_session_id_idx",
+        "e|idx|public.sessions_impersonator_session_id_idx",
+        "n|rel|public.sessions_impersonator_session_id_idx"
+      ],
+      "reads": [
+        "e|tbl|public.sessions",
+        "n|sch|public",
+        "e|col|public.sessions.impersonator_session_id"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "sessions",
+        "impersonator_session_id"
+      ],
+      "writes": [
+        "s|col|public.sessions.impersonator_session_id",
+        "n|col|public.sessions.impersonator_session_id",
+        "e|col|public.sessions.impersonator_session_id"
+      ],
+      "reads": [
+        "n|tbl|public.sessions",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "yjs_documents",
+        "organization_id"
+      ],
+      "writes": [
+        "s|colprop|public.yjs_documents.organization_id.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.yjs_documents",
+        "n|sch|public",
+        "n|col|public.yjs_documents.organization_id"
+      ],
+      "sqlHash": "e25a196491ccdef2"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "push_subscriptions",
+        "last_seen_at"
+      ],
+      "writes": [
+        "s|colprop|public.push_subscriptions.last_seen_at.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.push_subscriptions",
+        "n|sch|public",
+        "n|col|public.push_subscriptions.last_seen_at"
+      ],
+      "sqlHash": "30e0f9a884db06bc"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "yjs_updates",
+        "organization_id"
+      ],
+      "writes": [
+        "s|colprop|public.yjs_updates.organization_id.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.yjs_updates",
+        "n|sch|public",
+        "n|col|public.yjs_updates.organization_id"
+      ],
+      "sqlHash": "61910a404e6e8136"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"sessions\",\"impersonator_session_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"sessions_impersonator_session_id_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"sessions\",\"sessions_impersonator_session_id_sessions_id_fkey\"]"
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"yjs_documents\",\"organization_id\"]",
+      "set": {
+        "notNull": true
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"push_subscriptions\",\"last_seen_at\"]",
+      "set": {
+        "notNull": true
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"yjs_updates\",\"organization_id\"]",
+      "set": {
+        "notNull": true
+      }
+    }
+  ]
+}

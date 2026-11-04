@@ -16,6 +16,8 @@ import type { DropTarget, PanelDraggableData, Task, TaskDraggableData } from '~/
 
 /** Registers the global monitor that commits task drops; mount once per page that renders a task board. */
 export const useTaskDropMonitor = (tenantId: string, organizationId: string) => {
+  // Compiler gap: a conditional and optional chains inside the drop handler's try/catch.
+  'use no memo';
   const { t } = useTranslation();
 
   const { mutate: updateTaskMutation } = useTaskUpdateMutation(tenantId, organizationId);

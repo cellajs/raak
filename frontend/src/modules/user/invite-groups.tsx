@@ -1,4 +1,5 @@
 import { BanIcon, CircleAlertIcon, MailIcon, RotateCcwIcon, XIcon } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { lowercaseLabel } from 'shared/utils/i18n-text';
@@ -9,7 +10,8 @@ import type { IconComponent } from '~/modules/common/icons/types';
 import { Accordion } from '~/modules/ui/accordion';
 import { Button } from '~/modules/ui/button';
 import { Chip } from '~/modules/ui/chip';
-import { Input } from '~/modules/ui/input';
+import { Input, skipPasswordManagers } from '~/modules/ui/input';
+import type { InviteRole } from '~/modules/user/invite-submit';
 import type { InviteCheck, InviteGroupKey } from '~/modules/user/use-invite-check';
 import type { InviteList, InvitePerson } from '~/modules/user/use-invite-list';
 import { cn } from '~/utils/cn';
@@ -41,7 +43,10 @@ interface InviteFieldLineProps {
   check: InviteCheck;
 }
 
-/** One line under a field, saying what just happened to what was in it. Stays mounted, so a change is announced. */
+/**
+ * The line under a field, shown only for text that is no address. What happened to an address is spoken only: its tile
+ * rolls its count and its dot pulses. Stays mounted, so a change is announced.
+ */
 export function InviteFieldLine({ list, check }: InviteFieldLineProps) {
   const { t } = useTranslation();
   const { last, typedInvalid, people } = list;
@@ -61,23 +66,14 @@ export function InviteFieldLine({ list, check }: InviteFieldLineProps) {
     }
     if (last?.repeat) return t('c:invite_already_listed', { address: last.address });
     if (listed) {
-      const { tone, word, note, checking } = check.viewOf(listed);
-      return (
-        <>
-          <StatusDot tone={tone} checking={checking} />
-          <span className="min-w-0 break-all">
-            <span className={cn('font-medium', tileTones[tone].text)}>{word}</span>
-            {` · ${people.get(listed)?.name ?? listed}`}
-            {note && ` · ${note}`}
-          </span>
-        </>
-      );
+      const { word, note } = check.viewOf(listed);
+      return [word, people.get(listed)?.name ?? listed, note].filter(Boolean).join(' · ');
     }
     return null;
   };
 
   return (
-    <div role="status" className="flex items-baseline gap-1.5 text-muted-foreground text-sm">
+    <div role="status" className={cn('flex items-baseline gap-1.5 text-muted-foreground text-sm', !typedInvalid && 'sr-only')}>
       {content()}
     </div>
   );
@@ -100,6 +96,7 @@ function EditableAddress({ value, onFix }: EditableAddressProps) {
       inputMode="email"
       autoCapitalize="none"
       spellCheck={false}
+      {...skipPasswordManagers}
       className="focus-inset h-8 px-2"
       onChange={({ target }) => setText(target.value)}
       onBlur={() => onFix(text)}
@@ -120,14 +117,36 @@ interface InviteChipProps {
   onRemove: () => void;
 }
 
-/** An address as a plain chip. A long one wraps its fact under it and is never cut. */
+/**
+ * An address as a plain chip. A long one wraps its fact under it and is never cut. A person's chip shows their address
+ * while the mouse is on it and after a press, at the width of the longer of the two, so the row never moves.
+ */
 function InviteChip({ address, person, fact, onRemove }: InviteChipProps) {
   const { t } = useTranslation();
+  const [pinned, setPinned] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  // A press shows its own result until the pointer leaves, past the hover's preview
+  const [pressed, setPressed] = useState(false);
+  const showsAddress = pinned || (hovered && !pressed);
 
   return (
     <Chip
-      title={person ? address : undefined}
       className="h-auto min-h-6 rounded-xl"
+      onPointerEnter={(event) => {
+        if (event.pointerType === 'mouse') setHovered(true);
+      }}
+      onPointerLeave={() => {
+        setHovered(false);
+        setPressed(false);
+      }}
+      onPress={
+        person &&
+        (() => {
+          setPinned(!pinned);
+          setPressed(true);
+        })
+      }
+      pressLabel={person && t('c:invite_chip_person', { name: person.name, address })}
       onRemove={onRemove}
       removeLabel={t('c:remove_resource', { resource: address })}
       start={
@@ -135,7 +154,14 @@ function InviteChip({ address, person, fact, onRemove }: InviteChipProps) {
       }
     >
       <span className="flex flex-wrap gap-x-1.5 whitespace-normal">
-        <span className="break-all">{person?.name ?? address}</span>
+        {person ? (
+          <span className="inline-grid break-all text-start *:[grid-area:1/1]">
+            <span className={cn(showsAddress && 'invisible')}>{person.name}</span>
+            <span className={cn(!showsAddress && 'invisible')}>{address}</span>
+          </span>
+        ) : (
+          <span className="break-all">{address}</span>
+        )}
         {fact && <span className="whitespace-nowrap text-muted-foreground">{fact}</span>}
       </span>
     </Chip>
@@ -147,10 +173,12 @@ interface InviteGroupsProps {
   list: InviteList;
   /** The invite waits for its draft channel's publish, which changes what a new address gets. */
   held: boolean;
+  /** The role a channel invite gives, which the new tile names. */
+  role?: InviteRole;
 }
 
 /** A tile per outcome, with only the biggest problem open. A tile holds plain chips, a few at first and more on request. */
-export function InviteGroups({ check, list, held }: InviteGroupsProps) {
+export function InviteGroups({ check, list, held, role }: InviteGroupsProps) {
   const { t } = useTranslation();
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -158,6 +186,9 @@ export function InviteGroups({ check, list, held }: InviteGroupsProps) {
   const [limits, setLimits] = useState<Partial<Record<InviteGroupKey, number>>>({});
 
   const present = inviteTiles.filter(({ key }) => check.groups[key].length);
+  // The tile a single addition lands in, once checked: a paste, a restored draft or a mode switch leaves no last one
+  const lastView = list.last && check.viewOf(list.last.address);
+  const landed = lastView && !lastView.checking ? lastView.group : null;
   const biggest = present.find(({ key }) => key !== 'new')?.key ?? null;
   const open = picked?.revision === list.revision ? picked.key : biggest;
 
@@ -192,8 +223,25 @@ export function InviteGroups({ check, list, held }: InviteGroupsProps) {
               panelClassName="max-sm:pl-3"
               wrapMeta
               icon={<Icon className="text-muted-foreground" />}
-              title={t(summary, { count: addresses.length })}
-              status={{ tone: tileTone[key], label: t(word) }}
+              // The whole sentence rolls, since where the number sits depends on the language
+              title={
+                <span className="inline-grid">
+                  <AnimatePresence initial={false}>
+                    <motion.span
+                      key={addresses.length}
+                      className="[grid-area:1/1]"
+                      initial={{ y: '100%', opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: '-100%', opacity: 0 }}
+                    >
+                      {key === 'new' && role
+                        ? t('c:invite_summary_new_role', { count: addresses.length, role: t(`c:${role}`, { count: addresses.length }) })
+                        : t(summary, { count: addresses.length })}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+              }
+              status={{ tone: tileTone[key], label: t(word), pulse: landed === key ? list.revision : undefined }}
               meta={key === 'new' && held ? lowercaseLabel(t('c:invite_state_on_publish')) : lowercaseLabel(t(note))}
               lead={
                 key === 'fix' ? (

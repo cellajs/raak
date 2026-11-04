@@ -16,8 +16,11 @@ const record = (run: string, over: Partial<RunRecord> = {}): RunRecord => ({
 
 const store = (records: RunRecord[], log = 'line 1\nline 2\n'): RunStore => ({
   listRuns: async (limit) => records.map((r) => r.run).slice(0, limit),
-  readRecord: async (run) => records.find((r) => r.run === run),
-  readLog: async () => log,
+  readRecord: async (run) => {
+    const newest = records.find((r) => r.run === run);
+    return newest && { newest };
+  },
+  readLog: async () => ({ newest: log }),
   readBootAccount: async (key) =>
     key === 'backend-20261015T010300Z-boot.log' ? 'service=backend\nboot_rc=1\n\n--- boot error ---\nmigrate exited 1\n\nlast boot line' : undefined,
 });
@@ -45,14 +48,14 @@ describe('Show runs', () => {
     expect(lines[0]).toContain('the job run ended failed');
   });
 
-  it('lists every run, one that left no record too (D27), and shows the newest in full with a failed machine’s boot error and the end of its log', async () => {
+  it('lists every run, one that left no record too, and shows the newest in full with a failed machine’s boot error and the end of its log', async () => {
     const lines: string[] = [];
     const failed = record('20261015T010000Z-bbbbbbbbbb', {
       startedAt: '2026-10-15T01:00:00.000Z',
       outcome: 'failed',
-      failedStep: 'Waved rollout',
-      error: 'cutover failed',
-      steps: [{ title: 'Waved rollout', seconds: 30, outcome: 'error' }],
+      failedStep: 'Switch machines',
+      error: 'a switch failed',
+      steps: [{ title: 'Switch machines', seconds: 30, outcome: 'error' }],
       boot: [{ service: 'backend', key: 'backend-20261015T010300Z-boot.log', failed: true }, { service: 'cdc' }],
     });
     const jobRuns = [
@@ -75,7 +78,7 @@ describe('Show runs', () => {
     expect(lines.filter((line) => line.startsWith('  2026-10-15'))).toHaveLength(3);
     expect(lines[0]).toBe('  2026-10-15 02:00  staging  cccccccccc  failed (exit 1), no record');
     const detail = lines.join('\n');
-    expect(detail).toContain('failed at "Waved rollout"');
+    expect(detail).toContain('failed at "Switch machines"');
     expect(detail).toContain('migrate exited 1');
     expect(detail).toContain('cdc: no account of this release');
     expect(detail).toContain('line 2');

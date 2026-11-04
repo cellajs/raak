@@ -39,7 +39,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
             aria-selected={name === value}
             title={name}
             onClick={() => onChange(name)}
-            className={cn('flex items-center justify-center rounded-md p-1.5 hover:bg-accent', name === value && 'bg-accent ring-1 ring-ring')}
+            className={cn('flex items-center justify-center rounded-md p-1.5 hover:bg-hover', name === value && 'bg-accent ring-1 ring-ring')}
           >
             <NamedIcon name={name} className="size-5" />
           </button>

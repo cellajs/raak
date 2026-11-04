@@ -23,13 +23,13 @@ import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
 import { meKeys } from '~/modules/me/query';
 import { addMyMembershipCache, getApiIncludedMembership, upsertMyMembershipCache } from '~/modules/memberships/query-mutations';
+import { projectsListSearchDefaults } from '~/modules/project/search-params-schemas';
 import type { EnrichedProject } from '~/modules/project/types';
 import { workspaceQueryKeys } from '~/modules/workspace/query';
 import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesOnceUnobserved } from '~/query/basic/cache-mutations';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { defaultOrderFor } from '~/query/basic/get-query-key-sort-order';
 import { offsetPaging, pageQuery, refetchOnMountForIncluded } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { getSimilarQueries } from '~/query/basic/mutate-query';
@@ -58,8 +58,8 @@ type ProjectsListParams = ProjectFilters & { limit?: number };
 export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
   const {
     q = '',
-    sort = 'displayOrder',
-    order = defaultOrderFor(sort),
+    sort = projectsListSearchDefaults.sort,
+    order = projectsListSearchDefaults.order,
     organizationId,
     workspaceId,
     relatableUserId,

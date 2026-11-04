@@ -4,7 +4,7 @@ import type { SideEffectBlock, SideEffectProducer } from '../types';
  * publicAt distribution is owned by the server runtime: a child inherits its project's publicAt at
  * create (the insert helpers), then it is row-local and independent (make public / make private per
  * row or batch). This migration drops the former trigger-based cascade and inherit, which the
- * runtime replaced. 
+ * runtime replaced.
  * TODO: Once every environment has run it, this producer can be deleted.
  */
 function run(): SideEffectBlock {

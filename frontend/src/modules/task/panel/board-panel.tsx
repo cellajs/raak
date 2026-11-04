@@ -2,10 +2,9 @@ import { PlusIcon } from 'lucide-react';
 import { memo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
-import { useScrollVisibility } from '~/hooks/use-scroll-visibility';
 import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
+import { FloatingAction } from '~/modules/navigation/floating-nav/floating-action';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
@@ -48,8 +47,6 @@ export const BoardPanel = memo(function BoardPanel({
   const isMobile = useBreakpointBelow('sm');
   const search = useBoardSearch();
   const isReadOnly = useIsProjectReadOnly(project.id);
-
-  const { isVisible: showFab } = useScrollVisibility(isMobile);
 
   const { expandIced, expandAccepted } = useProjectPanelPrefs(project.id);
   const isCollapsed = useBoardStore((state) => !!state.panelCollapseState[panelId]);
@@ -94,12 +91,10 @@ export const BoardPanel = memo(function BoardPanel({
         <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex h-full flex-col">
           <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} />
           {!isReadOnly && (
-            <FloatingNavButton
-              id="create-task"
+            <FloatingAction
               icon={PlusIcon}
-              onClick={() => openCreateTaskDialog(project.id, project.organizationId, isOneStatus ? statuses?.[0] : undefined)}
-              ariaLabel={t('c:create_resource', { resource: t('c:task') })}
-              className={showFab ? 'opacity-100' : 'pointer-events-none translate-y-16 scale-50 opacity-0'}
+              label={t('c:create_resource', { resource: t('c:task') })}
+              onClick={(triggerRef) => openCreateTaskDialog(project.id, project.organizationId, isOneStatus ? statuses?.[0] : undefined, triggerRef)}
             />
           )}
           <WorkspaceArrivalBalloon project={project} />

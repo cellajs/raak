@@ -328,7 +328,6 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             ref={inputRef}
             autoFocus={!isTouchInteraction()}
             value={searchValue}
-            onClear={() => setSearchValue('')}
             onKeyDown={handleSearchKeyDown}
             wrapClassName="min-w-0 flex-1 max-sm:border-b-0"
             className="min-h-10 leading-normal"

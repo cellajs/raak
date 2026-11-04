@@ -23,6 +23,8 @@ interface UseSectionEdgePinnedOptions {
  * its slot and leaves with it, so a scroll away never pins the bar just to slide it out again.
  */
 export function useSectionEdgePinned({ edge, active, scrollRef, windowMode, listRef }: UseSectionEdgePinnedOptions) {
+  // Compiler gap: pendingEvents++ on a variable the scroll handler captures.
+  'use no memo';
   const [pinned, setPinned] = useState(false);
 
   useEffect(() => {
