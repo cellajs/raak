@@ -17,10 +17,12 @@ import { OlderAcceptedHint, PanelStatusSection } from '~/modules/task/panel/pane
 import { PanelTasksContext } from '~/modules/task/panel/panel-tasks-context';
 import { collapsedMainCount } from '~/modules/task/panel/task-panel-collapsed';
 import { TaskPanelEmpty } from '~/modules/task/panel/task-panel-empty';
+import { TaskGuestAlert } from '~/modules/task/task-guest-alert';
 import { taskInteractionStore, useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskCounts, TaskProps } from '~/modules/task/types';
 import { ScrollArea } from '~/modules/ui/scroll-area';
+import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 import { tw } from '~/utils/tw';
 
@@ -41,6 +43,7 @@ interface TaskPanelContentProps {
 
 export const TaskPanelContent = memo(function TaskPanelContent({ project, panelId, tasks, counts, windowScroll }: TaskPanelContentProps) {
   const isMobile = useBreakpointBelow('sm');
+  const isWorkspaceRoute = useIsWorkspaceRoute();
   const hasSelectedTasks = useTaskInteractionStore((state) => state.selectedTaskIds.length > 0);
 
   const { virtualizerRef, scrollViewportRef, handleSectionToggle, shift } = usePanelScrolling({
@@ -78,6 +81,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
       projectId={project.id}
       scrollRef={scrollViewportRef}
       windowMode={sectionWindowMode}
+      virtualizerRef={virtualizerRef}
       onToggle={handleSectionToggle}
       suppressed={hostsDraft}
     />
@@ -105,6 +109,10 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   return (
     <PanelTasksContext.Provider value={tasks}>
       <BoardPanelBody hasSelection={hasSelectedTasks} windowScroll={windowScroll} collapsedCount={collapsedMainCount(counts)}>
+        {/* Above the scroll area, so the list's virtualizer needs no offset for it. A project page shows one panel per status, so it would repeat there. */}
+        {isWorkspaceRoute && (
+          <TaskGuestAlert projectId={project.id} className="max-sm:mx-3 max-sm:mt-1 max-sm:mb-2 sm:rounded-none sm:border-0 sm:border-b" />
+        )}
         {isMobile || windowScroll ? (
           <div className="mb-10 flex h-full flex-col">
             {topSlot}

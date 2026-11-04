@@ -8,7 +8,7 @@ import { labelName } from 'shared/config/labels-config';
 import { DropIndicator } from '~/modules/common/drop-indicator';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { ReorderHandle, type ReorderPosition } from '~/modules/common/reorder-handle/reorder-handle';
-import { LabelFilterButton } from '~/modules/label/label-filter-button';
+import { LabelFilterCount } from '~/modules/label/label-filter-count';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
 import { isLabelData, labelDragData } from '~/modules/label/label-order';
 import { LabelTileDetails } from '~/modules/label/label-tile-details';
@@ -21,19 +21,20 @@ import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
+import { ProductRef } from '~/modules/task/product-ref';
 import { itemFocusBarClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
 import { buttonVariants } from '~/modules/ui/button';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
-import { formatCount } from '~/utils/format-count';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
 import { getScrollParent } from '~/utils/scroll-parent';
 import { tw } from '~/utils/tw';
 
-// Like a task card's actions: hidden until the tile is hovered or holds focus, then each slides in from the right like the
-// close button. On a collapsed tile pointer events follow, so a tap lands on the tile and expands it. Focus from a tap must
-// not reveal there: the buttons would appear under the finger between press and release, and the browser then fires no click.
+// Like a task card's actions: on a collapsed tile hidden until it is hovered or holds focus, then each slides in from the right
+// like the close button; an open tile shows them throughout. On a collapsed tile pointer events follow, so a tap lands on the
+// tile and expands it. Focus from a tap must not reveal there: the buttons would appear under the finger between press and
+// release, and the browser then fires no click.
 const actionSlide = tw(
   'translate-x-3 opacity-0 transition-[translate,opacity,color,background-color] duration-200 ease-out motion-reduce:transition-none',
 );
@@ -42,10 +43,6 @@ const restingActionsReveal = tw(
 );
 const restingActionsPointer = tw(
   'pointer-events-none group-hover/label-tile:pointer-events-auto group-focus-visible/label-tile:pointer-events-auto has-data-dropdowner-active:pointer-events-auto has-data-dropdowner-done:pointer-events-auto group-has-[:focus-visible]/label-tile:pointer-events-auto',
-);
-// A phone has no hover, so an open tile shows them throughout
-const openActionsReveal = tw(
-  'group-focus-within/label-tile:translate-x-0 group-focus-within/label-tile:opacity-100 group-hover/label-tile:translate-x-0 group-hover/label-tile:opacity-100 group-has-data-dropdowner-active/label-tile:translate-x-0 group-has-data-dropdowner-done/label-tile:translate-x-0 group-has-data-dropdowner-active/label-tile:opacity-100 group-has-data-dropdowner-done/label-tile:opacity-100 max-sm:translate-x-0 max-sm:opacity-100',
 );
 
 /** Holds a tile where it is while the open one above it collapses. Scroll anchoring would, but a sticky panel turns it off and Safari has none. */
@@ -156,7 +153,7 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
   };
 
   const collapse = () => labelTileStore.getState().collapse(row.id);
-  const actionClass = cn(actionSlide, expanded ? openActionsReveal : restingActionsReveal);
+  const actionClass = cn(actionSlide, expanded ? 'translate-x-0 opacity-100' : restingActionsReveal);
 
   const handleTileFocus = () => {
     if (onBoard && boardFocusStore.getState().currentItemId !== domId) setCurrentItem(domId);
@@ -214,20 +211,14 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
           onBoard &&
             'outline-none before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary before:opacity-0',
           onBoard && itemFocusBarClass,
-          'focus-within:bg-muted/50 hover:bg-muted/50',
+          // An open tile keeps the hover tint, so it stands out among the closed ones
+          'pointer-fine:focus-within:bg-card hover:bg-card focus-visible:bg-card has-[:focus-visible]:bg-card',
+          expanded && 'bg-card',
           isDragging && 'opacity-30',
           !expanded && !(onBoard && isCurrent) && 'resting-text transition-[color]',
         )}
       >
         <div className="flex min-h-11 items-center gap-2 px-4 py-1.5">
-          {/* Margins put the icon and the name under the panel header's, whose handle has a border and p-2 inside the header's px-2.
-              z-1 lifts it above the collapsed name's overlay. Small so its pressed fill clears the name; the after-overlay keeps a 2rem target. */}
-          <LabelFilterButton
-            name={row.name}
-            slug={row.slug}
-            onAction={onAction}
-            className="relative z-1 -mr-1 -ml-0.75 size-6 shrink-0 p-0 after:absolute after:-inset-1"
-          />
           {/* A collapsed tile holds the room of its floating button, so a long name's count stays clear of it */}
           <div className={cn('flex min-w-0 grow items-center gap-2', !expanded && 'pr-9')}>
             {/* Edit and display boxes share height, padding and border so the swap causes no layout shift */}
@@ -259,9 +250,9 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
                 </span>
               </button>
             )}
-            {!expanded && (
-              <span className="ml-1 shrink-0 whitespace-nowrap text-muted-foreground text-xs tabular-nums">{formatCount(row.usedCount)}</span>
-            )}
+            {expanded && <ProductRef number={row.number} />}
+            {/* z-1 lifts it above the collapsed name's overlay: a press filters the board, the rest of the tile opens it */}
+            <LabelFilterCount name={row.name} slug={row.slug} count={row.usedCount} onAction={onAction} />
             {!expanded && row.mode === 'epic' && (
               <Badge variant="secondary" className="shrink-0">
                 {t('c:epic')}

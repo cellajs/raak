@@ -617,6 +617,7 @@ export type Task = {
   deletedBy: ActorRef | null;
   public: boolean;
   seq: number;
+  number: number;
   expandable: boolean;
   summary: string;
   summaryLength: number;
@@ -955,6 +956,7 @@ export type Label = {
   deletedBy: string | null;
   public: boolean;
   seq: number;
+  number: number;
   color: string | null;
   mode: 'primary' | 'secondary' | 'epic';
   slug: string;
@@ -4336,13 +4338,14 @@ export type GetPublicTasksData = {
      * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
      */
     q?: string;
-    sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
+    sort?: 'number' | 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
     offset?: number;
     limit?: number;
     status?: string;
     type?: string;
     labels?: string;
+    assigned?: string;
     acceptedCutOff?: number;
     projectId: string;
   };
@@ -4454,6 +4457,84 @@ export type GetTaskCoverResponses = {
   200: unknown;
 };
 
+export type ResolveTaskLinkByNumberData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    number: number;
+  };
+  query?: never;
+  url: '/t/{tenantId}/{number}/resolve';
+};
+
+export type ResolveTaskLinkByNumberErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type ResolveTaskLinkByNumberError = ResolveTaskLinkByNumberErrors[keyof ResolveTaskLinkByNumberErrors];
+
+export type ResolveTaskLinkByNumberResponses = {
+  /**
+   * Task link resolution data
+   */
+  200: {
+    taskId: string;
+    projectId: string;
+    projectSlug: string;
+    organizationId: string;
+    organizationSlug: string;
+    tenantId: string;
+    public: boolean;
+  };
+};
+
+export type ResolveTaskLinkByNumberResponse = ResolveTaskLinkByNumberResponses[keyof ResolveTaskLinkByNumberResponses];
+
+export type GetTaskCoverByNumberData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    number: number;
+  };
+  query?: never;
+  url: '/t/{tenantId}/{number}/cover';
+};
+
+export type GetTaskCoverByNumberErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetTaskCoverByNumberError = GetTaskCoverByNumberErrors[keyof GetTaskCoverByNumberErrors];
+
+export type GetTaskCoverByNumberResponses = {
+  /**
+   * Success
+   */
+  200: unknown;
+};
+
 export type RedirectToTaskData = {
   body?: never;
   path: {
@@ -4481,6 +4562,40 @@ export type RedirectToTaskErrors = {
 export type RedirectToTaskError = RedirectToTaskErrors[keyof RedirectToTaskErrors];
 
 export type RedirectToTaskResponses = {
+  /**
+   * Success
+   */
+  200: unknown;
+};
+
+export type RedirectToTaskByNumberData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    number: number;
+  };
+  query?: never;
+  url: '/t/{tenantId}/{number}';
+};
+
+export type RedirectToTaskByNumberErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type RedirectToTaskByNumberError = RedirectToTaskByNumberErrors[keyof RedirectToTaskByNumberErrors];
+
+export type RedirectToTaskByNumberResponses = {
   /**
    * Success
    */
@@ -8020,7 +8135,7 @@ export type GetTasksData = {
      * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
      */
     q?: string;
-    sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
+    sort?: 'number' | 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
     offset?: number;
     limit?: number;
@@ -8035,6 +8150,7 @@ export type GetTasksData = {
     status?: string;
     type?: string;
     labels?: string;
+    assigned?: string;
     acceptedCutOff?: number;
     projectId?: string;
     workspaceId?: string;

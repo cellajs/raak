@@ -31,8 +31,8 @@ export function CardCloseButton({ onClick, animateIn = true, className }: CardCl
     <MotionConfig reducedMotion="user">
       <motion.span className="inline-flex" variants={slide} initial={animateIn ? 'hidden' : false} animate="shown" exit="gone">
         <TooltipButton toolTipContent={t('c:close')} side="top" sideOffset={5} hideWhenDetached>
-          <Button onClick={onClick} aria-label={t('c:collapse')} variant="ghost" size="xs" className={cn('size-8', className)}>
-            <XIcon />
+          <Button onClick={onClick} aria-label={t('c:collapse')} variant="ghost" size="xs" className={cn('size-8 p-0', className)}>
+            <XIcon className="size-4.5" />
           </Button>
         </TooltipButton>
       </motion.span>
@@ -49,13 +49,13 @@ export function CardCloseExit() {
     <MotionConfig reducedMotion="user">
       <motion.span
         aria-hidden
-        className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), 'size-8', taskCardGhostClass)}
+        className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), 'size-8 p-0', taskCardGhostClass)}
         variants={slide}
         initial="shown"
         animate="gone"
         onAnimationComplete={() => setDone(true)}
       >
-        <XIcon />
+        <XIcon className="size-4.5" />
       </motion.span>
     </MotionConfig>
   );

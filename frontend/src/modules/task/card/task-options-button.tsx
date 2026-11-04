@@ -1,6 +1,5 @@
 import { CopyIcon, EllipsisVerticalIcon, LinkIcon, Maximize2Icon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { appConfig } from 'shared';
 import { titleFromDocument } from 'shared/blocknote';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
@@ -13,6 +12,7 @@ import { DeleteTasks } from '~/modules/task/delete-tasks';
 import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
 import { setCurrentItem } from '~/modules/task/helpers/focus-item';
+import { taskShareLink } from '~/modules/task/helpers/task-link';
 import { taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -27,7 +27,7 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
   const { t } = useTranslation();
   const { copyToClipboard } = useCopyToClipboard(2000);
 
-  const shareLink = `${appConfig.backendUrl}/t/${task.id}`;
+  const shareLink = taskShareLink(task);
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const { create } = dropdowner.getState();
@@ -103,7 +103,7 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
         className={cn('focus-inset size-8 data-dropdowner-active:bg-foreground/7', taskCardGhostClass)}
         size="xs"
       >
-        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-3.5" />
+        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4.5" />
       </Button>
     </TooltipButton>
   );

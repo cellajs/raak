@@ -10,7 +10,14 @@ import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
 import { LABELS_PANEL_ID } from '~/modules/label/types';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useStartWith, useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { normalizePanelWidths, prepareBoardPanels, projectPanelName, publicBoardPanels, statusTabLists } from '~/modules/task/helpers/board-helpers';
+import {
+  normalizePanelWidths,
+  prepareBoardPanels,
+  projectPanelName,
+  publicBoardPanels,
+  sortByMembership,
+  statusTabLists,
+} from '~/modules/task/helpers/board-helpers';
 import { isBoardSearchActive } from '~/modules/task/helpers/search-filter';
 import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
 import { publicTasksBoardQueryOptions } from '~/modules/task/public-query';
@@ -150,6 +157,13 @@ export function useBoardPanels(boardId: string, projects: EnrichedProject[], ext
   };
 
   return { panels, layoutPanels, defaultLayout, handleLayoutChanged };
+}
+
+/** The project a phone's workspace board shows: the one its tab names, else the first in membership order. */
+export function useTabProject(projects: EnrichedProject[]) {
+  const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
+  const sorted = sortByMembership(projects);
+  return sorted.find((project) => project.slug === projectSlug) ?? sorted[0];
 }
 
 /** The statuses a mobile project board's open tab lists; undefined for all of them, as with a search active. */

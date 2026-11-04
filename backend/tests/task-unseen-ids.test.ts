@@ -109,6 +109,19 @@ describe('Unseen task ids', async () => {
     expect((counts as Record<string, Record<string, number>> | undefined)?.[memberProject]?.task).toBe(ids.length);
   });
 
+  it('leaves out the tasks no card marks: own, accepted and iced', async () => {
+    const open = await insertTask({ projectId: memberProject });
+    const own = await insertTask({ projectId: memberProject, createdBy: member.id });
+    const accepted = await insertTask({ projectId: memberProject, status: TaskStatus.Accepted });
+    const iced = await insertTask({ projectId: memberProject, status: TaskStatus.Iced });
+
+    const ids = await unseenIds(member.sessionCookie);
+    expect(ids).toContain(open);
+    expect(ids).not.toContain(own);
+    expect(ids).not.toContain(accepted);
+    expect(ids).not.toContain(iced);
+  });
+
   it('skips tasks from before the user joined the project', async () => {
     const newcomer = await createOrgUser(call, tenant.tenantId, tenant.organization.id, 'task-unseen-ids-newcomer', 'member');
     const before = await insertTask({ projectId: memberProject, createdAt: daysAgo(5) });

@@ -10,7 +10,8 @@ import { TaskDragHandle } from '~/modules/task/card/task-drag-handle';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
 import { focusItem } from '~/modules/task/helpers/focus-item';
-import { taskCardActionsRevealClass, taskCardGhostClass } from '~/modules/task/task-styles';
+import { ProductRef } from '~/modules/task/product-ref';
+import { taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { useOpenUserSheet } from '~/modules/user/use-open-user-sheet';
 import { cn } from '~/utils/cn';
@@ -41,15 +42,16 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
   return (
     <div className="flex w-full items-start justify-between py-1">
-      {/* A phone has no description gutter, so the grip unfolds beside the type button; from sm up it pushes that button into the gutter */}
-      <div className={cn('flex shrink-0 sm:flex-col', showDragHandle && 'sm:-mb-8')}>
+      {/* The grip unfolds under the type button, into the text gutter */}
+      <div className={cn('flex shrink-0 flex-col', showDragHandle && '-mb-8')}>
         {showDragHandle && <TaskDragHandle task={task} />}
         <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
       </div>
       <div className="ml-1 flex w-full items-center gap-1">
+        {!isSheet && <ProductRef number={task.number} className="mr-1" />}
         {createdBy && (
           <>
-            <TooltipButton toolTipContent={createdBy.name} side="bottom" sideOffset={5} hideWhenDetached>
+            <TooltipButton toolTipContent={createdBy.name} side="top" sideOffset={5} hideWhenDetached>
               {createdBy.kind === 'user' && !isPublicRoute ? (
                 <button
                   type="button"
@@ -63,8 +65,8 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
                 <span className="max-sm:hidden">{creatorAvatar}</span>
               )}
             </TooltipButton>
-            <TooltipButton toolTipContent={`${t('c:created_at')} ${dateShort(task.createdAt)}`} side="bottom" sideOffset={5} hideWhenDetached>
-              <span className="ml-1 text-center text-muted-foreground text-xs">
+            <TooltipButton toolTipContent={`${t('c:created_at')} ${dateShort(task.createdAt)}`} side="top" sideOffset={5} hideWhenDetached>
+              <span className="ml-1 text-center text-[0.8125rem] text-muted-foreground">
                 {isOnline ? <RelativeDate date={task.createdAt} /> : t('c:update_on_online')}
               </span>
             </TooltipButton>
@@ -73,8 +75,8 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
         <div className="grow" />
 
-        {/* Options come last, where a collapsed card shows them. A phone has no hover to reveal the actions. */}
-        <div className={cn(taskCardActionsRevealClass, 'flex items-center gap-1 max-sm:opacity-100')}>
+        {/* Options come last, where a collapsed card shows them on hover. An open card always shows its own. */}
+        <div className="flex items-center gap-1">
           {!isSheet && (
             <CardCloseButton
               animateIn={animateClose}

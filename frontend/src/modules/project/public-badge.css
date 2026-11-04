@@ -1,0 +1,33 @@
+/* A public project's globe sits in a notch cut from its avatar's corner, so it needs no disc of its own. The notch keys
+   on the badge being there: the avatar beside it is rendered by whoever places the badge, PageHeader among them. */
+:has(> [data-public-badge]) {
+  --public-badge-size: 1.125rem;
+  --public-badge-hang: 0.3125rem;
+}
+
+:has(> [data-public-badge="sm"]) {
+  --public-badge-size: 0.75rem;
+  --public-badge-hang: 0.125rem;
+}
+
+:has(> [data-public-badge="lg"]) {
+  --public-badge-size: 1.375rem;
+  --public-badge-hang: 0.375rem;
+}
+
+[data-public-badge] {
+  right: calc(var(--public-badge-hang) * -1);
+  bottom: calc(var(--public-badge-hang) * -1);
+  width: var(--public-badge-size);
+  height: var(--public-badge-size);
+}
+
+:has(> [data-public-badge]) > [data-slot="avatar"] {
+  --notch-at: calc(100% - var(--public-badge-size) / 2 + var(--public-badge-hang));
+  --notch-radius: calc(var(--public-badge-size) / 2 + 1px);
+  mask-image: radial-gradient(
+    circle var(--notch-radius) at var(--notch-at) var(--notch-at),
+    transparent calc(var(--notch-radius) - 0.5px),
+    #000 var(--notch-radius)
+  );
+}

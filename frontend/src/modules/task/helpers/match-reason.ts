@@ -8,7 +8,8 @@ type MatchReason = { description?: string; people: string[] };
 export const hiddenMatchReason = (task: Task, terms: string[]): MatchReason | null => {
   if (!terms.length) return null;
   const visible = [summaryText(task).folded, ...task.labels.map(({ name }) => foldText(name))];
-  const hidden = terms.filter((term) => !visible.some((field) => field.includes(term)));
+  // A `#123` term matched the number the card shows
+  const hidden = terms.filter((term) => !/^#\d+$/.test(term) && !visible.some((field) => field.includes(term)));
   if (!hidden.length) return null;
 
   const description = descriptionText(task);

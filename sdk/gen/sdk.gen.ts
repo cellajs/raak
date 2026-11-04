@@ -223,6 +223,9 @@ import type {
   GetStepUpPasskeyChallengeErrors,
   GetStepUpPasskeyChallengeResponses,
   GetStepUpResponses,
+  GetTaskCoverByNumberData,
+  GetTaskCoverByNumberErrors,
+  GetTaskCoverByNumberResponses,
   GetTaskCoverData,
   GetTaskCoverErrors,
   GetTaskCoverResponses,
@@ -311,6 +314,9 @@ import type {
   PushYjsUpdateData,
   PushYjsUpdateErrors,
   PushYjsUpdateResponses,
+  RedirectToTaskByNumberData,
+  RedirectToTaskByNumberErrors,
+  RedirectToTaskByNumberResponses,
   RedirectToTaskData,
   RedirectToTaskErrors,
   RedirectToTaskResponses,
@@ -320,6 +326,9 @@ import type {
   ResendPendingInvitationData,
   ResendPendingInvitationErrors,
   ResendPendingInvitationResponses,
+  ResolveTaskLinkByNumberData,
+  ResolveTaskLinkByNumberErrors,
+  ResolveTaskLinkByNumberResponses,
   ResolveTaskLinkData,
   ResolveTaskLinkErrors,
   ResolveTaskLinkResponses,
@@ -525,6 +534,7 @@ import {
   zPushYjsUpdateResponse,
   zResendInvitationWithTokenResponse,
   zResendPendingInvitationResponse,
+  zResolveTaskLinkByNumberResponse,
   zResolveTaskLinkResponse,
   zResubscribeNotificationsResponse,
   zRevokeApiKeyResponse,
@@ -2389,6 +2399,7 @@ export const getPublicTask = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.status - `string` (optional)
  * @param {string=} options.query.type - `string` (optional)
  * @param {string=} options.query.labels - `string` (optional)
+ * @param {string=} options.query.assigned - `string` (optional)
  * @param {number=} options.query.acceptedCutOff - `number` (optional)
  * @param {string} options.query.projectId - `string`
  * @returns Possible status codes: 200, 400, 404, 429
@@ -2445,6 +2456,49 @@ export const getTaskCover = <ThrowOnError extends boolean = true>(
   });
 
 /**
+ * Resolve task link by number
+ *
+ * Returns routing metadata for a task named by its number in a tenant.
+ *
+ * **GET /t/{tenantId}/{number}/resolve** ·· [resolveTaskLinkByNumber](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/t/{tenantId}/{number}/resolve) ·· _tasks · app · product_
+ *
+ * @param {resolveTaskLinkByNumberData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {integer} options.path.number - `integer`
+ * @returns Possible status codes: 200, 400, 404, 429
+ */
+export const resolveTaskLinkByNumber = <ThrowOnError extends boolean = true>(
+  options: Options<ResolveTaskLinkByNumberData, ThrowOnError>,
+): RequestResult<ResolveTaskLinkByNumberResponses, ResolveTaskLinkByNumberErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<ResolveTaskLinkByNumberResponses, ResolveTaskLinkByNumberErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zResolveTaskLinkByNumberResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/t/{tenantId}/{number}/resolve',
+    ...options,
+  });
+
+/**
+ * Get task cover by number
+ *
+ * Retrieves the cover image for a task named by its number in a tenant.
+ *
+ * **GET /t/{tenantId}/{number}/cover** ·· [getTaskCoverByNumber](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/t/{tenantId}/{number}/cover) ·· _tasks · app · product_
+ *
+ * @param {getTaskCoverByNumberData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {integer} options.path.number - `integer`
+ * @returns Possible status codes: 200, 400, 404, 429
+ */
+export const getTaskCoverByNumber = <ThrowOnError extends boolean = true>(
+  options: Options<GetTaskCoverByNumberData, ThrowOnError>,
+): RequestResult<GetTaskCoverByNumberResponses, GetTaskCoverByNumberErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetTaskCoverByNumberResponses, GetTaskCoverByNumberErrors, ThrowOnError, 'data'>({
+    responseStyle: 'data',
+    url: '/t/{tenantId}/{number}/cover',
+    ...options,
+  });
+
+/**
  * Redirect to task
  *
  * Redirects to the canonical route for a task by ID.
@@ -2461,6 +2515,27 @@ export const redirectToTask = <ThrowOnError extends boolean = true>(
   (options.client ?? client).get<RedirectToTaskResponses, RedirectToTaskErrors, ThrowOnError, 'data'>({
     responseStyle: 'data',
     url: '/t/{id}',
+    ...options,
+  });
+
+/**
+ * Redirect to task by number
+ *
+ * Redirects to the canonical route for a task by its number in a tenant.
+ *
+ * **GET /t/{tenantId}/{number}** ·· [redirectToTaskByNumber](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/t/{tenantId}/{number}) ·· _tasks · app · product_
+ *
+ * @param {redirectToTaskByNumberData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {integer} options.path.number - `integer`
+ * @returns Possible status codes: 200, 400, 404, 429
+ */
+export const redirectToTaskByNumber = <ThrowOnError extends boolean = true>(
+  options: Options<RedirectToTaskByNumberData, ThrowOnError>,
+): RequestResult<RedirectToTaskByNumberResponses, RedirectToTaskByNumberErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<RedirectToTaskByNumberResponses, RedirectToTaskByNumberErrors, ThrowOnError, 'data'>({
+    responseStyle: 'data',
+    url: '/t/{tenantId}/{number}',
     ...options,
   });
 
@@ -3999,6 +4074,7 @@ export const deleteTasks = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.status - `string` (optional)
  * @param {string=} options.query.type - `string` (optional)
  * @param {string=} options.query.labels - `string` (optional)
+ * @param {string=} options.query.assigned - `string` (optional)
  * @param {number=} options.query.acceptedCutOff - `number` (optional)
  * @param {string=} options.query.projectId - `string` (optional)
  * @param {string=} options.query.workspaceId - `string` (optional)

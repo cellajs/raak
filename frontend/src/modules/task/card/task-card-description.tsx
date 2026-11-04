@@ -86,7 +86,7 @@ export function TaskCardDescription({ task, state, isReadOnly, animateClose = fa
       {/* Frames the text inside taskDescriptionGutterClass's padding, clear of the type button in the gutter. Outside the
           layers, whose click capture would take a key press for a cursor point. */}
       {onEditRequest && state === 'expanded' && (
-        <DescriptionEditButton onClick={onEditRequest} className="-top-1 -right-2 bottom-3 left-0 sm:left-8" />
+        <DescriptionEditButton onClick={onEditRequest} className="-top-1 -right-2 bottom-3 left-7.5 group-data-[sheet=true]/task:-left-1" />
       )}
     </div>
   );

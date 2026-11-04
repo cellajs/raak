@@ -27,6 +27,7 @@
     "docker:test:down": "pnpm --filter backend compose --profile test down db_test",
     "docker:test:reset": "pnpm --filter backend compose --profile test down -v db_test",
     "stop": "pnpm -r --parallel --stream stop",
+    "killports": "node shared/scripts/kill-ports.ts",
     "generate": "pnpm --filter backend generate",
     "generate:routes": "pnpm --filter frontend gen:routes",
     "sdk": "pnpm --filter backend generate:openapi && pnpm --filter sdk generate:sdk",

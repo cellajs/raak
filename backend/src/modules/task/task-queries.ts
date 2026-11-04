@@ -254,12 +254,16 @@ export const findTaskNotificationPreview = async (tx: DbOrTx, id: string) => {
 export const findTaskNotificationTitles = (tx: DbOrTx, ids: string[]) =>
   tx.select({ id: tasksTable.id, name: tasksTable.name, summary: tasksTable.summary }).from(tasksTable).where(liveTasks(ids));
 
-/** A live task by id with no request scope, for link resolution outside a tenant; undefined when absent or deleted. */
-export const findLiveTaskById = async (ctx: DbContext, { id }: { id: string }) => {
+/** What a task link names: a task id, or a number within a tenant, which holds one organization. */
+export type TaskLinkRef = { id: string } | { tenantId: string; number: number };
+
+/** The live task a link names, with no request scope, for link resolution outside a tenant; undefined when absent or deleted. */
+export const findLinkedTask = async (ctx: DbContext, ref: TaskLinkRef) => {
+  const named = 'id' in ref ? eq(tasksTable.id, ref.id) : and(eq(tasksTable.tenantId, ref.tenantId), eq(tasksTable.number, ref.number));
   const [task] = await ctx.var.db
     .select()
     .from(tasksTable)
-    .where(and(eq(tasksTable.id, id), isNull(tasksTable.deletedAt)))
+    .where(and(named, isNull(tasksTable.deletedAt)))
     .limit(1);
   return task;
 };

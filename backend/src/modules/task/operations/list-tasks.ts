@@ -1,4 +1,4 @@
-import { and, arrayOverlaps, asc, desc, eq, inArray, or, type SQL, sql } from 'drizzle-orm';
+import { and, arrayOverlaps, asc, desc, eq, inArray, not, or, type SQL, sql } from 'drizzle-orm';
 import { foldText, parseTerms } from 'shared/utils/text-match';
 import type { z } from 'zod';
 import type { ActorContext } from '#/core/context';
@@ -29,14 +29,19 @@ const statusByName: Record<string, TaskStatus> = {
 
 const filterValues = (value?: string) => (value ? value.split(',') : []);
 
+const noAssignee = 'none';
+
 /** A page of the tasks in `projectIds` that match the list query, hydrated with their projects' members and labels. */
 export const listTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean; range?: SeqRange }) => {
-  const { q, status, type, labels, sort, order, acceptedCutOff, limit, offset } = queryInfo;
+  const { q, status, type, labels, assigned, sort, order, acceptedCutOff, limit, offset } = queryInfo;
   const rangeRead = seqRangeRead(tasksTable, opts?.range);
 
   const [tasksUsers, tasksLabels] = await Promise.all([findProjectMembers(ctx, { projectIds }), findLabelsByProjects(ctx, { projectIds })]);
 
   const keywordFilters = parseTerms(q).map((word) => {
+    // `#123` names a task by number; search-filter.ts is the client leg of the same rule
+    const number = word.match(/^#(\d+)$/);
+    if (number) return eq(tasksTable.number, Number(number[1]));
     const wordFilters: SQL[] = [textSearchFilter(tasksTable.keywords, word)];
 
     const filteredLabels = tasksLabels.filter(({ name }) => foldText(name).includes(word)).map(({ id }) => id);
@@ -55,13 +60,22 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
   const labelSlugs = filterValues(labels);
   const labelIds = tasksLabels.filter(({ slug }) => labelSlugs.includes(slug)).map(({ id }) => id);
 
+  // Hydration leaves out assignees who left the project, so a task is assigned only to the members it shows
+  const memberIds = tasksUsers.map(({ id }) => id);
+  const assignedValues = filterValues(assigned);
+  const assigneeIds = assignedValues.filter((id) => memberIds.includes(id));
+  const assigneeFilter = or(
+    assigneeIds.length ? arrayOverlaps(tasksTable.assignedTo, assigneeIds) : undefined,
+    assignedValues.includes(noAssignee) ? (memberIds.length ? not(arrayOverlaps(tasksTable.assignedTo, memberIds)) : sql`true`) : undefined,
+  );
+
   const orderBy =
     rangeRead.orderBy ??
     getOrderColumns({
       sort,
       order,
       fallback: ['createdAt', 'asc'],
-      columns: pick(tasksTable, ['status', 'projectId', 'createdAt', 'createdBy', 'updatedAt']),
+      columns: pick(tasksTable, ['number', 'status', 'projectId', 'createdAt', 'createdBy', 'updatedAt']),
       append: [desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number)), asc(tasksTable.id)],
     });
 
@@ -75,6 +89,7 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
     statuses.length ? inArray(tasksTable.status, statuses) : undefined,
     typeSlugs.length ? inArray(tasksTable.primaryLabelId, typeIds) : undefined,
     labelSlugs.length ? (labelIds.length ? arrayOverlaps(tasksTable.labels, labelIds) : sql`false`) : undefined,
+    assignedValues.length ? (assigneeFilter ?? sql`false`) : undefined,
     requestScopeWhere(ctx, tasksTable, 'task'),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,

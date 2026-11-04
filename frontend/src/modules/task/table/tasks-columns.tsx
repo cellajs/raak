@@ -16,6 +16,7 @@ import { SeenMark } from '~/modules/seen/seen-mark';
 import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
 import { TaskSummaryHtml } from '~/modules/task/card/task-summary-html';
 import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
+import { productRef } from '~/modules/task/helpers/product-ref';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
@@ -89,6 +90,16 @@ export const useColumns = (opts: {
 
   return [
     CheckboxColumn,
+    {
+      key: 'number',
+      name: '#',
+      sortable: true,
+      minBreakpoint: 'sm',
+      width: 72,
+      placeholderValue: '-',
+      renderCell: ({ row }) => productRef(row.number),
+      exportValue: (row) => row.number || null,
+    },
     {
       key: 'primaryLabel',
       name: t('c:type'),
@@ -181,7 +192,7 @@ export const useColumns = (opts: {
         return (
           <>
             <status.icon className="mr-2 size-4 shrink-0" aria-hidden="true" />
-            <span>{t(`c:${status.status}`)}</span>
+            <span>{t(`c:${status.name}`)}</span>
           </>
         );
       },

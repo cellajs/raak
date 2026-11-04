@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, doublePrecision, index, integer, snakeCase, text, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, index, integer, snakeCase, text, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
@@ -15,6 +15,8 @@ export const tasksTable = snakeCase.table(
   'tasks',
   {
     ...productColumns('task'),
+    /** Shown as `#123`, counted per organization: 0 until the insert trigger assigns it, as the client placeholder has it. */
+    number: integer().notNull().default(0),
     expandable: boolean().default(false).notNull(),
     summary: varchar({ length: maxLength.html }).notNull(),
     summaryLength: integer().default(0).notNull(),
@@ -40,6 +42,7 @@ export const tasksTable = snakeCase.table(
   (table) => [
     ...productIndexes('tasks', table),
     ...channelRelationIndexes('tasks', table, 'task'),
+    uniqueIndex('tasks_organization_number_unique').on(table.organizationId, table.number),
     index('tasks_project_status_index').on(table.projectId, table.status),
     index('tasks_primary_label_id_index').on(table.primaryLabelId),
     index('idx_tasks_labels_gin').using('gin', table.labels),

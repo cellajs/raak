@@ -69,7 +69,7 @@ export function openTaskDropdown(props: TaskDropdownProps) {
     triggerRef,
     triggerId,
     lead,
-    align: dropdownType === 'status' || dropdownType === 'assignedTo' ? 'end' : 'start',
+    align: dropdownType === 'assignedTo' ? 'end' : 'start',
   };
 
   return dropdowner.getState().create(taskDropdownContent(props), options);

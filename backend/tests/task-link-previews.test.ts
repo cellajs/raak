@@ -8,6 +8,7 @@ import { TaskStatus } from '#/modules/task/task-properties';
 import { usersTable } from '#/modules/user/user-db';
 import { mockStxBase } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
+import { adminDb } from './helpers';
 import { serviceAccountWithKey } from './oauth-helpers';
 import { clearSecurityTestData, createTestTenant, insertPasskey, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
@@ -71,12 +72,16 @@ describe('Task link previews of a private task', async () => {
 
   afterAll(async () => await clearSecurityTestData());
 
-  it('unfurls with the type, project, author and the start of the description', async () => {
+  // The insert trigger numbered the row; the admin connection reads it past RLS
+  const numberOf = async (id: string) =>
+    (await adminDb.select({ number: tasksTable.number }).from(tasksTable).where(eq(tasksTable.id, id)))[0].number;
+
+  it('unfurls with the type, number, project, author and the start of the description', async () => {
     const response = await anonymous(`/t/${taskId}`);
     const page = await response.text();
 
     expect(response.status).toBe(200);
-    expect(page).toContain(`<title>Task in ${project.name}`);
+    expect(page).toContain(`<title>Task #${await numberOf(taskId)} in ${project.name}`);
     expect(page).toContain('by Ada O&#39;Brien</title>');
     expect(page).toContain('<meta property="og:description" content="Ship the private thing Only members should open this." />');
     expect(page).toContain(`/t/${taskId}`);
@@ -136,5 +141,27 @@ describe('Task link previews of a private task', async () => {
     const response = await anonymous(`/t/${generateId()}/resolve`);
 
     expect(response.status).toBe(404);
+  });
+
+  // The number routes come after the id routes: `/t/{id}/resolve` must keep winning over `/t/{tenantId}/{number}`.
+  it('resolves, unfurls and covers a task by its number in the tenant', async () => {
+    const number = await numberOf(taskId);
+    cover.calls.length = 0;
+
+    const resolved = await anonymous(`/t/${tenant.tenantId}/${number}/resolve`);
+    const page = await (await anonymous(`/t/${tenant.tenantId}/${number}`)).text();
+    const coverResponse = await anonymous(`/t/${tenant.tenantId}/${number}/cover`);
+
+    expect(resolved.status).toBe(200);
+    expect(await resolved.json()).toMatchObject({ taskId, projectId, tenantId: tenant.tenantId });
+    expect(page).toContain(`<title>Task #${number} in ${project.name}`);
+    expect(page).toContain(`/t/${taskId}`);
+    expect(coverResponse.headers.get('content-type')).toBe('image/png');
+    expect(cover.calls).toEqual([expect.objectContaining({ title: 'Ship the private thing' })]);
+  });
+
+  it('answers 404 for a number no task of the tenant has, and for a number of another tenant', async () => {
+    expect((await anonymous(`/t/${tenant.tenantId}/999999/resolve`)).status).toBe(404);
+    expect((await anonymous(`/t/${generateId()}/${await numberOf(taskId)}/resolve`)).status).toBe(404);
   });
 });
