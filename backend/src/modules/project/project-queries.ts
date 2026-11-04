@@ -11,6 +11,7 @@ import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { type InsertProjectModel, projectsTable } from '#/modules/project/project-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { buildChannelListReadWhere, type ChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
+import type { CollectionReadFilter } from '#/permissions/collection-scope';
 import { getOrderColumns } from '#/utils/order-column';
 import { searchFilter } from '#/utils/sql';
 
@@ -145,6 +146,10 @@ export const resolveProjectNarrowing = async (
   }
   return undefined;
 };
+
+/** The projects whose every row a read filter grants: its unconditional scopes at the project level. */
+export const unconditionalProjectIds = (filter: CollectionReadFilter): string[] =>
+  filter.scopes.filter((scope) => scope.channelType === 'project' && !scope.condition && !scope.deeperChannels).flatMap((scope) => scope.channelIds);
 
 interface FindProjectsPaginatedOpts {
   userId: string;

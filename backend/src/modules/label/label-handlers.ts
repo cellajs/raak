@@ -30,7 +30,6 @@ app.openapi(labelRoutes.getLabelOlderAcceptedCounts, async (ctx) => {
 app.openapi(labelRoutes.getLabel, async (ctx) => {
   const { id } = ctx.req.valid('param');
   const result = await getLabelOp(ctx, id);
-  ctx.set('productCacheData', result);
   return ctx.json(result, 200);
 });
 

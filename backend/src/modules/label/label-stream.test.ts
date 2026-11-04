@@ -3,6 +3,10 @@ import { buildStreamChange } from '#/modules/entities/stream/build-change';
 import type { AppStreamProductEvent } from '#/modules/entities/stream/types';
 
 const labelRow = (deletedAt: string | null = null) => ({
+  activityId: 'activity-1',
+  userId: null,
+  changedFields: null,
+  stx: null,
   rowData: { id: 'label-1', organizationId: 'org-1', projectId: 'project-1', deletedAt },
   seq: 11,
   movedFrom: null,
@@ -10,19 +14,16 @@ const labelRow = (deletedAt: string | null = null) => ({
 
 const labelEvent = (overrides: Record<string, unknown>): AppStreamProductEvent =>
   ({
-    id: 'activity-1',
     type: 'label.updated',
     action: 'update',
     entityType: 'label',
     resourceType: null,
-    subjectId: 'label-1',
     tenantId: 'tenant-1',
     organizationId: 'org-1',
     projectId: 'project-1',
     rowData: null,
     rows: [labelRow()],
     trace: null,
-    stx: null,
     ...overrides,
   }) as unknown as AppStreamProductEvent;
 
@@ -31,7 +32,7 @@ const labelEvent = (overrides: Record<string, unknown>): AppStreamProductEvent =
 describe('buildStreamChange propagation hint', () => {
   it('classifies a live label update as an update hint', () => {
     const { propagation } = buildStreamChange(labelEvent({}));
-    expect(propagation).toMatchObject({ hostProduct: 'task', update: ['label-1'], remove: [] });
+    expect(propagation).toMatchObject({ embeddedProduct: 'label', update: ['label-1'], remove: [] });
   });
 
   it('classifies a soft-deleted label row as a removal hint', () => {

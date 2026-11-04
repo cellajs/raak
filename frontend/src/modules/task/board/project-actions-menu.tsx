@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, UsersIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dr
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { NamedText } from '~/modules/common/named-text';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -15,6 +16,7 @@ import { DrawerDisplayOptions } from '~/modules/task/board/display-options';
 import { Button } from '~/modules/ui/button';
 import { OpenInWorkspaceItem } from '~/modules/workspace/open-in-workspace-item';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
+import { findMembership } from '~/query/enrichment/helpers';
 import { cn } from '~/utils/cn';
 
 interface ProjectActionsMenuProps {
@@ -33,7 +35,8 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const { data: organization } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
 
-  const projectMembership = project.membership;
+  const { data: myMemberships } = useQuery(myMembershipsQueryOptions());
+  const projectMembership = findMembership(myMemberships?.items ?? [], project.id);
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const triggerRef = { current: currentTarget };

@@ -2,6 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import type { Workspace } from 'sdk';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
+import { useWithMembership } from '~/modules/project/use-with-membership';
 import { BoardEmpty } from '~/modules/task/board/board-empty';
 import { BoardHeaderSkeleton, BoardSkeleton } from '~/modules/task/board/board-skeleton';
 import { useCurrentUser } from '~/modules/user/user-store';
@@ -23,9 +24,11 @@ export function WorkspaceBoardSkeleton({ workspace, withHeader = true }: Workspa
     enabled: false,
   });
 
+  const joinedMenuProjects = useWithMembership(flattenInfiniteData<EnrichedProject>(menuProjects));
+  const joinedBoardProjects = useWithMembership(flattenInfiniteData<EnrichedProject>(boardProjects));
   const projects = boardProjects
-    ? flattenInfiniteData<EnrichedProject>(boardProjects)
-    : flattenInfiniteData<EnrichedProject>(menuProjects).filter(({ membership }) => membership?.workspaceId === workspace.id && !membership.archived);
+    ? joinedBoardProjects
+    : joinedMenuProjects.filter(({ membership }) => membership?.workspaceId === workspace.id && !membership.archived);
 
   // A menu list with pages still to fetch cannot rule out projects in this workspace.
   const isComplete = !!boardProjects || (!!menuProjects && !menuHasMore);

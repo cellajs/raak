@@ -1,4 +1,5 @@
 import type { z } from '@hono/zod-openapi';
+import { buildSubject } from 'shared';
 import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
@@ -13,7 +14,6 @@ import { type TaskModel, tasksTable } from '#/modules/task/task-db';
 import { insertTasks } from '#/modules/task/task-queries';
 import { taskContract, type taskCreateManyStxBodySchema } from '#/modules/task/task-schema';
 import { insertWithinTenantQuota } from '#/modules/tenants/quota-lock';
-import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { type PlacementHome, type ResolvedPlacement, resolvePlacement } from '#/permissions/product-placement';
 import { checkIdempotency } from '#/utils/idempotency';

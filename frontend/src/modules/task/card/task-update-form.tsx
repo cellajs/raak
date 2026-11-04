@@ -1,9 +1,9 @@
 import type { RefObject } from 'react';
-import { isUnconditionalCan } from 'shared';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import type { BlockNoteContentApi } from '~/modules/common/blocknote/blocknote-editor';
 import { CollaborativeBlockNote } from '~/modules/common/blocknote/collaborative-blocknote';
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
+import { useCan } from '~/modules/entities/use-can';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { useProjectMembers } from '~/modules/project/use-project-members';
 import { TaskCardContentExpanded } from '~/modules/task/card/task-card-content-expanded';
@@ -33,7 +33,8 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
   const { tenantId } = useOrganizationLayoutContext();
 
   const project = findProjectByIdOrSlug(task.projectId, tenantId);
-  const canEdit = isUnconditionalCan(project?.can?.task?.update);
+  const can = useCan();
+  const canEdit = !!project && can('update', 'task', project);
 
   const projectMembers = useProjectMembers(task.projectId, tenantId, task.organizationId);
   const updateData = useTaskDescriptionUpdate(task);

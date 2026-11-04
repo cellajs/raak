@@ -240,16 +240,6 @@ export const reassignTasksFromDeletedPrimaries = async (
 
 const liveTasks = (ids: string[]) => and(inArray(tasksTable.id, ids), isNull(tasksTable.deletedAt));
 
-/** A live task's title columns and body, for an instant notification email. */
-export const findTaskNotificationPreview = async (tx: DbOrTx, id: string) => {
-  const [row] = await tx
-    .select({ name: tasksTable.name, summary: tasksTable.summary, description: tasksTable.description })
-    .from(tasksTable)
-    .where(liveTasks([id]))
-    .limit(1);
-  return row;
-};
-
 /** Live tasks' title columns, for notification lists and digests. */
 export const findTaskNotificationTitles = (tx: DbOrTx, ids: string[]) =>
   tx.select({ id: tasksTable.id, name: tasksTable.name, summary: tasksTable.summary }).from(tasksTable).where(liveTasks(ids));

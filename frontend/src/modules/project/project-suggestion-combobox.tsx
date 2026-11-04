@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { BriefcaseIcon, ChevronDownIcon, SearchIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useRef, useState } from 'react';
@@ -8,6 +8,7 @@ import { useDebounce } from '~/hooks/use-debounce';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Badge } from '~/modules/ui/badge';
@@ -24,6 +25,7 @@ import {
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
+import { findMembership } from '~/query/enrichment/helpers';
 
 const dropdownVariants = {
   hidden: { opacity: 0, y: -5, scale: 0.98 },
@@ -57,6 +59,7 @@ export function ProjectSuggestionCombobox({
 
   const { data, isFetching } = useInfiniteQuery(projectsListQueryOptions({ q: debouncedSearchQuery, organizationId, excludeArchived: 'true' }));
   const projects = flattenInfiniteData<EnrichedProject>(data);
+  const { data: myMemberships } = useQuery(myMembershipsQueryOptions());
 
   // Compared by id: the list and the selection hold different object identities.
   const selectedIds = new Set(value.map((item) => item.id));
@@ -136,7 +139,7 @@ export function ProjectSuggestionCombobox({
                   {projects.map((project) => {
                     const { id, entityType, name, thumbnailUrl } = project;
                     const isSelected = selectedIds.has(id);
-                    const assignedWorkspaceId = project.membership?.workspaceId;
+                    const assignedWorkspaceId = findMembership(myMemberships?.items ?? [], id)?.workspaceId;
                     const isAssigned = !!assignedWorkspaceId;
                     const assignedWorkspace = assignedWorkspaceId ? findWorkspaceByIdOrSlug(assignedWorkspaceId, tenantId) : null;
 

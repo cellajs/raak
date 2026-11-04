@@ -10,6 +10,7 @@ import { Button } from '~/modules/ui/button';
 import { Popover, PopoverContent } from '~/modules/ui/popover';
 import { useIsWorkspaceRoute, useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { useWorkspaceArrivalStore } from '~/modules/workspace/workspace-arrival-store';
+import { findMembership, getCachedMemberships } from '~/query/enrichment/helpers';
 import { getRouter } from '~/routes/-router-instance';
 
 interface BalloonProps {
@@ -24,10 +25,11 @@ function RestoredMessage({ project }: BalloonProps) {
 
   const undo = async () => {
     if (!onlineManager.isOnline()) return toastOffline();
-    if (!project.membership) return;
+    const membership = findMembership(getCachedMemberships() ?? [], project.id);
+    if (!membership) return;
     try {
       await updateMembership({
-        path: { organizationId: organization.id, tenantId, id: project.membership.id },
+        path: { organizationId: organization.id, tenantId, id: membership.id },
         body: { archived: true },
         channelId: project.id,
         channelType: 'project',

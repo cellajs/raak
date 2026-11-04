@@ -8,7 +8,7 @@ import type { BoardLayoutHandle, BoardLayoutPanel } from '~/modules/common/board
 import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
 import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
 import { LABELS_PANEL_ID } from '~/modules/label/types';
-import type { EnrichedProject } from '~/modules/project/types';
+import type { ProjectWithMembership } from '~/modules/project/types';
 import { useStartWith, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { normalizePanelWidths, prepareBoardPanels, projectPanelName, publicBoardPanels, statusTabLists } from '~/modules/task/helpers/board-helpers';
 import { isBoardSearchActive } from '~/modules/task/helpers/search-filter';
@@ -109,7 +109,7 @@ export function computePanelReorder(
 }
 
 /** The board's panels in display order with their stored widths; the loading skeleton lays out the same way. */
-export function usePanelLayout(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[], publicView = false) {
+export function usePanelLayout(boardId: string, projects: ProjectWithMembership[], extraPanels?: BoardResizablePanel[], publicView = false) {
   const storedStatusPanels = useTaskBoardStore((state) => state.statusPanels[boardId]);
   const publicProjectId = publicView ? projects[0]?.id : undefined;
   const { data: publicTasks } = useQuery({ ...publicTasksBoardQueryOptions(publicProjectId ?? ''), enabled: !!publicProjectId });
@@ -125,7 +125,7 @@ export function usePanelLayout(boardId: string, projects: EnrichedProject[], ext
   return { panels, defaultLayout };
 }
 
-export function useBoardPanels(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[], publicView = false) {
+export function useBoardPanels(boardId: string, projects: ProjectWithMembership[], extraPanels?: BoardResizablePanel[], publicView = false) {
   const { t } = useTranslation();
   const { panels, defaultLayout } = usePanelLayout(boardId, projects, extraPanels, publicView);
   const prunePanelOrders = useBoardStore((state) => state.prunePanelOrders);

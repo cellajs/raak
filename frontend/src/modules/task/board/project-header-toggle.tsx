@@ -14,7 +14,7 @@ interface ProjectHeaderToggleProps {
 /** Shows or hides the project page's header. Hidden, the project's avatar holds the spot, with the expand icon over it on hover or focus. */
 export function ProjectHeaderToggle({ project }: ProjectHeaderToggleProps) {
   const { t } = useTranslation();
-  const isShown = useProjectHeaderShown(project);
+  const isShown = useProjectHeaderShown(project.id);
   const setProjectHeaderShown = useTaskBoardStore((state) => state.setProjectHeaderShown);
 
   return (

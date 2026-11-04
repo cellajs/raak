@@ -6,7 +6,7 @@ import {
   resolveProjectWorkspaceId,
   setProjectMembershipWorkspace,
 } from '#/modules/project/operations/project-workspace-membership';
-import { getValidChannel } from '#/permissions';
+import { getValidChannel } from '#/permissions/get-valid-channel';
 import { log } from '#/utils/logger';
 
 /**

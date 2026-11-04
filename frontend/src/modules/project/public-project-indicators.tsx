@@ -1,7 +1,7 @@
 import { GlobeIcon } from 'lucide-react';
 import { type ReactElement, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useResolveCan } from '~/modules/entities/use-resolve-can';
+import { useCan } from '~/modules/entities/use-can';
 import { openProjectSettingsSheet } from '~/modules/project/project-actions';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Badge, badgeVariants } from '~/modules/ui/badge';
@@ -107,9 +107,9 @@ interface PublicProjectChipProps {
 /** "Public" in a workspace panel head, in the spot of "Read only". */
 export function PublicProjectChip({ project }: PublicProjectChipProps) {
   const { t } = useTranslation();
-  const resolveCan = useResolveCan();
+  const can = useCan();
 
-  if (!resolveCan(project.can?.project?.update, project.createdBy)) {
+  if (!can('update', 'project', project)) {
     return (
       <Badge soft className={chipClass}>
         {t('c:public')}

@@ -12,6 +12,7 @@ import { fitPanels } from '~/modules/common/resizable-panels/panel-layout';
 import { idealWidthFactor } from '~/modules/common/resizable-panels/resizable-panels';
 import { SearchField } from '~/modules/common/search-field';
 import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
+import { useWithMembership } from '~/modules/project/use-with-membership';
 import { buildBoardExtraPanels, usePanelLayout, useShowExplainer, useStatusTabList } from '~/modules/task/board/board-hooks';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
@@ -62,7 +63,8 @@ export function BoardSkeleton({
   const showExplainer = useShowExplainer(isInWorkspace);
   const extraPanels = buildBoardExtraPanels({ showExplainer, publicView });
 
-  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, projects, extraPanels, publicView);
+  const boardProjects = useWithMembership(projects);
+  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, boardProjects, extraPanels, publicView);
   const panels: SkeletonColumn[] = isMobile ? [{ kind: 'mobile', panelId: 'mobilePanel' }] : boardPanels;
   const { ref: rowFrameRef, bounds: rowFrame } = useMeasure<HTMLDivElement>();
 
@@ -100,7 +102,7 @@ export function BoardSkeleton({
       case 'mobile':
         return (
           <>
-            {isInWorkspace ? <ProjectTabNav projects={projects} /> : <StatusTabNav />}
+            {isInWorkspace ? <ProjectTabNav projects={boardProjects} /> : <StatusTabNav />}
             <MobilePanelSkeleton />
           </>
         );

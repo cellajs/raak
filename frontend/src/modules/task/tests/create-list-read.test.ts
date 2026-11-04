@@ -16,7 +16,6 @@ vi.mock('~/modules/task/helpers/task-glow', () => ({ triggerTaskGlow: vi.fn() })
 
 const { ApiError } = await import('~/lib/api');
 const { tasksCanonicalOptions, useTaskCreateMutation } = await import('~/modules/task/query');
-const { initMutationDefaults } = await import('~/query/mutation-registry');
 
 const ctx = { tenantId: 'ten-1', organizationId: 'org-1' };
 const projectId = 'proj-1';
@@ -111,7 +110,6 @@ describe('a task list read that races a create', () => {
   it('carries nothing for a row a delete is out for', async () => {
     const { answer, created } = await boardWithCreateOut();
     // A delete queued behind the create, as one restored from the offline queue holds it; its request stays out.
-    initMutationDefaults(queryClient);
     deleteTasks.mockReturnValue(new Promise(() => {}));
     hydrate(queryClient, {
       queries: [],

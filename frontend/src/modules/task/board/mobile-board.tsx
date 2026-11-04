@@ -1,7 +1,7 @@
 import { useSearch } from '@tanstack/react-router';
 import { Suspense, useEffect, useRef } from 'react';
 import { ScrollReset } from '~/modules/common/scroll-reset';
-import type { EnrichedProject } from '~/modules/project/types';
+import type { EnrichedProject, ProjectWithMembership } from '~/modules/project/types';
 import { useStatusTabList } from '~/modules/task/board/board-hooks';
 import { MobilePanelSkeleton } from '~/modules/task/board/board-skeleton';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
@@ -11,7 +11,7 @@ import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 
 /** A phone's workspace board: one project at a time, under its project tabs. */
-export function MobileWorkspaceBoard({ projects }: { projects: EnrichedProject[] }) {
+export function MobileWorkspaceBoard({ projects }: { projects: ProjectWithMembership[] }) {
   const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
 
   const sorted = sortByMembership(projects);

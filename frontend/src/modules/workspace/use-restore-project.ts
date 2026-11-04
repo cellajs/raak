@@ -7,6 +7,7 @@ import type { EnrichedOrganization } from '~/modules/organization/types';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useWorkspaceArrivalStore } from '~/modules/workspace/workspace-arrival-store';
+import { findMembership, getCachedMemberships } from '~/query/enrichment/helpers';
 import { getRouter } from '~/routes/-router-instance';
 
 export interface RestoreProjectProps {
@@ -30,7 +31,7 @@ export function useRestoreProject(props: RestoreProjectProps, { open }: { open: 
   const [isPending, setIsPending] = useState(false);
 
   const restoreProject = async () => {
-    const membership = project.membership;
+    const membership = findMembership(getCachedMemberships() ?? [], project.id);
     if (!membership?.workspaceId) return;
     if (!onlineManager.isOnline()) return toastOffline();
 

@@ -1,6 +1,6 @@
 import i18n from 'i18next';
 import { panelMinWidth } from '~/modules/common/board/board-layout';
-import type { EnrichedProject } from '~/modules/project/types';
+import type { ProjectWithMembership } from '~/modules/project/types';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
@@ -25,12 +25,12 @@ export const prepareBoardTasks = (tasks: Task[], showAccepted: boolean, showIced
     )
     .sort(compareTaskOrder);
 
-export const sortByMembership = (projects: EnrichedProject[]) => {
+export const sortByMembership = (projects: ProjectWithMembership[]) => {
   return [...projects].sort((a, b) => (a.membership?.displayOrder ?? 0) - (b.membership?.displayOrder ?? 0));
 };
 
 /** Orders tasks as the board shows them: panels by membership, then status and display order. */
-export const sortTasksAsOnBoard = (tasks: Task[], projects: EnrichedProject[]) => {
+export const sortTasksAsOnBoard = (tasks: Task[], projects: ProjectWithMembership[]) => {
   const panelIndex = new Map(sortByMembership(projects).map((project, index) => [project.id, index]));
   return [...tasks].sort((a, b) => (panelIndex.get(a.projectId) ?? 0) - (panelIndex.get(b.projectId) ?? 0) || compareTaskOrder(a, b));
 };
@@ -52,7 +52,7 @@ export const statusPanelId = (projectId: string, status: TaskStatus) => `${proje
 
 /** One panel per project; on a board with status panels, the project's panel keeps the statuses left over, unless `withoutRest`. Status panels line up from the status the board starts with, and the project's panel follows them. */
 export const prepareBoardPanels = (
-  projects: EnrichedProject[],
+  projects: ProjectWithMembership[],
   statusPanels: TaskStatus[] = [],
   startWith: TogglableStatusType = 'accepted',
   withoutRest = false,

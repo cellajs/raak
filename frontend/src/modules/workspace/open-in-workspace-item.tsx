@@ -1,9 +1,12 @@
+import { useQuery } from '@tanstack/react-query';
 import { ArrowRightIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
+import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { openProjectBoard, type RestoreProjectProps, useRestoreProject } from '~/modules/workspace/use-restore-project';
+import { findMembership } from '~/query/enrichment/helpers';
 
 /** The project menu's way to its workspace, with a separator after it; a press first restores an archived project. */
 export function OpenInWorkspaceItem(props: RestoreProjectProps) {
@@ -12,7 +15,9 @@ export function OpenInWorkspaceItem(props: RestoreProjectProps) {
   const { restoreProject, isPending } = useRestoreProject(props, { open: true });
   const { rows: workspaces } = useInfiniteRows({ ...workspacesListQueryOptions({ organizationId: organization.id }), refetchOnMount: false });
 
-  const membership = project.membership;
+  const { data: myMemberships } = useQuery(myMembershipsQueryOptions());
+
+  const membership = findMembership(myMemberships?.items ?? [], project.id);
   if (!membership?.workspaceId) return null;
   const { archived, workspaceId } = membership;
   const current = workspaces?.find(({ id }) => id === workspaceId);
