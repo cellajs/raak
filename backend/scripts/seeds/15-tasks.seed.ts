@@ -1,7 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { and, eq } from 'drizzle-orm';
 import { appConfig } from 'shared';
-import { type DescriptionBlock, findSummarySource } from 'shared/utils/derive-description-core';
+import type { DescriptionBlock } from 'shared/blocknote';
+import { findSummarySource } from 'shared/utils/derive-description-core';
 import { nanoid } from 'shared/utils/nanoid';
 import { createServerStx } from '#/core/stx/create-server-stx';
 import { getSeedDb } from '#/db/db';

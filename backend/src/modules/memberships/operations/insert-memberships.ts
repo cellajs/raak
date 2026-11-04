@@ -52,7 +52,7 @@ export const insertMemberships = async <T extends MembershipEntity>(
   // One query for per-user max(displayOrder), the baseline for the next order
   const maxOrderRows = await findMaxDisplayOrders(ctx, { userIds });
 
-  const maxOrdersByUser = new Map<string, number>(maxOrderRows.map((r) => [r.userId, r.maxOrder ?? 0]));
+  const maxOrdersByUser = new Map<string, number>(maxOrderRows.map((r) => [r.userId, r.maxOrder]));
 
   // Rows assigned per user in this run, to step the order by orderGap
   const assignedCounts = new Map<string, number>();
@@ -80,15 +80,15 @@ export const insertMemberships = async <T extends MembershipEntity>(
   const broughtAlongRows = prepared.flatMap(({ baseMembership, channelIdColumns, entity }) => {
     const { [appConfig.entityIdColumnKeys[entity.entityType]]: _, ...parentIdColumns } = channelIdColumns;
     return membershipsBroughtAlong(entity, baseMembership.role, findMenuParent(entity.entityType)).map(
-      ({ channelType, channelId, role }) =>
-        ({
-          ...baseMembership,
-          tenantId: entity.tenantId,
-          role,
-          ...(channelType === 'organization' ? { organizationId: channelId } : parentIdColumns),
-          channelType,
-          channelId,
-        }) as InsertMembershipModel,
+      ({ channelType, channelId, role }): InsertMembershipModel => ({
+        ...baseMembership,
+        ...(channelType === 'organization' ? {} : parentIdColumns),
+        organizationId: channelIdColumns.organizationId,
+        tenantId: entity.tenantId,
+        role,
+        channelType,
+        channelId,
+      }),
     );
   });
 

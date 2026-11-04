@@ -61,7 +61,7 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
         waitingFallback={
           // The static wherever no live editor is, faded and inert only while an editor is coming.
           // noGutter: the wrapper already applies taskDescriptionGutterClass, so the swap causes no reflow.
-          <div className={cn(canEdit && 'pointer-events-none select-none opacity-50')}>
+          <div className={cn(canEdit && 'pointer-events-none opacity-50 select-none')}>
             <TaskCardContentExpanded task={task} noGutter />
           </div>
         }

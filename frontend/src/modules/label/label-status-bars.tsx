@@ -66,7 +66,7 @@ export function LabelStatusBars({ row, showProjects }: LabelStatusBarsProps) {
               type="button"
               aria-expanded={isOpen}
               onClick={() => setOpenProjectId(isOpen ? null : projectId)}
-              className="pointer-fine:group-[:not(:hover,:focus-within)]/label-tile:resting-avatar pointer-coarse:group-[:not(:focus-visible,:has(:focus-visible))]/label-tile:resting-avatar flex h-7 w-full items-center gap-2 rounded-sm outline-0 focus-visible:ring-2 focus-visible:ring-ring max-sm:h-11"
+              className="pointer-fine:group-[:not(:hover,:focus-within)]/label-tile:resting-avatar pointer-coarse:group-[:not(:focus-visible,:has(:focus-visible))]/label-tile:resting-avatar focus-visible:ring-ring flex h-7 w-full items-center gap-2 rounded-sm outline-0 focus-visible:ring-2 max-sm:h-11"
             >
               {project ? (
                 <EntityAvatar type="project" id={project.id} name={project.name} url={project.thumbnailUrl} className="size-5 shrink-0" />
@@ -107,13 +107,13 @@ export function LabelStatusBars({ row, showProjects }: LabelStatusBarsProps) {
                     initial={false}
                     animate={isOpen ? { y: 0, opacity: 1 } : { y: '100%', opacity: 0 }}
                     transition={rollTransition}
-                    className="absolute inset-0 flex items-center text-left font-medium text-xs"
+                    className="absolute inset-0 flex items-center text-left text-xs font-medium"
                   >
                     <span className="truncate">{project.name}</span>
                   </motion.span>
                 )}
               </span>
-              <span className="min-w-8 shrink-0 text-right text-muted-foreground text-xs tabular-nums">
+              <span className="text-muted-foreground min-w-8 shrink-0 text-right text-xs tabular-nums">
                 {formatCount(row.projectUsage[projectId] ?? 0)}
               </span>
             </button>
@@ -125,7 +125,7 @@ export function LabelStatusBars({ row, showProjects }: LabelStatusBarsProps) {
                     {statuses.map(({ value, name, icon: Icon, count }) => (
                       <li key={value} className="flex items-center gap-1.5">
                         <Icon className="size-3.5 shrink-0" />
-                        <span className="grow truncate text-muted-foreground">{t(`c:${name}`)}</span>
+                        <span className="text-muted-foreground grow truncate">{t(`c:${name}`)}</span>
                         {formatCount(count)}
                       </li>
                     ))}

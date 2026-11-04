@@ -45,7 +45,14 @@ export type NewTaskFormValues = z.infer<typeof createTaskFormSchema>;
 
 export const newTaskFormDefaults: NewTaskFormValues = { ...getSchemaDefaults(createTaskFormSchema), status: TaskStatus.Unstarted };
 
-export const newTaskFormIsDirty = ({ assignedTo, labels, description }: Pick<NewTaskFormValues, 'assignedTo' | 'labels' | 'description'>) =>
+/** A stored draft, parsed: one an older bundle saved may lack a field the form has now. */
+export const parseTaskDraft = (draft: Record<string, unknown> | undefined) => createTaskFormSchema.partial().safeParse(draft).data;
+
+export const newTaskFormIsDirty = ({
+  assignedTo = [],
+  labels = [],
+  description,
+}: Partial<Pick<NewTaskFormValues, 'assignedTo' | 'labels' | 'description'>>) =>
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteHasContent(description));
 
 /** The create-task form's element id; card-glow.css styles ids starting with `create-task-`. */
@@ -64,7 +71,7 @@ export const toggleCreateTaskForm = (project: { id: string; organizationId: stri
 
   if (store.draftTasks[project.id]) return closeCreateTaskForm(project.id);
 
-  const draftForm = draftStore.getState().getForm<NewTaskFormValues | undefined>(id);
+  const draftForm = parseTaskDraft(draftStore.getState().getForm(id));
   const draftStatus = draftForm?.status ?? TaskStatus.Unstarted;
 
   const defaultTask: Task = {

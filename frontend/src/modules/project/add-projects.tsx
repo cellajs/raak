@@ -30,7 +30,7 @@ function AddProjectsOption({ onClick, icon: Icon, label, ariaLabel }: AddProject
       <Icon className="size-12" strokeWidth={1} />
       <div className="flex flex-col truncate">
         <p>{label}</p>
-        <div className="mt-1 flex items-center truncate text-muted-foreground transition-colors group-hover/tile:text-foreground">
+        <div className="text-muted-foreground group-hover/tile:text-foreground mt-1 flex items-center truncate transition-colors">
           <strong>{t('c:continue')}</strong>
           <ChevronRightIcon className="ml-1" />
         </div>

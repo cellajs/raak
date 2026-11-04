@@ -82,75 +82,168 @@
         "values": {
           "spamLimiter": {
             "name": "Emails sent",
-            "description": "10 requests per hour for each user, or each IP address when not signed in. Failed requests don't count."
+            "description": "Mails sent for each user, or for each IP address when not signed in. A failed request does not count.",
+            "policy": {
+              "mode": "success",
+              "points": 10,
+              "duration": 3600
+            }
           },
           "emailEnumLimiter": {
             "name": "Email lookups",
-            "description": "30 lookups per hour for each IP address. Every lookup counts, whatever the answer. Past it, sign-in goes on without lookups."
+            "description": "Lookups for each IP address. Every lookup counts, whatever the answer; past the budget, sign-in goes on without lookups.",
+            "policy": {
+              "mode": "limit",
+              "points": 30,
+              "duration": 3600
+            }
           },
           "presignedUrlLimiter": {
             "name": "File links",
-            "description": "2,000 requests per hour for each user. One request can cover up to 50 files."
+            "description": "Requests for each user or service account. One request can cover up to 50 files.",
+            "policy": {
+              "mode": "limit",
+              "points": 2000,
+              "duration": 3600
+            }
           },
           "uploadTokenLimiter": {
             "name": "Upload tokens",
-            "description": "300 tokens per hour for each user."
+            "description": "Tokens for each user or service account.",
+            "policy": {
+              "mode": "limit",
+              "points": 300,
+              "duration": 3600
+            }
           },
           "pushSubscriptionLimiter": {
             "name": "Push subscriptions",
-            "description": "30 registrations per hour for each user."
+            "description": "Registrations for each user.",
+            "policy": {
+              "mode": "limit",
+              "points": 30,
+              "duration": 3600
+            }
           },
           "totpVerificationLimiter": {
             "name": "Failed TOTP codes",
-            "description": "5 wrong codes per hour for each IP address, then blocked for 30 minutes. A correct code resets the count."
+            "description": "Wrong codes for each IP address. A correct code resets the count.",
+            "policy": {
+              "mode": "failseries",
+              "points": 5,
+              "duration": 3600,
+              "blockDuration": 1800
+            }
           },
           "stepUpLimiter": {
             "name": "Failed step-ups",
-            "description": "5 failed checks per hour for each account, then blocked for 30 minutes. A passed check resets the count."
+            "description": "Failed checks for each account. A passed check resets the count.",
+            "policy": {
+              "mode": "failseries",
+              "points": 5,
+              "duration": 3600,
+              "blockDuration": 1800
+            }
           },
           "magicLinkLimiter": {
             "name": "Magic links, new browser",
-            "description": "3 emails per 30 minutes for each address, when the browser has never signed in to it."
+            "description": "Emails for each address, when the browser has never signed in to it.",
+            "policy": {
+              "mode": "limit",
+              "points": 3,
+              "duration": 1800
+            }
           },
           "recognizedMagicLinkLimiter": {
             "name": "Magic links, known browser",
-            "description": "10 emails per 30 minutes for each address, when the browser has signed in to it before."
+            "description": "Emails for each address, when the browser has signed in to it before.",
+            "policy": {
+              "mode": "limit",
+              "points": 10,
+              "duration": 1800
+            }
           },
           "passkeyChallengeLimiter": {
             "name": "Passkey challenges",
-            "description": "30 challenges per 5 minutes for each IP address."
+            "description": "Challenges for each IP address.",
+            "policy": {
+              "mode": "limit",
+              "points": 30,
+              "duration": 300
+            }
           },
           "clientMetadataFetchLimiter": {
             "name": "Client metadata fetches",
-            "description": "60 fetches per minute for each IP address."
+            "description": "Fetches for each IP address.",
+            "policy": {
+              "mode": "limit",
+              "points": 60,
+              "duration": 60
+            }
           },
           "serviceBurstLimiter": {
             "name": "Request burst",
-            "description": "30 requests per second for each user or service account using an API key or access token."
+            "description": "Requests for each user or service account using an API key or access token.",
+            "policy": {
+              "mode": "limit",
+              "points": 30,
+              "duration": 1
+            }
           },
           "mcpRequestLimiter": {
             "name": "MCP requests",
-            "description": "30 requests per second for each user or service account."
+            "description": "Requests for each user or service account.",
+            "policy": {
+              "mode": "limit",
+              "points": 30,
+              "duration": 1
+            }
           },
-          "syncReadLimiter": {
-            "name": "Sync reads",
-            "description": "1,000 reads per 5 minutes for each user."
+          "readLimiter": {
+            "name": "Reads",
+            "description": "Reads for each user or service account, or for each IP address when not signed in.",
+            "policy": {
+              "mode": "limit",
+              "points": 1000,
+              "duration": 300
+            }
           },
           "streamConnectLimiter": {
             "name": "Stream connections",
-            "description": "60 connection attempts per 5 minutes for each user."
+            "description": "Connection attempts for each user.",
+            "policy": {
+              "mode": "limit",
+              "points": 60,
+              "duration": 300
+            }
           },
           "yjsHttpLimiter": {
             "name": "Yjs over HTTP",
-            "description": "600 pulls and pushes per minute for each user, counted together."
+            "description": "Pulls and pushes for each user, counted together.",
+            "policy": {
+              "mode": "limit",
+              "points": 600,
+              "duration": 60
+            }
           },
           "pointsLimiter": {
             "name": "API points",
-            "description": "An hourly budget for each user or service account in a tenant: 1 point per request, 1 per item on bulk routes. Default 1,000 an hour, and each tenant can change it."
+            "description": "Points for each user or service account in a tenant: 1 per request, 1 per item on a bulk route. A tenant starts at 1,000 an hour, which a system admin can raise up to the ceiling shown.",
+            "policy": {
+              "mode": "limit",
+              "points": 5000,
+              "duration": 3600
+            }
           },
           "tokenLimiter": {
             "name": "Failed sign-ins",
-            "description": "10 failed attempts per hour for each IP address and kind of sign-in, then blocked for 30 minutes. A success resets the count."
+            "description": "Failed attempts for each IP address and kind of sign-in. A success resets the count.",
+            "policy": {
+              "mode": "failseries",
+              "points": 10,
+              "duration": 3600,
+              "blockDuration": 1800
+            }
           },
           "insertEntityLock": {
             "name": "Create lock",
@@ -741,45 +834,6 @@
         },
         "x-tags": ["base", "entities", "cella"]
       },
-      "ProductBase": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": ["string", "null"]
-          },
-          "description": {
-            "type": ["string", "null"]
-          },
-          "entityType": {
-            "type": "string",
-            "enum": ["task", "label", "attachment"]
-          },
-          "keywords": {
-            "type": "string"
-          }
-        },
-        "required": ["id", "name", "createdAt", "updatedAt", "description", "entityType", "keywords"],
-        "description": "The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields and adds its writers as `ActorRef`s.",
-        "example": {
-          "id": "7e460470-da58-4733-a7ff-0d31897ecf8d",
-          "createdAt": "2024-07-02T14:28:38.152Z",
-          "updatedAt": "2024-07-03T04:17:25.780Z",
-          "name": "Capitulus vesco cursim alter.",
-          "description": "Veritas itaque basium a. Sufficio ter nostrum cilicium tersus ara. Earum ascit trans somniculosus.",
-          "keywords": "sint clementia corrigo",
-          "entityType": "attachment"
-        },
-        "x-tags": ["base", "entities", "cella"]
-      },
       "MembershipBase": {
         "type": "object",
         "properties": {
@@ -895,6 +949,35 @@
           "mutationId": "ad54dc2c-11e4-430b-95c7-39ea0ae52213",
           "sourceId": "7762c287-9155-4500-95f3-d63ec6185e0c",
           "fieldTimestamps": {}
+        },
+        "x-tags": ["base", "cella"]
+      },
+      "StxStored": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StxBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "changedFields": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                "maxItems": 100,
+                "description": "The fields the last write changed, set by the server; absent after a create or a server-driven write"
+              }
+            }
+          }
+        ],
+        "description": "The sync envelope as a product row stores and returns it: StxBase plus changedFields, the fields the last write changed, which the server sets and the Yjs materializer reads. A request carries StxBase only.",
+        "example": {
+          "mutationId": "ad54dc2c-11e4-430b-95c7-39ea0ae52213",
+          "sourceId": "7762c287-9155-4500-95f3-d63ec6185e0c",
+          "fieldTimestamps": {},
+          "changedFields": ["name", "updatedAt"]
         },
         "x-tags": ["base", "cella"]
       },
@@ -1053,6 +1136,25 @@
           "type": "membership.changed",
           "organizationId": "1be38924-da6b-4eea-ab8e-0e94769102fc",
           "subjectId": "27983ef1-9055-4794-ab1b-540257e8ce1f"
+        },
+        "x-tags": ["data", "entities", "cella"]
+      },
+      "StreamError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["unauthorized", "session_replaced", "access_changed", "resync"]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["code", "message"],
+        "description": "Why the server ends an app stream. It arrives as an `error` event on `/entities/app/stream` just before the stream closes; `unauthorized` ends it for good, any other code tells the client to reconnect.",
+        "example": {
+          "code": "session_replaced",
+          "message": "Session replaced"
         },
         "x-tags": ["data", "entities", "cella"]
       },
@@ -1337,7 +1439,8 @@
             "type": "object",
             "properties": {
               "key": {
-                "type": "string"
+                "type": "string",
+                "description": "A federation key in appConfig.federations"
               },
               "label": {
                 "type": "string"
@@ -1826,7 +1929,8 @@
                   "type": "object",
                   "properties": {
                     "key": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "A federation key in appConfig.federations"
                     },
                     "label": {
                       "type": "string"
@@ -1973,10 +2077,6 @@
                 "revokedAt": {
                   "type": ["string", "null"]
                 },
-                "revokedBy": {
-                  "type": ["string", "null"],
-                  "format": "uuid"
-                },
                 "revocationReason": {
                   "type": ["string", "null"],
                   "enum": ["sign_out", "other_session", "mfa_enabled", "session_cap", "replaced", null]
@@ -2014,7 +2114,6 @@
                 "createdAt",
                 "expiresAt",
                 "revokedAt",
-                "revokedBy",
                 "revocationReason",
                 "steppedUpAt",
                 "steppedUpVia",
@@ -2096,7 +2195,6 @@
               "ipAsn": null,
               "deviceIdHash": "e73e1e9b96a7acab442bcbafafbc1c5f",
               "revokedAt": null,
-              "revokedBy": null,
               "revocationReason": null,
               "steppedUpAt": null,
               "steppedUpVia": null,
@@ -3280,10 +3378,45 @@
             "properties": {
               "quotas": {
                 "type": "object",
-                "additionalProperties": {
-                  "type": "integer",
-                  "minimum": 0
+                "properties": {
+                  "user": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "organization": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "workspace": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "project": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "task": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "label": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "attachment": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "serviceAccount": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "apiKey": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
                 },
+                "required": ["user", "organization", "workspace", "project", "task", "label", "attachment", "serviceAccount", "apiKey"],
                 "description": "Caps per tenant on entities, service accounts and API keys (0 = unlimited)"
               },
               "rateLimits": {
@@ -4738,7 +4871,7 @@
             ]
           },
           "stx": {
-            "$ref": "#/components/schemas/StxBase"
+            "$ref": "#/components/schemas/StxStored"
           },
           "description": {
             "type": ["string", "null"],
@@ -4837,8 +4970,9 @@
             "description": "MIME type of the server-converted variant; null when none."
           },
           "size": {
-            "type": "string",
-            "maxLength": 255
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "keys": {
             "type": "object",
@@ -4942,7 +5076,7 @@
           "filename": "ick_thoroughly_coincide.text",
           "contentType": "application/x-sh",
           "convertedContentType": null,
-          "size": "5480456",
+          "size": 5480456,
           "keys": {
             "original": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text"
           },
@@ -5389,10 +5523,6 @@
           "revokedAt": {
             "type": ["string", "null"]
           },
-          "revokedBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
           "createdBy": {
             "anyOf": [
               {
@@ -5448,20 +5578,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "actorId",
-          "tenantId",
-          "name",
-          "prefix",
-          "last4",
-          "scopes",
-          "expiresAt",
-          "revokedAt",
-          "revokedBy",
-          "createdBy",
-          "createdAt"
-        ],
+        "required": ["id", "actorId", "tenantId", "name", "prefix", "last4", "scopes", "expiresAt", "revokedAt", "createdBy", "createdAt"],
         "description": "A secret key a service account authenticates with, sent as `Authorization: Bearer` or `x-api-key`. Only its prefix and last four characters are returned after creation; it can expire and be revoked.",
         "example": {
           "id": "f3c10bf5-c7cd-4d71-886d-aaaf26240582",
@@ -5473,7 +5590,6 @@
           "scopes": ["attachment:read"],
           "expiresAt": null,
           "revokedAt": null,
-          "revokedBy": null,
           "createdAt": "2024-11-20T15:58:25.416Z",
           "createdBy": {
             "id": "f51db79f-5767-434a-9a5a-1f68f22c07d3",
@@ -5497,7 +5613,7 @@
         "summary": "Auth health check",
         "description": "Returns auth health status including whether the client IP is rate-limited for email enumeration protection.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "Auth health status",
@@ -5518,7 +5634,8 @@
                         "type": "object",
                         "properties": {
                           "key": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "A federation key in appConfig.federations"
                           },
                           "label": {
                             "type": "string"
@@ -5537,6 +5654,12 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -5606,7 +5729,7 @@
         "summary": "Get pending MFA challenge",
         "description": "For the MFA challenge a sign-in left in this browser: the address of the account it completes, so the MFA page can name it in any browser.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "Pending sign-in address\n\nThe address of the account the held MFA challenge signs in to.",
@@ -5624,8 +5747,14 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -6722,7 +6851,7 @@
           "provider": "github"
         },
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -6761,6 +6890,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -6777,7 +6909,7 @@
           "provider": "google"
         },
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -6816,6 +6948,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -6832,7 +6967,7 @@
           "provider": "microsoft"
         },
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -6871,6 +7006,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -7165,7 +7303,7 @@
           "strategy": "sso"
         },
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -7193,6 +7331,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -7208,7 +7349,7 @@
           "strategy": "sso"
         },
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -7262,6 +7403,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -7277,7 +7421,7 @@
           "strategy": "sso"
         },
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -7329,6 +7473,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -7481,7 +7628,7 @@
         "summary": "Get step-up state",
         "description": "Whether this session stands stepped up for a kind of action, and what the user can offer to step up: a passkey or TOTP they hold, an emailed code, or setting up a second factor.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -7527,6 +7674,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -7738,7 +7888,7 @@
           "strategy": "sso"
         },
         "x-guard": ["userGuard", "sysAdminGuard", "tenantGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -7797,6 +7947,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -8391,7 +8544,7 @@
         "summary": "Get self",
         "description": "Returns the current user.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "User",
@@ -8403,8 +8556,14 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -8613,7 +8772,7 @@
         "summary": "Get auth data",
         "description": "Returns authentication related data of current user, including sessions, passkeys, TOTP and the enabled sign-in providers.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "Sign-in methods and sessions",
@@ -8625,8 +8784,14 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -8643,7 +8808,7 @@
         "summary": "Get list of invitations",
         "description": "Returns a list of pending memberships with entity data.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "Invitations pending",
@@ -8751,8 +8916,14 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -8871,10 +9042,6 @@
                           "revokedAt": {
                             "type": ["string", "null"]
                           },
-                          "revokedBy": {
-                            "type": ["string", "null"],
-                            "format": "uuid"
-                          },
                           "revocationReason": {
                             "type": ["string", "null"],
                             "enum": ["sign_out", "other_session", "mfa_enabled", "session_cap", "replaced", null]
@@ -8905,7 +9072,6 @@
                           "createdAt",
                           "expiresAt",
                           "revokedAt",
-                          "revokedBy",
                           "revocationReason",
                           "steppedUpAt",
                           "steppedUpVia"
@@ -9082,7 +9248,7 @@
         "summary": "Get my memberships",
         "description": "Returns all memberships for the current user across all channel entities.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "User memberships",
@@ -9103,8 +9269,14 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -9121,7 +9293,7 @@
         "summary": "Get connected apps",
         "description": "Lists the OAuth clients the user consented to (MCP clients, registered apps) with their scopes.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "Connected apps",
@@ -9155,8 +9327,14 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -9243,7 +9421,7 @@
         "summary": "Get public counts",
         "description": "Returns the number of users and of each channel entity type, such as organizations. This endpoint is public and uses a 1 minute in memory cache for performance.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "Public counts",
@@ -9278,6 +9456,9 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -9294,7 +9475,7 @@
         "summary": "List notifications",
         "description": "Returns the current user notification inbox, newest first, with the unread count. Ambient posts are not included: those are covered by unseen counts. Rows older than the retention window are removed with their partition.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -9329,6 +9510,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "format": "date-time",
               "description": "createdAt of the last row of the previous page"
             },
@@ -9352,10 +9534,15 @@
                         "type": "object",
                         "properties": {
                           "id": {
-                            "type": "string"
+                            "type": "string",
+                            "format": "uuid"
                           },
                           "createdAt": {
                             "type": "string"
+                          },
+                          "actorId": {
+                            "type": ["string", "null"],
+                            "format": "uuid"
                           },
                           "type": {
                             "type": "string",
@@ -9366,25 +9553,30 @@
                             "enum": ["task", "label", "attachment"]
                           },
                           "subjectId": {
-                            "type": "string"
+                            "type": "string",
+                            "format": "uuid"
                           },
                           "contextId": {
-                            "type": ["string", "null"]
+                            "type": ["string", "null"],
+                            "format": "uuid"
                           },
                           "channelId": {
-                            "type": "string"
+                            "type": "string",
+                            "format": "uuid"
                           },
                           "channelType": {
                             "type": "string",
                             "enum": ["organization", "workspace", "project"]
                           },
                           "organizationId": {
-                            "type": "string"
+                            "type": "string",
+                            "format": "uuid"
                           },
                           "tenantId": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 24
                           },
-                          "actorId": {
+                          "readAt": {
                             "type": ["string", "null"]
                           },
                           "actor": {
@@ -9402,14 +9594,12 @@
                           },
                           "subjectTitle": {
                             "type": "string"
-                          },
-                          "readAt": {
-                            "type": ["string", "null"]
                           }
                         },
                         "required": [
                           "id",
                           "createdAt",
+                          "actorId",
                           "type",
                           "entityType",
                           "subjectId",
@@ -9418,11 +9608,10 @@
                           "channelType",
                           "organizationId",
                           "tenantId",
-                          "actorId",
+                          "readAt",
                           "actor",
                           "channelName",
-                          "subjectTitle",
-                          "readAt"
+                          "subjectTitle"
                         ]
                       }
                     },
@@ -9528,7 +9717,7 @@
         "summary": "Get notification preferences",
         "description": "Email and digest preferences for the current user. In-app delivery is not opt-out.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "Notification preferences",
@@ -9553,8 +9742,14 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -9807,7 +10002,7 @@
         "summary": "Fetch public project by ID",
         "description": "Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -9955,7 +10150,7 @@
         "summary": "Get the Web Push application server key",
         "description": "Returns the VAPID public key `PushManager.subscribe()` needs, or null while push sending is off (push turned off, VAPID keys missing, or keys or subject refused); the client then offers no push toggle.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "VAPID public key",
@@ -9973,8 +10168,14 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -10176,7 +10377,7 @@
         "summary": "Get list of requests",
         "description": "Returns a list of submitted requests across all types: contact form, newsletter, and waitlist.",
         "x-guard": ["userGuard", "sysAdminGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -10283,6 +10484,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -10385,7 +10589,7 @@
         "summary": "Get unseen counts",
         "description": "Returns the number of unseen product entities per parent channel entity and entity type for the current user. Counts only entities created or published within the seen window: an older one is never unseen.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
             "description": "Unseen counts\n\nKeyed by parent channel entity id, then by product entity type.",
@@ -10816,7 +11020,7 @@
         "summary": "Get public task",
         "description": "Retrieves a public task by its ID.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -10862,7 +11066,7 @@
         "summary": "Get public tasks",
         "description": "Returns a list of public tasks associated with a specific project. For publicly shared boards.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -11133,7 +11337,7 @@
         "summary": "Resolve task link",
         "description": "Returns routing metadata for a task link so the frontend can decide where to redirect the user.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -11209,7 +11413,7 @@
         "summary": "Get task cover",
         "description": "Retrieves the cover image for a task by ID.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -11245,7 +11449,7 @@
         "summary": "Resolve task link by number",
         "description": "Returns routing metadata for a task named by its number in a tenant.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -11330,7 +11534,7 @@
         "summary": "Get task cover by number",
         "description": "Retrieves the cover image for a task named by its number in a tenant.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -11375,7 +11579,7 @@
         "summary": "Redirect to task",
         "description": "Redirects to the canonical route for a task by ID.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -11411,7 +11615,7 @@
         "summary": "Redirect to task by number",
         "description": "Redirects to the canonical route for a task by its number in a tenant.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -11460,7 +11664,7 @@
         "summary": "Get list of tenants",
         "description": "Returns a paginated list of tenants. System admin access required.",
         "x-guard": ["userGuard", "sysAdminGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -11652,6 +11856,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -11893,7 +12100,7 @@
         "summary": "Get list of users",
         "description": "Returns a list of users. Only system admins receive the system `role`, and only they may filter or sort by it.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -12050,6 +12257,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -12066,7 +12276,7 @@
         "summary": "Get user",
         "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead. Pass ?include=mfa for `mfaRequired`, which only the user themselves, system admins and admins of an organization the user is a member of receive.",
         "x-guard": ["userGuard", "relatableGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -12097,9 +12307,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "include",
             "in": "query"
           }
@@ -12169,6 +12381,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -12184,7 +12399,7 @@
           "service": "oauth"
         },
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -12212,6 +12427,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -12900,7 +13118,7 @@
         "summary": "Get list of organizations",
         "description": "Returns a list of organizations.",
         "x-guard": ["userGuard", "relatableGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -12992,9 +13210,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "include",
             "in": "query"
           }
@@ -13243,6 +13463,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -13265,7 +13488,7 @@
         "summary": "Get organization",
         "description": "Retrieves an organization by ID within a tenant. Pass ?slug=true to resolve by slug instead.",
         "x-guard": ["actorGuard", "tenantGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -13305,9 +13528,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "include",
             "in": "query"
           }
@@ -13334,6 +13559,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -13354,7 +13582,7 @@
         "summary": "Update organization",
         "description": "Updates an organization within a tenant.",
         "x-guard": ["actorGuard", "tenantGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -14348,7 +14576,7 @@
         "summary": "Get list of projects",
         "description": "Returns a paginated list of projects where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, workspaceId to scope to a specific workspace, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by project name. With relatableUserId it lists that user’s projects in the organizations the caller shares with them, by name; role, excludeArchived and workspaceId describe that user’s own membership and are refused there. With scope=organization and an organizationId it lists every project of that organization the caller may read, by name, whether or not the caller is a member; the membership filters and relatableUserId are refused there.",
         "x-guard": ["userGuard", "relatableGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -14468,9 +14696,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "include",
             "in": "query"
           }
@@ -14579,6 +14809,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -14601,7 +14834,7 @@
         "summary": "Get project",
         "description": "Retrieves a project by ID. Pass ?slug=true to resolve by slug instead.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -14650,9 +14883,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "include",
             "in": "query"
           }
@@ -14679,6 +14914,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -14699,7 +14937,7 @@
         "summary": "Update project",
         "description": "Updates a project by ID.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -15799,7 +16037,7 @@
         "summary": "Get list of workspaces",
         "description": "Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, and q to search by workspace name.",
         "x-guard": ["userGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -15874,9 +16112,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "include",
             "in": "query"
           }
@@ -16006,6 +16246,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -16028,7 +16271,7 @@
         "summary": "Get workspace",
         "description": "Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -16077,9 +16320,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "include",
             "in": "query"
           }
@@ -16106,6 +16351,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -16126,7 +16374,7 @@
         "summary": "Update workspace",
         "description": "Updates a workspace by ID.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -16229,7 +16477,7 @@
           "entity": "attachment"
         },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -16378,7 +16626,7 @@
                       "filename": "finally_wherever_nasalise.php",
                       "contentType": "application/vnd.oasis.opendocument.presentation",
                       "convertedContentType": null,
-                      "size": "7555316",
+                      "size": 7555316,
                       "keys": {
                         "original": "uploads/pubibp4ljoerjtgyu7cndg4f/finally_wherever_nasalise.php"
                       },
@@ -16423,7 +16671,7 @@
                       "filename": "buzzing_brr_hm.rmi",
                       "contentType": "application/x-7z-compressed",
                       "convertedContentType": null,
-                      "size": "1767423",
+                      "size": 1767423,
                       "keys": {
                         "original": "uploads/pv1fvu0uyumluud11ppu88to/buzzing_brr_hm.rmi"
                       },
@@ -16519,7 +16767,7 @@
         "summary": "Create attachments",
         "description": "Registers one or more new attachments after client side upload. Includes metadata like name, content type, size and storage keys. Every storage key must lie under the caller's own upload prefix and name a stored object; the size comes from storage.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -16550,7 +16798,7 @@
                   "name": "ick_thoroughly_coincide.text",
                   "filename": "ick_thoroughly_coincide.text",
                   "contentType": "application/x-sh",
-                  "size": "5480456",
+                  "size": 5480456,
                   "keys": {
                     "original": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text"
                   },
@@ -16585,8 +16833,8 @@
                       "description": "MIME type of the uploaded file (e.g. image/png)."
                     },
                     "size": {
-                      "type": "string",
-                      "maxLength": 255
+                      "type": "integer",
+                      "minimum": 0
                     },
                     "keys": {
                       "type": "object",
@@ -16608,7 +16856,8 @@
                           "maxLength": 2048
                         }
                       },
-                      "required": ["original"]
+                      "required": ["original"],
+                      "description": "Storage object keys per variant, keyed by variant name; only generated variants are present."
                     },
                     "groupId": {
                       "type": ["string", "null"],
@@ -16680,7 +16929,7 @@
                       "filename": "inasmuch.xhtml",
                       "contentType": "application/ogg",
                       "convertedContentType": null,
-                      "size": "2405024",
+                      "size": 2405024,
                       "keys": {
                         "original": "uploads/g9cersdww4bfs8s5tco33lcg/inasmuch.xhtml"
                       },
@@ -16725,7 +16974,7 @@
                       "filename": "victoriously.mp4",
                       "contentType": "audio/opus",
                       "convertedContentType": null,
-                      "size": "8358566",
+                      "size": 8358566,
                       "keys": {
                         "original": "uploads/d6hh0iebfum8827w318qwfuf/victoriously.mp4"
                       },
@@ -16811,7 +17060,7 @@
                       "filename": "inasmuch.xhtml",
                       "contentType": "application/ogg",
                       "convertedContentType": null,
-                      "size": "2405024",
+                      "size": 2405024,
                       "keys": {
                         "original": "uploads/g9cersdww4bfs8s5tco33lcg/inasmuch.xhtml"
                       },
@@ -16856,7 +17105,7 @@
                       "filename": "victoriously.mp4",
                       "contentType": "audio/opus",
                       "convertedContentType": null,
-                      "size": "8358566",
+                      "size": 8358566,
                       "keys": {
                         "original": "uploads/d6hh0iebfum8827w318qwfuf/victoriously.mp4"
                       },
@@ -16940,7 +17189,7 @@
           "entity": "attachment"
         },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -16989,11 +17238,13 @@
                     "properties": {
                       "mutationId": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 36,
+                        "description": "Unique mutation ID"
                       },
                       "sourceId": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 64,
+                        "description": "Tab/instance identifier for echo prevention"
                       }
                     },
                     "required": ["mutationId", "sourceId"]
@@ -17078,7 +17329,7 @@
         "summary": "Get presigned URLs",
         "description": "Signs download URLs for up to 50 private attachment files in one call, referenced by id + variant. Missing and denied ids come back in a uniform rejectedIds list (no 403/404 split), and the call succeeds even when every item is rejected. Public files should use the public CDN URL directly. Requires organization context.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["presignedUrlLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "presignedUrlLimiter"],
         "parameters": [
           {
             "schema": {
@@ -17250,7 +17501,7 @@
           "entity": "attachment"
         },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -17302,6 +17553,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -17327,7 +17581,7 @@
           "entity": "attachment"
         },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -17448,7 +17702,7 @@
         "summary": "Link attachment keys",
         "description": "Stores the storage keys of a file its uploader uploaded after creating the attachment, for a file added offline. Only the uploader may link them, under their own upload prefix, and only while the attachment has no stored file. Repeating the same keys returns the attachment unchanged.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -17577,7 +17831,7 @@
         "summary": "Create labels",
         "description": "Creates one or more labels within a project.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -17883,7 +18137,7 @@
         "summary": "Get list of labels",
         "description": "Returns a list of labels for a given project or workspace.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -18157,7 +18411,7 @@
         "summary": "Delete labels",
         "description": "Deletes one or more labels by ID.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -18199,11 +18453,13 @@
                     "properties": {
                       "mutationId": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 36,
+                        "description": "Unique mutation ID"
                       },
                       "sourceId": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 64,
+                        "description": "Tab/instance identifier for echo prevention"
                       }
                     },
                     "required": ["mutationId", "sourceId"]
@@ -18288,7 +18544,7 @@
         "summary": "Get older accepted task counts per label",
         "description": "Returns, per label id, how many tasks of a project were accepted before the cut-off of `acceptedCutOff` days ago.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -18378,7 +18634,7 @@
         "summary": "Get label",
         "description": "Retrieves a label by its ID.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -18430,6 +18686,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -18450,7 +18709,7 @@
         "summary": "Update label",
         "description": "Updates a label by ID.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -18577,7 +18836,7 @@
           "service": "mcp"
         },
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -18634,6 +18893,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -19614,7 +19876,7 @@
         "summary": "Get list of members",
         "description": "Retrieves members (users) of a channel entity by ID, including their associated membership data. Pass ?include=counts for per-member counts, and ?include=mfa for `mfaRequired`, which only admins of the organization receive.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -19716,18 +19978,22 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "include",
             "in": "query"
           },
           {
             "schema": {
               "type": "string",
-              "maxLength": 2048
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "userIds",
             "in": "query"
           }
@@ -19953,6 +20219,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -19969,7 +20238,7 @@
         "summary": "Get list of pending memberships",
         "description": "Returns the pending invitations of a channel entity, identified by ID, to every user who may read it: the address each went to, its role and its inviter. A row looks the same whether an account holds the address or not.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -20156,6 +20425,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -20340,7 +20612,7 @@
                   },
                   "entityType": {
                     "type": "string",
-                    "enum": ["task", "label", "attachment"],
+                    "enum": ["task"],
                     "description": "Entity type for all IDs in this batch"
                   }
                 },
@@ -20472,6 +20744,7 @@
                       },
                       "expiresAt": {
                         "type": "string",
+                        "maxLength": 64,
                         "format": "date-time"
                       }
                     },
@@ -20526,7 +20799,6 @@
                     "scopes": ["attachment:read"],
                     "expiresAt": null,
                     "revokedAt": null,
-                    "revokedBy": null,
                     "createdAt": "2024-09-23T23:15:48.299Z",
                     "createdBy": {
                       "id": "316b4c70-d649-481d-b03f-61d16dcebe99",
@@ -20571,7 +20843,6 @@
                         "scopes": ["attachment:read"],
                         "expiresAt": null,
                         "revokedAt": null,
-                        "revokedBy": null,
                         "createdAt": "2024-09-23T23:15:48.299Z",
                         "createdBy": {
                           "id": "316b4c70-d649-481d-b03f-61d16dcebe99",
@@ -20621,7 +20892,7 @@
         "summary": "Get service accounts",
         "description": "Lists the service accounts of this organization.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -20767,6 +21038,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       }
@@ -20879,7 +21153,7 @@
         "summary": "Get API keys",
         "description": "Lists the API keys of a service account. Secrets are never returned here.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -20926,7 +21200,6 @@
                       "scopes": ["attachment:read"],
                       "expiresAt": null,
                       "revokedAt": null,
-                      "revokedBy": null,
                       "createdAt": "2024-11-20T15:58:25.416Z",
                       "createdBy": {
                         "id": "f51db79f-5767-434a-9a5a-1f68f22c07d3",
@@ -20964,6 +21237,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -21045,6 +21321,7 @@
                   },
                   "expiresAt": {
                     "type": "string",
+                    "maxLength": 64,
                     "format": "date-time"
                   },
                   "rollFrom": {
@@ -21078,7 +21355,6 @@
                   "scopes": ["attachment:read"],
                   "expiresAt": null,
                   "revokedAt": null,
-                  "revokedBy": null,
                   "createdAt": "2024-09-23T23:15:48.299Z",
                   "createdBy": {
                     "id": "316b4c70-d649-481d-b03f-61d16dcebe99",
@@ -21116,7 +21392,6 @@
                     "scopes": ["attachment:read"],
                     "expiresAt": null,
                     "revokedAt": null,
-                    "revokedBy": null,
                     "createdAt": "2024-09-23T23:15:48.299Z",
                     "createdBy": {
                       "id": "316b4c70-d649-481d-b03f-61d16dcebe99",
@@ -21256,7 +21531,7 @@
           "entity": "task"
         },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -21823,7 +22098,7 @@
           "entity": "task"
         },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -22191,7 +22466,7 @@
         "summary": "Delete tasks",
         "description": "Deletes one or more tasks by ID.",
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {
@@ -22233,11 +22508,13 @@
                     "properties": {
                       "mutationId": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 36,
+                        "description": "Unique mutation ID"
                       },
                       "sourceId": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 64,
+                        "description": "Tab/instance identifier for echo prevention"
                       }
                     },
                     "required": ["mutationId", "sourceId"]
@@ -22316,7 +22593,7 @@
         "summary": "Get unseen task ids",
         "description": "Returns the ids of the newest tasks that are new to the current user: not seen yet, and created after the user joined. Newest first.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["syncReadLimiter"],
+        "x-rate-limiter": ["readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -22399,7 +22676,7 @@
           "entity": "task"
         },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["serviceBurstLimiter", "readLimiter"],
         "parameters": [
           {
             "schema": {
@@ -22451,6 +22728,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
           }
         }
       },
@@ -22476,7 +22756,7 @@
           "entity": "task"
         },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["pointsLimiter"],
+        "x-rate-limiter": ["serviceBurstLimiter", "pointsLimiter"],
         "parameters": [
           {
             "schema": {

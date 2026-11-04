@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
-import { createTaskFormId, type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
+import { createTaskFormId, newTaskFormIsDirty, parseTaskDraft, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { newTaskButtonClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
@@ -19,7 +19,7 @@ export function NewTaskButton({ project, size = 'xs', className }: NewTaskButton
   const { t } = useTranslation();
 
   const hasDraft = useDraftStore((state) => {
-    const storedForm = state.getForm<NewTaskFormValues>(createTaskFormId(project.id));
+    const storedForm = parseTaskDraft(state.getForm(createTaskFormId(project.id)));
     return !!storedForm && newTaskFormIsDirty(storedForm);
   });
   const isReadOnly = useIsProjectReadOnly(project.id);
@@ -35,7 +35,7 @@ export function NewTaskButton({ project, size = 'xs', className }: NewTaskButton
       className={cn(newTaskButtonClass, className)}
       onClick={() => toggleCreateTaskForm(project)}
     >
-      <Badge className="absolute -top-1 -right-1 z-100 in-data-[form-dirty=false]:hidden size-2 p-0" />
+      <Badge className="absolute -top-1 -right-1 z-100 size-2 p-0 in-data-[form-dirty=false]:hidden" />
       <PlusIcon className={cn('size-4.5 transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />
       <span>{t('c:task')}</span>
     </Button>

@@ -1,4 +1,5 @@
 import { bigint, bytea, index, primaryKey, snakeCase, uuid, varchar } from 'drizzle-orm/pg-core';
+import { appConfig } from 'shared';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { tenantIdLength } from '#/db/utils/constraints';
 import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
@@ -15,7 +16,7 @@ import { tenantsTable } from '#/modules/tenants/tenants-db';
 export const yjsDocumentsTable = snakeCase.table(
   'yjs_documents',
   {
-    entityType: varchar({ length: 50 }).notNull(),
+    entityType: varchar({ length: 50, enum: appConfig.productEntityTypes }).notNull(),
     entityId: uuid().notNull(),
     tenantId: varchar({ length: tenantIdLength })
       .notNull()
@@ -43,9 +44,6 @@ export const yjsDocumentsTable = snakeCase.table(
   ],
 );
 
-export type YjsDocumentModel = typeof yjsDocumentsTable.$inferSelect;
-export type InsertYjsDocumentModel = typeof yjsDocumentsTable.$inferInsert;
-
 /**
  * Append-only log of updates, one row per received update, in arrival order: a client's, or a server-origin one an
  * outside write of the description left. Durable before the update is broadcast, so a relay crash loses nothing.
@@ -55,7 +53,7 @@ export const yjsUpdatesTable = snakeCase.table(
   'yjs_updates',
   {
     id: bigint({ mode: 'number' }).generatedAlwaysAsIdentity().primaryKey(),
-    entityType: varchar({ length: 50 }).notNull(),
+    entityType: varchar({ length: 50, enum: appConfig.productEntityTypes }).notNull(),
     entityId: uuid().notNull(),
     tenantId: varchar({ length: tenantIdLength })
       .notNull()
@@ -74,6 +72,3 @@ export const yjsUpdatesTable = snakeCase.table(
     ...writeThroughPolicies('yjs_updates'),
   ],
 );
-
-export type YjsUpdateModel = typeof yjsUpdatesTable.$inferSelect;
-export type InsertYjsUpdateModel = typeof yjsUpdatesTable.$inferInsert;

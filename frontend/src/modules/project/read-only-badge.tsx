@@ -15,7 +15,7 @@ export function ProjectReadOnlyBadge({ projectId }: ProjectReadOnlyBadgeProps) {
 
   return (
     // The look of the cover's upload button: its edge and translucent fill
-    <Badge variant="outline" size="sm" className="border-foreground/20 bg-background/50 max-sm:hidden dark:bg-background/75">
+    <Badge variant="outline" size="sm" className="border-foreground/20 bg-background/50 dark:bg-background/75 max-sm:hidden">
       {t('c:read_only')}
     </Badge>
   );

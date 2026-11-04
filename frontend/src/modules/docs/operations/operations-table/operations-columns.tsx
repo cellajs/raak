@@ -7,6 +7,7 @@ import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
 import { extensionLabel } from '~/modules/docs/helpers/extension-label';
+import { extensionValue } from '~/modules/docs/helpers/extension-value';
 import { operationLinkOptions } from '~/modules/docs/helpers/reference-links';
 import { upperFirst } from '~/modules/docs/helpers/upper-first';
 import { AccessCell, type AccessValue } from '~/modules/docs/operations/access-explanation';
@@ -26,7 +27,7 @@ const hiddenTagKinds = new Set(['owner', 'entity']);
 const prominentExtensions = new Set(['x-guard', 'x-rate-limiter']);
 
 export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: string[] = []) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const extensionColumns: ColumnOrColumnGroup<GenOperationSummary>[] = extensions.map((ext) => ({
     key: ext.id,
@@ -39,13 +40,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
     renderCell: ({ row, tabIndex }: { row: GenOperationSummary; tabIndex: number }) => {
       const values = row.extensions[ext.id];
       if (!values?.length) return null;
-      const items: AccessValue[] = values.map((value) => ({
-        value,
-        code: value,
-        name: ext.values?.[value]?.name ?? value,
-        description: ext.values?.[value]?.description,
-        isGuard: ext.key === 'x-guard',
-      }));
+      const items = values.map((value) => extensionValue(ext, value, t, i18n.resolvedLanguage));
       return (
         <AccessCell
           label={extensionLabel(ext)}
@@ -117,7 +112,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
           variant="cell"
           size="cell"
           title={row.path}
-          className="min-w-0 font-mono text-foreground text-xs"
+          className="text-foreground min-w-0 font-mono text-xs"
           render={
             <Link
               {...operationLinkOptions(row)}
@@ -148,7 +143,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
         if (!row.hasResponseBody) {
           return (
             <span
-              className="w-full text-center text-muted-foreground text-xs"
+              className="text-muted-foreground w-full text-center text-xs"
               data-tooltip="true"
               data-tooltip-content={t('c:docs.no_response_body')}
             >
@@ -158,7 +153,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
         }
         if (!row.hasExample) {
           return (
-            <span className="w-full text-center text-muted-foreground" data-tooltip="true" data-tooltip-content={t('c:docs.no_example_yet')}>
+            <span className="text-muted-foreground w-full text-center" data-tooltip="true" data-tooltip-content={t('c:docs.no_example_yet')}>
               -
             </span>
           );
@@ -188,7 +183,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
       width: 200,
       minWidth: 120,
       renderCell: ({ row }) => (
-        <code className="truncate text-muted-foreground text-xs">
+        <code className="text-muted-foreground truncate text-xs">
           <HighlightText text={row.id} />
         </code>
       ),

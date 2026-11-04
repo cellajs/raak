@@ -1,20 +1,31 @@
-import type { ConfigSwitch } from 'shared';
+import type { AccessScopedEntityType, ConfigSwitch } from 'shared';
+import type { OpenApiTagKind } from '../../backend/src/core/openapi-tag-registry.ts';
 
 /**
  * Types for the docs JSON that `src/openapi-parser` derives from the spec, which Vite serves at `/static/docs.gen/`
  * and the frontend docs module fetches at runtime. The "Gen" prefix marks data generated from the OpenAPI spec.
  */
 
+/** A limiter's budget: `points` per `duration` seconds and, for a failure budget, how long a spent one blocks. */
+export interface GenRateLimitPolicy {
+  mode: 'limit' | 'success' | 'fail' | 'failseries';
+  points: number;
+  duration: number;
+  blockDuration?: number;
+}
+
 /** Metadata for one extension value, such as a specific limiter or guard. */
 export interface GenExtensionValueMetadata {
   name?: string;
   description: string;
+  /** A limiter's budget, which the docs show before its description. */
+  policy?: GenRateLimitPolicy;
 }
 
 /** Custom OpenAPI extension, provided by the backend via info.x-extensions. */
 export interface GenExtensionDefinition {
   /** OpenAPI extension key, e.g., 'x-guard' */
-  key: string;
+  key: `x-${string}`;
   /** Identifier for frontend property names, e.g., 'xGuard' */
   id: string;
   description: string;
@@ -29,7 +40,7 @@ export interface GenOperationTool {
   /** Whether the tool is marked for the client to ask its user first; a hint, nothing enforces it */
   approvalRequired: boolean;
   /** The entity the tool acts on: with the method it names the scope a token needs */
-  entity: string;
+  entity: AccessScopedEntityType;
 }
 
 /** Minimal operation data for table and sidebar rendering. */
@@ -67,7 +78,7 @@ export interface GenTagSummary {
   name: string;
   description?: string;
   count: number;
-  kind?: string;
+  kind?: OpenApiTagKind;
 }
 
 export interface GenInfoSummary {

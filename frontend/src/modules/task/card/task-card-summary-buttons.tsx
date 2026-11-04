@@ -15,7 +15,7 @@ export function TaskCardSummaryButtons({ task }: TaskCardSummaryButtonsProps) {
   return (
     <>
       <div className="-mt-[0.15rem] ml-1 inline-flex items-center gap-1">
-        {task.expandable && <div className="inline-flex min-h-5 cursor-pointer text-muted-foreground text-sm">...</div>}
+        {task.expandable && <div className="text-muted-foreground inline-flex min-h-5 cursor-pointer text-sm">...</div>}
         {totalCount > 0 && (
           <div className="inline-flex min-h-5 cursor-pointer gap-[.15rem] text-sm">
             <span className="text-success">{checkedCount}</span>
@@ -30,7 +30,7 @@ export function TaskCardSummaryButtons({ task }: TaskCardSummaryButtonsProps) {
           </div>
         )}
       </div>
-      {env.VITE_DEBUG_UI && <span className="ml-2 text-center text-faint-foreground text-sm">order {task.displayOrder}</span>}
+      {env.VITE_DEBUG_UI && <span className="text-faint-foreground ml-2 text-center text-sm">order {task.displayOrder}</span>}
     </>
   );
 }

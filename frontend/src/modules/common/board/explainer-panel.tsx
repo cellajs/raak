@@ -27,13 +27,13 @@ export function ExplainerPanel() {
       icon={<InfoIcon />}
       title={t('c:getting_started')}
       headerActions={
-        <Button variant="ghost" size="sm" className="font-normal text-muted-foreground" onClick={() => setAlertSeen('welcome-text')}>
+        <Button variant="ghost" size="sm" className="text-muted-foreground font-normal" onClick={() => setAlertSeen('welcome-text')}>
           <span>{t('c:dont_show_again')}</span>
         </Button>
       }
     >
       <ScrollArea className="h-full">
-        <div className="select-text p-4">
+        <div className="p-4 select-text">
           <Suspense fallback={<Spinner className="my-4" noDelay />}>
             <BlockNoteFullHtml
               id="board-explainer"

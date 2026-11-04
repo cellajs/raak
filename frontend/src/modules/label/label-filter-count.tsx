@@ -29,7 +29,7 @@ export function LabelFilterCount({ name, slug, count, onAction, className }: Lab
           onAction?.();
         }}
         className={cn(
-          'focus-effect relative z-1 h-6 shrink-0 whitespace-nowrap rounded-full px-1.5 text-muted-foreground text-xs tabular-nums transition-colors hover:bg-hover hover:text-foreground',
+          'focus-effect text-muted-foreground hover:bg-hover hover:text-foreground relative z-1 h-6 shrink-0 rounded-full px-1.5 text-xs whitespace-nowrap tabular-nums transition-colors',
           isPressed && 'bg-foreground-soft text-background hover:bg-foreground-soft hover:text-background',
           className,
         )}

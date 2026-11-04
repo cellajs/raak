@@ -46,7 +46,7 @@ export function LocalPanelShell({ panelId, icon, title, headerActions, windowScr
           'flex min-h-13 items-center',
           isCollapsed
             ? 'justify-center'
-            : ['gap-2 truncate border-b bg-card/[calc(var(--content-opacity,1)*100%)] px-2 font-semibold text-sm', frameBorderFade],
+            : ['bg-card/[calc(var(--content-opacity,1)*100%)] gap-2 truncate border-b px-2 text-sm font-semibold', frameBorderFade],
         )}
       >
         <PanelDragHandleButton

@@ -62,7 +62,7 @@ function TaskSheetTitle({ taskId }: TaskSheetTitleProps) {
       )}
       <span className="flex items-center gap-2">
         {t('c:task')}
-        {!!number && <span className="font-normal text-muted-foreground">{productRef(number)}</span>}
+        {!!number && <span className="text-muted-foreground font-normal">{productRef(number)}</span>}
       </span>
     </span>
   );

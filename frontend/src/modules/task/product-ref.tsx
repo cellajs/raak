@@ -10,5 +10,5 @@ interface ProductRefProps {
 export function ProductRef({ number, className }: ProductRefProps) {
   const ref = productRef(number);
   if (!ref) return null;
-  return <span className={cn('shrink-0 text-muted-foreground text-xs tabular-nums', className)}>{ref}</span>;
+  return <span className={cn('text-muted-foreground shrink-0 text-xs tabular-nums', className)}>{ref}</span>;
 }

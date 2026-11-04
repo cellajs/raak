@@ -4,14 +4,15 @@ import { schemaTags } from '#/core/openapi-helpers';
 import { createSelectSchema } from '#/db/utils/drizzle-schema';
 import { passkeySchema } from '#/modules/auth/passkeys/passkeys-schema';
 import { sessionsTable } from '#/modules/auth/sessions/sessions-db';
+import { federationRefSchema } from '#/modules/auth/sso/sso-schema';
 import { mockConnectedApp, mockMeAuthResponse, mockMeResponse, mockUploadTokenResponse } from '#/modules/me/me-mocks';
 import { inactiveMembershipSchema } from '#/modules/memberships/memberships-schema';
 import { enabledOAuthProvidersSchema, userFlagsSchema, userSchema, userUpdateBodySchema } from '#/modules/user/user-schema';
 import { validUuidSchema } from '#/schemas';
 import { channelBaseSchema } from '#/schemas/entity-base';
 
-/** A session row as stored, secret omitted: what a revoke returns. */
-export const sessionBaseSchema = createSelectSchema(sessionsTable);
+/** A session row as stored, secret and revoker omitted: what a revoke returns. */
+export const sessionBaseSchema = createSelectSchema(sessionsTable).omit({ revokedBy: true });
 
 /** A session as the account page lists it. */
 const sessionSchema = sessionBaseSchema.extend({
@@ -45,7 +46,7 @@ const identityShape = { email: z.union([z.string(), z.null()]), ...methodDatesSh
 const institutionAccountSchema = z.object({
   connectionId: z.string(),
   displayName: z.string(),
-  federation: z.object({ key: z.string(), label: z.string() }),
+  federation: federationRefSchema,
   identity: z.union([z.object(identityShape), z.null()]).describe('The identity the account holds through this connection; null when not connected'),
 });
 

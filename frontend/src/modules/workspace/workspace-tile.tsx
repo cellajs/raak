@@ -31,7 +31,7 @@ export function WorkspaceTile({ entity, menuItem }: WorkspaceTileProps) {
             {projects.map((project) => (
               <EntityAvatar
                 key={project.id}
-                className="size-8 border-2 border-black/25 more-contrast:border-black/85 sm:size-10"
+                className="more-contrast:border-black/85 size-8 border-2 border-black/25 sm:size-10"
                 type="project"
                 id={project.id}
                 name={project.name}
@@ -39,14 +39,14 @@ export function WorkspaceTile({ entity, menuItem }: WorkspaceTileProps) {
               />
             ))}
           </AvatarGroupList>
-          <AvatarOverflowIndicator className="size-8 rounded-md border-2 border-black/25 more-contrast:border-black/85 bg-muted font-semibold more-contrast:text-foreground text-faint-foreground text-xs tracking-tighter shadow-none sm:size-10" />
+          <AvatarOverflowIndicator className="more-contrast:border-black/85 bg-muted more-contrast:text-foreground text-faint-foreground size-8 rounded-md border-2 border-black/25 text-xs font-semibold tracking-tighter shadow-none sm:size-10" />
         </AvatarGroup>
       )}
     </div>
   );
 
   const meta = (
-    <div className="truncate text-muted-foreground text-xs sm:text-sm">
+    <div className="text-muted-foreground truncate text-xs sm:text-sm">
       {projects.length > 0
         ? projects.map((project) => project.name).join(', ')
         : archivedCount > 0

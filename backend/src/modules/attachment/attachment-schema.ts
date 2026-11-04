@@ -6,7 +6,7 @@ import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { mockAttachmentResponse } from '#/modules/attachment/attachment-mocks';
 import { productViewCountSchema } from '#/modules/entities/entities-schema';
 import { placementFieldsSchema, validatePlacement } from '#/permissions/product-placement';
-import { batchResponseSchema, maxLength, productListQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import { batchResponseSchema, maxLength, productListQuerySchema, stxStoredSchema, validUuidSchema } from '#/schemas';
 import { auditShape, tombstoneShape } from '#/schemas/entity-base';
 
 /** The single place the storage-key variant set is enumerated. `original` is always present. */
@@ -34,7 +34,7 @@ export const attachmentSchema = z
     ...attachmentSelectSchema.shape,
     ...auditShape,
     ...tombstoneShape,
-    stx: stxBaseSchema,
+    stx: stxStoredSchema,
     viewCount: productViewCountSchema,
   })
   .openapi('Attachment', {
@@ -58,8 +58,7 @@ const attachmentCreateBodySchema = attachmentInsertSchema
   })
   .extend({
     id: validUuidSchema,
-    /** The column defaults to {}, making `keys` optional on the generated insert schema; a create must carry at least the original key. */
-    keys: attachmentKeysSchema,
+    size: z.number().int().min(0),
     // The home id of a row that lives in a channel; none while attachments live in the organization.
     ...placementFieldsSchema('attachment'),
   });

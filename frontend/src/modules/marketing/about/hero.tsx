@@ -42,13 +42,13 @@ export function Hero({ title, text, children }: HeroProps) {
           !inView && 'translate-y-4 scale-95 opacity-0',
         )}
       >
-        <h1 className="mb-6 font-heading text-3xl leading-10 sm:mt-6 sm:text-4xl sm:leading-13 md:text-5xl md:leading-18 lg:text-6xl">
-          <span className={cn('whitespace-pre-line bg-linear-to-br bg-clip-text font-bold', gradientClass)} style={gradientStyle}>
+        <h1 className="font-heading mb-6 text-3xl leading-10 sm:mt-6 sm:text-4xl sm:leading-13 md:text-5xl md:leading-18 lg:text-6xl">
+          <span className={cn('bg-linear-to-br bg-clip-text font-bold whitespace-pre-line', gradientClass)} style={gradientStyle}>
             {t(title)}
           </span>
         </h1>
         {text && (
-          <h2 className="mb-8 text-foreground text-xl leading-8 md:text-2xl md:leading-10">
+          <h2 className="text-foreground mb-8 text-xl leading-8 md:text-2xl md:leading-10">
             <Trans t={t} i18nKey={text} components={{ em: <em />, strong: <strong /> }} />
           </h2>
         )}

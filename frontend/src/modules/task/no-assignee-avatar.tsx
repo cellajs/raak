@@ -16,7 +16,7 @@ export function NoAssigneeAvatar({ className, 'aria-hidden': ariaHidden }: NoAss
       aria-hidden={ariaHidden}
       // The container sizes the mark, as an avatar's letter scales with it
       className={cn(
-        '@container inline-flex shrink-0 items-center justify-center rounded-full bg-(--avatar-rest) font-semibold text-(--avatar-rest-foreground) leading-none',
+        '@container inline-flex shrink-0 items-center justify-center rounded-full bg-(--avatar-rest) leading-none font-semibold text-(--avatar-rest-foreground)',
         className,
       )}
     >

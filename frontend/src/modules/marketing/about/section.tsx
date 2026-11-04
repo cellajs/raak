@@ -25,7 +25,7 @@ function AboutSectionHeader({ title, text, className }: AboutSectionHeaderProps)
 
   return (
     <div className={cn('mx-auto flex max-w-3xl flex-col gap-4', className)}>
-      {title && <h2 className="font-heading font-semibold text-2xl leading-[1.1] sm:text-center sm:text-3xl md:text-4xl">{t(title)}</h2>}
+      {title && <h2 className="font-heading text-2xl leading-[1.1] font-semibold sm:text-center sm:text-3xl md:text-4xl">{t(title)}</h2>}
       {text && (
         <p className="text-muted-foreground sm:text-center sm:text-lg sm:leading-7">
           <Trans i18nKey={text as never} />

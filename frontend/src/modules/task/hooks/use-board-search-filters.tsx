@@ -203,7 +203,7 @@ export function useBoardSearchFilters(
         key: 'labels',
         label: t('c:label_other'),
         isCompact: true,
-        matchIcon: <TagIcon className="size-3.5 shrink-0 text-muted-foreground" />,
+        matchIcon: <TagIcon className="text-muted-foreground size-3.5 shrink-0" />,
         rowLimit: popularLabelCount,
         options: labelSlugs.map((slug) => ({
           value: slug,

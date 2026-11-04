@@ -65,19 +65,6 @@ export const zChannelBase = z.object({
 });
 
 /**
- * The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields and adds its writers as `ActorRef`s.
- */
-export const zProductBase = z.object({
-  id: z.string(),
-  name: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string().nullable(),
-  description: z.string().nullable(),
-  entityType: z.enum(['task', 'label', 'attachment']),
-  keywords: z.string(),
-});
-
-/**
  * A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.
  */
 export const zMembershipBase = z.object({
@@ -104,6 +91,15 @@ export const zStxBase = z.object({
   fieldTimestamps: z.record(z.string(), z.string().max(33)),
   replayed: z.boolean().optional(),
 });
+
+/**
+ * The sync envelope as a product row stores and returns it: StxBase plus changedFields, the fields the last write changed, which the server sets and the Yjs materializer reads. A request carries StxBase only.
+ */
+export const zStxStored = zStxBase.and(
+  z.object({
+    changedFields: z.array(z.string().max(64)).max(100).optional(),
+  }),
+);
 
 /**
  * A live change of product rows, naming each row with its sequence position and the write that changed it, but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
@@ -147,6 +143,14 @@ export const zStreamSignal = z.object({
   organizationId: z.string().nullable(),
   subjectId: z.string().nullable(),
   version: z.int().optional(),
+});
+
+/**
+ * Why the server ends an app stream. It arrives as an `error` event on `/entities/app/stream` just before the stream closes; `unauthorized` ends it for good, any other code tells the client to reconnect.
+ */
+export const zStreamError = z.object({
+  code: z.enum(['unauthorized', 'session_replaced', 'access_changed', 'resync']),
+  message: z.string(),
 });
 
 /**
@@ -401,7 +405,6 @@ export const zMeAuthData = z.object({
       createdAt: z.string(),
       expiresAt: z.string(),
       revokedAt: z.string().nullable(),
-      revokedBy: z.uuid().nullable(),
       revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced']).nullable(),
       steppedUpAt: z.string().nullable(),
       steppedUpVia: z.enum(['passkey', 'totp', 'email', 'sso']).nullable(),
@@ -745,7 +748,17 @@ export const zTenant = z.object({
   status: z.enum(['active', 'suspended', 'archived']),
   statusChangedAt: z.string(),
   restrictions: z.object({
-    quotas: z.record(z.string(), z.int().gte(0)),
+    quotas: z.object({
+      user: z.int().gte(0),
+      organization: z.int().gte(0),
+      workspace: z.int().gte(0),
+      project: z.int().gte(0),
+      task: z.int().gte(0),
+      label: z.int().gte(0),
+      attachment: z.int().gte(0),
+      serviceAccount: z.int().gte(0),
+      apiKey: z.int().gte(0),
+    }),
     rateLimits: z.object({
       apiPointsPerHour: z.int().gte(0),
       invitationMailsPerDay: z.int().gte(0),
@@ -1137,7 +1150,7 @@ export const zAttachment = z.object({
       }),
     ])
     .nullable(),
-  stx: zStxBase,
+  stx: zStxStored,
   description: z.string().max(1000000).nullable(),
   keywords: z.string().max(1000000),
   deletedAt: z.string().nullable(),
@@ -1167,7 +1180,7 @@ export const zAttachment = z.object({
   filename: z.string().max(255),
   contentType: z.string().max(255),
   convertedContentType: z.string().max(255).nullable(),
-  size: z.string().max(255),
+  size: z.int().gte(-9007199254740991).lte(9007199254740991),
   keys: z.object({
     original: z.string().max(2048),
     preview: z.string().max(2048).optional(),
@@ -1307,7 +1320,6 @@ export const zApiKey = z.object({
     .nullable(),
   expiresAt: z.string().nullable(),
   revokedAt: z.string().nullable(),
-  revokedBy: z.uuid().nullable(),
   createdBy: z
     .union([
       z.object({
@@ -1946,7 +1958,6 @@ export const zRevokeMySessionsResponse = z.object({
       createdAt: z.string(),
       expiresAt: z.string(),
       revokedAt: z.string().nullable(),
-      revokedBy: z.uuid().nullable(),
       revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced']).nullable(),
       steppedUpAt: z.string().nullable(),
       steppedUpVia: z.enum(['passkey', 'totp', 'email', 'sso']).nullable(),
@@ -2021,7 +2032,7 @@ export const zGetNotificationsQuery = z.object({
     .optional()
     .default('false'),
   limit: z.int().gte(1).lte(100).optional().default(30),
-  before: z.iso.datetime().optional(),
+  before: z.iso.datetime().max(64).optional(),
 });
 
 /**
@@ -2030,21 +2041,21 @@ export const zGetNotificationsQuery = z.object({
 export const zGetNotificationsResponse = z.object({
   items: z.array(
     z.object({
-      id: z.string(),
+      id: z.uuid(),
       createdAt: z.string(),
+      actorId: z.uuid().nullable(),
       type: z.enum(['mention', 'comment', 'reply']),
       entityType: z.enum(['task', 'label', 'attachment']),
-      subjectId: z.string(),
-      contextId: z.string().nullable(),
-      channelId: z.string(),
+      subjectId: z.uuid(),
+      contextId: z.uuid().nullable(),
+      channelId: z.uuid(),
       channelType: z.enum(['organization', 'workspace', 'project']),
-      organizationId: z.string(),
-      tenantId: z.string(),
-      actorId: z.string().nullable(),
+      organizationId: z.uuid(),
+      tenantId: z.string().max(24),
+      readAt: z.string().nullable(),
       actor: zUserMinimalBase.nullable(),
       channelName: z.string(),
       subjectTitle: z.string(),
-      readAt: z.string().nullable(),
     }),
   ),
   unreadCount: z.int().gte(0),
@@ -2501,7 +2512,7 @@ export const zGetUserQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().max(255).optional(),
+  include: z.string().max(2048).optional(),
 });
 
 /**
@@ -2638,7 +2649,7 @@ export const zGetOrganizationsQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().max(255).optional(),
+  include: z.string().max(2048).optional(),
 });
 
 /**
@@ -2659,7 +2670,7 @@ export const zGetOrganizationQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().max(255).optional(),
+  include: z.string().max(2048).optional(),
 });
 
 /**
@@ -2922,7 +2933,7 @@ export const zGetProjectsQuery = z.object({
     .optional()
     .default('false'),
   scope: z.enum(['memberships', 'organization']).optional().default('memberships'),
-  include: z.string().max(255).optional(),
+  include: z.string().max(2048).optional(),
 });
 
 /**
@@ -2944,7 +2955,7 @@ export const zGetProjectQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().max(255).optional(),
+  include: z.string().max(2048).optional(),
 });
 
 /**
@@ -3201,7 +3212,7 @@ export const zGetWorkspacesQuery = z.object({
   limit: z.int().gte(1).lte(1000).optional().default(40),
   organizationId: z.string().max(50).optional(),
   role: z.enum(['admin', 'member', 'guest']).optional(),
-  include: z.string().max(255).optional(),
+  include: z.string().max(2048).optional(),
 });
 
 /**
@@ -3223,7 +3234,7 @@ export const zGetWorkspaceQuery = z.object({
     .union([z.enum(['true', 'false']), z.boolean()])
     .optional()
     .default('false'),
-  include: z.string().max(255).optional(),
+  include: z.string().max(2048).optional(),
 });
 
 /**
@@ -3255,8 +3266,8 @@ export const zDeleteAttachmentsBody = z.object({
   ids: z.array(z.string().max(50)).min(1).max(50),
   stx: z
     .object({
-      mutationId: z.string().max(255),
-      sourceId: z.string().max(255),
+      mutationId: z.string().max(36),
+      sourceId: z.string().max(64),
     })
     .optional(),
 });
@@ -3318,7 +3329,7 @@ export const zCreateAttachmentsBody = z
       name: z.string().max(255).optional(),
       filename: z.string().max(255),
       contentType: z.string().max(255),
-      size: z.string().max(255),
+      size: z.int().gte(0),
       keys: z.object({
         original: z.string().max(2048),
         preview: z.string().max(2048).optional(),
@@ -3439,8 +3450,8 @@ export const zDeleteLabelsBody = z.object({
   ids: z.array(z.string().max(50)).min(1).max(50),
   stx: z
     .object({
-      mutationId: z.string().max(255),
-      sourceId: z.string().max(255),
+      mutationId: z.string().max(36),
+      sourceId: z.string().max(64),
     })
     .optional(),
 });
@@ -3780,7 +3791,7 @@ export const zGetMembersQuery = z.object({
   entityId: z.string().max(50),
   entityType: z.enum(['organization', 'workspace', 'project']),
   role: z.enum(['admin', 'member', 'guest']).optional(),
-  include: z.string().max(255).optional(),
+  include: z.string().max(2048).optional(),
   userIds: z.string().max(2048).optional(),
 });
 
@@ -3884,7 +3895,7 @@ export const zWithdrawPendingInvitationResponse = z.void();
 
 export const zMarkSeenBody = z.object({
   entityIds: z.array(z.string().max(50)).min(1).max(500),
-  entityType: z.enum(['task', 'label', 'attachment']),
+  entityType: z.enum(['task']),
 });
 
 export const zMarkSeenPath = z.object({
@@ -3952,7 +3963,7 @@ export const zCreateServiceAccountBody = z.object({
         .min(1)
         .max(12)
         .nullish(),
-      expiresAt: z.iso.datetime().optional(),
+      expiresAt: z.iso.datetime().max(64).optional(),
     })
     .optional(),
 });
@@ -4036,7 +4047,7 @@ export const zCreateApiKeyBody = z.object({
     .min(1)
     .max(12)
     .nullish(),
-  expiresAt: z.iso.datetime().optional(),
+  expiresAt: z.iso.datetime().max(64).optional(),
   rollFrom: z.string().max(50).optional(),
   rollOverlapDays: z.int().gte(0).lte(30).optional().default(7),
 });
@@ -4072,8 +4083,8 @@ export const zDeleteTasksBody = z.object({
   ids: z.array(z.string().max(50)).min(1).max(100),
   stx: z
     .object({
-      mutationId: z.string().max(255),
-      sourceId: z.string().max(255),
+      mutationId: z.string().max(36),
+      sourceId: z.string().max(64),
     })
     .optional(),
 });

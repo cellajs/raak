@@ -12,7 +12,7 @@ import { setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
 import { useSectionEdgePinned } from '~/modules/task/hooks/use-section-edge-pinned';
 import { boardAcceptedCutOffDays, statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import { statusSectionColors } from '~/modules/task/task-styles';
+import { olderAcceptedHintFill, statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { Collapsible, CollapsibleContent, collapsiblePanelClass } from '~/modules/ui/collapsible';
@@ -122,10 +122,7 @@ export function PanelStatusSection({
         colors.fill,
         colors.text,
         colors.border[isTop ? 'top' : 'bottom'],
-        !isTile &&
-          (isIced
-            ? 'hover:from-sky-500/26 hover:to-sky-500/36 dark:hover:from-sky-500/22 dark:hover:to-sky-500/32'
-            : 'hover:from-green-500/26 hover:to-green-500/36 dark:hover:from-green-500/22 dark:hover:to-green-500/32'),
+        !isTile && colors.hoverFill,
         isTile
           ? 'relative'
           : [
@@ -152,7 +149,7 @@ export function PanelStatusSection({
           'group/bar focus-inset flex w-full justify-start rounded-none border-0 bg-transparent px-2 text-sm duration-300 ease-in-out hover:bg-transparent dark:hover:bg-transparent',
           // The bar overlaps the wrapper's line, so bar and line together stay the h-9 the list's insets are laid out for
           isTop ? '-mb-px' : '-mt-px',
-          isIced ? 'hover:text-sky-900 dark:hover:text-sky-200' : 'hover:text-green-900 dark:hover:text-green-200',
+          colors.hoverText,
         )}
       >
         <span className="group-active/bar:press relative flex w-full items-center gap-1">
@@ -212,7 +209,7 @@ export function OlderAcceptedHint({ count }: OlderAcceptedHintProps) {
   const colors = statusSectionColors.accepted;
 
   return (
-    <div className={cn('flex gap-4 bg-green-50 px-4 py-5 text-xs dark:bg-green-950', colors.border.top, colors.text, hintFadeOut)}>
+    <div className={cn('flex gap-4 px-4 py-5 text-xs', olderAcceptedHintFill, colors.border.top, colors.text, hintFadeOut)}>
       <InfoIcon className="shrink-0" />
       <p>
         <OlderAcceptedText i18nKey="c:older_accepted_in_table" count={count} />

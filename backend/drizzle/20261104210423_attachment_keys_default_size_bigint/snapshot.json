@@ -1,0 +1,64 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "69934c9b-f01c-46fd-adb5-9053e1148024",
+  "prevIds": [
+    "49498b72-7112-41ec-afa8-fbaf962f6acd"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attachments",
+        "size"
+      ],
+      "writes": [
+        "s|colprop|public.attachments.size.type",
+        "s|colprop|public.attachments.size.default"
+      ],
+      "reads": [
+        "n|tbl|public.attachments",
+        "n|sch|public",
+        "n|col|public.attachments.size"
+      ],
+      "sqlHash": "c242fa0148da65ae"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attachments",
+        "keys"
+      ],
+      "writes": [
+        "s|colprop|public.attachments.keys.default"
+      ],
+      "reads": [
+        "n|tbl|public.attachments",
+        "n|sch|public",
+        "n|col|public.attachments.keys"
+      ],
+      "sqlHash": "18776909ba2eb667"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"attachments\",\"size\"]",
+      "set": {
+        "type": "bigint"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"attachments\",\"keys\"]",
+      "set": {
+        "default": null
+      }
+    }
+  ]
+}

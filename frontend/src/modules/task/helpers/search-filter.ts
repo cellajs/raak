@@ -1,5 +1,4 @@
-import type { Block } from '@blocknote/core';
-import { getSearchableTextFromBlocks } from 'shared/blocknote';
+import { getSearchableTextFromBlocks, parseBlocks } from 'shared/blocknote';
 import { foldText, matchesTerms, parseTerms } from 'shared/utils/text-match';
 import type { RecentBoardSearch } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
@@ -15,7 +14,7 @@ const summaryCache = new WeakMap<Task, SearchableText>();
 const searchableText = (cache: WeakMap<Task, SearchableText>, task: Task, document: string | null): SearchableText => {
   const cached = cache.get(task);
   if (cached) return cached;
-  const text = document ? getSearchableTextFromBlocks(JSON.parse(document) as Block[]) : '';
+  const text = document ? getSearchableTextFromBlocks(parseBlocks(document) ?? []) : '';
   const entry = { text, folded: foldText(text) };
   cache.set(task, entry);
   return entry;

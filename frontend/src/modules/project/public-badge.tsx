@@ -18,7 +18,7 @@ export function PublicBadge({ size = 'md' }: PublicBadgeProps) {
       role="img"
       aria-label={t('c:public_project')}
       data-public-badge={size}
-      className="absolute flex items-center justify-center text-muted-foreground dark:text-foreground"
+      className="text-muted-foreground dark:text-foreground absolute flex items-center justify-center"
     >
       <GlobeIcon className={iconClass[size]} />
     </span>

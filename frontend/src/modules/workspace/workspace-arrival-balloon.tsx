@@ -71,7 +71,7 @@ function ArrivalPlacement({ project }: BalloonProps) {
   if (isMobile) {
     return (
       // Above the floating nav buttons, which take the corners of the bottom edge
-      <Alert variant="info" role="status" className="fixed inset-x-3 bottom-[calc(5.5rem+var(--bottom-inset,0px))] z-110 w-auto shadow-floating">
+      <Alert variant="info" role="status" className="shadow-floating fixed inset-x-3 bottom-[calc(5.5rem+var(--bottom-inset,0px))] z-110 w-auto">
         <RestoredMessage project={project} />
       </Alert>
     );
@@ -81,7 +81,7 @@ function ArrivalPlacement({ project }: BalloonProps) {
     <>
       <div ref={setAnchor} />
       {/* Above the sticky status bars (z-85), as the drop ring in BoardPanel */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 z-90 rounded-t-lg ring-2 ring-info ring-inset" />
+      <div aria-hidden className="ring-info pointer-events-none absolute inset-0 z-90 rounded-t-lg ring-2 ring-inset" />
       {anchor && (
         <Popover open onOpenChange={(open) => !open && clearArrival()}>
           <PopoverContent

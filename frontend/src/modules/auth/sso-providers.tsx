@@ -3,7 +3,7 @@ import { useSearch } from '@tanstack/react-router';
 import { BuildingIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { GetAuthHealthResponse } from 'sdk';
-import { appConfig, type FederationConfig } from 'shared';
+import { appConfig, type FederationKey } from 'shared';
 import { invitationResumePath } from '~/modules/auth/post-auth-redirect';
 import { ssoEntryQueryOptions } from '~/modules/auth/query';
 import { safeRedirectPath } from '~/modules/auth/redirect-path';
@@ -25,15 +25,15 @@ export const ssoStartUrl = (
   return `${base}?${params}`;
 };
 
-/** The logo a federation's config names, if any. Federation keys arrive as plain strings from the API. */
-const federationLogo = (key: string) => (appConfig.federations as Record<string, FederationConfig | undefined>)[key]?.logo;
+/** The logo a federation's config names, if any. */
+const federationLogo = (key: FederationKey) => appConfig.federations[key].logo;
 
 interface SsoProvidersProps {
-  /** The institution the context names (an invitation's organization): its button comes first. */
+  /** The invitation's institution; its button comes first. */
   connectionId?: string;
-  /** Federations with a connected institution: one "sign in with your institution" button each, through the federation's own picker. */
+  /** One button each, through the federation's own picker. */
   federations?: GetAuthHealthResponse['federations'];
-  /** The context's institution is the main way in: its button takes the primary look. */
+  /** Gives the institution's button the primary look. */
   primary?: boolean;
 }
 

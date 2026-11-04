@@ -1,4 +1,4 @@
-import { projectId } from './ids';
+import { type BenchAttachmentHome, projectId } from './ids';
 import { TOTAL_PROJECTS } from './project.bench';
 
 /**
@@ -10,7 +10,7 @@ import { TOTAL_PROJECTS } from './project.bench';
  * returns a seeded channel per column, such as `{ projectId: projectId(index % TOTAL_PROJECTS) }`, and moves
  * `attachmentSeedOrder` past the seeds of those channels.
  */
-export const benchAttachmentHome = (index: number): Record<string, string> => ({
+export const benchAttachmentHome = (index: number): BenchAttachmentHome => ({
   projectId: projectId(index % TOTAL_PROJECTS),
 });
 

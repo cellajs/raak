@@ -2,6 +2,7 @@ import { z } from '@hono/zod-openapi';
 import { type TOptions, t } from 'i18next';
 import { appConfig } from 'shared';
 import { isCDNUrl } from 'shared/utils/is-cdn-url';
+import type { ErrorKey } from '#/core/error';
 import { maxLength } from '#/db/utils/constraints';
 import countries from '#json/countries.json';
 
@@ -96,6 +97,11 @@ export const integerQuerySchema = ({ min = 0, max, error }: { min?: number; max?
   );
 };
 
+/** A list's sort direction; each list query sets its own default. */
+export const orderSchema = z.enum(['asc', 'desc']);
+
+export type OrderDirection = z.infer<typeof orderSchema>;
+
 /** Search, sort and paging: newest first from offset 0, the configured default `limit` when absent, at most 1000. */
 export const paginationQuerySchema = z.object({
   q: z
@@ -106,7 +112,7 @@ export const paginationQuerySchema = z.object({
       'Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.',
     ),
   sort: z.enum(['createdAt']).default('createdAt'),
-  order: z.enum(['asc', 'desc']).default('desc'),
+  order: orderSchema.default('desc'),
   offset: integerQuerySchema({ error: translatedError('error:invalid_offset') }).default(0),
   limit: integerQuerySchema({ min: 1, max: limitMax, error: translatedError('error:invalid_limit', { max: limitMax }) }).default(
     appConfig.requestLimits.default,
@@ -158,13 +164,29 @@ export const fullResponseQuerySchema = z.object({ fullResponse: booleanTransform
 const includeOptions = ['counts', 'membership', 'members', 'mfa'] as const;
 export type IncludeOption = (typeof includeOptions)[number];
 
-/** Comma-separated, e.g. `?include=counts,membership`. */
-export const includeQuerySchema = z
-  .string()
-  .max(maxLength.field)
-  .optional()
-  .transform((val) => (val ? val.split(',').map((s) => s.trim()) : []))
-  .pipe(z.array(z.enum(includeOptions)));
+/**
+ * A list in one query key, comma-separated: `?include=counts,membership`. Absent reads as an empty array and a value
+ * `item` refuses answers 400. The frontend writes the same form through `csvSearchParam`.
+ * @param item schema of one value, which holds no comma
+ * @param maxItems most values one request names; default 50
+ */
+export const csvQuerySchema = <T extends z.ZodType<unknown, string>>(item: T, maxItems = 50) =>
+  z
+    .string()
+    .max(maxLength.url)
+    .optional()
+    .transform((value) =>
+      value
+        ? value
+            .split(',')
+            .map((entry) => entry.trim())
+            .filter(Boolean)
+        : [],
+    )
+    .pipe(z.array(item).max(maxItems))
+    .openapi({ description: 'Comma-separated values' });
+
+export const includeQuerySchema = csvQuerySchema(z.enum(includeOptions));
 
 export const slugIncludeQuerySchema = z.object({ slug: booleanTransformSchema.optional(), include: includeQuerySchema });
 
@@ -177,12 +199,6 @@ export const idsBodySchema = (maxItems = 50) =>
       .max(maxItems, translatedError('error:invalid_max_items', { max: maxItems, name: 'ID' })),
   });
 
-/** The optional stx is what prevents echoing the change back to its source. */
-export const idsWithStxBodySchema = (maxItems = 50) =>
-  idsBodySchema(maxItems).extend({
-    stx: z.object({ mutationId: z.string().max(maxLength.field), sourceId: z.string().max(maxLength.field) }).optional(),
-  });
-
 /** The `Location` header of a redirect. */
 export const locationSchema = z.object({ Location: z.string() });
 
@@ -191,7 +207,7 @@ export const locationSchema = z.object({ Location: z.string() });
  * @param errorType - Translation key, e.g. 'invalid_slug'.
  */
 export const refineWithType =
-  <T>(check: (val: T) => boolean, errorType: string) =>
+  <T>(check: (val: T) => boolean, errorType: ErrorKey) =>
   (val: T, ctx: z.RefinementCtx) => {
     if (!check(val)) {
       ctx.addIssue({ code: 'custom', message: t(`error:${errorType}`), input: val, params: { type: errorType } });
@@ -253,9 +269,10 @@ export const validNameSchema = z
   .max(maxLength.field, translatedError('error:invalid_between_num', { name: 'Name', min: 1, max: maxLength.field }))
   .regex(namePattern, translatedError('error:invalid_name'));
 
-/** An email address, trimmed and lowercased before it is checked. */
+/** An email address, trimmed and lowercased before it is checked; the raw input is bounded first. */
 export const validEmailSchema = z
   .string()
+  .max(maxLength.field, translatedError('error:invalid_between_num', { name: 'Email', min: 4, max: maxLength.field }))
   .trim()
   .toLowerCase()
   .pipe(

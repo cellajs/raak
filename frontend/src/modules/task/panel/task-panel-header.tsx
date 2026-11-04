@@ -53,14 +53,14 @@ function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: 
           <span className="relative block h-8">
             <span
               className={cn(
-                'block truncate pt-1.5 font-semibold leading-5',
+                'block truncate pt-1.5 leading-5 font-semibold',
                 role && 'transition-transform duration-100 ease-in-out group-hover/panel-head:-translate-y-1.5 group-hover/panel-head:delay-300',
               )}
             >
               {project.name}
             </span>
             {role && (
-              <span className="pointer-events-none absolute top-5 left-0 text-muted-foreground text-xs leading-3 opacity-0 transition-opacity duration-100 ease-in-out group-hover/panel-head:opacity-100 group-hover/panel-head:delay-300">
+              <span className="text-muted-foreground pointer-events-none absolute top-5 left-0 text-xs leading-3 opacity-0 transition-opacity duration-100 ease-in-out group-hover/panel-head:opacity-100 group-hover/panel-head:delay-300">
                 {t(role)}
               </span>
             )}
@@ -101,7 +101,7 @@ export function TaskPanelHeader({ project, publicView, statuses, panelId, window
   const actionsSlot = !isCollapsed ? (
     <>
       {isReadOnly && isInWorkspace && (
-        <Badge soft className="font-normal text-xs">
+        <Badge soft className="text-xs font-normal">
           {t('c:read_only')}
         </Badge>
       )}

@@ -287,7 +287,7 @@ interface PanelBodySkeletonProps {
 
 function PanelBodySkeleton({ rows = rowCount, rowHeight = desktopRowHeight, showAccepted = true, showIced = true }: PanelBodySkeletonProps) {
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden border-panel-edge sm:border">
+    <div className="border-panel-edge flex min-h-0 w-full flex-1 flex-col overflow-hidden sm:border">
       {showAccepted && (
         <div
           className={cn('h-9 shrink-0 border-t border-t-transparent', statusSectionColors.accepted.border.top, statusSectionColors.accepted.fill)}
@@ -340,14 +340,14 @@ function PanelHeaderSkeleton({ projectPage, project, statuses, isCollapsed }: Pa
             </span>
           )}
           {!isCollapsed &&
-            (projectPage ? <PanelStatusTitle statuses={statuses} /> : <div className="truncate font-semibold leading-6">{project.name}</div>)}
+            (projectPage ? <PanelStatusTitle statuses={statuses} /> : <div className="truncate leading-6 font-semibold">{project.name}</div>)}
         </div>
       }
       actions={
         !projectPage && (
           <>
             {isReadOnly && (
-              <Badge soft className="font-normal text-xs">
+              <Badge soft className="text-xs font-normal">
                 {t('c:read_only')}
               </Badge>
             )}

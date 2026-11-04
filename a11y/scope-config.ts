@@ -1,23 +1,25 @@
-import type { AuditApi, ScopeState } from './src/scope.ts';
+import { getMe, getMyMemberships, getOrganizations, getProjects, getWorkspaces, updateMe } from 'sdk';
+import type { Client } from 'sdk/client';
+import type { ScopeState } from './src/scope.ts';
 import { auditContrast, settle } from './src/session.ts';
 
 /**
  * Brings the audit user into the state the pages below expect, before the first visit. A freshly seeded user has not
  * finished onboarding, and `/home` then redirects to the welcome page.
  */
-export const prepare = async (api: AuditApi) => {
-  const { user } = await api<{ user: { userFlags: { finishedOnboarding?: boolean }; contrast?: string } }>('/me');
-  if (!user.userFlags.finishedOnboarding) await api('/me', { method: 'PUT', body: { userFlags: { finishedOnboarding: true } } });
+export const prepare = async (client: Client) => {
+  const { user } = await getMe({ client });
+  if (!user.userFlags.finishedOnboarding) await updateMe({ client, body: { userFlags: { finishedOnboarding: true } } });
   // The browser context asks for more contrast, but `/me` overwrites the seeded UI store on every authenticated page.
   // Without this the run would quietly measure the default edges on exactly the pages richest in form controls.
-  if (user.contrast !== auditContrast) await api('/me', { method: 'PUT', body: { contrast: auditContrast } });
+  if (user.contrast !== auditContrast) await updateMe({ client, body: { contrast: auditContrast } });
 };
 
 /** The organization the audit user administers, the first in their menu: settings and the invite dialog need that role. */
-const administeredOrganization = async (api: AuditApi) => {
+const administeredOrganization = async (client: Client) => {
   const [{ items: organizations }, { items: memberships }] = await Promise.all([
-    api<{ items: { id: string; tenantId: string; slug: string }[] }>('/organizations?limit=50'),
-    api<{ items: { channelId: string; channelType: string; role: string; archived: boolean; displayOrder: number }[] }>('/me/memberships'),
+    getOrganizations({ client, query: { limit: 50 } }),
+    getMyMemberships({ client }),
   ]);
   const [administered] = memberships
     .filter((membership) => membership.channelType === 'organization' && membership.role === 'admin' && !membership.archived)
@@ -30,11 +32,15 @@ const administeredOrganization = async (api: AuditApi) => {
  * Page path of a workspace or project in that organization: one the audit user administers when there is one, so its
  * cards are editable and the audit covers the edit affordances, else the first.
  */
-const firstChannelPath = async (api: AuditApi, type: 'workspace' | 'project') => {
-  const organization = await administeredOrganization(api);
+const firstChannelPath = async (client: Client, type: 'workspace' | 'project') => {
+  const organization = await administeredOrganization(client);
   if (!organization) return null;
-  const list = (role: string) => api<{ items: { slug: string }[] }>(`/${type}s?organizationId=${organization.id}${role}&limit=1`);
-  const [channel] = [...(await list('&role=admin')).items, ...(await list('')).items];
+  const list = async (role?: 'admin') => {
+    const query = { organizationId: organization.id, role, limit: 1 };
+    const { items } = type === 'workspace' ? await getWorkspaces({ client, query }) : await getProjects({ client, query });
+    return items;
+  };
+  const [channel] = [...(await list('admin')), ...(await list())];
   return channel ? `${organization.path}/${type}/${channel.slug}` : null;
 };
 
@@ -42,11 +48,11 @@ const firstChannelPath = async (api: AuditApi, type: 'workspace' | 'project') =>
  * Values for the `{name}` placeholders in the paths below, read from the API as the audit user before the first visit.
  * A resolver that returns null skips nothing by itself: a state whose path needs the value fails with a clear message.
  */
-export const placeholders: Record<string, (api: AuditApi) => Promise<string | null>> = {
+export const placeholders: Record<string, (client: Client) => Promise<string | null>> = {
   /** Path prefix of the administered organization. */
-  org: async (api) => (await administeredOrganization(api))?.path ?? null,
-  workspace: (api) => firstChannelPath(api, 'workspace'),
-  project: (api) => firstChannelPath(api, 'project'),
+  org: async (client) => (await administeredOrganization(client))?.path ?? null,
+  workspace: (client) => firstChannelPath(client, 'workspace'),
+  project: (client) => firstChannelPath(client, 'project'),
 };
 
 /**
@@ -66,6 +72,8 @@ export const scope: ScopeState[] = [
   { id: 'docs-operations', path: '/docs/operations', auth: false },
   { id: 'docs-schemas', path: '/docs/schemas', auth: false },
   { id: 'docs-page', path: '/docs/page/quickstart', auth: false },
+  // The floating nav's buttons are Tab stops at this width only
+  { id: 'docs-page-phone', path: '/docs/page/architecture', auth: false, context: { viewport: { width: 390, height: 800 } } },
   {
     id: 'docs-search',
     overlay: true,
@@ -102,6 +110,24 @@ export const scope: ScopeState[] = [
   { id: 'org-settings', path: '{org}/organization/settings', auth: true },
   { id: 'system-users', path: '/system/users', auth: true },
   { id: 'system-organizations', path: '/system/organizations', auth: true },
+
+  // No overlay: the page beside a pinned sheet stays in use, so axe must find it exposed. Pinning takes the width of `2xl`
+  {
+    id: 'menu-sheet-pinned',
+    path: '/home',
+    auth: true,
+    context: { viewport: { width: 1500, height: 900 } },
+    open: async (page) => {
+      await page.keyboard.press('Alt+M');
+      await settle(page);
+      const preferences = page.getByRole('button', { name: 'Preferences' });
+      await preferences.click();
+      await page.getByRole('switch', { name: /keep menu open/i }).click();
+      // An open panel dims the menu behind it
+      await preferences.click();
+      await settle(page);
+    },
+  },
 
   // Overlays
   {

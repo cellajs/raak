@@ -46,13 +46,13 @@ export function LabelTileDetails({ row, lockedByProjectIds, showProjectUsage }: 
             disabled={isLocked}
             onCheckedChange={(checked) => updateLabel.mutate({ id: row.id, ops: { mode: checked ? 'epic' : 'secondary' } })}
           />
-          <label htmlFor={switchId} className={cn('select-none pl-1 text-sm leading-none', isLocked ? 'text-muted-foreground' : 'cursor-pointer')}>
+          <label htmlFor={switchId} className={cn('pl-1 text-sm leading-none select-none', isLocked ? 'text-muted-foreground' : 'cursor-pointer')}>
             {t('c:epic')}
           </label>
         </div>
 
         {isLocked && (
-          <p className="flex gap-2 text-muted-foreground text-xs">
+          <p className="text-muted-foreground flex gap-2 text-xs">
             <LockIcon aria-hidden className="mt-px size-3.5 shrink-0" />
             {lockReason}
           </p>

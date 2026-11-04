@@ -28,13 +28,13 @@ export function OpenInWorkspaceItem(props: RestoreProjectProps) {
         <DropdownActionItem icon={ArrowRightIcon} closeOnSelect={false} loading={isPending} onSelect={restoreProject}>
           <span className="text-left">
             {t('c:open_in_workspace')}
-            <span className="block font-normal text-muted-foreground text-xs">{t('c:open_in_workspace_restores.text')}</span>
+            <span className="text-muted-foreground block text-xs font-normal">{t('c:open_in_workspace_restores.text')}</span>
           </span>
         </DropdownActionItem>
       ) : (
         <DropdownActionItem icon={ArrowRightIcon} onSelect={() => openProjectBoard(props, current?.slug ?? workspaceId)}>
           <span>{t('c:open_in_workspace')}</span>
-          {current && <span className="ml-auto max-w-32 truncate pl-3 font-normal text-muted-foreground text-xs">{current.name}</span>}
+          {current && <span className="text-muted-foreground ml-auto max-w-32 truncate pl-3 text-xs font-normal">{current.name}</span>}
         </DropdownActionItem>
       )}
       <DropdownActionSeparator />

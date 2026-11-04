@@ -9,9 +9,9 @@ import {
   mockUuid,
   withFakerSeed,
 } from '#/mocks';
-import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
 import { mockMembershipBase } from '#/modules/memberships/memberships-mocks';
-import type { InsertProjectModel, ProjectModel } from '#/modules/project/project-db';
+import type { InsertProjectModel } from '#/modules/project/project-db';
+import { mockActorRefs } from '#/schemas/entity-base-mocks';
 
 const projectName = mockUniqueEnforcer();
 
@@ -44,9 +44,9 @@ export const mockProject = (suffix?: string): InsertProjectModel => {
 
 /**
  * Generates a mock project API response with deterministic seeding.
- * Adds the caller's membership in `included` to the base mock.
+ * Adds writer references and the caller's membership in `included` to the base mock.
  */
-export const mockProjectResponse = (key = 'project:default'): ProjectModel & { included: { membership: MembershipBaseModel } } =>
+export const mockProjectResponse = (key = 'project:default') =>
   withFakerSeed(key, () => {
     const createdAt = mockPastIsoDate();
     const projectId = mockUuid();
@@ -62,7 +62,7 @@ export const mockProjectResponse = (key = 'project:default'): ProjectModel & { i
       tenantId,
     });
 
-    return { ...base, included: { membership } };
+    return { ...base, ...mockActorRefs(base, key), included: { membership } };
   });
 
 export const mockPaginatedProjectsResponse = (count = 2) => mockPaginated(mockProjectResponse, count);

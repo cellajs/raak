@@ -241,9 +241,9 @@ export function CreateTaskForm({
             'flex flex-col gap-2 sm:p-3 sm:pl-11',
             isDialog && 'grow',
             !isDialog &&
-              'relative border-b before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 sm:before:-left-px',
+              'before:bg-primary relative border-b before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:opacity-0 sm:before:-left-px',
             !isDialog && itemFocusBarClass,
-            isFocused ? 'is-focused focus-visible:outline-none focus-visible:ring-0' : 'focus-visible:ring-1 focus-visible:ring-ring',
+            isFocused ? 'is-focused focus-visible:ring-0 focus-visible:outline-none' : 'focus-visible:ring-ring focus-visible:ring-1',
             className,
           )}
         >
@@ -328,11 +328,11 @@ export function CreateTaskForm({
                     ) : (
                       <>
                         <TagIcon className="text-faint-foreground" />
-                        <span className="ml-1 text-faint-foreground">{t('c:select_resource', { resource: t('c:label_other') })}</span>
+                        <span className="text-faint-foreground ml-1">{t('c:select_resource', { resource: t('c:label_other') })}</span>
                       </>
                     )}
                   </div>
-                  <ChevronDownIcon className="ml-auto size-4 shrink-0 text-faint-foreground" />
+                  <ChevronDownIcon className="text-faint-foreground ml-auto size-4 shrink-0" />
                 </div>
                 <FormMessage />
               </FormItem>
@@ -389,7 +389,7 @@ export function CreateTaskForm({
                         </>
                       ) : (
                         <>
-                          <NoAssigneeAvatar className="size-5" /> <span className="ml-0.5 font-normal text-faint-foreground">{t('c:assign_to')}</span>
+                          <NoAssigneeAvatar className="size-5" /> <span className="text-faint-foreground ml-0.5 font-normal">{t('c:assign_to')}</span>
                         </>
                       )}
                     </span>
@@ -420,7 +420,7 @@ export function CreateTaskForm({
                         disabled={!isDirty}
                         aria-label={t('c:set_resource', { resource: t('c:status') })}
                         press={false}
-                        className="rounded-none rounded-r border-l-background/25"
+                        className="border-l-background/25 rounded-none rounded-r"
                         id={`status-${formId}`}
                         onClick={({ currentTarget }) =>
                           openTaskDropdown({

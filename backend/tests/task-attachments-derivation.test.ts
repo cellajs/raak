@@ -73,7 +73,7 @@ describe('Task attachments derivation (owned embedding host array)', async () =>
       projectId,
       bucketName: 'test-bucket',
       contentType: 'image/png',
-      size: '1024',
+      size: 1024,
       stx: mockStxBase(),
       createdBy: tenant.user.id,
     };

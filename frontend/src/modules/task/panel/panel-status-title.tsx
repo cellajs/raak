@@ -8,7 +8,7 @@ function StatusIcons({ statuses }: { statuses: TaskStatus[] }) {
   const icons = statuses.map((status) => {
     const { icon: Icon } = statusOptionsByValue[status];
     // The tooltip names them all, so no svg title of one on top of it
-    return <Icon key={status} className="pointer-events-none size-4 shrink-0 rounded-md bg-card ring-1 ring-card" />;
+    return <Icon key={status} className="bg-card ring-card pointer-events-none size-4 shrink-0 rounded-md ring-1" />;
   });
   if (statuses.length < 2) return icons;
 
@@ -46,7 +46,7 @@ export function PanelStatusTitle({ statuses, count }: PanelStatusTitleProps) {
 
   return (
     <div className="flex min-w-0 items-baseline gap-2">
-      <div className="truncate font-semibold leading-6">{statuses ? formatStatusesLabel(statuses) : t('c:task_other')}</div>
+      <div className="truncate leading-6 font-semibold">{statuses ? formatStatusesLabel(statuses) : t('c:task_other')}</div>
       {statuses && count !== undefined && <span className="text-muted-foreground text-sm tabular-nums">{count}</span>}
     </div>
   );

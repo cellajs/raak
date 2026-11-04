@@ -27,7 +27,7 @@ function CellaShare({ cellaLoc, totalLoc }: { cellaLoc: number; totalLoc: number
 
   return (
     <div ref={ref} className="text-left">
-      <div className="font-medium text-8xl text-primary">{value}%</div>
+      <div className="text-primary text-8xl font-medium">{value}%</div>
       <div className="text-muted-foreground">{t('about:showcase.from_cella')}</div>
     </div>
   );
@@ -52,9 +52,9 @@ export function Showcase() {
                 <div className="flex">
                   <div className="w-full">
                     <a href={item.url} target="_blank" rel="noreferrer" className="focus-effect mt-4 block rounded-md">
-                      <h3 className="group mb-2 font-medium text-xl 2xl:text-[1.38rem]">
+                      <h3 className="group mb-2 text-xl font-medium 2xl:text-[1.38rem]">
                         {t(title)}
-                        <ArrowUpRightIcon className="-mt-2 ml-1 inline-block text-primary opacity-50 group-hover:opacity-100" />
+                        <ArrowUpRightIcon className="text-primary -mt-2 ml-1 inline-block opacity-50 group-hover:opacity-100" />
                       </h3>
                     </a>
                     <p className="mb-6 leading-relaxed sm:mb-12">{t(text)}</p>

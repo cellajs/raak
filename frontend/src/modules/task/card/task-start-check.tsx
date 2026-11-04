@@ -52,6 +52,7 @@ export function TaskStartCheck({ taskId, className }: TaskStartCheckProps) {
       <Tooltip open={check && !!anchor}>
         {/* Unlike a hover tooltip it shows on a phone too: Start is a tap there */}
         <TooltipContent anchor={anchor} side="top" sideOffset={8} className="flex items-center gap-1.5 max-sm:flex">
+          {/* biome-ignore lint/nursery/noTailwindRawColors: on the tooltip's inverted surface the theme's success has the background's lightness */}
           <CheckIcon aria-hidden="true" className="size-3.5 text-green-400 dark:text-green-800" strokeWidth={3} />
           {t('c:copied')}
         </TooltipContent>
