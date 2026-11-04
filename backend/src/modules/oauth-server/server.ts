@@ -5,17 +5,18 @@ import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response';
 import { eq, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type Provider from 'oidc-provider';
+import { servicePaths } from 'shared';
 import { createHealthApp } from 'shared/health-app';
 import type { Env } from '#/core/context';
 import { baseDb } from '#/db/db';
 import { env } from '#/env';
 import { appErrorHandler } from '#/lib/error';
 import { type HealthComponent, mapDatabaseComponent, rollupStatus } from '#/lib/health-helpers';
-import { limiterScope } from '#/middlewares/rate-limiter/helpers';
 import { createInteractionsApp } from '#/modules/oauth-server/interactions';
 import { signingKeysTable } from '#/modules/oauth-server/signing-keys-db';
+import { runWithLogContext } from '#/utils/logger';
 
-const oauthMount = '/oauth';
+const oauthMount = servicePaths.oauth;
 
 /** The `?depth=full` diagnostics, in the API's component shape: the store answers and a signing key exists, else 503. */
 async function probeHealth(): Promise<{ httpStatus: number; body: unknown }> {
@@ -34,22 +35,22 @@ async function probeHealth(): Promise<{ httpStatus: number; body: unknown }> {
   components.signingKey = signingKey
     ? { status: 'healthy', checkedVia: 'local' }
     : { status: 'unhealthy', checkedVia: 'local', reason: 'signing_key_missing' };
-  const status = rollupStatus(components, new Set(Object.keys(components)));
+  const status = rollupStatus(components);
   return { httpStatus: status === 'unhealthy' ? 503 : 200, body: { status, uptime: Math.floor(process.uptime()), components } };
 }
 
 type Listener = (req: IncomingMessage, res: ServerResponse) => void;
 
 /**
- * The provider with each request bound for its client metadata fetch hook (`limiterScope`), as the interaction routes
- * are: the hook charges the per-IP fetch budget only when a client id is about to be fetched, so a request that fetches
- * nothing, a known client's refresh among them, never counts. The provider answers on the raw response and reads the
- * request body itself.
+ * The provider with each request bound as the ambient request for its client metadata fetch hook, as the interaction
+ * routes are: the hook charges the per-IP fetch budget only when a client id is about to be fetched, so a request that
+ * fetches nothing, a known client's refresh among them, never counts. The provider answers on the raw response and
+ * reads the request body itself.
  */
-function withLimiterScope(handle: (req: IncomingMessage, res: ServerResponse) => unknown): Listener {
+function withAmbientRequest(handle: (req: IncomingMessage, res: ServerResponse) => unknown): Listener {
   const app = new Hono<Env>();
   app.onError(appErrorHandler);
-  app.use(limiterScope);
+  app.use((ctx, next) => runWithLogContext(ctx, next));
   app.all('*', async (c) => {
     await handle(c.env.incoming, c.env.outgoing);
     return RESPONSE_ALREADY_SENT;
@@ -64,7 +65,7 @@ function withLimiterScope(handle: (req: IncomingMessage, res: ServerResponse) =>
  * entry and the integration tests.
  */
 export function createOauthListener(provider: Provider): Listener {
-  const oidc = withLimiterScope(provider.callback());
+  const oidc = withAmbientRequest(provider.callback());
   const interactions = getRequestListener(createInteractionsApp(provider).fetch);
   const health = getRequestListener(createHealthApp({ version: env.RELEASE_SHA, full: probeHealth }).fetch);
 

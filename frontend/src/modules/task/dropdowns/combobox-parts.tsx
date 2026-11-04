@@ -11,8 +11,8 @@ export const comboboxActionButtonClass = cn(buttonVariants({ variant: 'ghost' })
 /** Desktop: a height-capped flex column so only the list scrolls. Mobile: a plain block, since a nested scroll region fights the drawer's swipe. */
 export const comboboxShellClass = tw('relative rounded-lg sm:flex sm:max-h-[44vh] sm:w-(--trigger-width) sm:flex-col sm:overflow-hidden');
 
-/** Desktop only: fills the shell's remaining height. */
-export const comboboxScrollClass = tw('sm:min-h-0 sm:flex-1');
+/** Desktop only: fills the shell's remaining height. A flex column, since the viewport's `height: 100%` cannot resolve under a shell capped by max-height alone. */
+export const comboboxScrollClass = tw('sm:flex sm:min-h-0 sm:flex-1 sm:flex-col');
 
 /** Pins the search input in the mobile drawer; `top-5` clears the drawer's ~20px sticky drag handle. A normal flex child from `sm` up. */
 export const comboboxInputPinClass = tw('sticky top-5 z-10 shrink-0 bg-background sm:static sm:top-auto sm:z-auto sm:bg-transparent');

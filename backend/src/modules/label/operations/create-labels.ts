@@ -1,18 +1,19 @@
 import type { z } from '@hono/zod-openapi';
 import type { ChannelEntityType } from 'shared';
+import { buildSubject } from 'shared';
 import { labelName, labelSlug } from 'shared/config/labels-config';
 import type { OrgContext } from '#/core/context';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
+import { heatRank, heatWeights } from '#/modules/label/helpers/label-heat';
 import { normalizeLabelName } from '#/modules/label/helpers/label-name';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { findLabelColorsByName, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
 import { insertWithinTenantQuota } from '#/modules/tenants/quota-lock';
-import { getValidChannel } from '#/permissions';
-import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
+import { getValidChannel } from '#/permissions/get-valid-channel';
 import { resolvePlacement } from '#/permissions/product-placement';
 import { checkIdempotency } from '#/utils/idempotency';
 import { getIsoDate } from '#/utils/iso-date';
@@ -63,9 +64,13 @@ export async function createLabelsOp(
       labelInfo.mode === 'secondary' ? {} : { resolveHome: managedHome },
     );
 
+    // A new tag or epic starts warm: whoever made it is about to use it. A primary label keeps the organization's order.
+    const displayOrder = labelInfo.mode === 'primary' ? labelInfo.displayOrder : (labelInfo.displayOrder ?? heatRank(heatWeights.created));
+
     const label = {
       ...labelInfo,
       ...placement,
+      displayOrder,
       slug: labelInfo.slug ?? labelSlug(labelInfo.name ?? 'New label'),
       entityType: 'label' as const,
       tenantId: organization.tenantId,

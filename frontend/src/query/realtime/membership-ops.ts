@@ -1,5 +1,4 @@
 import { appConfig, type ChannelEntityType } from 'shared';
-import { getAndSetMe } from '~/modules/me/helpers';
 import { meKeys, myMembershipsQueryOptions } from '~/modules/me/query';
 import { memberQueryKeys } from '~/modules/memberships/query';
 import { getEntityQueryKeys, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
@@ -36,7 +35,7 @@ export function invalidateMemberQueries(organizationId: string | null): void {
   }
 }
 
-/** The enrichment subscriber re-enriches entity lists from this, and useMenu rebuilds. */
+/** The channel enrichment subscriber reruns on this, and useMenu rebuilds. */
 export function invalidateMemberships(): void {
   queryClient.invalidateQueries({ queryKey: meKeys.memberships, refetchType: 'active' });
 }
@@ -45,10 +44,4 @@ export function invalidateMemberships(): void {
 export function fetchMemberships(): Promise<unknown> {
   // A catchup within the stale time of the route loader's read fetches nothing.
   return queryClient.query({ ...myMembershipsQueryOptions(), staleTime: defaultStaleTime });
-}
-
-/** Called after membership updates, since a role change alters permissions. */
-export function refreshMe(): void {
-  // Best effort: a failed read leaves the user as it was, and the next membership change reads again.
-  getAndSetMe().catch((error) => console.debug('[MembershipOps] Could not refresh the user:', error));
 }

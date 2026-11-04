@@ -4,7 +4,8 @@ import { isDropdownOpen } from '~/modules/common/dropdowner/use-dropdowner';
 import { finalFocusFor, type OverlayCloseDetails, touchInitialFocus } from '~/modules/common/overlay-store-helpers';
 import { ContentKeyTransition } from '~/modules/common/sheeter/content-key-transition';
 import { type InternalSheet, navSheetId, sheeter } from '~/modules/common/sheeter/use-sheeter';
-import { navigationStore } from '~/modules/navigation/navigation-store';
+import { uploader } from '~/modules/common/uploader/use-uploader';
+import { useNavigationStore } from '~/modules/navigation/navigation-store';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '~/modules/ui/sheet';
 import { cn } from '~/utils/cn';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
@@ -36,6 +37,9 @@ export function SheeterSheet({ sheet, onExited }: SheeterSheetProps) {
 
   const popupRef = useRef<HTMLDivElement>(null);
 
+  // Pinned, the page beside the sheet stays in use: a modal popup would hide that page from assistive technology
+  const isPinned = useNavigationStore((state) => state.keepNavOpen) && id === navSheetId;
+
   // The provider keeps the removed sheet rendered until it has slid out
   const closeSheet = () => {
     sheeter.getState().remove(sheet.id);
@@ -53,14 +57,11 @@ export function SheeterSheet({ sheet, onExited }: SheeterSheetProps) {
     }
 
     if (eventDetails.reason === 'outside-press') {
-      // An outside press on a dropdown or dialog must not close the sheet
-      if (isDropdownOpen() || dialoger.getState().dialogs.some((dialog) => dialog.open)) return;
+      // An outside press on a dropdown or dialog must not close the sheet, the uploader's dialog included: it isn't in the dialoger
+      if (isDropdownOpen() || uploader.getState().uploadData || dialoger.getState().dialogs.some((dialog) => dialog.open)) return;
 
       // The nav button's own click handler toggles the nav sheet; closing here makes it reopen
       if (sheet.id === navSheetId) {
-        const navState = navigationStore.getState();
-        if (navState.keepNavOpen && navState.navSheetOpen) return;
-
         const target = eventDetails.event?.target;
         if (target instanceof Element && target.closest('#sidebar-nav, #bottom-bar-nav')) return;
       }
@@ -74,8 +75,9 @@ export function SheeterSheet({ sheet, onExited }: SheeterSheetProps) {
       open={open}
       onOpenChange={handleOpenChange}
       onOpenChangeComplete={(isOpen) => !isOpen && onExited?.()}
-      modal={modal}
-      disablePointerDismissal={disablePointerDismissal}
+      modal={isPinned ? false : modal}
+      // Also what stops a non-modal popup from closing when focus leaves it
+      disablePointerDismissal={isPinned || disablePointerDismissal}
     >
       <SheetContent
         ref={popupRef}

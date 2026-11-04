@@ -5,6 +5,9 @@ import { buildMenuFromCache } from '~/modules/navigation/menu-sheet/helpers/buil
 import { getCurrentUser } from '~/modules/user/user-store';
 import { queryClient } from '~/query/query-client';
 
+/** Enough pages for any member's lists: a fetch stops at the last page, and a refetch keeps the pages it holds. */
+const menuListPages = 50;
+
 /**
  * Builds the menu from cache, serving what is already cached and revalidating behind it.
  *
@@ -15,17 +18,16 @@ import { queryClient } from '~/query/query-client';
 export async function getMenuData() {
   const userId = getCurrentUser().id;
 
-  // Memberships come first: the cache subscriber (initChannelEnrichment) reads from this cache.
+  // The menu joins each list row with the user's membership of it.
   const membershipsOptions = myMembershipsQueryOptions();
   await queryClient.query({ ...membershipsOptions, staleTime: 'static' });
   void queryClient.query(membershipsOptions).catch(() => {});
 
-  // Fetch entity lists; the subscriber enriches them with memberships on cache write.
   await Promise.all(
     appConfig.channelEntityTypes.map(async (entityType) => {
       const listQuery = getChannelListQuery(entityType);
       if (!listQuery) return;
-      const options = listQuery({ relatableUserId: userId });
+      const options = { ...listQuery({ relatableUserId: userId }), pages: menuListPages };
       await queryClient.infiniteQuery({ ...options, staleTime: 'static' });
       void queryClient.infiniteQuery(options).catch(() => {});
     }),

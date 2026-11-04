@@ -4,9 +4,9 @@ import { Suspense } from 'react';
 import { PublicProjectPage } from '~/modules/project/public-project-page';
 import { publicProjectQueryOptions } from '~/modules/project/query';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
+import { Board } from '~/modules/task/board/lazy-board';
 import { lazyNamed } from '~/utils/lazy-named';
 
-const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
 const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
 
 const publicProjectApi = getRouteApi('/_public/_content/$tenantId/$organizationSlug/public/project/$slug');

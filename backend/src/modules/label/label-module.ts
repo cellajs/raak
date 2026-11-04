@@ -1,14 +1,17 @@
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { tenantContext } from '#/db/tenant-context';
 import { defineBackendModule } from '#/lib/module';
+import { collectLabelHeat, type TaskHeatRow } from '#/modules/label/helpers/label-heat';
 import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
 import { labelHandlers } from '#/modules/label/label-handlers';
-import { insertLabels, propagateSetupConfigLabels } from '#/modules/label/label-queries';
+import { bumpLabelHeat, insertLabels, propagateSetupConfigLabels } from '#/modules/label/label-queries';
 import { updateLabelOp } from '#/modules/label/operations/update-label';
 import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
 
 const primaryLabelsOf = (row: Record<string, unknown> | undefined): PrimaryLabelDefinition[] | undefined =>
   (row?.setupConfig as { primaryLabels?: PrimaryLabelDefinition[] } | undefined)?.primaryLabels;
+
+const taskHeatRows = (rows: Record<string, unknown>[]) => rows as unknown as TaskHeatRow[];
 
 defineBackendModule({
   name: 'labels',
@@ -37,6 +40,13 @@ defineBackendModule({
       // On the dispatcher's connection: create-projects dispatches inside its transaction, where the project rows are
       // not visible to any other connection yet.
       if (rows.length) await insertLabels(ctx, { labels: rows });
+    },
+    // Labels sort by heat: the tasks written carry it onto their labels, inside the write's transaction.
+    'task.created': async (ctx, { after = [] }) => {
+      await bumpLabelHeat(ctx, collectLabelHeat(taskHeatRows(after)));
+    },
+    'task.updated': async (ctx, { before = [], after = [] }) => {
+      await bumpLabelHeat(ctx, collectLabelHeat(taskHeatRows(after), taskHeatRows(before)));
     },
     // Diff-driven: propagate primary-label edits to tracked child rows only when they changed.
     'organization.updated': async (ctx, { before = [], after = [] }) => {

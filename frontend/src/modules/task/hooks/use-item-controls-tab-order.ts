@@ -32,6 +32,8 @@ export function useItemControlsTabOrder(
     const removeControls = () => {
       for (const el of container.querySelectorAll<HTMLElement>(focusableSelector)) {
         if (el.id === mainId || el.tabIndex < 0) continue;
+        // An attribute written inside an editor rebuilds that block, and its new control fires the observer below: an endless loop
+        if (el.parentElement?.closest('.ProseMirror')) continue;
         el.setAttribute('tabindex', '-1');
         removedRef.current.add(el);
       }
@@ -54,8 +56,9 @@ export function useItemControlsTabOrder(
       if (event.defaultPrevented || (event.target instanceof HTMLElement && event.target.isContentEditable)) return;
       const main = document.getElementById(mainId);
       if (!main) return;
+      // A read-only card keeps its controls inert and its checklist disabled: Tab passes over them, so they cannot close the cycle
       const controls = [...container.querySelectorAll<HTMLElement>(focusableSelector)].filter(
-        (el) => el !== main && el.tabIndex >= 0 && el.checkVisibility(),
+        (el) => el !== main && el.tabIndex >= 0 && !el.matches(':disabled') && !el.closest('[inert]') && el.checkVisibility(),
       );
       const last = controls.at(-1);
       if (!last) return;

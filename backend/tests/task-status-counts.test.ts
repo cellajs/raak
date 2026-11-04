@@ -58,7 +58,6 @@ describe('Task status counts of a project', async () => {
       unstarted: 2,
       started: 1,
       finished: 0,
-      delivered: 0,
       reviewed: 0,
       accepted: 0,
     });

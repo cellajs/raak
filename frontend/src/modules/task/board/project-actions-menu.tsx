@@ -1,18 +1,22 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, UsersIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { NamedText } from '~/modules/common/named-text';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import type { EnrichedProject } from '~/modules/project/types';
+import { DrawerDisplayOptions } from '~/modules/task/board/display-options';
 import { Button } from '~/modules/ui/button';
-import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
+import { OpenInWorkspaceItem } from '~/modules/workspace/open-in-workspace-item';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
+import { findMembership } from '~/query/enrichment/helpers';
 import { cn } from '~/utils/cn';
 
 interface ProjectActionsMenuProps {
@@ -26,14 +30,13 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
   const navigate = useNavigate();
 
   const isInWorkspace = useIsWorkspaceRoute();
+  const isMobile = useBreakpointBelow('sm');
 
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const { data: organization } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
 
-  const projectMembership = project.membership;
-  const projectWorkspace = projectMembership?.workspaceId ? findWorkspaceByIdOrSlug(projectMembership.workspaceId, tenantId) : undefined;
-
-  const hasGoTo = isInWorkspace || !!projectWorkspace;
+  const { data: myMemberships } = useQuery(myMembershipsQueryOptions());
+  const projectMembership = findMembership(myMemberships?.items ?? [], project.id);
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const triggerRef = { current: currentTarget };
@@ -44,36 +47,27 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
 
     dropdowner.getState().create(
       <>
-        {isInWorkspace && (
-          <DropdownActionItem
-            icon={ArrowRightIcon}
-            onSelect={closeThen(() =>
-              navigate({
-                to: '/$tenantId/$organizationSlug/project/$slug',
-                params: { slug: project.slug, organizationSlug: organization.slug, tenantId },
-              }),
-            )}
-          >
-            {t('c:go_to_project')}
-          </DropdownActionItem>
-        )}
-        {!isInWorkspace && projectWorkspace && (
-          <DropdownActionItem
-            icon={ArrowRightIcon}
-            onSelect={closeThen(() =>
-              navigate({
-                to: '/$tenantId/$organizationSlug/workspace/$slug',
-                params: { slug: projectWorkspace.slug, organizationSlug: organization.slug, tenantId },
-                search: { projectSlug: project.slug },
-              }),
-            )}
-          >
-            {t('c:go_to_workspace')}
-          </DropdownActionItem>
+        <DrawerDisplayOptions />
+        {isInWorkspace ? (
+          <>
+            <DropdownActionItem
+              icon={ArrowRightIcon}
+              onSelect={closeThen(() =>
+                navigate({
+                  to: '/$tenantId/$organizationSlug/project/$slug',
+                  params: { slug: project.slug, organizationSlug: organization.slug, tenantId },
+                }),
+              )}
+            >
+              {t('c:go_to_project')}
+            </DropdownActionItem>
+            {projectMembership && <DropdownActionSeparator />}
+          </>
+        ) : (
+          <OpenInWorkspaceItem project={project} organization={organization} />
         )}
         {projectMembership && (
           <>
-            {hasGoTo && <DropdownActionSeparator />}
             <DropdownActionItem icon={UsersIcon} onSelect={closeThen(() => openProjectMembersSheet(project, triggerRef))}>
               {t('c:project_members')}
             </DropdownActionItem>
@@ -95,8 +89,8 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
     );
   };
 
-  // A non-member on a project page has nothing to pick
-  if (!isInWorkspace && !projectMembership) return null;
+  // A non-member on a project page has nothing to pick, except on a phone: the menu holds the view toggle
+  if (!isInWorkspace && !projectMembership && !isMobile) return null;
 
   return (
     <TooltipButton toolTipContent={t('c:resource_options', { resource: t('c:project') })}>

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, doublePrecision, index, snakeCase, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, index, integer, snakeCase, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import type { LabelMode } from 'shared/config/labels-config';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
@@ -18,16 +18,20 @@ export const labelsTable = snakeCase.table(
   'labels',
   {
     ...productColumns('label'),
+    /** Counted per organization: 0 until the insert trigger assigns it, as the client placeholder has it. */
+    number: integer().notNull().default(0),
     color: varchar({ length: maxLength.field }),
     mode: varchar({ length: maxLength.field }).notNull().default('secondary').$type<LabelMode>(),
     slug: varchar({ length: maxLength.field }).notNull(),
     icon: varchar({ length: maxLength.field }),
     organizationTracked: boolean().notNull().default(false),
+    /** A primary label's place in the organization's order; a tag's or epic's heat rank (helpers/label-heat.ts), highest first. */
     displayOrder: doublePrecision(),
     ...channelRelationColumns('label'),
   },
   (table) => [
     ...productIndexes('labels', table),
+    uniqueIndex('labels_organization_number_unique').on(table.organizationId, table.number),
     index('labels_organization_id_name_index').on(table.organizationId, table.name, table.id),
     // One live primary label per slug within a project; secondary/epic labels are exempt.
     uniqueIndex('labels_project_primary_slug_unique')

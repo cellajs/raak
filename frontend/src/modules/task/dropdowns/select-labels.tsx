@@ -13,7 +13,6 @@ import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-co
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { useInDropdownerDrawer } from '~/modules/common/dropdowner/drawer';
 import { deduplicateLabels } from '~/modules/label/group-labels';
-import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
 import { useLabelUsage } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
@@ -95,13 +94,14 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
 
   // Subscribed so labels re-scope when the list updates; in a workspace the board has already fetched it.
   const { data: workspaceProjectIds } = useInfiniteQuery({
-    ...projectsListQueryOptions({ workspaceId: workspaceId ?? '' }),
+    ...projectsListQueryOptions({ workspaceId: workspaceId ?? '', excludeArchived: 'true' }),
     enabled: !!workspaceId,
     select: (data) => data.pages.flatMap((page) => page.items.map((project) => project.id)),
   });
 
   // Labels are project-homed: inside a workspace span its projects, else the current one (also until the project list has loaded).
-  const labelProjectIds = workspaceId && workspaceProjectIds ? workspaceProjectIds : [projectId];
+  // The current one stays in: a task sheet opened by link can hold a task of an archived project.
+  const labelProjectIds = workspaceId && workspaceProjectIds ? [...new Set([projectId, ...workspaceProjectIds])] : [projectId];
 
   const labels = useQueries({
     queries: labelProjectIds.map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
@@ -133,16 +133,13 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     return () => scrollParent.removeEventListener('scroll', onScroll);
   };
 
-  const trackUsage = useLabelRecencyStore((state) => state.trackUsage);
-  const getScore = useLabelRecencyStore((state) => state.getScore);
-
   const focusInput = () => {
     if (!isTouchInteraction()) inputRef.current?.focus();
   };
 
   const projectLabels = labels.filter((label) => label.projectId === projectId);
 
-  const allLabels = deduplicateLabels(labels, projectId, organizationId, usage);
+  const allLabels = deduplicateLabels(labels, projectId, usage);
 
   const searchSlug = labelSlug(searchValue);
   // Labels are meant to be lowercase, but older and seeded names carry capitals and spaces: normalize them as the input is.
@@ -153,18 +150,9 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
       )
     : [];
 
-  // Top labels by recency, then usedCount, then name, excluding the selected
+  // The hottest labels, the selected left out
   const selectedSlugs = new Set(selectedLabels.map((label) => label.slug));
-  const suggestedLabels = allLabels
-    .filter((label) => !selectedSlugs.has(label.slug))
-    .sort((a, b) => {
-      const recency = getScore(organizationId, b.slug) - getScore(organizationId, a.slug);
-      if (recency !== 0) return recency;
-      const usageDiff = b.usedCount - a.usedCount;
-      if (usageDiff !== 0) return usageDiff;
-      return a.name.localeCompare(b.name);
-    })
-    .slice(0, suggestedLabelCount);
+  const suggestedLabels = allLabels.filter((label) => !selectedSlugs.has(label.slug)).slice(0, suggestedLabelCount);
 
   const visibleLabels = searchValue ? searchResults : [...selectedLabels, ...suggestedLabels];
 
@@ -207,7 +195,6 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
       const updatedLabels = getItemsSortedByName([...selectedLabels, newLabel]);
       setSelectedLabels(updatedLabels);
       onChange(updatedLabels);
-      trackUsage(organizationId, [newLabel.slug]);
       return;
     }
 
@@ -253,7 +240,6 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     const finalLabels = updatedLabels.map((label) => (label.id === newLabel.id ? createdLabels[0] : label));
     setSelectedLabels(finalLabels);
     onChange(finalLabels);
-    trackUsage(organizationId, [newLabelData.slug]);
   };
 
   // flushSync: iOS raises the keyboard only for a field focused within the tap itself
@@ -360,9 +346,9 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             <AnimatePresence initial={false}>
               {!searchValue && (
                 <motion.div
-                  initial={{ opacity: 0, width: 0, marginRight: 0 }}
-                  animate={{ opacity: 1, width: 'auto', marginRight: -12 }}
-                  exit={{ opacity: 0, width: 0, marginRight: 0 }}
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
                   transition={{ duration: 0.15 }}
                   className="shrink-0 overflow-hidden"
                 >
@@ -380,17 +366,20 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             type="button"
             aria-expanded={!selectedCollapsed}
             aria-controls="select-labels-selected-group"
-            className="mx-1 mt-1 flex w-[calc(100%-0.5rem)] shrink-0 items-center gap-2 pointer-coarse:px-3 px-2 pointer-coarse:py-2 py-1.5 text-muted-foreground text-xs outline-hidden hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+            className="group-label mx-1 mt-1 flex w-[calc(100%-0.5rem)] shrink-0 items-center gap-2 rounded-sm pointer-coarse:py-2 py-1.5 pr-2 pl-2 pointer-coarse:pl-3 text-xs outline-hidden hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
             onClick={() => setSelectedCollapsed((collapsed) => !collapsed)}
           >
             {t('c:selected')}
-            {selectedCollapsed && <span className="ml-1 text-faint-foreground text-xs">{selectedLabels.length}</span>}
+            {selectedCollapsed && <span className="ml-1 font-normal text-faint-foreground text-xs">{selectedLabels.length}</span>}
             <span className="grow" />
-            <ChevronDownIcon className={cn('size-3.5 transition-transform', !selectedCollapsed && 'rotate-180')} />
+            {/* The same box as a row's check, so the two share a column */}
+            <span className="flex size-4 items-center justify-center">
+              <ChevronDownIcon className={cn('size-3.5 transition-transform', !selectedCollapsed && 'rotate-180')} />
+            </span>
           </button>
         )}
-        <ScrollArea className={comboboxScrollClass}>
-          <ComboboxList className="p-1!">
+        <ScrollArea className={comboboxScrollClass} viewportClassName="sm:min-h-0 sm:overscroll-contain">
+          <ComboboxList className="max-h-none overflow-visible p-1!">
             {searchValue ? (
               searchResults.length > 0 ? (
                 <ComboboxGroup>

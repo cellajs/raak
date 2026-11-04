@@ -1,4 +1,4 @@
-import { and, count, eq, getColumns, inArray, ne, type SQL, sql } from 'drizzle-orm';
+import { and, asc, count, eq, getColumns, inArray, ne, notInArray, type SQL, sql } from 'drizzle-orm';
 import type { EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
 import type { UserId } from '#/db/utils/ids';
@@ -50,17 +50,42 @@ export const deleteWorkspacesByIds = async (ctx: ActorContext, { ids }: DeleteWo
   return db.delete(workspacesTable).where(and(inArray(workspacesTable.id, ids), requestScopeWhere(ctx, workspacesTable, 'workspace')));
 };
 
-interface UnfileWorkspaceMembershipsOpts {
+interface FindUserWorkspaceIdOpts {
+  userId: string;
+  organizationId: string;
+  exceptIds?: string[];
+}
+
+/** The id of the user's first workspace in the organization, by their own order. */
+export const findUserWorkspaceId = async (ctx: DbContext, { userId, organizationId, exceptIds = [] }: FindUserWorkspaceIdOpts) => {
+  const [first] = await ctx.var.db
+    .select({ id: membershipsTable.channelId })
+    .from(membershipsTable)
+    .where(
+      and(
+        eq(membershipsTable.userId, userId),
+        eq(membershipsTable.organizationId, organizationId),
+        eq(membershipsTable.channelType, 'workspace'),
+        notInArray(membershipsTable.channelId, exceptIds),
+      ),
+    )
+    .orderBy(asc(membershipsTable.displayOrder), asc(membershipsTable.channelId))
+    .limit(1);
+  return first?.id;
+};
+
+interface MoveWorkspaceMembershipsOpts {
   ids: string[];
   updatedBy: UserId;
+  /** The workspace a user's memberships move to. */
+  targetOf: (userId: string) => Promise<string>;
 }
 
 /**
- * Takes the memberships filed under the workspaces out of them, so a workspace delete cascades only to the memberships
- * of the workspaces themselves. `workspace_id` is immutable (`memberships_immutable_keys`), so a copy replaces each row.
+ * Moves the memberships filed under the workspaces to the holder's `targetOf`, so a workspace delete cascades only to the memberships of the workspaces themselves. `workspace_id` is immutable (`memberships_immutable_keys`), so a copy replaces each row.
  * @returns The users holding any membership under the workspaces, the workspaces' members included.
  */
-export const unfileWorkspaceMemberships = async (ctx: ActorContext, { ids, updatedBy }: UnfileWorkspaceMembershipsOpts) => {
+export const moveWorkspaceMemberships = async (ctx: ActorContext, { ids, updatedBy, targetOf }: MoveWorkspaceMembershipsOpts) => {
   const { db } = ctx.var;
   const underWorkspaces = and(inArray(membershipsTable.workspaceId, ids), requestScopeWhere(ctx, membershipsTable));
   const holders = await db.selectDistinct({ userId: membershipsTable.userId }).from(membershipsTable).where(underWorkspaces);
@@ -68,10 +93,15 @@ export const unfileWorkspaceMemberships = async (ctx: ActorContext, { ids, updat
     .delete(membershipsTable)
     .where(and(underWorkspaces, ne(membershipsTable.channelType, 'workspace')))
     .returning();
+
+  const targets = new Map<string, string>();
+  for (const userId of new Set(filed.map((membership) => membership.userId))) {
+    targets.set(userId, await targetOf(userId));
+  }
   if (filed.length) {
     await db
       .insert(membershipsTable)
-      .values(filed.map(({ id, ...membership }) => ({ ...membership, workspaceId: null, ...updateStamps(updatedBy) })));
+      .values(filed.map(({ id, ...membership }) => ({ ...membership, workspaceId: targets.get(membership.userId), ...updateStamps(updatedBy) })));
   }
   return holders.map(({ userId }) => userId);
 };
@@ -86,7 +116,6 @@ interface FindWorkspacesPaginatedOpts {
   offset: number;
   limit: number;
   organizationId?: string;
-  excludeArchived?: boolean;
   role?: EntityRole;
   includeCounts: boolean;
 }
@@ -94,7 +123,7 @@ interface FindWorkspacesPaginatedOpts {
 /** Get paginated list of workspaces with total count, membership, optional entity counts. */
 export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspacesPaginatedOpts) => {
   const { db } = ctx.var;
-  const { userId, isSystemAdmin, q, sort, order, offset, limit, organizationId, excludeArchived, role, includeCounts } = opts;
+  const { userId, isSystemAdmin, q, sort, order, offset, limit, organizationId, role, includeCounts } = opts;
 
   const entityType = 'workspace';
 
@@ -104,10 +133,7 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
     eq(membershipsTable.channelType, entityType),
   );
 
-  const membershipFilterOn = and(
-    ...(excludeArchived ? [eq(membershipsTable.archived, false)] : []),
-    ...(role ? [eq(membershipsTable.role, role)] : []),
-  );
+  const membershipFilterOn = and(...(role ? [eq(membershipsTable.role, role)] : []));
 
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 

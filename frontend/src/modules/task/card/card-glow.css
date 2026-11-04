@@ -10,13 +10,9 @@
 [data-status="1"] {
   --glow-color-rgb: 249, 115, 22;
 }
-/* delivered */
-[data-status="2"] {
-  --glow-color-rgb: 234, 179, 8;
-}
 /* finished */
 [data-status="3"] {
-  --glow-color-rgb: 132, 204, 22;
+  --glow-color-rgb: 234, 179, 8;
 }
 /* started */
 [data-status="4"] {
@@ -64,10 +60,15 @@
   animation: highlight-flash 1s ease-out forwards;
 }
 
-/* The first summary line fades out under the options button, on the states that reveal it (taskCardActionsRevealClass).
+/* The first summary line fades out under the options button, on the states that reveal it (taskCardActionsRevealClass):
+   hover and any focus inside with a fine pointer, only keyboard focus on a touch screen, where a tap would leave it on.
    The mask keeps the card's status gradient and search tint showing through unchanged. */
-[data-task-card-id]:is(:hover, :focus-within, .is-focused) .task-summary-fade {
-  mask-image: linear-gradient(to left, #000 2.25rem, transparent 4rem), linear-gradient(#000, #000);
+.task-summary-fade {
+  --summary-fade-mask: linear-gradient(to left, #000 2.25rem, transparent 4rem), linear-gradient(#000, #000);
+}
+
+[data-task-card-id]:is(:focus-visible, :has(:focus-visible), .is-focused) .task-summary-fade {
+  mask-image: var(--summary-fade-mask);
   mask-size:
     100% 1lh,
     100% 100%;
@@ -76,6 +77,20 @@
     0 0;
   mask-repeat: no-repeat;
   mask-composite: exclude;
+}
+
+@media (pointer: fine) {
+  [data-task-card-id]:is(:hover, :focus-within) .task-summary-fade {
+    mask-image: var(--summary-fade-mask);
+    mask-size:
+      100% 1lh,
+      100% 100%;
+    mask-position:
+      right top,
+      0 0;
+    mask-repeat: no-repeat;
+    mask-composite: exclude;
+  }
 }
 
 /* Behind a new task's primary label icon, in the label's color. Only transform and opacity move, so a scrolling list repaints nothing. */

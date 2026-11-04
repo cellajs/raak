@@ -15,12 +15,11 @@ import {
 import { zCreateLabelsBody, zLabel } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import { labelName } from 'shared/config/labels-config';
-import { isRecord } from 'shared/utils/as-record';
-import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-owned-fields';
+import { registerDescriptionColumns } from '~/modules/common/blocknote/yjs-owned-fields';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
-import { cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
+import { cacheRemove, cacheUpdate, cancelKeepingMark, removeDetailQueriesById, writeKeepingMark } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
@@ -29,13 +28,14 @@ import { createCacheFinder } from '~/query/basic/find-in-list-cache';
 import { liveItems } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
-import { addMutationRegistrar } from '~/query/mutation-registry';
-import { type CreateVariables, type DeleteVariables, registerVariablesVersion, type UpdateVariables } from '~/query/offline/mutation-variables';
+import { syncedListOptions } from '~/query/basic/synced-list-options';
+import type { CreateVariables, DeleteVariables, UpdateVariables } from '~/query/offline/mutation-variables';
 import { prepareProductDelete } from '~/query/offline/prepare-delete';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse, writeEntityToCache } from '~/query/offline/update-success-utils';
+import { queryClient } from '~/query/query-client';
 import { invalidateEmbeddingHosts, propagateEmbeddedProduct } from '~/query/realtime/propagation';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import { createResourceError } from '~/utils/resource-error';
@@ -66,8 +66,8 @@ registerEntityQueryKeys('label', keys, ({ organizationId, tenantId, channelId, q
 /** The keys a create row takes. An edit of any other field cannot fold into a queued create. */
 const labelCreateKeys = Object.keys(zCreateLabelsBody.element.shape);
 
-// `keywords` is derived from the description, so it follows the description's stamp.
-registerYjsOwnedFields('label', ['description', 'keywords']);
+// The column `update-label.ts` stores from a description.
+registerDescriptionColumns('label', ['keywords']);
 
 const handleError = createResourceError('label');
 
@@ -78,7 +78,7 @@ const invalidateOrgLists = (queryClient: QueryClient, organizationId: string) =>
 const patchCachedLabel = (queryClient: QueryClient, organizationId: string, row: Label, ops: UpdateLabelFields) => {
   const patched = { ...row, ...ops, updatedAt: new Date().toISOString() };
   cacheUpdate(keys.list.org(organizationId), [patched]);
-  queryClient.setQueryData(keys.detail.byId(row.id), patched);
+  writeKeepingMark(queryClient, keys.detail.byId(row.id), () => patched);
   propagateEmbeddedProduct('label', [row.id], 'update');
 };
 
@@ -89,19 +89,22 @@ export const findLabelInCache = createCacheFinder<Label>('label');
  * Org and workspace views aggregate these per-project lists client-side.
  */
 export const labelsCanonicalOptions = ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) => {
-  return queryOptions({
-    queryKey: keys.list.home(organizationId, projectId),
-    queryFn: () => {
-      return fetchAllPages(
-        ({ limit, offset }) => getLabels({ path: { organizationId, tenantId }, query: { projectId, limit, offset } }).then(liveItems),
-        appConfig.requestLimits.labels,
-      );
-    },
-    staleTime: syncStaleTime,
-  });
+  return syncedListOptions(
+    queryOptions({
+      queryKey: keys.list.home(organizationId, projectId),
+      queryFn: () => {
+        return fetchAllPages(
+          ({ limit, offset }) => getLabels({ path: { organizationId, tenantId }, query: { projectId, limit, offset } }).then(liveItems),
+          appConfig.requestLimits.labels,
+        );
+      },
+      staleTime: syncStaleTime,
+    }),
+    { organizationId, tenantId, channelId: projectId },
+  );
 };
 
-/** Per label, the project's tasks accepted before the board's cut-off: what the board list leaves out of a label's total. */
+/** Per label, the project's tasks accepted before the board's cut-off: what the board list leaves out of a label's status counts. */
 export const labelOlderAcceptedCountsOptions = ({
   organizationId,
   tenantId,
@@ -117,23 +120,18 @@ export const labelOlderAcceptedCountsOptions = ({
   });
 };
 
-// The `?? createStxFor*` fallback keeps queues persisted before stx became a durable variable replayable.
 const createLabelMutationFn = async ({ tenantId, organizationId, data, stx }: CreateLabelFullVars) => {
-  const effectiveStx = stx ?? createStxForCreate();
-  const result = await createLabels({ body: data.map((row) => ({ ...row, stx: effectiveStx })), path: { organizationId, tenantId } });
+  const result = await createLabels({ body: data.map((row) => ({ ...row, stx })), path: { organizationId, tenantId } });
   return result.data;
 };
 
 /** Sends one label update; exported for the replay test. */
 export const updateLabelMutationFn = async ({ tenantId, organizationId, id, ops, stx }: UpdateLabelFullVars) => {
-  const effectiveStx = stx ?? createStxForUpdate(ops ? Object.keys(ops) : []);
-  return updateLabel({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
+  return updateLabel({ body: { ops, stx }, path: { id, organizationId, tenantId } });
 };
 
 const deleteLabelMutationFn = async ({ tenantId, organizationId, rows, stx }: DeleteLabelVars) => {
-  const ids = rows.map(({ id }) => id);
-  const effectiveStx = stx ?? createStxForDelete();
-  return deleteLabels({ path: { organizationId, tenantId }, body: { ids, stx: effectiveStx } });
+  return deleteLabels({ path: { organizationId, tenantId }, body: { ids: rows.map(({ id }) => id), stx } });
 };
 
 type CreateData = Awaited<ReturnType<typeof createLabelMutationFn>>;
@@ -150,7 +148,7 @@ const labelCreateOptions = (queryClient: QueryClient): UseMutationOptions<Create
   mutationFn: createLabelMutationFn,
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ tenantId, organizationId, data }) => {
-    await queryClient.cancelQueries({ queryKey: keys.list.org(organizationId) });
+    await cancelKeepingMark(queryClient, keys.list.org(organizationId));
     // The ids live on the request path, not the create body, so carry them onto the row: cache placement resolves the
     // canonical home list from the entity itself, and a delete takes its path from it.
     const optimisticLabels = data.map((row) => createOptimisticEntity(zLabel, { ...row, tenantId, organizationId }));
@@ -182,8 +180,8 @@ const labelUpdateOptions = (
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ organizationId, id, ops }) => {
     const orgKey = keys.list.org(organizationId);
-    await queryClient.cancelQueries({ queryKey: orgKey });
-    await queryClient.cancelQueries({ queryKey: keys.detail.byId(id) });
+    await cancelKeepingMark(queryClient, orgKey);
+    await cancelKeepingMark(queryClient, keys.detail.byId(id));
     const previousLabel = findLabelInCache(id);
     if (previousLabel) patchCachedLabel(queryClient, organizationId, previousLabel, ops);
     return { previousLabel };
@@ -194,7 +192,7 @@ const labelUpdateOptions = (
     handleError('update', error);
     if (context?.previousLabel) {
       cacheUpdate(keys.list.org(variables.organizationId), [context.previousLabel]);
-      queryClient.setQueryData(keys.detail.byId(context.previousLabel.id), context.previousLabel);
+      writeKeepingMark(queryClient, keys.detail.byId(context.previousLabel.id), () => context.previousLabel);
       // Embedded copies carry the optimistic edit and its newer updatedAt beats the restored
       // row in the propagation guard, so hosts recover through a refetch
       invalidateEmbeddingHosts('label', variables.organizationId);
@@ -204,7 +202,7 @@ const labelUpdateOptions = (
     const orgKey = keys.list.org(variables.organizationId);
     const cached = findLabelInCache(updatedLabel.id);
     const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
-    const merged = mergeServerResponse({ cached, serverEntity: updatedLabel, mutatedKeys, derivedKeys: { description: ['keywords'] } });
+    const merged = mergeServerResponse({ queryClient, cached, serverEntity: updatedLabel, mutatedKeys });
     writeEntityToCache({ entity: merged, listKey: orgKey, detailKey: keys.detail.byId(updatedLabel.id), queryClient });
   },
   onSettled: (_data, error, variables) => {
@@ -221,7 +219,7 @@ const labelDeleteOptions = (queryClient: QueryClient): UseMutationOptions<Delete
     const orgKey = keys.list.org(organizationId);
     const labelIds = rows.map(({ id }) => id);
     removePendingMutations(queryClient, keys.update, labelIds);
-    await queryClient.cancelQueries({ queryKey: orgKey });
+    await cancelKeepingMark(queryClient, orgKey);
     cacheRemove(orgKey, rows);
     removeDetailQueriesById(queryClient, keys.detail.base, labelIds);
     propagateEmbeddedProduct('label', labelIds, 'remove');
@@ -305,29 +303,16 @@ export const useLabelDeleteMutation = (tenantId: string, organizationId: string)
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
-addMutationRegistrar((queryClient: QueryClient) => {
-  queryClient.setQueryDefaults(keys.detail.base, {
-    queryFn: ({ queryKey, meta }) => {
-      const id = queryKey[2] as string;
-      const cached = findLabelInCache(id);
-      const { organizationId, tenantId } = resolveQueryOrgTenantIds(meta, cached, 'label');
-      return getLabel({ path: { id, organizationId, tenantId } });
-    },
-  });
-
-  queryClient.setMutationDefaults(keys.create, labelCreateOptions(queryClient));
-  queryClient.setMutationDefaults(keys.update, labelUpdateOptions(queryClient));
-  queryClient.setMutationDefaults(keys.delete, labelDeleteOptions(queryClient));
+// Mutation defaults (offline persistence): set when the module loads, before the cache restore hydrates a queued mutation.
+queryClient.setQueryDefaults(keys.detail.base, {
+  queryFn: ({ queryKey }) => {
+    const id = queryKey[2] as string;
+    const cached = findLabelInCache(id);
+    const { organizationId, tenantId } = resolveQueryOrgTenantIds(cached, 'label');
+    return getLabel({ path: { id, organizationId, tenantId } });
+  },
 });
 
-// Version 2 carries a create's rows as a list under `data` and a delete's under `rows`; version 1 queued a create's one row
-// under `data` and a delete's rows as `labels`.
-registerVariablesVersion(keys.create, 2, (variables) => {
-  if (!isRecord(variables) || !isRecord(variables.data)) return null;
-  return { ...variables, data: [variables.data] };
-});
-registerVariablesVersion(keys.delete, 2, (variables) => {
-  if (!isRecord(variables) || !Array.isArray(variables.labels)) return null;
-  const { labels, ...rest } = variables;
-  return { ...rest, rows: labels };
-});
+queryClient.setMutationDefaults(keys.create, labelCreateOptions(queryClient));
+queryClient.setMutationDefaults(keys.update, labelUpdateOptions(queryClient));
+queryClient.setMutationDefaults(keys.delete, labelDeleteOptions(queryClient));

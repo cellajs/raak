@@ -24,6 +24,7 @@ export const mockTask = (key = 'task:default'): TaskModel =>
     return {
       ...base,
       // Specific columns
+      number: 0,
       expandable: faker.datatype.boolean(),
       summary: JSON.stringify([{ type: 'paragraph', props: {}, content: [{ type: 'text', text: summaryText, styles: {} }], children: [] }]),
       summaryLength: summaryText.length,
@@ -53,6 +54,7 @@ export const mockTaskResponse = (key = 'task:default') => {
 
   return {
     ...task,
+    number: withFakerSeed(`${key}:number`, () => faker.number.int({ min: 1, max: 999 })),
     labels: task.labels.map((id, index) => mockEmbeddedLabel(id, `${key}:label:${index}`)),
     primaryLabel: mockEmbeddedLabel(task.primaryLabelId, `${key}:primary-label`),
     assignedTo: task.assignedTo.map((id, index) => ({ ...mockUserMinimalBase(`${key}:assigned-to:${index}`, id) })),

@@ -1,6 +1,5 @@
 import { createXRoutes, errors, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
-import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchLabelsResponse, mockPaginatedLabelsResponse } from '#/modules/label/label-mocks';
 import {
@@ -60,7 +59,6 @@ const labelRoutes = createXRoutes(['labels', 'app', 'product'], {
     path: '/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xScope: 'label:read',
-    xCache: [productCache('label')],
     summary: 'Get label',
     description: 'Retrieves a label by its ID.',
     request: { params: idInTenantOrgParamSchema },

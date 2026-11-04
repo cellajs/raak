@@ -1,6 +1,6 @@
 import type { AnyRoute } from '@tanstack/react-router';
 import { Link, type LinkComponentProps, redirect, useNavigate, useRouterState } from '@tanstack/react-router';
-import { useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { appConfig, type ChannelEntityType, isChannel } from 'shared';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useMountedState } from '~/hooks/use-mounted-state';
@@ -18,10 +18,13 @@ import { ActiveTabMarker, useTabIndicator } from '~/modules/common/page/tab-indi
 import { type TabNavAvatar, TabNavLabel, TabNavShell, tabNavItemClass } from '~/modules/common/page/tab-nav-shell';
 import { useScrollResetOnNavigate } from '~/modules/common/scroll-reset';
 import { getRouter } from '~/routes/-router-instance';
+import { getHasNavigated } from '~/utils/nav-transition';
 
 export type PageTab = {
   id: string;
   label: TKey;
+  /** Sits before the label. */
+  icon?: ReactNode;
   path: LinkComponentProps['to'];
   params?: LinkComponentProps['params'];
   search?: LinkComponentProps['search'];
@@ -245,7 +248,7 @@ export function PageTabNav({ tabs: explicitTabs, parentRouteId, title, avatar, f
   const firstTabRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
-    if (!isMobile && hasStarted) firstTabRef.current?.focus();
+    if (!isMobile && hasStarted && getHasNavigated()) firstTabRef.current?.focus();
   }, [hasStarted]);
 
   const scrollToResetOnNavigate = useScrollResetOnNavigate();
@@ -256,7 +259,7 @@ export function PageTabNav({ tabs: explicitTabs, parentRouteId, title, avatar, f
 
   return (
     <TabNavShell title={title} avatar={avatar} className={className} indicator={indicator}>
-      {tabs.map(({ id, path, label, search = {}, params = true, activeOptions = { exact: true, includeSearch: false } }, index) => (
+      {tabs.map(({ id, path, label, icon, search = {}, params = true, activeOptions = { exact: true, includeSearch: false } }, index) => (
         <Link
           key={id}
           id={`tab-${id}`}
@@ -277,7 +280,7 @@ export function PageTabNav({ tabs: explicitTabs, parentRouteId, title, avatar, f
 
             return (
               <>
-                <TabNavLabel label={label} />
+                <TabNavLabel label={label} icon={icon} />
                 {showAsActive && <ActiveTabMarker indicator={indicator} />}
               </>
             );

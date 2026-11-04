@@ -17,9 +17,6 @@ ignoredOptionalDependencies:
   - html2canvas
 # A version installs a day after its publish (supply-chain guard), so a release that needs a new create-cella waits for it
 minimumReleaseAge: 1440
-minimumReleaseAgeExclude:
-  # Only the CLI version a release needs before its day is up: the entry is removed, or bumped when a release needs another.
-  - '@cellajs/cli@0.6.0'
 overrides:
   # fork: raak's t.$id.tsx route trips a router-plugin emit bug under newer @babel/traverse
   # 7.29.10 makes @tanstack/router-plugin 1.168.42 emit an undefined export for a route whose split
@@ -33,7 +30,9 @@ overrides:
   '@opentelemetry/instrumentation-pg>@types/pg-pool': '-'
   # Tailwind pins lightningcss exactly, one minor behind Vite: a second set of native bindings until it catches up.
   '@tailwindcss/node>lightningcss': ^1.33.0
+  glob@>=9.0.0 <=14.0.1: ^14.0.2
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
+  minimatch@<11.0.1: ^11.0.1
   # Storybook pins an older oxc-resolver exactly; knip's version serves both.
   oxc-resolver: 11.24.2
   postcss-selector-parser@<6.1.5: ^6.1.5
@@ -41,9 +40,6 @@ overrides:
   react-scan>react-doctor: '-'
   zod@<4.6.6: ^4.6.6
 packages:
-  - mcp
-  - oauth
-  - jobs
   - backend
   - cdc
   - shared

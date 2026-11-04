@@ -1,17 +1,28 @@
+import type { QueryCacheNotifyEvent } from '@tanstack/react-query';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { taskKeys } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { getQueryItems, getSimilarQueries } from '~/query/basic/mutate-query';
 import { queryClient } from '~/query/query-client';
 
+const isTaskQueryEvent = ({ query }: QueryCacheNotifyEvent) => {
+  const key = query?.queryKey;
+  return Array.isArray(key) && key[0] === 'task';
+};
+
 // Task keys only: a broad subscription re-runs the snapshot on unrelated query events and can trip React's setState-in-render warning.
 // Module-level, so useSyncExternalStore does not resubscribe each render.
-export const subscribeToTaskCache = (onStoreChange: () => void) =>
+// Deferred: a suspending query notifies the cache while its component renders, when no other component may update
+const subscribeToTaskEvents = (onStoreChange: () => void, isRelevant: (event: QueryCacheNotifyEvent) => boolean) =>
   queryClient.getQueryCache().subscribe((event) => {
-    const key = event.query?.queryKey;
-    // Deferred: a suspending query notifies the cache while its component renders, when no other component may update
-    if (Array.isArray(key) && key[0] === 'task') queueMicrotask(onStoreChange);
+    if (isTaskQueryEvent(event) && isRelevant(event)) queueMicrotask(onStoreChange);
   });
+
+/** Every event on a task query, for a snapshot of which queries are active: only an observer's arrival or leaving changes that. */
+export const subscribeToTaskQueries = (onStoreChange: () => void) => subscribeToTaskEvents(onStoreChange, () => true);
+
+/** What can change the cached tasks. Not observers: each view over the tasks adds some per project, which would re-run a snapshot walking every task. */
+export const subscribeToTaskCache = (onStoreChange: () => void) => subscribeToTaskEvents(onStoreChange, ({ type }) => !type.startsWith('observer'));
 
 export const cachedTasks = (): Task[] => {
   const queries = getSimilarQueries<Task>(taskKeys.list.base);

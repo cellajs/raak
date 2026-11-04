@@ -1,6 +1,7 @@
 import { PlusIcon } from 'lucide-react';
 import { type RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { appConfig } from 'shared';
 import { getMenuSection } from '~/lib/entity-modules';
 import { CountBadge } from '~/modules/common/count-badge';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -8,11 +9,11 @@ import type { UserMenuItem } from '~/modules/me/types';
 import { menuOrganizations } from '~/modules/navigation/menu-sheet/helpers/menu-organizations';
 import { sortAndFilterMenu } from '~/modules/navigation/menu-sheet/helpers/sort-and-filter-menu';
 import { useMenu } from '~/modules/navigation/menu-sheet/helpers/use-menu';
-import { navIconStrokeWidth, SidebarNavButton } from '~/modules/navigation/nav-buttons';
+import { useOrganizationUnseenCounts } from '~/modules/navigation/menu-sheet/helpers/use-menu-item-unseen-count';
+import { SidebarNavButton } from '~/modules/navigation/nav-buttons';
 import { useNavigationStore } from '~/modules/navigation/navigation-store';
 import type { TriggerOrganizationFn } from '~/modules/navigation/types';
 import { useRouteOrganizationId } from '~/modules/navigation/use-route-organization-id';
-import { useOrganizationUnseenCounts } from '~/modules/seen/use-unseen-count';
 import { SidebarMenu } from '~/modules/ui/sidebar';
 import { useUserStore } from '~/modules/user/user-store';
 import { cn } from '~/utils/cn';
@@ -43,11 +44,19 @@ function SidebarOrganizationButton({ organization, unseenCount, isActive, isCurr
       onClick={() => onClick(organization, buttonRef)}
       className="relative"
       itemClassName="pb-0"
-      badge={unseenCount > 0 && <CountBadge count={unseenCount} className="absolute top-2 left-8" />}
+      // Its right edge stays put and a longer count grows left: the button clips what passes its edge
+      badge={unseenCount > 0 && <CountBadge count={unseenCount} className="absolute top-2 left-12 -translate-x-full" />}
     >
       <EntityAvatar
-        // An outline, not a ring: its offset stays transparent over the button's hover and open fills
-        className={cn('size-8 shrink-0 transition-transform group-hover:scale-110', isCurrent && 'outline-2 outline-primary outline-offset-2')}
+        // An outline, not a ring: its offset stays transparent over the button's open fill
+        className={cn(
+          'size-8 shrink-0 transition-transform group-hover:scale-110',
+          isCurrent && 'outline-2 outline-primary outline-offset-2',
+          // Only the organization you are in, or are opening, shows its color
+          !isCurrent &&
+            !isActive &&
+            'pointer-fine:group-[:not(:hover,:focus-visible)]:resting-avatar pointer-coarse:group-[:not(:focus-visible)]:resting-avatar',
+        )}
         type={organization.entityType}
         id={organization.id}
         name={organization.name}
@@ -75,9 +84,9 @@ function SidebarCreateOrganizationButton({ isCollapsed, onClick }: SidebarCreate
       onClick={() => onClick(buttonRef)}
       itemClassName="pb-0"
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-sidebar-foreground/15 more-contrast:border-sidebar-foreground/40 border-dashed transition-transform group-hover:scale-110">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-sidebar-foreground/30 more-contrast:border-sidebar-foreground/40 border-dashed transition-transform group-hover:scale-110">
         {/* The nav icons' rendered stroke: theirs is drawn at size-5, this one at size-4 */}
-        <PlusIcon className="size-4" strokeWidth={(navIconStrokeWidth * 5) / 4} />
+        <PlusIcon className="size-4" strokeWidth={(appConfig.theme.strokeWidth * 5) / 4} />
       </span>
     </SidebarNavButton>
   );
@@ -98,14 +107,14 @@ export function SidebarOrganizationButtons({ isCollapsed, onClick }: SidebarOrga
   const { menu } = useMenu(user?.id);
   const organizations = menuOrganizations(menu);
   const routeOrganizationId = useRouteOrganizationId(organizations);
-  const unseenCounts = useOrganizationUnseenCounts();
+  const unseenCounts = useOrganizationUnseenCounts(menu);
   const createOrganization = getMenuSection('organization')?.createAction;
 
   // An open menu sheet shows these counts itself: the full menu on its rows, an organization's sheet on its header and sections
   const isFullMenuOpen = navSheetOpen === 'menu' && !navSheetOrganizationId;
 
   return (
-    <SidebarMenu className="no-scrollbar min-h-0 gap-1 overflow-y-auto">
+    <SidebarMenu className="no-scrollbar min-h-0 gap-0 overflow-y-auto">
       {sortAndFilterMenu(organizations, false).map((organization) => {
         const isActive = navSheetOpen === 'menu' && navSheetOrganizationId === organization.id;
         return (

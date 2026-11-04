@@ -8,7 +8,7 @@ import { findMemberPreviewsByChannels } from '#/modules/memberships/memberships-
 import { findProjectsPaginated } from '#/modules/project/project-queries';
 import type { projectListQuerySchema } from '#/modules/project/project-schema';
 import type { UserMinimalBase } from '#/modules/user/helpers/user-minimal';
-import { actorFrom } from '#/permissions/access';
+import { accessFrom } from '#/permissions/access';
 import { resolveChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 
 /**
@@ -42,8 +42,7 @@ export async function getProjectsOp(ctx: UserContext, input: z.infer<typeof proj
   if (organizationWide && (!organizationId || relatableUserId || queryParams.role || queryParams.excludeArchived || queryParams.workspaceId)) {
     throw new AppError(400, 'invalid_request', 'warn', { entityType: 'project', meta: { reason: 'organization_scope' } });
   }
-  const readScope =
-    organizationWide && organizationId ? resolveChannelCollectionReadScope(memberships, 'project', organizationId, actorFrom(ctx)) : undefined;
+  const readScope = organizationWide && organizationId ? resolveChannelCollectionReadScope(accessFrom(ctx), 'project', organizationId) : undefined;
 
   const byName = (ofAnotherUser || organizationWide) && queryParams.sort === 'displayOrder';
   const sort = byName ? ('name' as const) : queryParams.sort;

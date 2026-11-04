@@ -1,6 +1,5 @@
 import { createXRoutes, errors, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
-import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchTasksResponse, mockTasksResponse } from '#/modules/task/task-mocks';
 import {
@@ -74,7 +73,6 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     method: 'get',
     path: '/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
-    xCache: [productCache('task')],
     xTool: { description: 'Get full task details including description, labels, and assignees.', approvalRequired: false, entity: 'task' },
     summary: 'Get task',
     description: 'Retrieves a task by its ID.',

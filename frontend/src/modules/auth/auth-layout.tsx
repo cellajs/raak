@@ -35,7 +35,7 @@ export function AuthLayout() {
         </div>
 
         <div className="flex w-[90vw] xs:w-80 translate-y-4 starting:scale-95 flex-col gap-4 starting:opacity-0 transition-[opacity,scale] duration-500 ease-out has-[.error-notice]:w-[90vw] sm:w-lg has-[.error-notice]:sm:w-200">
-          <main className="flex flex-col gap-4">
+          <main className="flex flex-col gap-4 focus:outline-hidden">
             <Outlet />
           </main>
 
@@ -47,7 +47,7 @@ export function AuthLayout() {
               className="focus-effect active:press mx-auto rounded-md p-4 transition-transform sm:hover:scale-105"
               aria-label={t('c:go_to_about')}
             >
-              <Logo height={40} title={t('c:go_to_about')} />
+              <Logo size="lg" title={t('c:go_to_about')} />
             </Link>
 
             <AppFooterLinks className="justify-center" links={authFooterLinks} />

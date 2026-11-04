@@ -146,7 +146,7 @@ export const sharedDataTypes: SharedDataType[] = [
     dataCategories: ['name', 'email address', 'avatar', 'bio', 'passkeys (public key only)', 'authenticator app setup', 'preferences'],
     dataSubjects: ['end users'],
     storageLocation: 'Primary database (EU)',
-    retentionPeriod: 'Until you delete your account: then gone from the Service at once and deleted within 90 days.',
+    retentionPeriod: ['Until you delete your account: then gone from the Service at once and deleted within 90 days.'],
   },
   {
     slug: 'auth_sessions',
@@ -156,7 +156,10 @@ export const sharedDataTypes: SharedDataType[] = [
     dataCategories: ['hashed session token', 'device and browser', 'hashed IP address with country and network', 'hashed device id'],
     dataSubjects: ['end users'],
     storageLocation: 'Primary database (EU)',
-    retentionPeriod: `Sessions last a week and are deleted ${retention.sessionDaysAfterExpiry} days after they end. Known devices: ${retention.deviceDaysUnseen} days after you last signed in from one, or until you delete your account.`,
+    retentionPeriod: [
+      `Sessions last a week and are deleted ${retention.sessionDaysAfterExpiry} days after they end.`,
+      `Known devices: ${retention.deviceDaysUnseen} days after you last signed in from one, or until you delete your account.`,
+    ],
   },
   {
     slug: 'organization_membership',
@@ -166,7 +169,7 @@ export const sharedDataTypes: SharedDataType[] = [
     dataCategories: ['organizations you belong to', 'role', 'join date', 'last seen'],
     dataSubjects: ['organization members'],
     storageLocation: 'Primary database (EU)',
-    retentionPeriod: 'Until the membership or organization is removed.',
+    retentionPeriod: ['Until the membership or organization is removed.'],
   },
   {
     slug: 'user_uploads',
@@ -176,7 +179,7 @@ export const sharedDataTypes: SharedDataType[] = [
     dataCategories: ['files', 'file name, time and owner'],
     dataSubjects: ['end users', 'organization members'],
     storageLocation: 'Scaleway Object Storage (EU)',
-    retentionPeriod: 'Until deleted, at the latest 90 days after account deletion.',
+    retentionPeriod: ['Until deleted, at the latest 90 days after account deletion.'],
   },
   {
     slug: 'activity',
@@ -186,7 +189,7 @@ export const sharedDataTypes: SharedDataType[] = [
     dataCategories: ['history of changes', 'notifications', 'seen items'],
     dataSubjects: ['end users'],
     storageLocation: 'Primary database (EU)',
-    retentionPeriod: `${retention.activityDays} days.`,
+    retentionPeriod: [`${retention.activityDays} days.`],
   },
   {
     slug: 'transactional_emails',
@@ -196,7 +199,7 @@ export const sharedDataTypes: SharedDataType[] = [
     dataCategories: ['email address', 'email content', 'delivery status'],
     dataSubjects: ['end users'],
     storageLocation: 'Brevo (EU)',
-    retentionPeriod: 'Delivery logs: 30 days.',
+    retentionPeriod: ['Delivery logs: 30 days.'],
   },
   {
     slug: 'page_visits',
@@ -206,7 +209,7 @@ export const sharedDataTypes: SharedDataType[] = [
     dataCategories: ['pages visited', 'referrer', 'country', 'hash of IP address and browser'],
     dataSubjects: ['visitors', 'end users'],
     storageLocation: 'One Dollar Stats (Finland)',
-    retentionPeriod: 'The visitor hash changes daily.',
+    retentionPeriod: ['The visitor hash changes daily.'],
   },
   {
     slug: 'error_data',
@@ -216,7 +219,7 @@ export const sharedDataTypes: SharedDataType[] = [
     dataCategories: ['errors', 'performance data', 'pages visited', 'browser', 'IP address', 'user and session id in server logs'],
     dataSubjects: ['end users'],
     storageLocation: 'Maple (US)',
-    retentionPeriod: '30 days by default.',
+    retentionPeriod: ['30 days by default.'],
     optional: true,
   },
 ];

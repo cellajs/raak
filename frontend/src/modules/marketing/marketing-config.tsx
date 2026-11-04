@@ -22,7 +22,6 @@ export const marketingNavConfig: { id: TKey; url: string; hash: string }[] = [
 interface FooterSection {
   title: TKey;
   links: FooterLinkProps[];
-  hideOnMobile?: boolean;
 }
 
 const socials: FooterLinkProps[] = [{ title: 'c:social', href: appConfig.company.socialUrl }];
@@ -37,7 +36,6 @@ export const footerSections: FooterSection[] = [
   },
   {
     title: 'c:documentation',
-    hideOnMobile: true,
     links: [{ title: 'c:docs', href: '/docs' }],
   },
   {

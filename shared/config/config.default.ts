@@ -1,12 +1,4 @@
-import type {
-  ConfigMode,
-  FederationConfig,
-  NavigationConfig,
-  ProductEmbedding,
-  RequiredConfig,
-  S3ConfigInput,
-  SlotOf,
-} from '../src/config-builder/types.ts';
+import type { FederationConfig, NavigationConfig, ProductEmbedding, RequiredConfig, S3ConfigInput, SlotOf } from '../src/config-builder/types.ts';
 import { nonEmpty } from '../src/config-builder/utils.ts';
 import { hierarchy } from './hierarchy-config.ts';
 import type { PrimaryLabelDefinition } from './labels-config.ts';
@@ -82,7 +74,10 @@ export const config = {
    * User menu structure of channel entities with optional nested subentities.
    * If subentityType is set, the table must include `${entity}Id` foreign key.
    */
-  menuStructure: [{ entityType: 'organization', subentityType: null } as const, { entityType: 'workspace', subentityType: 'project' } as const],
+  menuStructure: [
+    { entityType: 'organization', subentityType: null } as const,
+    { entityType: 'workspace', subentityType: 'project', archivable: false } as const,
+  ],
 
   /** Nav bar, how the menu groups channels and where page tabs show: `NavigationConfig`. */
   navigation: { navBar: true, menu: 'perOrganization', pageTabs: {} } as NavigationConfig<(typeof hierarchy.channelTypes)[number]>,
@@ -107,7 +102,7 @@ export const config = {
       apiKey: 100,
     },
     rateLimits: { apiPointsPerHour: 1000, invitationMailsPerDay: 250 },
-  } as const,
+  },
 
   /**
    * Tenants one user may create through onboarding (`selfCreateTenant`); a tenant reused while it holds no organization
@@ -145,39 +140,50 @@ export const config = {
   keywords:
     'starter kit, fullstack, monorepo, typescript, hono, honojs, drizzle, shadcn, react, postgres, pwa, offline, instant updates, realtime data, sync engine',
 
-  // URLs & endpoints
+  // Origin & services
 
-  // Same-origin: every service is a path under the app origin, so cookies stay
-  // first-party (`__Host-`, SameSite=Strict), CORS disappears and CSP collapses
-  // to 'self'. The LB routes /api, /yjs and /mcp by path prefix (matchPathBegin).
-  // These URLs are the single source: the config builder derives `services.<slug>.publicUrl`
-  // from them, so mode configs override the URLs here and never the `services` block.
-  frontendUrl: 'https://www.raak.dev',
-  backendUrl: 'https://www.raak.dev/api',
-  backendAuthUrl: 'https://www.raak.dev/api/auth',
-  yjsUrl: 'wss://www.raak.dev/yjs',
-  mcpUrl: 'https://www.raak.dev/mcp',
-  /** The OAuth authorization server (issuer). Same origin under `/oauth`, so the session cookie reaches its consent screen. */
-  oauthUrl: 'https://www.raak.dev/oauth',
-  // Which services this app runs; a mode config flips a flag here, e.g. mcp on in staging only.
+  /**
+   * The app's one origin. Every service is a path under it (`servicePaths`): the builder derives `frontendUrl`,
+   * `backendUrl`, `yjsUrl`, `mcpUrl` and `oauthUrl`, and `services.<slug>.publicUrl`, from it. Same-origin keeps cookies
+   * first-party (`__Host-`, SameSite=Strict), needs no CORS and collapses the CSP to 'self'. A mode file sets its own.
+   */
+  origin: 'https://www.raak.dev',
+
+  /**
+   * This app's number on a developer's machine, 0-9 without 4, so stacks of different apps run side by side (shared/README.md).
+   * It adds its number to the frontend port and its origin, and ten times its number to every other service port and
+   * to the local database ports (`shared/src/local-database.ts`). With two stacks on one number, whichever backend binds
+   * :4000 first answers every app's `/api` proxy.
+   */
+  devAppIndex: 1,
+
+  /**
+   * The services this app runs, each with the port it listens on, as app number 0 has them: the Vite proxy targets in
+   * development, the deploy's container ports, and the folded workers' ports under `singleVM`. A mode file flips a
+   * flag, e.g. mcp on in staging only. `PORT`-style env vars still override at runtime. `frontend` is the Vite fallback
+   * for when the origin carries no port (tunnel mode); otherwise the origin's port wins.
+   */
   services: {
-    frontend: { enabled: true as boolean },
-    backend: { enabled: true as boolean },
-    cdc: { enabled: true as boolean },
-    yjs: { enabled: true as boolean },
+    frontend: { enabled: true, port: 3000 },
+    // `internalPort`: the backend's internal listener, which the cdc and yjs workers dial (`INTERNAL_PORT` overrides it).
+    backend: { enabled: true, port: 4000, internalPort: 4005 },
+    // The port is its health endpoint.
+    cdc: { enabled: true, port: 4001 },
+    yjs: { enabled: true, port: 4002 },
     // MCP needs the oauth authorization server to issue its access tokens; both stay off until that is deployed.
-    mcp: { enabled: false as boolean },
-    oauth: { enabled: false as boolean },
+    mcp: { enabled: false, port: 4003 },
+    /** The OAuth authorization server (issuer). Same origin under `/oauth`, so the session cookie reaches its consent screen. */
+    oauth: { enabled: false, port: 4004 },
     // The job store's maintainer (cron and queue supervision); off means no sweeps or queues run anywhere.
-    jobs: { enabled: true as boolean },
+    jobs: { enabled: true, port: 4006 },
   },
 
-  // Cost escape hatch: when true the backend (MODE=api) also boots every enabled
+  // Cost escape hatch: when true the backend (SERVICE=api) also boots every enabled
   // service in-process: one VM for previews/small apps. Default false keeps the
   // split (one service per process). HTTP keeps its LB overlap on a deploy; the
   // co-hosted cdc and jobs wait for the old VM's slot and scheduler, so live
   // updates pause until it is reaped.
-  singleVM: false as boolean,
+  singleVM: false,
 
   aboutUrl: '/about',
   statusUrl: '',
@@ -192,31 +198,16 @@ export const config = {
   supportEmail: 'info@cellajs.com',
   securityEmail: 'info@cellajs.com',
 
-  // Mode & flags
-
-  mode: 'development' as ConfigMode,
-  maintenance: false,
-
-  /**
-   * Local dev listen ports, also the Vite proxy targets. Ports are machine-global, so an app must
-   * offset this whole block together with the port in the `frontendUrl` family (e.g. +20). With
-   * two stacks up, whichever backend binds :4000 first answers every app's `/api` proxy. Keep the
-   * app's offset in the tens: a linked git worktree adds 100 per worktree on its own, or
-   * `DEV_PORT_OFFSET` sets that by hand (shared/README.md).
-   * `PORT`-style env vars still override at runtime. `frontend` is the Vite fallback for when
-   * `frontendUrl` carries no port (tunnel mode); otherwise the URL port wins. `internal` is the
-   * backend's internal listener, which the cdc and yjs workers dial (`INTERNAL_PORT` overrides it).
-   */
-  devPorts: { frontend: 3001, api: 4010, cdcHealth: 4011, yjs: 4012, mcp: 4013, oauth: 4014, internal: 4015, jobs: 4016 },
+  // Flags
 
   has: {
-    pwa: true as boolean,
-    push: false as boolean,
-    commentEmail: false as boolean,
-    selfRegistration: false as boolean,
-    waitlist: true as boolean,
-    uploadEnabled: true as boolean,
-    chatSupport: false as boolean,
+    pwa: true,
+    push: false,
+    commentEmail: false,
+    selfRegistration: false,
+    waitlist: true,
+    uploadEnabled: true,
+    chatSupport: false,
   },
 
   // apiVersion guards the API envelope; cookieVersion invalidates all sessions.
@@ -226,7 +217,7 @@ export const config = {
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
   cookieVersion: 'v3',
-  clientCacheVersion: 'v27-range-read-tombstones',
+  clientCacheVersion: 'v30-mechanism-review',
 
   // Authentication
 
@@ -329,7 +320,7 @@ export const config = {
   theme: {
     navigation: { hasSidebarTextLabels: false, sidebarWidthExpanded: '16rem', sidebarWidthCollapsed: '4rem', sheetPanelWidth: '20rem' },
     colors: {},
-    strokeWidth: 1.5,
+    strokeWidth: 1.75,
     /**
      * Mail colors, hex: mail clients read neither CSS variables nor oklch. Some clients recolor a mail for dark mode and
      * leave dark fills alone, so the button's edge, or a mid-tone fill, must stand out on white and on a dark panel;
@@ -344,7 +335,7 @@ export const config = {
       darkButtonLabel: '#262626',
     },
     screenSizes: { xs: '420px', sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1400px' },
-  } as const,
+  },
   placeholderColors: [
     'bg-blue-300',
     'bg-lime-300',
@@ -370,7 +361,6 @@ export const config = {
     name: 'CellaJS',
     shortName: 'Cella',
     email: 'info@cellajs.com',
-    supportEmail: 'info@cellajs.com',
     tel: '+31 6 12345678',
     streetAddress: 'Drizzle Road 42',
     postcode: '90210 JS',

@@ -7,7 +7,7 @@ import { checkSlugAvailable } from '#/modules/entities/operations/check-slug';
 import { toProjectResponse } from '#/modules/project/operations/to-project-response';
 import { updateProject } from '#/modules/project/project-queries';
 import { projectContract, type projectUpdateBodySchema } from '#/modules/project/project-schema';
-import { getValidChannel } from '#/permissions';
+import { getValidChannel } from '#/permissions/get-valid-channel';
 import { log } from '#/utils/logger';
 
 /**

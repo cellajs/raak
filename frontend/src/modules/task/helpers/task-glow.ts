@@ -14,8 +14,9 @@ const triggerGlow = (el: HTMLElement) => {
     }
 
     el.setAttribute(glowAttr, '');
+    // Only animationend: the restart above queues an animationcancel that is dispatched once the attribute is
+    // back on, so cleaning up on it would strip the run that just started and leave no glow at all.
     el.addEventListener('animationend', cleanup, { once: true });
-    el.addEventListener('animationcancel', cleanup, { once: true });
   });
 };
 
@@ -30,21 +31,31 @@ export const triggerSectionGlow = (type: 'iced' | 'accepted', projectId: string)
   else requestAnimationFrame(attempt);
 };
 
-export const triggerTaskGlow = (taskId: string) => {
+/** A card still being typed in: a description save lands mid-edit, and a flash under the open editor distracts. */
+const isBeingEdited = (el: HTMLElement) => el.dataset.state === 'editing' && el.contains(document.activeElement);
+
+/** A card scrolled to, or swapped out by a list re-render, mounts a frame or two later, and a glow needs its element. */
+const mountFrames = 10;
+
+export const triggerTaskGlow = (taskId: string, framesLeft = mountFrames) => {
   const el = document.getElementById(taskId);
-  if (!el || el.hasAttribute(suppressGlowAttr)) return;
+  if (!el) return framesLeft > 0 ? void requestAnimationFrame(() => triggerTaskGlow(taskId, framesLeft - 1)) : undefined;
+  if (el.hasAttribute(suppressGlowAttr)) return;
+  if (!isBeingEdited(el)) return triggerGlow(el);
 
-  // Defer glow until card leaves editing state (description saves happen while editing)
-  if (el.dataset.state === 'editing') {
-    const observer = new MutationObserver(() => {
-      if (el.dataset.state !== 'editing') {
-        observer.disconnect();
-        triggerGlow(el);
-      }
-    });
-    observer.observe(el, { attributes: true, attributeFilter: ['data-state'] });
-    return;
-  }
+  // A touch tap outside a card leaves it in `editing`, so waiting on that state alone would hold the glow back
+  // for as long as the card stays open: focus leaving ends the edit just as much.
+  const observer = new MutationObserver(() => glowOnceEdited());
+  // focusout runs before the new focus lands, so the check waits a frame for it
+  const onFocusOut = () => requestAnimationFrame(glowOnceEdited);
 
-  triggerGlow(el);
+  const glowOnceEdited = () => {
+    if (isBeingEdited(el)) return;
+    observer.disconnect();
+    el.removeEventListener('focusout', onFocusOut);
+    triggerGlow(el);
+  };
+
+  observer.observe(el, { attributes: true, attributeFilter: ['data-state'] });
+  el.addEventListener('focusout', onFocusOut);
 };

@@ -62,12 +62,12 @@ const shotWorkspace = async (call) => {
 export const placeholders = {
   /** Path of the workspace board: the shot of raak that shows its own work, project panels side by side. */
   workspace: async (call) => (await shotWorkspace(call))?.path ?? null,
-  /** A task of that workspace, opened in its sheet. Newest first, so a seeded run picks a task with a description. */
+  /** A task of that workspace, opened in its sheet: the newest with todos, which shows more of what a task holds. */
   task: async (call) => {
     const workspace = await shotWorkspace(call);
     if (!workspace) return null;
-    const { items: tasks } = await call(`${workspace.api}/tasks?workspaceId=${workspace.id}&sort=createdAt&order=desc&limit=1`);
-    return tasks[0]?.id ?? null;
+    const { items: tasks } = await call(`${workspace.api}/tasks?workspaceId=${workspace.id}&sort=createdAt&order=desc&limit=20`);
+    return (tasks.find(({ checkboxCount }) => checkboxCount > 0) ?? tasks[0])?.id ?? null;
   },
 };
 
@@ -91,9 +91,23 @@ const tidyBoard = async (page) => {
     await explainer.first().evaluate((button) => button.click());
     await explainer.first().waitFor({ state: 'detached' });
   }
-  await page.locator('button[aria-label="toggle debug toolbar"]').evaluateAll((buttons) => {
-    for (const button of buttons) button.style.visibility = 'hidden';
+  // A stylesheet, since the rail's unread counts arrive late on a seeded database, and differ between runs of a pair
+  await page.addStyleTag({
+    content:
+      'button[aria-label="toggle debug toolbar"], #nav-sheet .animate-status-pulse, [data-sidebar="menu-button"] span.rounded-full.font-bold { visibility: hidden; }',
   });
+};
+
+/** The board or table, then the opened task once its description has joined the relay: until then it reads "Connecting...". */
+const tidyTask = async (page) => {
+  await tidyBoard(page);
+  await page.locator('[contenteditable="true"]').first().waitFor();
+};
+
+/** The table, once its rows have their summaries: a row renders first and fills that cell a moment later. */
+const tidyTable = async (page) => {
+  await tidyBoard(page);
+  await page.locator('.rdg-row [role="gridcell"] button', { hasText: /\S/ }).first().waitFor();
 };
 
 /**
@@ -114,7 +128,7 @@ export const shots = [
     device: 'pc',
     path: '{workspace}?view=table',
     out: 'frontend/public/static/marketing/screenshots/table',
-    open: tidyBoard,
+    open: tidyTable,
   },
   {
     id: 'task',
@@ -122,7 +136,7 @@ export const shots = [
     // The sheet over the board it was opened from, which is what a reader of the carousel sees when they click a card.
     path: '{workspace}?taskSheetId={task}',
     out: 'frontend/public/static/marketing/screenshots/task',
-    open: tidyBoard,
+    open: tidyTask,
   },
   // raak on a phone, for the showcase on cella's About page. raak ships neither: they land in the gitignored `.temp`,
   // and are copied from there to `frontend/public/static/marketing/showcases/` in the cella checkout.
@@ -138,6 +152,6 @@ export const shots = [
     device: 'mobile',
     path: '{workspace}?taskSheetId={task}',
     out: '.temp/showcases/raak-2',
-    open: tidyBoard,
+    open: tidyTask,
   },
 ];

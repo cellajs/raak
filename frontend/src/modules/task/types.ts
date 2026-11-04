@@ -1,7 +1,7 @@
 import type { DropTargetRecord } from '@atlaskit/pragmatic-drag-and-drop/dist/types/internal-types';
 import type { GetTaskResponse } from 'sdk';
 import type { z } from 'zod';
-import type { EnrichedProject } from '~/modules/project/types';
+import type { ProjectWithMembership } from '~/modules/project/types';
 import type { tasksTableSearchSchema } from '~/modules/task/search-params-schemas';
 import type { statusOptions, TaskStatus } from '~/modules/task/task-properties';
 import type { DraggableItemData } from '~/utils/get-draggable-item-data';
@@ -15,7 +15,7 @@ export type TaskLabel = NonNullable<Task['labels']>[number];
 export type BoardResizablePanel =
   | {
       kind: 'project';
-      project: EnrichedProject;
+      project: ProjectWithMembership;
       panelId: string;
       /** The statuses it lists, in workflow order; all of them when absent. */
       statuses?: TaskStatus[];

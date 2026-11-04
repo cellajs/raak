@@ -1,17 +1,14 @@
 import type { z } from '@hono/zod-openapi';
-import { hierarchy } from 'shared';
+import { buildSubject, hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { userActorRef, withActorRefs } from '#/modules/actors/actor-refs';
 import { countTenantEntityRows } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
-import { generateUniqueSlugs } from '#/modules/entities/operations/generate-unique-slugs';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
-import { insertMemberships } from '#/modules/memberships/operations/insert-memberships';
 import { assertTenantQuota } from '#/modules/tenants/tenant-restrictions';
-import { insertWorkspaces } from '#/modules/workspace/workspace-queries';
+import { insertHeldWorkspaces } from '#/modules/workspace/operations/ensure-workspace';
 import { workspaceContract } from '#/modules/workspace/workspace-schema';
-import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
 import { createRejectionState } from '#/utils/rejection-utils';
@@ -31,33 +28,10 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: z.infer<typ
 
   canCreateEntity(ctx, buildSubject('workspace', { organizationId: organization.id }));
 
-  const slugBase = `${user.slug}-${organization.slug}`;
-  const slugs = await generateUniqueSlugs(
-    ctx,
-    itemsToCreate.map(() => slugBase),
-    'workspace',
+  const names = itemsToCreate.map((item) => item.name);
+  const { workspaceRecords, createdMemberships } = await ctx.var.db.transaction((tx) =>
+    insertHeldWorkspaces({ var: { db: tx } }, { holder: user, organization, names }),
   );
-  const workspaceValues = itemsToCreate.map((item, index) => ({
-    name: item.name,
-    slug: slugs[index],
-    createdBy: user.id,
-    tenantId: organization.tenantId,
-    organizationId: organization.id,
-  }));
-
-  // A workspace and its creator's membership commit together: a workspace without its admin reaches no one
-  const { workspaceRecords, createdMemberships } = await ctx.var.db.transaction(async (tx) => {
-    const txCtx = { var: { db: tx } };
-    const workspaceRecords = await insertWorkspaces(txCtx, { workspaces: workspaceValues });
-    const membershipInserts = workspaceRecords.map((workspace) => ({
-      userId: user.id,
-      createdBy: user.id,
-      role: creatorRole,
-      entity: workspace,
-    }));
-    const createdMemberships = await insertMemberships(txCtx, { items: membershipInserts });
-    return { workspaceRecords, createdMemberships };
-  });
 
   log.info('Workspaces created', { count: workspaceRecords.length, ids: workspaceRecords.map((workspace) => workspace.id) });
 

@@ -1,12 +1,12 @@
 import { Suspense } from 'react';
 import { FocusViewContainer } from '~/modules/common/focus-view';
 import { Spinner } from '~/modules/common/spinner';
+import { Board } from '~/modules/task/board/lazy-board';
 import { WorkspaceBoardSkeleton } from '~/modules/task/board/workspace-board-skeleton';
 import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const WorkspacePage = lazyNamed(() => import('~/modules/workspace/workspace-page'), 'WorkspacePage');
-const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
 const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
 
 export function WorkspaceRouteComponent() {
@@ -16,7 +16,7 @@ export function WorkspaceRouteComponent() {
 
   // The frame sits outside the Suspense boundaries, so the skeleton renders where the board will.
   return (
-    <FocusViewContainer className="group/workspace h-full max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
+    <FocusViewContainer className="h-full max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
       <Suspense fallback={view === 'table' ? <Spinner size="lg" className="mt-[45vh]" /> : boardSkeleton}>
         <WorkspacePage key={workspace.slug} workspaceId={workspace.id} organizationId={workspace.organizationId} tenantId={tenantId}>
           {view === 'table' ? (

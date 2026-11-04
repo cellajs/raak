@@ -1,11 +1,25 @@
 import type { SVGProps } from 'react';
-import { StatusIconFrame } from '~/modules/task/dropdowns/status-icons/status-icon-frame';
+import { StatusIconFrame, statusIconStrokeWidth } from '~/modules/task/dropdowns/status-icons/status-icon-frame';
+import { statusIconColors } from '~/modules/task/task-styles';
+
+const { fill, stroke } = statusIconColors.accepted;
 
 export function AcceptedIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <StatusIconFrame status="accepted" {...props}>
-      <rect x="0.7" y="0.7" width="14.6" height="14.6" rx="4.8" fill="#16A34A" />
-      <path d="M4.9 8.2 7 10.3 11.2 5.6" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    <StatusIconFrame statusName="done" {...props}>
+      {/* Ends Started's quarter and Delivered's half. No tick: beside the card's checkbox, a ticked box reads as checked. */}
+      <rect
+        x="1.25"
+        y="1.25"
+        width="13.5"
+        height="13.5"
+        rx="4.25"
+        fill="none"
+        stroke="#16a34a"
+        strokeWidth={statusIconStrokeWidth}
+        className={stroke}
+      />
+      <rect x="3.2" y="3.2" width="9.6" height="9.6" rx="3.15" fill="#16a34a" className={fill} />
     </StatusIconFrame>
   );
 }

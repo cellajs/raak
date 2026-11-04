@@ -1,17 +1,15 @@
 import type { StreamChange } from 'sdk';
 import { appConfig, type ProductEntityType } from 'shared';
 import { asRecord } from 'shared/utils/as-record';
+import { writeKeepingMark } from '~/query/basic/cache-mutations';
 import { getEntityQueryKeys, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 import { forEachListQuery, mapListItems } from '~/query/basic/mutate-query';
 import type { ItemData } from '~/query/basic/types';
 import { queryClient } from '~/query/query-client';
 
-/** The part of a propagation hint the client reads: its host fields are advisory, and this app's productEmbeddings config says where embedded copies are cached. */
-type PropagationHint = Pick<NonNullable<StreamChange['propagation']>, 'embeddedProduct' | 'update' | 'remove'>;
-
 /** Patch stale embedded-product references across every host column productEmbeddings declares for the changed product. */
-export function propagateEmbeddings(hint: PropagationHint): void {
+export function propagateEmbeddings(hint: NonNullable<StreamChange['propagation']>): void {
   const { embeddedProduct, update, remove } = hint;
   if (update.length === 0 && remove.length === 0) return;
 
@@ -45,15 +43,13 @@ function patchHostCaches(
 
   forEachListQuery(keys.list.base, (queryKey, data) => {
     const patched = mapListItems(data, (items) => patchItems(items, hostColumn, updateSet, removeSet, freshEmbedded));
-    if (patched !== data) queryClient.setQueryData(queryKey, patched);
+    writeKeepingMark(queryClient, queryKey, () => patched);
   });
 
   for (const [queryKey, host] of queryClient.getQueriesData<ItemData>({ queryKey: keys.detail.base })) {
     if (!host) continue;
     const patched = patchSingleHost(host, hostColumn, updateSet, removeSet, freshEmbedded);
-    if (patched !== host) {
-      queryClient.setQueryData(queryKey, patched);
-    }
+    writeKeepingMark(queryClient, queryKey, () => patched);
   }
 }
 
@@ -121,13 +117,18 @@ function patchSingleHost(
     const needsPatch = embedded.some((item: { id?: string }) => item.id && (updateSet.has(item.id) || removeSet.has(item.id)));
     if (!needsPatch) return host;
 
+    let replaced = false;
     const patched = embedded
       .filter((item: { id?: string }) => !item.id || !removeSet.has(item.id))
       .map((item: { id?: string; updatedAt?: string }) => {
         const fresh = item.id && updateSet.has(item.id) ? freshEmbedded.get(item.id) : undefined;
-        return fresh && isFresher(item, fresh) ? fresh : item;
+        if (!fresh || !isFresher(item, fresh)) return item;
+        replaced = true;
+        return fresh;
       });
 
+    // Every copy kept keeps the host too: a rewrite would re-render it for nothing
+    if (!replaced && patched.length === embedded.length) return host;
     return { ...host, [hostColumn]: patched };
   }
 

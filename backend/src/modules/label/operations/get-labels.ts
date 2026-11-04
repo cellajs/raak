@@ -6,7 +6,7 @@ import { labelsTable } from '#/modules/label/label-db';
 import { findLabelsPaginated } from '#/modules/label/label-queries';
 import type { labelListQuerySchema } from '#/modules/label/label-schema';
 import { resolveProjectNarrowing } from '#/modules/project/project-queries';
-import { actorFrom } from '#/permissions/access';
+import { accessFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { projectTombstones, seqRangeOf } from '#/utils/seq-range';
@@ -27,9 +27,9 @@ export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput) {
 
   // Resolve the caller's readable scope (unconditional projects + row-conditional slices,
   // e.g. `read: 'own'`) and compile it to a single row predicate.
-  const actor = actorFrom(ctx);
-  const readFilter = resolveCollectionReadFilter(ctx.var.actor.bindings, 'label', organizationId, actor, requested);
-  const scopeWhere = buildCollectionReadWhere(readFilter, labelsTable, 'label', actor);
+  const access = accessFrom(ctx);
+  const readFilter = resolveCollectionReadFilter(access, 'label', organizationId, requested);
+  const scopeWhere = buildCollectionReadWhere(readFilter, labelsTable, access);
 
   if (scopeWhere.kind === 'none') {
     return { items: [], total: 0 };

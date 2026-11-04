@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { stopImpersonationFlow } from '~/modules/me/helpers';
-import { navIconStrokeWidth, navItemIconClass, SidebarNavButton } from '~/modules/navigation/nav-buttons';
+import { navItemIconClass, SidebarNavButton } from '~/modules/navigation/nav-buttons';
 import { useUserStore } from '~/modules/user/user-store';
 
 interface StopImpersonationProps {
@@ -27,7 +27,7 @@ export function StopImpersonation({ isCollapsed }: StopImpersonationProps) {
 
   return (
     <SidebarNavButton label={t('c:stop_impersonation')} isCollapsed={isCollapsed} onClick={stopImpersonation}>
-      <UserXIcon className={navItemIconClass} strokeWidth={navIconStrokeWidth} />
+      <UserXIcon className={navItemIconClass} />
     </SidebarNavButton>
   );
 }

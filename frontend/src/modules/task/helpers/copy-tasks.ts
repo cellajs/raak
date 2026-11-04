@@ -1,5 +1,4 @@
 import i18n from 'i18next';
-import { appConfig } from 'shared';
 import { titleFromDocument } from 'shared/blocknote';
 import { announce } from '~/modules/common/announce';
 import type { customSchema } from '~/modules/common/blocknote/blocknote-schema';
@@ -7,6 +6,8 @@ import { getHeadlessEditor, getParsedContent } from '~/modules/common/blocknote/
 import { toaster } from '~/modules/common/toaster/toaster';
 import type { EnrichedProject } from '~/modules/project/types';
 import { showStartCheck } from '~/modules/task/card/task-start-check';
+import { productRef } from '~/modules/task/helpers/product-ref';
+import { taskShareLink } from '~/modules/task/helpers/task-link';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { findInCache } from '~/query/basic/find-in-list-cache';
@@ -15,10 +16,11 @@ const taskToBlocks = (task: Task): (typeof customSchema.PartialBlock)[] => {
   const blocks = getParsedContent(task.description ?? undefined) ?? [];
   const title = titleFromDocument(task.description);
   const meta = [
+    productRef(task.number),
     task.primaryLabel?.name,
-    i18n.t(`c:${statusOptionsByValue[task.status].status}`),
+    i18n.t(`c:${statusOptionsByValue[task.status].name}`),
     findInCache<EnrichedProject>('project', task.projectId)?.name,
-    `${appConfig.backendUrl}/t/${task.id}`,
+    taskShareLink(task),
   ];
 
   return [

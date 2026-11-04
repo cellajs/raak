@@ -1,41 +1,12 @@
 import { MutationCache, onlineManager, QueryCache, QueryClient } from '@tanstack/react-query';
+import { isRecord } from 'shared/utils/as-record';
 import type { ApiError } from '~/lib/api';
-import { quarantineFailedSync } from '~/query/offline/failed-sync';
-import { mutationIdOf } from '~/query/offline/mutation-variables';
-import { mutationRetry } from '~/query/offline/network-retry';
+import { productTypeOf } from '~/query/cache-migration';
+import { mutationRetry, replayRetry } from '~/query/offline/network-retry';
 import type { QueryMeta } from '~/query/react-query';
 
 // Lazy import breaks the cycle query-client -> on-error -> teardown-user-state -> query-client; a static import makes HMR re-evaluation hit a TDZ error on `onError`.
 const handleError = (error: ApiError, meta: QueryMeta | undefined) => import('~/query/on-error').then(({ onError }) => onError(error, meta));
-const handleSuccess = () => import('~/query/on-success').then(({ onSuccess }) => onSuccess());
-
-/** What an stx mutation's variables carry, alone or once per item of a batch. */
-interface StxVariables {
-  stx?: { mutationId?: string; replayed?: boolean };
-}
-
-/** Mutation ids restored from the persisted cache and replaying now. Only these quarantine on a 4xx: a live edit's failure reaches the user through the toast and needs no salvage. */
-const replayingMutationIds = new Set<string>();
-
-/** Record every paused mutation as replaying; call right before `resumePausedMutations`. */
-export function markReplayingMutations(): void {
-  for (const mutation of queryClient.getMutationCache().getAll()) {
-    if (!mutation.state.isPaused) continue;
-    const mutationId = mutationIdOf(mutation.state.variables);
-    if (mutationId) replayingMutationIds.add(mutationId);
-  }
-}
-
-/** Quarantines a replayed mutation that fails with a 4xx so no offline edit is lost after a cache bust. Best-effort. */
-function quarantineOnClientError(error: ApiError, variables: unknown, mutationKey: unknown): void {
-  const mutationId = mutationIdOf(variables);
-  if (!mutationId || !replayingMutationIds.delete(mutationId)) return;
-
-  const status = error?.status;
-  if (typeof status !== 'number' || status < 400 || status >= 500) return;
-
-  quarantineFailedSync({ mutationId, mutationKey, status, variables, error }).catch(() => {});
-}
 
 /** How long a query counts as fresh while online. */
 export const defaultStaleTime = 30 * 1000;
@@ -43,17 +14,31 @@ export const defaultStaleTime = 30 * 1000;
 const offlineStaleTime = Number.POSITIVE_INFINITY;
 const defaultGcTime = 7 * 24 * 60 * 60 * 1000;
 
+/** Sets `replayed` on the stx of a mutation's variables. */
+function flagReplay(variables: unknown): void {
+  if (isRecord(variables) && isRecord(variables.stx)) variables.stx.replayed = true;
+}
+
 /**
- * Flags every mutation that pauses offline, whether it pauses live or is restored paused from the persisted cache: the
- * stx on its variables gets `replayed`, so the request its `mutationFn` sends on resume is arbitrated by intent time.
- * The flag is part of the variables, so it persists with the mutation and no module sets it.
+ * Flags a mutation as a replay when it pauses offline or is restored paused from the persisted cache, and, through
+ * `applyOnlineState`, when the device goes offline while it waits: the request its `mutationFn` sends on resume is
+ * arbitrated by intent time and retried through a gateway's outage. A live edit that waits online behind another of
+ * its scope stays unflagged, so the server orders it by arrival. The flag is part of the variables, so it persists
+ * with the mutation and no module sets it.
  */
-function flagPausedMutations(client: QueryClient): void {
+function flagReplays(client: QueryClient): void {
   client.getMutationCache().subscribe((event) => {
     if (event.type !== 'added' && event.type !== 'updated') return;
-    if (!event.mutation.state.isPaused) return;
-    const variables = event.mutation.state.variables as StxVariables | StxVariables[] | undefined;
-    for (const item of Array.isArray(variables) ? variables : [variables]) if (item?.stx) item.stx.replayed = true;
+    if (event.mutation.state.isPaused && (event.type === 'added' || !onlineManager.isOnline())) flagReplay(event.mutation.state.variables);
+  });
+}
+
+/** Gives each mutation on the default retry one that reads its variables, so its replay waits out a gateway's outage. */
+function retryReplays(client: QueryClient): void {
+  client.getMutationCache().subscribe((event) => {
+    if (event.type !== 'added' || event.mutation.options.retry !== mutationRetry) return;
+    const { mutation } = event;
+    mutation.setOptions({ ...mutation.options, retry: replayRetry(() => mutation.state.variables) });
   });
 }
 
@@ -62,19 +47,10 @@ export const queryClient: QueryClient =
   import.meta.hot?.data?.queryClient ??
   new QueryClient({
     mutationCache: new MutationCache({
-      onError: (error, variables, _onMutateResult, mutation) => {
-        quarantineOnClientError(error, variables, mutation.options.mutationKey);
-        return handleError(error, mutation.meta);
-      },
-      onSuccess: (_data, variables) => {
-        const mutationId = mutationIdOf(variables);
-        if (mutationId) replayingMutationIds.delete(mutationId);
-        return handleSuccess();
-      },
+      onError: (error, _variables, _onMutateResult, mutation) => handleError(error, mutation.meta),
     }),
     queryCache: new QueryCache({
       onError: (error, query) => handleError(error, query.meta),
-      onSuccess: handleSuccess,
     }),
     defaultOptions: {
       queries: {
@@ -89,33 +65,42 @@ export const queryClient: QueryClient =
         retry: false,
       },
       mutations: {
-        // Connectivity failures reach an offline retry boundary and persist for replay; server errors do not retry, so quarantine and toast handlers run immediately.
+        // Connectivity failures reach an offline retry boundary and persist for replay; server errors do not retry, so the toast and rollback run at once.
         networkMode: 'offlineFirst',
         retry: mutationRetry,
       },
     },
   });
 
-/** Offline, no query goes stale by age; back online, every query goes stale and the mounted ones refetch in the background. */
+/**
+ * Offline, no query goes stale by age, and every mutation waiting to run becomes a replay. Back online, every query but
+ * the synced product ones is marked and the mounted ones refetch in the background: a product list is the sync engine's,
+ * whose catchup fetches what a dropped stream missed.
+ */
 function applyOnlineState(online: boolean): void {
   console.info(`[Offline] Network: ${online ? 'online' : 'offline'}`);
   const staleTime = online ? defaultStaleTime : offlineStaleTime;
   // setDefaultOptions replaces every default: the mutation defaults carry the offline retry and pause.
   const defaults = queryClient.getDefaultOptions();
   queryClient.setDefaultOptions({ ...defaults, queries: { ...defaults.queries, staleTime } });
-  if (online) queryClient.invalidateQueries({ refetchType: 'active' });
+  if (online) {
+    queryClient.invalidateQueries({ refetchType: 'active', predicate: ({ queryKey }) => !productTypeOf(queryKey) });
+    return;
+  }
+  for (const { state } of queryClient.getMutationCache().getAll()) if (state.isPaused) flagReplay(state.variables);
 }
 
 // Subscribed once per page load; the HMR-preserved client keeps its subscription.
 if (!import.meta.hot?.data?.listenersAttached) {
-  flagPausedMutations(queryClient);
+  flagReplays(queryClient);
+  retryReplays(queryClient);
   onlineManager.subscribe(applyOnlineState);
   // The onlineManager starts online, then follows the browser's online and offline events: seed it with what the browser reports now.
   onlineManager.setOnline(navigator.onLine);
 }
 
 let resolveCacheRestored: () => void;
-/** Resolves once PersistQueryClientProvider has restored the persisted cache. */
+/** Resolves once PersistQueryClientProvider's restore at boot finished or failed. */
 export const cacheRestored: Promise<void> = import.meta.hot?.data?.cacheRestored ?? new Promise<void>((resolve) => (resolveCacheRestored = resolve));
 export function markCacheRestored() {
   resolveCacheRestored();

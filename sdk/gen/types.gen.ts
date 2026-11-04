@@ -116,42 +116,46 @@ export type StxBase = {
 };
 
 /**
- * A live change of product rows, naming the rows, their path and sequence range but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
+ * A live change of product rows, naming each row with its sequence position and the write that changed it, but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
  */
 export type StreamChange = {
   /**
-   * Change kind; moveOut = the row left this path (reparent) and is no longer readable there
+   * Change kind; moveOut = the row left the channel the receiver read it under (reparent) and is no longer readable there
    */
   action: 'create' | 'update' | 'delete' | 'moveOut';
   productType: 'task' | 'label' | 'attachment';
-  subjectId: string;
   organizationId: string;
   tenantId: string | null;
-  /**
-   * Id path of the affected rows (root-first ancestor ids); moveOut carries the OLD path
-   */
-  path: string | null;
-  /**
-   * Org-sequence position (one order per organization, shared across product entity types)
-   */
-  seq: number | null;
   /**
    * Deepest channel entity ID above the rows, which groups unseen counts
    */
   channelId: string | null;
-  stx: StxBase | null;
   /**
-   * Actor whose write the activity records; a tab takes the change as its own echo only when this is its signed-in user
+   * The rows the receiver may read, in commit order; their sequence positions need not be contiguous, since rows of other paths interleave
    */
-  actorId: string | null;
+  rows: Array<{
+    subjectId: string;
+    /**
+     * Org-sequence position (one order per organization, shared across product entity types); null on a delete and on a move-out whose row has left its table
+     */
+    seq: number | null;
+    stx: StxBase | null;
+    /**
+     * Actor whose write the activity records; a tab takes the row as its own echo only when this is its signed-in user
+     */
+    actorId: string | null;
+  }>;
   /**
-   * Last sequence position for a batched change: client should fetch range
+   * Set when the receiver may read more rows than one frame names in full, and `rows` and the propagation hint are then empty: the sequence range of a create or update to fetch, nulls on a delete or a move-out
    */
-  batchUntilSeq: number | null;
-  /**
-   * Exact row count for batches: sequence ranges of different paths may interleave
-   */
-  count: number | null;
+  overflow: {
+    afterSeq: number | null;
+    untilSeq: number | null;
+    /**
+     * The ids of the rows when they are at most 400, in commit order; null past that, when a delete or a move-out refetches the lists of the type
+     */
+    subjectIds: Array<string> | null;
+  } | null;
   /**
    * Server-suggested spread window (ms) for the lazy range fetch; scales with channel audience and load, and the client clamps it between its priority tier bounds
    */
@@ -164,14 +168,6 @@ export type StreamChange = {
      * Embedded product type whose change triggered the propagation
      */
     embeddedProduct: 'task' | 'label' | 'attachment';
-    /**
-     * Host product type whose cache should be patched
-     */
-    hostProduct: 'task' | 'label' | 'attachment';
-    /**
-     * Column on the host product that embeds the changed product
-     */
-    hostColumn: string;
     /**
      * Embedded row IDs whose cached copies in host rows need a refresh
      */
@@ -197,9 +193,9 @@ export type StreamSignal = {
    */
   subjectId: string | null;
   /**
-   * Counter value of a versioned signal, when the sender knows it; catchup returns the stored one
+   * A versioned signal's version on its organization after the change it is about, as catchup returns it; absent on any other signal, from a worker of an earlier release and on a change delivered again
    */
-  version: number | null;
+  version?: number;
 };
 
 /**
@@ -577,7 +573,6 @@ export type Project = {
       taskStatusCounts?: {
         accepted: number;
         reviewed: number;
-        delivered: number;
         finished: number;
         started: number;
         unstarted: number;
@@ -618,12 +613,13 @@ export type Task = {
   deletedBy: ActorRef | null;
   public: boolean;
   seq: number;
+  number: number;
   expandable: boolean;
   summary: string;
   summaryLength: number;
   primaryLabelId: string;
   displayOrder: number;
-  status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
+  status: 6 | 5 | 4 | 3 | 1 | 0;
   statusChangedAt: string;
   checkboxCount: number;
   checkedCount: number;
@@ -956,6 +952,7 @@ export type Label = {
   deletedBy: string | null;
   public: boolean;
   seq: number;
+  number: number;
   color: string | null;
   mode: 'primary' | 'secondary' | 'epic';
   slug: string;
@@ -2816,27 +2813,11 @@ export type GetAppStreamResponses = {
 export type PostAppCatchupData = {
   body: {
     /**
-     * Id of the last activity the client received (its commit position and index). Omit on first sync.
-     */
-    cursor?: string;
-    /**
-     * Client-declared views: prefix set + entity types + org-sequence cursor per view
+     * Client-declared views: an organization, a product type and its org-sequence cursor per view
      */
     views?: Array<{
-      /**
-       * Client-chosen stable view key, echoed back verbatim to correlate responses
-       */
-      key: string;
       organizationId: string;
-      /**
-       * Id path prefixes this view covers (root-first ids, slash-joined)
-       */
-      prefixes: Array<string>;
-      entityTypes: Array<'task' | 'label' | 'attachment'>;
-      /**
-       * View depth: subtree (default) covers rows at or below the prefix node; self covers only rows HOMED at the node (exact placement: a channel wall). Self views are answerable by direct home-scoped memberships.
-       */
-      depth?: 'self' | 'subtree';
+      entityType: 'task' | 'label' | 'attachment';
       /**
        * Org-sequence position this view has fully ingested (0 = baseline not yet established)
        */
@@ -2891,14 +2872,6 @@ export type PostAppCatchupResponses = {
            */
           embeddedProduct: 'task' | 'label' | 'attachment';
           /**
-           * Host product type whose cache should be patched
-           */
-          hostProduct: 'task' | 'label' | 'attachment';
-          /**
-           * Column on the host product that embeds the changed product
-           */
-          hostColumn: string;
-          /**
            * Embedded row IDs whose cached copies in host rows need a refresh
            */
           update: Array<string>;
@@ -2906,6 +2879,14 @@ export type PostAppCatchupResponses = {
            * Embedded row IDs (deleted or soft deleted) that host rows drop
            */
           remove: Array<string>;
+          /**
+           * Set when more embedded rows changed than one hint names: `update` and `remove` are then empty, and the host lists of the organization refetch
+           */
+          overflow?: boolean;
+          /**
+           * Highest sequence position among the rows the hint read, which the caller may all read: a client whose view of the embedded product is opaque takes it as that view's cursor
+           */
+          untilSeq?: number;
         }>;
       };
     };
@@ -2913,28 +2894,14 @@ export type PostAppCatchupResponses = {
      * Per-view answers for client-declared views (same order as the request)
      */
     views?: Array<{
-      /**
-       * The client-supplied view key, echoed verbatim
-       */
-      key: string;
+      organizationId: string;
+      entityType: 'task' | 'label' | 'attachment';
       status: 'ok' | 'opaque' | 'forbidden';
       /**
-       * Per-entityType newest sequence position over the view prefixes (subtree: e:f:{type}; self: e:f:h:{type})
+       * Newest sequence position of the type in the organization
        */
-      frontiers?: {
-        [key: string]: number;
-      };
-      /**
-       * Per-entityType live row counts summed over the view prefixes (subtree: e:c:{type}; self: e:c:h:{type})
-       */
-      counts?: {
-        [key: string]: number;
-      };
+      frontier?: number;
     }>;
-    /**
-     * Last activity ID (use as offset for next request)
-     */
-    cursor: string | null;
     /**
      * Generation of the sync books. A client that holds another one refetches its synced data and takes the frontiers as baselines
      */
@@ -4337,13 +4304,14 @@ export type GetPublicTasksData = {
      * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
      */
     q?: string;
-    sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
+    sort?: 'number' | 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
     offset?: number;
     limit?: number;
     status?: string;
     type?: string;
     labels?: string;
+    assigned?: string;
     acceptedCutOff?: number;
     projectId: string;
   };
@@ -4455,6 +4423,84 @@ export type GetTaskCoverResponses = {
   200: unknown;
 };
 
+export type ResolveTaskLinkByNumberData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    number: number;
+  };
+  query?: never;
+  url: '/t/{tenantId}/{number}/resolve';
+};
+
+export type ResolveTaskLinkByNumberErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type ResolveTaskLinkByNumberError = ResolveTaskLinkByNumberErrors[keyof ResolveTaskLinkByNumberErrors];
+
+export type ResolveTaskLinkByNumberResponses = {
+  /**
+   * Task link resolution data
+   */
+  200: {
+    taskId: string;
+    projectId: string;
+    projectSlug: string;
+    organizationId: string;
+    organizationSlug: string;
+    tenantId: string;
+    public: boolean;
+  };
+};
+
+export type ResolveTaskLinkByNumberResponse = ResolveTaskLinkByNumberResponses[keyof ResolveTaskLinkByNumberResponses];
+
+export type GetTaskCoverByNumberData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    number: number;
+  };
+  query?: never;
+  url: '/t/{tenantId}/{number}/cover';
+};
+
+export type GetTaskCoverByNumberErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetTaskCoverByNumberError = GetTaskCoverByNumberErrors[keyof GetTaskCoverByNumberErrors];
+
+export type GetTaskCoverByNumberResponses = {
+  /**
+   * Success
+   */
+  200: unknown;
+};
+
 export type RedirectToTaskData = {
   body?: never;
   path: {
@@ -4482,6 +4528,40 @@ export type RedirectToTaskErrors = {
 export type RedirectToTaskError = RedirectToTaskErrors[keyof RedirectToTaskErrors];
 
 export type RedirectToTaskResponses = {
+  /**
+   * Success
+   */
+  200: unknown;
+};
+
+export type RedirectToTaskByNumberData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    number: number;
+  };
+  query?: never;
+  url: '/t/{tenantId}/{number}';
+};
+
+export type RedirectToTaskByNumberErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type RedirectToTaskByNumberError = RedirectToTaskByNumberErrors[keyof RedirectToTaskByNumberErrors];
+
+export type RedirectToTaskByNumberResponses = {
   /**
    * Success
    */
@@ -5377,7 +5457,6 @@ export type CreateProjectsResponses = {
             taskStatusCounts?: {
               accepted: number;
               reviewed: number;
-              delivered: number;
               finished: number;
               started: number;
               unstarted: number;
@@ -5638,7 +5717,6 @@ export type AssignProjectWorkspaceResponses = {
         taskStatusCounts?: {
           accepted: number;
           reviewed: number;
-          delivered: number;
           finished: number;
           started: number;
           unstarted: number;
@@ -5651,98 +5729,6 @@ export type AssignProjectWorkspaceResponses = {
 };
 
 export type AssignProjectWorkspaceResponse = AssignProjectWorkspaceResponses[keyof AssignProjectWorkspaceResponses];
-
-export type RemoveProjectWorkspaceData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/projects/{id}/workspace';
-};
-
-export type RemoveProjectWorkspaceErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type RemoveProjectWorkspaceError = RemoveProjectWorkspaceErrors[keyof RemoveProjectWorkspaceErrors];
-
-export type RemoveProjectWorkspaceResponses = {
-  /**
-   * A project that organizes tasks and members within an organization.
-   */
-  200: Project & {
-    included?: {
-      membership: MembershipBase;
-      counts?: {
-        membership: {
-          admin: number;
-          member: number;
-          guest: number;
-          pending: number;
-          total: number;
-        };
-        entities: {
-          task: number;
-          label: number;
-          attachment: number;
-        };
-        entitiesSelf: {
-          task: number;
-          label: number;
-          attachment: number;
-        };
-        activity: {
-          task: {
-            created: number | null;
-            updated: number | null;
-          };
-          label: {
-            created: number | null;
-            updated: number | null;
-          };
-          attachment: {
-            created: number | null;
-            updated: number | null;
-          };
-        };
-        taskStatusCounts?: {
-          accepted: number;
-          reviewed: number;
-          delivered: number;
-          finished: number;
-          started: number;
-          unstarted: number;
-          iced: number;
-        };
-      };
-      members?: Array<UserMinimalBase>;
-    };
-  };
-};
-
-export type RemoveProjectWorkspaceResponse = RemoveProjectWorkspaceResponses[keyof RemoveProjectWorkspaceResponses];
 
 export type MoveProjectToWorkspaceData = {
   body?: never;
@@ -5824,7 +5810,6 @@ export type MoveProjectToWorkspaceResponses = {
         taskStatusCounts?: {
           accepted: number;
           reviewed: number;
-          delivered: number;
           finished: number;
           started: number;
           unstarted: number;
@@ -6009,7 +5994,6 @@ export type GetWorkspacesData = {
     limit?: number;
     organizationId?: string;
     role?: 'admin' | 'member' | 'guest';
-    excludeArchived?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/workspaces';
@@ -7535,6 +7519,7 @@ export type GetPendingMembershipsResponses = {
       role: 'admin' | 'member' | 'guest';
       createdAt: string;
       remindedAt: string | null;
+      linkExpiresAt: string | null;
       createdBy: ActorRef | null;
     }>;
     total: number;
@@ -8116,7 +8101,7 @@ export type GetTasksData = {
      * Search, case- and accent-insensitive. Every word must appear in a searched field; "quotes" keep a phrase together and a leading - leaves out items holding that whole word or phrase.
      */
     q?: string;
-    sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
+    sort?: 'number' | 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
     offset?: number;
     limit?: number;
@@ -8131,6 +8116,7 @@ export type GetTasksData = {
     status?: string;
     type?: string;
     labels?: string;
+    assigned?: string;
     acceptedCutOff?: number;
     projectId?: string;
     workspaceId?: string;
@@ -8190,7 +8176,7 @@ export type CreateTasksData = {
     name?: string;
     description: string | null;
     id: string;
-    status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
+    status: 6 | 5 | 4 | 3 | 1 | 0;
     primaryLabelId?: string;
     displayOrder?: number;
     labels?: Array<string>;
@@ -8368,7 +8354,7 @@ export type UpdateTaskData = {
     ops: {
       name?: string;
       description?: string | null;
-      status?: 6 | 5 | 4 | 3 | 2 | 1 | 0;
+      status?: 6 | 5 | 4 | 3 | 1 | 0;
       primaryLabelId?: string;
       displayOrder?: number;
       labels?: {

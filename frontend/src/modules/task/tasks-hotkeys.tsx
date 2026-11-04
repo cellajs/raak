@@ -25,6 +25,23 @@ import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
 
+const gridIgnoreTags = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', '[role="grid"]'];
+
+// Browser find cannot see virtualized cards or rows: the first press goes to the search box, and a second press typed there is native find.
+// Registered apart from gridIgnoreTags, so it also works from a table cell or a button.
+const handleFind = (event: KeyboardEvent) => {
+  const input = document.getElementById(boardSearchInputId);
+  if (!(input instanceof HTMLInputElement)) return;
+  event.preventDefault();
+  input.focus();
+  input.select();
+};
+
+const findHotkeys: HotkeyItem[] = [
+  ['meta + f', handleFind, { preventDefault: false }],
+  ['ctrl + f', handleFind, { preventDefault: false }],
+];
+
 interface TasksHotkeysProps {
   projects: Project[];
 }
@@ -127,26 +144,49 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     ['Alt + N', handleNewTask],
   ];
 
-  // Browser find cannot see virtualized cards: the first press goes to the search box, and a second press typed there is native find.
-  const handleFind = (event: KeyboardEvent) => {
-    const input = document.getElementById(boardSearchInputId);
-    if (!(input instanceof HTMLInputElement)) return;
-    event.preventDefault();
-    input.focus();
-    input.select();
-  };
-
   const stateHotkeys: HotkeyItem[] = [
     ['Escape', handleEscape],
     ['Enter', handleEnter],
-    ['meta + f', handleFind, { preventDefault: false }],
-    ['ctrl + f', handleFind, { preventDefault: false }],
   ];
-
-  const gridIgnoreTags = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', '[role="grid"]'];
 
   const coreHotkeys = [...stateHotkeys, ...actionHotkeys];
   useHotkeys(coreHotkeys, gridIgnoreTags);
+  useHotkeys(findHotkeys);
 
   return <BoardNavHotkeys disabled={isSheetOpen} />;
+}
+
+/** The board keys of a public page, which only shows tasks: Enter opens the current card, Escape closes it, the arrows move between cards. */
+export function PublicTasksHotkeys() {
+  const taskSheetId = useSearch({ strict: false, select: (search) => search.taskSheetId });
+
+  // Public tasks sit in a cache of their own, which currentActiveTask does not read: the card element holds all these keys need
+  const currentCard = () => {
+    const { currentItemId } = useBoardFocusStore.getState();
+    const card = currentItemId ? document.getElementById(currentItemId) : null;
+    return card?.hasAttribute('data-task-card-id') ? card : null;
+  };
+
+  const handleEnter = () => {
+    const card = taskSheetId ? null : currentCard();
+    if (card?.dataset.state === 'collapsed') taskCardStore.getState().setTaskState(card.id, 'expanded');
+  };
+
+  const handleEscape = () => {
+    if (isHoverContentOpen()) return;
+    if (taskSheetId) return sheeter.getState().remove(`${taskSheetParam}-${taskSheetId}`);
+    const card = currentCard();
+    if (card && card.dataset.state !== 'collapsed') taskCardStore.getState().setTaskState(card.id, 'collapsed');
+  };
+
+  useHotkeys(
+    [
+      ['Escape', handleEscape],
+      ['Enter', handleEnter],
+    ],
+    gridIgnoreTags,
+  );
+  useHotkeys(findHotkeys);
+
+  return <BoardNavHotkeys disabled={!!taskSheetId} />;
 }

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { subscribeToTaskCache } from '~/modules/task/helpers/active-task';
+import { subscribeToTaskQueries } from '~/modules/task/helpers/active-task';
 import { isBoardSearchActive, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
 import { type BaseTasksQueryParam, taskKeys } from '~/modules/task/query';
@@ -14,7 +14,7 @@ export const useTasksTotal = (queryParams?: BaseTasksQueryParam) => {
   const isSearching = isBoardSearchActive(search);
   const queryKey = queryParams ? taskKeys.list.org(queryParams.organizationId) : taskKeys.publicList.base;
 
-  return useSyncExternalStore(subscribeToTaskCache, () => {
+  return useSyncExternalStore(subscribeToTaskQueries, () => {
     const queries = queryClient.getQueriesData<QueryData<Task>>({ queryKey, type: 'active' });
 
     if (!queries.length) return null;

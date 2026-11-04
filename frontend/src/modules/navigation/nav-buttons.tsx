@@ -15,7 +15,8 @@ interface NavItemButtonProps {
   onClick: TriggerNavItemFn;
 }
 
-export const navIconStrokeWidth = 1.8;
+/** The button's 4px inset from the sidebar edge, plus a 4px gap outside it. */
+const tooltipSideOffset = 8;
 
 /** A nav icon's classes; larger below sm, where the bottom bar shows them. */
 export const navItemIconClass = tw('size-6 shrink-0 transition-transform group-hover:scale-110 sm:size-5');
@@ -27,7 +28,7 @@ function NavItemIcon({ navItem }: { navItem: NavItem }) {
   }
 
   const Icon = navItem.icon;
-  return <Icon className={navItemIconClass} strokeWidth={navIconStrokeWidth} />;
+  return <Icon className={navItemIconClass} />;
 }
 
 function NavItemBadge({ navItem, isActive, className }: { navItem: NavItem; isActive: boolean; className?: string }) {
@@ -68,17 +69,18 @@ export function SidebarNavButton({
   const showTooltip = isCollapsed || !hasSidebarTextLabels;
 
   return (
-    <SidebarMenuItem className={cn('flex pb-2', itemClassName)}>
+    <SidebarMenuItem className={cn('flex', itemClassName)}>
       <SidebarMenuButton
         ref={ref}
         size="lg"
         data-collapsed={isCollapsed}
-        tooltip={{ children: label, hidden: !showTooltip }}
+        tooltip={{ children: label, hidden: !showTooltip, sideOffset: tooltipSideOffset }}
         onClick={onClick}
         isActive={isActive}
         aria-current={isCurrent || undefined}
+        // The icon's scale answers the pointer, so a fill only ever means the sheet it opened
         className={cn(
-          'group h-14 justify-center text-sidebar-foreground ring-inset transition-[width] duration-200 ease-linear data-[collapsed=true]:w-16 [&>svg]:size-5',
+          'group h-14 justify-center text-sidebar-foreground ring-inset transition-[width] duration-200 ease-linear data-[collapsed=true]:w-16 data-[active=false]:hover:bg-transparent [&>svg]:size-5',
           className,
         )}
       >

@@ -39,8 +39,7 @@ const workspaceRoutes = createXRoutes(['workspaces', 'app', 'channel'], {
       'Returns a paginated list of workspaces where the current user has a membership. ' +
       'Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. ' +
       'Optional filters: organizationId to scope to a specific organization, ' +
-      'role to filter by membership role, excludeArchived to hide archived memberships, ' +
-      'and q to search by workspace name.',
+      'role to filter by membership role, and q to search by workspace name.',
     request: { query: workspaceListQuerySchema },
     responses: { 200: json('Workspaces', paginationSchema(workspaceSchema), mockPaginatedWorkspacesResponse()) },
   }),
@@ -71,7 +70,8 @@ const workspaceRoutes = createXRoutes(['workspaces', 'app', 'channel'], {
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     summary: 'Delete workspaces',
-    description: 'Deletes one or more workspaces by ID.',
+    description:
+      "Deletes one or more workspaces by ID. A user's last workspace in the organization is refused; projects filed under a deleted workspace move to the user's next one.",
     request: { params: tenantOrgParamSchema, body: jsonBody(idsBodySchema()) },
     responses: { 200: json('Success', batchResponseSchema()) },
   }),

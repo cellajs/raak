@@ -223,6 +223,9 @@ import type {
   GetStepUpPasskeyChallengeErrors,
   GetStepUpPasskeyChallengeResponses,
   GetStepUpResponses,
+  GetTaskCoverByNumberData,
+  GetTaskCoverByNumberErrors,
+  GetTaskCoverByNumberResponses,
   GetTaskCoverData,
   GetTaskCoverErrors,
   GetTaskCoverResponses,
@@ -311,18 +314,21 @@ import type {
   PushYjsUpdateData,
   PushYjsUpdateErrors,
   PushYjsUpdateResponses,
+  RedirectToTaskByNumberData,
+  RedirectToTaskByNumberErrors,
+  RedirectToTaskByNumberResponses,
   RedirectToTaskData,
   RedirectToTaskErrors,
   RedirectToTaskResponses,
-  RemoveProjectWorkspaceData,
-  RemoveProjectWorkspaceErrors,
-  RemoveProjectWorkspaceResponses,
   ResendInvitationWithTokenData,
   ResendInvitationWithTokenErrors,
   ResendInvitationWithTokenResponses,
   ResendPendingInvitationData,
   ResendPendingInvitationErrors,
   ResendPendingInvitationResponses,
+  ResolveTaskLinkByNumberData,
+  ResolveTaskLinkByNumberErrors,
+  ResolveTaskLinkByNumberResponses,
   ResolveTaskLinkData,
   ResolveTaskLinkErrors,
   ResolveTaskLinkResponses,
@@ -526,9 +532,9 @@ import {
   zPublishOrganizationResponse,
   zPullYjsDocumentResponse,
   zPushYjsUpdateResponse,
-  zRemoveProjectWorkspaceResponse,
   zResendInvitationWithTokenResponse,
   zResendPendingInvitationResponse,
+  zResolveTaskLinkByNumberResponse,
   zResolveTaskLinkResponse,
   zResubscribeNotificationsResponse,
   zRevokeApiKeyResponse,
@@ -1581,12 +1587,11 @@ export const getAppStream = <ThrowOnError extends boolean = true>(
 /**
  * App stream catchup
  *
- * Fetch what a client missed since its last sync: frontiers and counts per declared view (prefix sets + org-sequence cursors in the body), and per organization the versions of its versioned signals.
+ * Fetch what a client missed since its last sync: a frontier per declared view (an organization, a product type and its org-sequence cursor in the body), and per organization the versions of its versioned signals.
  *
  * **POST /entities/app/stream** ·· [postAppCatchup](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/POST/entities/app/stream) ·· _entities · cella_
  *
  * @param {postAppCatchupData} options
- * @param {string=} options.body.cursor - `string` (optional)
  * @param {any[]=} options.body.views - `any[]` (optional)
  * @returns Possible status codes: 200, 400, 401, 413, 429
  */
@@ -2393,6 +2398,7 @@ export const getPublicTask = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.status - `string` (optional)
  * @param {string=} options.query.type - `string` (optional)
  * @param {string=} options.query.labels - `string` (optional)
+ * @param {string=} options.query.assigned - `string` (optional)
  * @param {number=} options.query.acceptedCutOff - `number` (optional)
  * @param {string} options.query.projectId - `string`
  * @returns Possible status codes: 200, 400, 404, 429
@@ -2449,6 +2455,49 @@ export const getTaskCover = <ThrowOnError extends boolean = true>(
   });
 
 /**
+ * Resolve task link by number
+ *
+ * Returns routing metadata for a task named by its number in a tenant.
+ *
+ * **GET /t/{tenantId}/{number}/resolve** ·· [resolveTaskLinkByNumber](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/t/{tenantId}/{number}/resolve) ·· _tasks · app · product_
+ *
+ * @param {resolveTaskLinkByNumberData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {integer} options.path.number - `integer`
+ * @returns Possible status codes: 200, 400, 404, 429
+ */
+export const resolveTaskLinkByNumber = <ThrowOnError extends boolean = true>(
+  options: Options<ResolveTaskLinkByNumberData, ThrowOnError>,
+): RequestResult<ResolveTaskLinkByNumberResponses, ResolveTaskLinkByNumberErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<ResolveTaskLinkByNumberResponses, ResolveTaskLinkByNumberErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zResolveTaskLinkByNumberResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/t/{tenantId}/{number}/resolve',
+    ...options,
+  });
+
+/**
+ * Get task cover by number
+ *
+ * Retrieves the cover image for a task named by its number in a tenant.
+ *
+ * **GET /t/{tenantId}/{number}/cover** ·· [getTaskCoverByNumber](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/t/{tenantId}/{number}/cover) ·· _tasks · app · product_
+ *
+ * @param {getTaskCoverByNumberData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {integer} options.path.number - `integer`
+ * @returns Possible status codes: 200, 400, 404, 429
+ */
+export const getTaskCoverByNumber = <ThrowOnError extends boolean = true>(
+  options: Options<GetTaskCoverByNumberData, ThrowOnError>,
+): RequestResult<GetTaskCoverByNumberResponses, GetTaskCoverByNumberErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetTaskCoverByNumberResponses, GetTaskCoverByNumberErrors, ThrowOnError, 'data'>({
+    responseStyle: 'data',
+    url: '/t/{tenantId}/{number}/cover',
+    ...options,
+  });
+
+/**
  * Redirect to task
  *
  * Redirects to the canonical route for a task by ID.
@@ -2465,6 +2514,27 @@ export const redirectToTask = <ThrowOnError extends boolean = true>(
   (options.client ?? client).get<RedirectToTaskResponses, RedirectToTaskErrors, ThrowOnError, 'data'>({
     responseStyle: 'data',
     url: '/t/{id}',
+    ...options,
+  });
+
+/**
+ * Redirect to task by number
+ *
+ * Redirects to the canonical route for a task by its number in a tenant.
+ *
+ * **GET /t/{tenantId}/{number}** ·· [redirectToTaskByNumber](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/t/{tenantId}/{number}) ·· _tasks · app · product_
+ *
+ * @param {redirectToTaskByNumberData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {integer} options.path.number - `integer`
+ * @returns Possible status codes: 200, 400, 404, 429
+ */
+export const redirectToTaskByNumber = <ThrowOnError extends boolean = true>(
+  options: Options<RedirectToTaskByNumberData, ThrowOnError>,
+): RequestResult<RedirectToTaskByNumberResponses, RedirectToTaskByNumberErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<RedirectToTaskByNumberResponses, RedirectToTaskByNumberErrors, ThrowOnError, 'data'>({
+    responseStyle: 'data',
+    url: '/t/{tenantId}/{number}',
     ...options,
   });
 
@@ -2959,29 +3029,6 @@ export const assignProjectWorkspace = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Remove project from workspace
- *
- * Removes the current user's project membership from its assigned workspace without leaving the project.
- *
- * **DELETE /{tenantId}/{organizationId}/projects/{id}/workspace** ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· _projects · app · channel_
- *
- * @param {removeProjectWorkspaceData} options
- * @param {string} options.path.tenantId - `string`
- * @param {string} options.path.organizationId - `string`
- * @param {string} options.path.id - `string`
- * @returns Possible status codes: 200, 400, 401, 403, 404, 429
- */
-export const removeProjectWorkspace = <ThrowOnError extends boolean = true>(
-  options: Options<RemoveProjectWorkspaceData, ThrowOnError>,
-): RequestResult<RemoveProjectWorkspaceResponses, RemoveProjectWorkspaceErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).delete<RemoveProjectWorkspaceResponses, RemoveProjectWorkspaceErrors, ThrowOnError, 'data'>({
-    responseValidator: async (data) => await zRemoveProjectWorkspaceResponse.parseAsync(data),
-    responseStyle: 'data',
-    url: '/{tenantId}/{organizationId}/projects/{id}/workspace',
-    ...options,
-  });
-
-/**
  * Move project between workspaces
  *
  * Moves a project from one workspace to another.
@@ -3008,7 +3055,7 @@ export const moveProjectToWorkspace = <ThrowOnError extends boolean = true>(
 /**
  * Delete workspaces
  *
- * Deletes one or more workspaces by ID.
+ * Deletes one or more workspaces by ID. A user's last workspace in the organization is refused; projects filed under a deleted workspace move to the user's next one.
  *
  * **DELETE /{tenantId}/{organizationId}/workspaces** ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces) ·· _workspaces · app · channel_
  *
@@ -3061,7 +3108,7 @@ export const createWorkspaces = <ThrowOnError extends boolean = true>(
 /**
  * Get list of workspaces
  *
- * Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.
+ * Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, and q to search by workspace name.
  *
  * **GET /workspaces** ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/workspaces) ·· _workspaces · app · channel_
  *
@@ -3073,7 +3120,6 @@ export const createWorkspaces = <ThrowOnError extends boolean = true>(
  * @param {integer=} options.query.limit - `integer` (optional)
  * @param {string=} options.query.organizationId - `string` (optional)
  * @param {enum=} options.query.role - `enum` (optional)
- * @param {enum | boolean=} options.query.excludeArchived - `enum | boolean` (optional)
  * @param {string=} options.query.include - `string` (optional)
  * @returns Possible status codes: 200, 400, 401
  */
@@ -3254,7 +3300,7 @@ export const getPresignedUrls = <ThrowOnError extends boolean = true>(
 /**
  * Get attachment
  *
- * Returns a single attachment by ID, from the entity detail cache. A write drops the row from it; a server process the drop does not reach answers from its cached row for up to 10 seconds.
+ * Returns a single attachment by ID.
  *
  * **GET /{tenantId}/{organizationId}/attachments/{id}** ·· [getAttachment](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/GET/{tenantId}/{organizationId}/attachments/{id}) ·· _attachments · cella · product_
  *
@@ -3306,7 +3352,7 @@ export const updateAttachment = <ThrowOnError extends boolean = true>(
 /**
  * Link attachment keys
  *
- * Stores the storage keys of a file its uploader uploaded after creating the attachment, offline or before cloud storage was configured. Only the uploader may link them, under their own upload prefix, and only while the attachment has no stored file. Repeating the same keys returns the attachment unchanged.
+ * Stores the storage keys of a file its uploader uploaded after creating the attachment, for a file added offline. Only the uploader may link them, under their own upload prefix, and only while the attachment has no stored file. Repeating the same keys returns the attachment unchanged.
  *
  * **PUT /{tenantId}/{organizationId}/attachments/{id}/keys** ·· [linkAttachmentKeys](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/PUT/{tenantId}/{organizationId}/attachments/{id}/keys) ·· _attachments · cella · product_
  *
@@ -3519,7 +3565,7 @@ export const getMcpProtectedResourceMetadata = <ThrowOnError extends boolean = t
 /**
  * MCP endpoint
  *
- * Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to; in a batch it gets its own insufficient_scope error, the other calls keep their results, and the 200 carries the challenge.
+ * Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A missing or invalid token answers 401 with a WWW-Authenticate challenge naming where to find the authorization server metadata. A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to; in a batch it gets its own insufficient_scope error, the other calls keep their results, and the 200 carries the challenge.
  *
  * **POST /{tenantId}/{organizationId}/mcp** ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=mcp#tag/mcp/POST/{tenantId}/{organizationId}/mcp) ·· _mcp · cella_
  *
@@ -3632,7 +3678,7 @@ export const checkMembershipInvite = <ThrowOnError extends boolean = true>(
 /**
  * Update membership
  *
- * Updates a membership: its role, or the muted, archived or display order status. Send at least one field. Muted, archived and display order are set by the member only, and the response carries them only on the caller's own membership. A role change, and any change to another member's membership, requires update permission on the channel.
+ * Updates a membership: its role, or the muted, archived or display order status. Send at least one field. Muted, archived and display order are set by the member only, and the response carries them only on the caller's own membership. An archive that sends no display order moves the row to the top of the archived rows, a restore to the bottom of the active ones. A channel type whose menu section sets `archivable: false` cannot be archived. A role change, and any change to another member's membership, requires update permission on the channel.
  *
  * **PUT /{tenantId}/{organizationId}/memberships/{id}** ·· [updateMembership](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/PUT/{tenantId}/{organizationId}/memberships/{id}) ·· _memberships · cella_
  *
@@ -4027,6 +4073,7 @@ export const deleteTasks = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.status - `string` (optional)
  * @param {string=} options.query.type - `string` (optional)
  * @param {string=} options.query.labels - `string` (optional)
+ * @param {string=} options.query.assigned - `string` (optional)
  * @param {number=} options.query.acceptedCutOff - `number` (optional)
  * @param {string=} options.query.projectId - `string` (optional)
  * @param {string=} options.query.workspaceId - `string` (optional)

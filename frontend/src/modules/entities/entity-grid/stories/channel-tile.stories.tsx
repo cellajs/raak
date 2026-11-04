@@ -9,6 +9,7 @@ import {
   ChannelTileDescription,
   ChannelTileFooter,
   ChannelTileHeading,
+  ChannelTileMemberCount,
   ChannelTileMembers,
   ChannelTileMembership,
   ChannelTileParentChip,
@@ -16,6 +17,7 @@ import {
   ChannelTileStats,
 } from '~/modules/entities/entity-grid';
 import type { ChannelTileEntity } from '~/modules/entities/types';
+import { meKeys } from '~/modules/me/query';
 import { Button } from '~/modules/ui/button';
 import { withApp } from '~/stories/with-app';
 
@@ -49,7 +51,9 @@ const organization: ChannelTileEntity = {
   },
 };
 
-const adminMembership = { role: mostPrivileged } as MembershipBase;
+/** The viewer's own memberships and invitations, as the me queries hold them. */
+const joined = { app: { queryData: [[meKeys.memberships, { items: [{ channelId: 'org-1', role: mostPrivileged } as MembershipBase] }]] } };
+const invited = { app: { queryData: [[meKeys.invites, { items: [{ entity: { id: 'org-1' } }] }]] } };
 const parent = { ...organization, id: 'org-parent', slug: 'contoso', name: 'Contoso' };
 
 /** The channel grid tile. Each part reads the row from `ChannelTileCard`; a module composes its own tile from them or renders the default. */
@@ -83,7 +87,7 @@ export const Default: Story = {
 };
 
 export const Joined: Story = {
-  args: { entity: { ...organization, membership: adminMembership } },
+  parameters: joined,
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole('button', { name: /leave/ })).toBeInTheDocument();
   },
@@ -91,14 +95,15 @@ export const Joined: Story = {
 
 /** On another user's profile the viewer's own membership stays out of the tile. */
 export const OfAnotherUser: Story = {
-  args: { entity: { ...organization, membership: adminMembership }, hideOwnRole: true },
+  parameters: joined,
+  args: { hideOwnRole: true },
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).queryByRole('button', { name: /leave/ })).toBeNull();
   },
 };
 
 export const Invited: Story = {
-  args: { entity: { ...organization, invited: true } },
+  parameters: invited,
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByText('pending')).toBeInTheDocument();
   },
@@ -129,7 +134,7 @@ export const LargeCounts: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByText(/^2\.6k members?$/i)).toBeInTheDocument();
+    await expect(canvas.getByText('2.6k')).toBeInTheDocument();
     await expect(canvas.getByText('+1.2k')).toBeInTheDocument();
     await expect(canvas.getByText(/^21k/)).toBeInTheDocument();
     await expect(canvas.queryByText(/2610|1200|21312/)).toBeNull();
@@ -149,11 +154,12 @@ export const Composed: Story = {
           </>
         }
       >
-        <ChannelTileHeading meta={<ChannelTileStats countRole={leastPrivileged} />} />
+        <ChannelTileHeading meta={<ChannelTileStats />} />
       </ChannelTileBanner>
       <ChannelTileFooter>
         <ChannelTileDescription />
         <ChannelTileMembership fallback={<Button variant="outline">Join</Button>} />
+        <ChannelTileMemberCount countRole={leastPrivileged} />
       </ChannelTileFooter>
     </ChannelTileCard>
   ),

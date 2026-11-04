@@ -5,17 +5,16 @@ import type { CreateTasksData, GetTasksData, UpdateTaskData, UserMinimalBase } f
 import { createTasks, deleteTasks, getTask, getTasks, getUnseenTaskIds, updateTask } from 'sdk';
 import { zCreateTasksBody, zTask } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
-import { isRecord } from 'shared/utils/as-record';
 import { deriveDocument } from 'shared/utils/derive-description-core';
 import { registerDescriptionDerivation } from '~/modules/common/blocknote/description-derivation';
-import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-owned-fields';
+import { registerDescriptionColumns } from '~/modules/common/blocknote/yjs-owned-fields';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { findLabelInCache } from '~/modules/label/query';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
-import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
+import { cacheCreate, cacheRemove, cacheUpdate, cancelKeepingMark, removeDetailQueriesById, writeKeepingMark } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
@@ -24,20 +23,15 @@ import { createCacheFinder } from '~/query/basic/find-in-list-cache';
 import { liveItems, offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
-import { addMutationRegistrar } from '~/query/mutation-registry';
+import { syncedListOptions } from '~/query/basic/synced-list-options';
 import { isArrayDelta } from '~/query/offline/array-delta';
-import {
-  type CreateVariables,
-  type DeleteVariables,
-  entityIdsOf,
-  registerVariablesVersion,
-  type UpdateVariables,
-} from '~/query/offline/mutation-variables';
+import { type CreateVariables, type DeleteVariables, entityIdsOf, type UpdateVariables } from '~/query/offline/mutation-variables';
 import { prepareProductDelete } from '~/query/offline/prepare-delete';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse, writeEntityToCache } from '~/query/offline/update-success-utils';
+import { queryClient } from '~/query/query-client';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import type { QueryData } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
@@ -73,7 +67,7 @@ type TaskUpdateFullVars = UpdateVariables<UpdateTaskOps> & Partial<OptimisticCac
 type TaskDeleteFullVars = DeleteVariables<Task>;
 
 /** Retains API literal unions for task-list sorting and matching filters. */
-type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'status' | 'type' | 'labels' | 'sort' | 'order'>;
+type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'status' | 'type' | 'labels' | 'assigned' | 'sort' | 'order'>;
 /** Separate key space for public (unauthenticated) task queries. */
 type PublicTaskListFilters = TaskListFilters & { public: true };
 
@@ -117,7 +111,7 @@ const deriveTaskDescription = (description: string | null) => {
 const taskDerivedDescriptionFields = ['summary', 'summaryLength', 'expandable', 'checkboxCount', 'checkedCount', 'attachments', 'keywords'] as const;
 
 registerDescriptionDerivation('task', deriveTaskDescription);
-registerYjsOwnedFields('task', ['description', ...taskDerivedDescriptionFields]);
+registerDescriptionColumns('task', taskDerivedDescriptionFields);
 
 const handleError = createResourceError('task');
 
@@ -128,8 +122,7 @@ const invalidateOrgLists = (queryClient: QueryClient, organizationId: string) =>
 const findTaskInCache = createCacheFinder<Task>('task');
 
 const createTaskMutationFn = async ({ tenantId, organizationId, data, stx }: TaskCreateFullVars) => {
-  const effectiveStx = stx ?? createStxForCreate();
-  const body = data.map(({ fullLabels: _fl, fullAssignedTo: _fa, ...row }) => ({ ...row, stx: effectiveStx }));
+  const body = data.map(({ fullLabels: _fl, fullAssignedTo: _fa, ...row }) => ({ ...row, stx }));
   const result = await createTasks({ body, path: { organizationId, tenantId } });
   return result.data;
 };
@@ -142,14 +135,15 @@ const scalarFieldNamesOf = (ops: UpdateTaskOps | undefined) =>
 
 /** Exported for the replay test. */
 export const updateTaskMutationFn = async ({ tenantId, organizationId, id, ops, stx }: TaskUpdateFullVars) => {
-  const effectiveStx = stx ?? createStxForUpdate(scalarFieldNamesOf(ops));
-  return updateTask({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
+  return updateTask({
+    body: { ops, stx },
+    path: { id, organizationId, tenantId },
+    query: stx.replayed ? { fullResponse: true } : undefined,
+  });
 };
 
 const deleteTasksMutationFn = async ({ tenantId, organizationId, rows, stx }: TaskDeleteFullVars) => {
-  const ids = rows.map(({ id }) => id);
-  const effectiveStx = stx ?? createStxForDelete();
-  return deleteTasks({ body: { ids, stx: effectiveStx }, path: { organizationId, tenantId } });
+  return deleteTasks({ body: { ids: rows.map(({ id }) => id), stx }, path: { organizationId, tenantId } });
 };
 
 type CreateData = Awaited<ReturnType<typeof createTaskMutationFn>>;
@@ -160,7 +154,7 @@ type DeleteData = Awaited<ReturnType<typeof deleteTasksMutationFn>>;
 const applyOptimisticTaskUpdate = (
   queryClient: QueryClient,
   organizationId: string,
-  variables: TaskUpdateFullVars,
+  variables: Omit<TaskUpdateFullVars, 'stx'>,
 ): { previousTask: Task | undefined } => {
   const { id: taskId, ops } = variables;
   const orgKey = taskKeys.list.org(organizationId);
@@ -196,10 +190,10 @@ const applyOptimisticTaskUpdate = (
       cacheRemove(oldScopeKey, [previousTask]);
       const newScopeKey = taskKeys.list.home(organizationId, mergedOps.projectId as string);
       cacheCreate(newScopeKey, [optimisticTask]);
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(taskId), optimisticTask);
+      writeKeepingMark<Task>(queryClient, taskKeys.detail.byId(taskId), () => optimisticTask);
     } else {
       cacheUpdate(orgKey, [optimisticTask]);
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(taskId), (old) => (old ? optimisticTask : old));
+      writeKeepingMark<Task>(queryClient, taskKeys.detail.byId(taskId), (old) => (old ? optimisticTask : old));
     }
   }
 
@@ -249,21 +243,24 @@ const carryUnansweredCreates = (client: QueryClient, projectId: string) => {
 
 /** One flat query per project scope; board and table views derive from it with select() or client-side filtering. */
 export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) => {
-  return queryOptions({
-    queryKey: taskKeys.list.home(organizationId, projectId),
-    queryFn: async ({ client }) => {
-      const completeRead = carryUnansweredCreates(client, projectId);
-      const read = await fetchAllPages(
-        ({ limit, offset }) =>
-          getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOffDays } }).then(
-            liveItems,
-          ),
-        appConfig.requestLimits.tasks,
-      );
-      return completeRead(read);
-    },
-    staleTime: syncStaleTime,
-  });
+  return syncedListOptions(
+    queryOptions({
+      queryKey: taskKeys.list.home(organizationId, projectId),
+      queryFn: async ({ client }) => {
+        const completeRead = carryUnansweredCreates(client, projectId);
+        const read = await fetchAllPages(
+          ({ limit, offset }) =>
+            getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOffDays } }).then(
+              liveItems,
+            ),
+          appConfig.requestLimits.tasks,
+        );
+        return completeRead(read);
+      },
+      staleTime: syncStaleTime,
+    }),
+    { organizationId, tenantId, channelId: projectId },
+  );
 };
 
 /** Task-table defaults shared by the member and public query options. */
@@ -274,19 +271,21 @@ const tasksTableQueryKey = ({
   status,
   type,
   labels,
+  assigned,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
   projectId,
   workspaceId,
   organizationId,
 }: Omit<GetTasksParam, 'acceptedCutOff' | 'tenantId'>) =>
-  taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, q, status, type, labels });
+  taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, q, status, type, labels, assigned });
 
 export const tasksTableQueryOptions = ({
   q,
   status,
   type,
   labels,
+  assigned,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
   projectId,
@@ -295,17 +294,19 @@ export const tasksTableQueryOptions = ({
   tenantId,
   limit = appConfig.requestLimits.tasksTable,
 }: Omit<GetTasksParam, 'acceptedCutOff'> & { limit?: number }) => {
-  const filters = { q, status, type, labels, sort, order, organizationId, projectId, workspaceId };
+  const filters = { q, status, type, labels, assigned, sort, order, organizationId, projectId, workspaceId };
 
-  return infiniteQueryOptions({
-    queryKey: tasksTableQueryKey({ q, status, type, labels, sort, order, projectId, workspaceId, organizationId }),
-    ...offsetPaging(limit, (offset, signal) =>
-      getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }).then(liveItems),
-    ),
-    refetchOnWindowFocus: false,
-    meta: { persist: false },
-    staleTime: syncStaleTime,
-  });
+  return syncedListOptions(
+    infiniteQueryOptions({
+      queryKey: tasksTableQueryKey({ q, status, type, labels, assigned, sort, order, projectId, workspaceId, organizationId }),
+      ...offsetPaging(limit, (offset, signal) =>
+        getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }).then(liveItems),
+      ),
+      refetchOnWindowFocus: false,
+      meta: { persist: false },
+      staleTime: syncStaleTime,
+    }),
+  );
 };
 
 /** Shared by the live hook and the offline-replay defaults: callbacks derive the org key from durable variables (onMutate skips replay). */
@@ -326,7 +327,7 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
         assignedTo: fullAssignedTo,
       }),
     );
-    await queryClient.cancelQueries({ queryKey: orgKey });
+    await cancelKeepingMark(queryClient, orgKey);
     // Insert into the row's canonical home (project) list only, never filtered/search lists.
     insertEntitiesIntoHome(queryClient, optimisticTasks);
 
@@ -343,6 +344,8 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
   onSuccess: (createdTasks, variables) => {
     // An in-place update keeps the DOM element and its glow; it inserts nothing, so a row an SSE delete removed mid-POST stays gone.
     cacheUpdate(taskKeys.list.org(variables.organizationId), createdTasks);
+    // The open sheet reads the detail, which the stored row completes: the number for one
+    for (const task of createdTasks) writeKeepingMark<Task>(queryClient, taskKeys.detail.byId(task.id), (cached) => cached && task);
   },
   // Error-only: onSuccess patches the cache, SSE handles other users
   onSettled: (_data, error, variables) => {
@@ -360,7 +363,7 @@ const taskUpdateOptions = (
   meta: { suppressGlobalErrorToast: true },
   // Squash/coalesce runs in the hook's prepare step, so variables already carry the merge; onMutate keeps only cache work.
   onMutate: async (variables) => {
-    await queryClient.cancelQueries({ queryKey: taskKeys.list.org(variables.organizationId) });
+    await cancelKeepingMark(queryClient, taskKeys.list.org(variables.organizationId));
     return applyOptimisticTaskUpdate(queryClient, variables.organizationId, variables);
   },
   onError: (error, variables, context) => {
@@ -378,7 +381,7 @@ const taskUpdateOptions = (
       } else {
         cacheUpdate(orgKey, [context.previousTask]);
       }
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(context.previousTask.id), context.previousTask);
+      writeKeepingMark<Task>(queryClient, taskKeys.detail.byId(context.previousTask.id), () => context.previousTask);
     }
   },
   onSuccess: (updatedTask, variables) => {
@@ -387,20 +390,20 @@ const taskUpdateOptions = (
     const cached = findTaskInCache(updatedTask.id);
     const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
 
-    // Cross-project move: the server's labels/assignedTo win over the cached ones
-    const isProjectMove = variables.ops && 'projectId' in variables.ops;
+    // A move and a replay answer the full row, whose relations win over the cached ones; any other update answers them as stubs
+    const isFullResponse = (variables.ops && 'projectId' in variables.ops) || variables.stx?.replayed;
     const merged = mergeServerResponse({
+      queryClient,
       cached,
       serverEntity: updatedTask,
       mutatedKeys,
-      derivedKeys: { description: taskDerivedDescriptionFields, status: ['statusChangedAt'] },
-      skipKeys: isProjectMove ? [] : ['labels', 'assignedTo'],
+      derivedKeys: { status: ['statusChangedAt'] },
+      skipKeys: isFullResponse ? [] : ['labels', 'assignedTo', 'primaryLabel', 'createdBy'],
     });
 
-    // The lite response path answers primaryLabel: null, so a merged response must never
-    // supply it; rebuild the derived object from the cached label row the id points at.
-    if (!isProjectMove && typeof variables.ops?.primaryLabelId === 'string') {
-      const freshPrimary = findLabelInCache(variables.ops.primaryLabelId);
+    // The settle can bring a primaryLabelId the kept object does not match, from this edit or a remote one kept out while it was pending.
+    if (!isFullResponse && merged.primaryLabel?.id !== merged.primaryLabelId) {
+      const freshPrimary = findLabelInCache(merged.primaryLabelId);
       if (freshPrimary) merged.primaryLabel = freshPrimary;
     }
     writeEntityToCache({ entity: merged, listKey: orgKey, detailKey, queryClient });
@@ -419,7 +422,7 @@ const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteD
     const orgKey = taskKeys.list.org(organizationId);
     const taskIds = rows.map(({ id }) => id);
     removePendingMutations(queryClient, taskKeys.update, taskIds);
-    await queryClient.cancelQueries({ queryKey: orgKey });
+    await cancelKeepingMark(queryClient, orgKey);
     cacheRemove(orgKey, rows);
     removeDetailQueriesById(queryClient, taskKeys.detail.base, taskIds);
     return { tasksToDelete: rows };
@@ -501,33 +504,19 @@ export const useTaskDeleteMutation = (tenantId: string, organizationId: string) 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
-addMutationRegistrar((queryClient: QueryClient) => {
-  queryClient.setQueryDefaults(taskKeys.detail.base, {
-    queryFn: ({ queryKey, meta }) => {
-      const id = queryKey[2] as string;
-      const cached = findTaskInCache(id);
-      const { organizationId, tenantId } = resolveQueryOrgTenantIds(meta, cached, 'task');
-      return getTask({ path: { id, organizationId, tenantId } });
-    },
-  });
-
-  queryClient.setMutationDefaults(taskKeys.create, taskCreateOptions(queryClient));
-  queryClient.setMutationDefaults(taskKeys.update, taskUpdateOptions(queryClient));
-  queryClient.setMutationDefaults(taskKeys.delete, taskDeleteOptions(queryClient));
+// Mutation defaults (offline persistence): set when the module loads, before the cache restore hydrates a queued mutation.
+queryClient.setQueryDefaults(taskKeys.detail.base, {
+  queryFn: ({ queryKey }) => {
+    const id = queryKey[2] as string;
+    const cached = findTaskInCache(id);
+    const { organizationId, tenantId } = resolveQueryOrgTenantIds(cached, 'task');
+    return getTask({ path: { id, organizationId, tenantId } });
+  },
 });
 
-// Version 2 carries a create's rows as a list under `data` and a delete's under `rows`; version 1 queued a create's one row
-// at the top level and a delete's rows as `tasksToDelete`.
-registerVariablesVersion(taskKeys.create, 2, (variables) => {
-  if (!isRecord(variables) || typeof variables.id !== 'string') return null;
-  const { tenantId, organizationId, stx, ...row } = variables;
-  return { tenantId, organizationId, stx, data: [row] };
-});
-registerVariablesVersion(taskKeys.delete, 2, (variables) => {
-  if (!isRecord(variables) || !Array.isArray(variables.tasksToDelete)) return null;
-  const { tasksToDelete, ...rest } = variables;
-  return { ...rest, rows: tasksToDelete };
-});
+queryClient.setMutationDefaults(taskKeys.create, taskCreateOptions(queryClient));
+queryClient.setMutationDefaults(taskKeys.update, taskUpdateOptions(queryClient));
+queryClient.setMutationDefaults(taskKeys.delete, taskDeleteOptions(queryClient));
 
 /** Fetch tasks for table export. Bypasses cache; returns flat items. */
 export const fetchTasksForExport = async (params: {

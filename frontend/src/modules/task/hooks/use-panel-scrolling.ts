@@ -22,12 +22,6 @@ function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>, windowScro
   }, [scrollRef, windowScroll]);
 }
 
-// A card scrolled to mounts a render or two later, and a glow needs its element
-const glowOnceMounted = (taskId: string, framesLeft = 10) => {
-  if (document.getElementById(taskId)) return triggerTaskGlow(taskId);
-  if (framesLeft > 0) requestAnimationFrame(() => glowOnceMounted(taskId, framesLeft - 1));
-};
-
 const sectionStatus: Record<TogglableStatusType, TaskStatus> = { accepted: TaskStatus.Accepted, iced: TaskStatus.Iced };
 
 interface UsePanelScrollingOptions {
@@ -97,7 +91,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, counts, isMobile,
         const startIndex = virtualizer.findItemIndex(virtualizer.scrollOffset);
         const endIndex = virtualizer.findItemIndex(virtualizer.scrollOffset + virtualizer.viewportSize);
         if (index <= startIndex || index >= endIndex) virtualizer.scrollToIndex(index, { align: 'center', smooth: false });
-        requestAnimationFrame(() => glowOnceMounted(taskId));
+        requestAnimationFrame(() => triggerTaskGlow(taskId));
       },
     });
   }, [projectId]);
@@ -139,7 +133,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, counts, isMobile,
         return;
       }
       virtualizerRef.current?.scrollToIndex(index, { align: 'center', smooth: false });
-      requestAnimationFrame(() => glowOnceMounted(tasks[index].id));
+      requestAnimationFrame(() => triggerTaskGlow(tasks[index].id));
     });
   }, [tasks]);
 
@@ -152,6 +146,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, counts, isMobile,
     const frame = requestAnimationFrame(() => {
       const index = tasksRef.current.findIndex(isDraftTask);
       if (index !== -1) virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
+      scrollViewportRef.current?.closest('[data-panel]')?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     });
     return () => cancelAnimationFrame(frame);
   }, [draftPlacement]);

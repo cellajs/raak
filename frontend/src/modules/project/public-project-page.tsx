@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import type { GetPublicProjectResponse } from 'sdk';
 import { PageHeader } from '~/modules/common/page/header';
+import { PublicBadge } from '~/modules/project/public-badge';
 import { ReadOnlyScope } from '~/modules/project/use-read-only';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
+import { PublicTasksHotkeys } from '~/modules/task/tasks-hotkeys';
 
 interface PublicProjectPageProps {
   project: GetPublicProjectResponse;
@@ -13,7 +15,8 @@ export function PublicProjectPage({ project, children }: PublicProjectPageProps)
   return (
     <ReadOnlyScope.Provider value>
       <TaskSheetHandler />
-      <PageHeader entity={project} canUpdate={false} onCoverUpdate={() => {}} />
+      <PublicTasksHotkeys />
+      <PageHeader entity={project} canUpdate={false} onCoverUpdate={() => {}} avatarBadge={<PublicBadge size="lg" />} />
       <div className="flex flex-col sm:gap-2 sm:p-3 md:gap-3">{children}</div>
     </ReadOnlyScope.Provider>
   );

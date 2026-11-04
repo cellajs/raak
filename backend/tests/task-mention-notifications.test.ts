@@ -4,7 +4,7 @@ import { appConfig } from 'shared';
 import { generateId } from 'shared/utils/entity-id';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { getSeedDb } from '#/db/db';
-import type { ActivityEvent } from '#/lib/activity-bus';
+import type { ProductActivityEvent } from '#/lib/activity-bus';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { notificationsTable } from '#/modules/notification/notification-db';
 import { fanOutNotifications } from '#/modules/notification/operations/fan-out';
@@ -104,27 +104,32 @@ describe('Task mention notifications', async () => {
       headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
     });
 
-  const updatedEvent = (): ActivityEvent =>
+  const updatedEvent = (): ProductActivityEvent =>
     // Test mock: the CDC worker fills the remaining columns; the fan-out reads only these.
     ({
-      id: `act:${generateId()}`,
       type: 'task.updated',
       action: 'update',
       entityType: 'task',
       resourceType: null,
       tableName: 'tasks',
-      subjectId: taskId,
-      userId: tenant.user.id,
       tenantId: tenant.tenantId,
       organizationId: tenant.organization.id,
       ...nullAncestorScopes,
       projectId,
       rowData: null,
-      rows: [{ rowData: { id: taskId, organizationId: tenant.organization.id, projectId }, seq: 1, movedFrom: null }],
+      rows: [
+        {
+          activityId: `act:${generateId()}`,
+          userId: tenant.user.id,
+          changedFields: ['description'],
+          stx: null,
+          rowData: { id: taskId, organizationId: tenant.organization.id, projectId },
+          seq: 1,
+          movedFrom: null,
+        },
+      ],
       trace: null,
-      stx: null,
-      changedFields: ['description'],
-    }) as unknown as ActivityEvent;
+    }) as unknown as ProductActivityEvent;
 
   const inboxOf = (userId: string) =>
     db
@@ -135,7 +140,7 @@ describe('Task mention notifications', async () => {
   it('mentions readable users and drops ids without read access', async () => {
     const result = await putDescription(JSON.stringify([paragraphWithMentions([member.id, strangerId])]));
     expect(result.response.status).toBe(200);
-    expect(await fanOutNotifications(updatedEvent())).toBe(true);
+    await fanOutNotifications(updatedEvent());
     expect(await inboxOf(member.id)).toEqual([{ type: 'mention' }]);
     expect(await inboxOf(strangerId)).toEqual([]);
   });
@@ -143,7 +148,7 @@ describe('Task mention notifications', async () => {
   it('adds no mention once the description no longer carries one', async () => {
     const result = await putDescription(JSON.stringify([paragraphWithMentions([])]));
     expect(result.response.status).toBe(200);
-    expect(await fanOutNotifications(updatedEvent())).toBe(false);
+    await fanOutNotifications(updatedEvent());
     expect(await inboxOf(member.id)).toEqual([{ type: 'mention' }]);
   });
 });

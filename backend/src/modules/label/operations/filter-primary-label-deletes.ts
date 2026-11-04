@@ -1,7 +1,7 @@
 import type { ActorContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { findLiveLabelModes, findLivePrimaryLabels, lockProjectForPrimaryLabels } from '#/modules/label/label-queries';
-import { getValidChannel } from '#/permissions';
+import { getValidChannel } from '#/permissions/get-valid-channel';
 
 /**
  * Filter a permitted delete set by the primary-label rules: deleting a primary label

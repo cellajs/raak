@@ -1,6 +1,6 @@
 import type { ActorContext } from '#/core/context';
 import { toProjectResponse } from '#/modules/project/operations/to-project-response';
-import { getValidChannel } from '#/permissions';
+import { getValidChannel } from '#/permissions/get-valid-channel';
 
 /**
  * A project by id, or by slug with `bySlug`, with the counts and the caller's membership `include` asks for.

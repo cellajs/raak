@@ -21,6 +21,7 @@ import { TaskPanelHeader } from '~/modules/task/panel/task-panel-header';
 import { TaskDemoScope } from '~/modules/task/task-demo-scope';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskCounts } from '~/modules/task/types';
+import { WorkspaceArrivalBalloon } from '~/modules/workspace/workspace-arrival-balloon';
 import { cn } from '~/utils/cn';
 
 export interface BoardPanelProps {
@@ -83,7 +84,9 @@ export const BoardPanel = memo(function BoardPanel({
 
   const counts = {
     total: filteredTasks.length,
-    acceptedCutOff: !statuses || statuses.includes(TaskStatus.Accepted) ? hiddenAccepted : 0,
+    // A status filter without accepted rules out the older accepted tasks too, though the board never fetched them
+    acceptedCutOff:
+      (!statuses || statuses.includes(TaskStatus.Accepted)) && (!search.statuses.length || search.statuses.includes('accepted')) ? hiddenAccepted : 0,
     showAccepted,
     showIced,
     accepted: showAccepted ? acceptedCount : 0,
@@ -104,21 +107,29 @@ export const BoardPanel = memo(function BoardPanel({
               className={showFab ? 'opacity-100' : 'pointer-events-none translate-y-16 scale-50 opacity-0'}
             />
           )}
+          <WorkspaceArrivalBalloon project={project} />
         </div>
       ) : (
-        <div ref={panelRef} className={cn('relative flex h-full flex-col', windowScroll && 'min-h-[80vh]')}>
+        <div
+          ref={panelRef} // The header pins to the window, and the bars and card headers below read this to pin under it
+          className={cn('relative flex h-full flex-col', windowScroll && 'min-h-[80vh] [--sticky-stack-nav:3.25rem]')}
+        >
           <TaskPanelHeader
             project={project}
             publicView={publicView}
             statuses={statuses}
             showProject={showProject}
             panelId={panelId}
+            windowScroll={windowScroll}
             count={filteredTasks.filter((task) => !isDraftTask(task)).length}
           />
+          <WorkspaceArrivalBalloon project={project} />
           <div className="flex min-h-0 flex-1 flex-col">
             <BoardPanelContent
               isCollapsed={isCollapsed}
-              collapsedContent={<TaskPanelCollapsed panelId={panelId} name={projectPanelName(project, statuses)} counts={counts} />}
+              collapsedContent={
+                <TaskPanelCollapsed panelId={panelId} name={projectPanelName(project, statuses)} counts={counts} windowScroll={windowScroll} />
+              }
             >
               <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} windowScroll={windowScroll} />
             </BoardPanelContent>

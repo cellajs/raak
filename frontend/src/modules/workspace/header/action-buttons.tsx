@@ -1,8 +1,8 @@
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
-import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, UsersIcon } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { ArrowRightIcon, EllipsisVerticalIcon, PlusIcon, SettingsIcon, UsersIcon } from 'lucide-react';
 import { type RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Project } from 'sdk';
 import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dropdowner/dropdown-action-item';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { TooltipButton } from '~/modules/common/tooltip-button';
@@ -10,6 +10,9 @@ import { useChannelSettingsSections } from '~/modules/entities/use-channel-setti
 import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
+import { useWithMembership } from '~/modules/project/use-with-membership';
+import { useTabProject } from '~/modules/task/board/board-hooks';
+import { DrawerDisplayOptions } from '~/modules/task/board/display-options';
 import { Button } from '~/modules/ui/button';
 import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 import { openWorkspaceSettingsSheet } from '~/modules/workspace/workspace-settings';
@@ -18,15 +21,20 @@ import { cn } from '~/utils/cn';
 
 export function WorkspaceActionButtons() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
-  const { workspace } = useWorkspaceContext();
+  const { workspace, organization, tenantId } = useWorkspaceContext();
 
-  const { data: projectsData } = useSuspenseInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }));
-  const projects = flattenInfiniteData<Project>(projectsData);
-  const projectSlug = workspaceRouteApi.useSearch({ select: (search) => search.projectSlug });
+  // The board's list: an archived project has no tab, so the fallback must name the first tab
+  const { data: projectsData } = useSuspenseInfiniteQuery(
+    projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }),
+  );
+  const tabProject = useTabProject(useWithMembership(flattenInfiniteData<EnrichedProject>(projectsData)));
   const searchQuery = workspaceRouteApi.useSearch({ select: (search) => search.q });
+  const view = workspaceRouteApi.useSearch({ select: (search) => search.view });
 
-  const project: EnrichedProject | undefined = projects.find((candidate) => candidate.slug === projectSlug) || projects[0];
+  // The table lists every project, with no tab to say which one the menu's project actions would hit
+  const project = view === 'table' ? undefined : tabProject;
   const projectMembership = project?.membership;
 
   const refs = { add: useRef<HTMLButtonElement>(null), workspace: useRef<HTMLButtonElement>(null) };
@@ -67,20 +75,36 @@ export function WorkspaceActionButtons() {
 
     dropdowner.getState().create(
       <>
+        <DrawerDisplayOptions />
         {actions.map(({ key, icon, label, onClick }) => (
           <DropdownActionItem key={key} icon={icon} onSelect={select(() => onClick(triggerRef))}>
             {label}
           </DropdownActionItem>
         ))}
-        {project && projectMembership && (
+        {project && (
           <>
             <DropdownActionSeparator />
-            <DropdownActionItem icon={UsersIcon} onSelect={select(() => openProjectMembersSheet(project, triggerRef))}>
-              {t('c:project_members')}
+            <DropdownActionItem
+              icon={ArrowRightIcon}
+              onSelect={select(() =>
+                navigate({
+                  to: '/$tenantId/$organizationSlug/project/$slug',
+                  params: { slug: project.slug, organizationSlug: organization.slug, tenantId },
+                }),
+              )}
+            >
+              {t('c:go_to_project')}
             </DropdownActionItem>
-            <DropdownActionItem icon={SettingsIcon} onSelect={select(() => openProjectSettingsSheet(project, triggerRef))}>
-              {t('c:resource_settings', { resource: t('c:project') })}
-            </DropdownActionItem>
+            {projectMembership && (
+              <>
+                <DropdownActionItem icon={UsersIcon} onSelect={select(() => openProjectMembersSheet(project, triggerRef))}>
+                  {t('c:project_members')}
+                </DropdownActionItem>
+                <DropdownActionItem icon={SettingsIcon} onSelect={select(() => openProjectSettingsSheet(project, triggerRef))}>
+                  {t('c:resource_settings', { resource: t('c:project') })}
+                </DropdownActionItem>
+              </>
+            )}
           </>
         )}
       </>,

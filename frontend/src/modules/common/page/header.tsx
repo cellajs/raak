@@ -17,29 +17,35 @@ interface PageHeaderProps extends Omit<PageCoverProps, 'id' | 'url'> {
   panel?: ReactNode;
   /** Takes the place of the context line below the name, for an entity that sits in no hierarchy. */
   subline?: ReactNode;
+  /** Positioned over the avatar, which does not clip it. */
+  avatarBadge?: ReactNode;
   /** Ancestor chain, root first. Entries must be enriched: their routes need `ancestorSlugs`. */
   parents?: EnrichedChannel[];
   /** @deprecated Use `parents`. */
   parent?: EnrichedChannel;
 }
 
-export function PageHeader({ entity, panel, subline, parents, parent, ...coverProps }: PageHeaderProps) {
+export function PageHeader({ entity, panel, subline, avatarBadge, parents, parent, ...coverProps }: PageHeaderProps) {
   // Ancestor chain, root first; the deprecated single `parent` folds in
   const ancestors = parents ?? (parent ? [parent] : []);
+  const isUser = entity.entityType === 'user';
 
   return (
     <div className="relative w-full">
       <PageCover id={entity.id} url={entity.bannerUrl} {...coverProps} />
 
       <div className="absolute bottom-0 flex min-h-18 w-full bg-background/50 p-1 backdrop-blur-xs dark:bg-background/75" id={pageTopHashNav.hash}>
-        <EntityAvatar
-          id={entity.id}
-          name={entity.name}
-          type={entity.entityType}
-          url={entity.thumbnailUrl}
-          // A user avatar rises by half its size to sit centered on the cover's edge
-          className={entity.entityType === 'user' ? 'mx-3 -mt-10 size-20 ring-4 ring-black/10 sm:-mt-13 sm:size-26' : 'm-2 size-12'}
-        />
+        {/* A user avatar rises by half its size to sit centered on the cover's edge */}
+        <div className={cn('relative shrink-0', isUser ? 'mx-3 -mt-10 size-20 sm:-mt-13 sm:size-26' : 'm-2 size-12')}>
+          <EntityAvatar
+            id={entity.id}
+            name={entity.name}
+            type={entity.entityType}
+            url={entity.thumbnailUrl}
+            className={cn('size-full', isUser && 'ring-4 ring-black/10')}
+          />
+          {avatarBadge}
+        </div>
 
         <div className="flex flex-col truncate py-1.5 pl-1">
           <h1 className="max-sm:wrap-break-word mb-1 font-semibold leading-6 max-sm:line-clamp-2 max-sm:whitespace-normal sm:truncate md:text-xl">

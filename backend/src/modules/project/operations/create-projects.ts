@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import { hierarchy } from 'shared';
+import { buildSubject, hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
@@ -14,12 +14,11 @@ import { resolveProjectWorkspaceId } from '#/modules/project/operations/project-
 import { insertProjects } from '#/modules/project/project-queries';
 import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
 import { assertTenantQuota } from '#/modules/tenants/tenant-restrictions';
-import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
 import { filterWithRejection } from '#/utils/rejection-utils';
 
-const zeroTaskStatusCounts = { accepted: 0, reviewed: 0, delivered: 0, finished: 0, started: 0, unstarted: 0, iced: 0 };
+const zeroTaskStatusCounts = { accepted: 0, reviewed: 0, finished: 0, started: 0, unstarted: 0, iced: 0 };
 
 type CreateProjectItem = z.infer<typeof projectCreateBodySchema>[number];
 

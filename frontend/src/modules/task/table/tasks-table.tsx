@@ -47,7 +47,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   });
   const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
 
-  const { q, sort, order, status, type, labels } = search;
+  const { q, sort, order, status, type, labels, assigned } = search;
   const parsedSearch = parseBoardSearch(search);
 
   const [columns, setColumns] = useColumnVisibility(useColumns({ hideProject: !workspace, organization, tenantId, projects }));
@@ -55,7 +55,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const [isCompact, setIsCompact] = useState(true);
 
   // Here, not at the writes: the field, its chips, a recent search and the back button all change these
-  useEffect(() => setSelected([]), [q, status, type, labels]);
+  useEffect(() => setSelected([]), [q, status, type, labels, assigned]);
 
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
@@ -105,50 +105,47 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   return (
     <SearchScope q={q}>
-      {/* Holds the reset sentinel out of the page's flex gap, which would drop the bar below where the board has it */}
-      <div>
-        <ScrollReset>
-          <div className="flex h-full flex-col gap-4 sm:gap-2 md:gap-3">
-            <TasksTableBar
-              total={total}
-              selected={selected}
-              searchVars={search}
-              columns={columns}
-              setColumns={setColumns}
-              projects={projects}
-              workspace={workspace}
-              publicView={publicView}
-              clearSelection={() => setSelected([])}
-              isCompact={isCompact}
-              setIsCompact={setIsCompact}
-            />
-            <DataTable<Task>
-              {...{
-                rows,
-                rowHeight: 52,
-                rowKeyGetter: rowKeyById,
-                columns,
-                enableVirtualization: true,
-                enableStickyHeader: true,
-                limit: tableLimit,
-                error,
-                isLoading,
-                isFetching,
-                isFiltered: isBoardSearchActive(parsedSearch),
-                hasNextPage,
-                fetchMore,
-                selectedRows: selectedRowIds,
-                onSelectedRowsChange: handleSelectedRowsChange,
-                isRowSelectionDisabled,
-                isCompact,
-                sortColumns,
-                onSortColumnsChange,
-                NoRowsComponent: noRowsComponent,
-              }}
-            />
-          </div>
-        </ScrollReset>
-      </div>
+      <ScrollReset>
+        <div className="flex h-full flex-col gap-4 sm:gap-2 md:gap-3">
+          <TasksTableBar
+            total={total}
+            selected={selected}
+            searchVars={search}
+            columns={columns}
+            setColumns={setColumns}
+            projects={projects}
+            workspace={workspace}
+            publicView={publicView}
+            clearSelection={() => setSelected([])}
+            isCompact={isCompact}
+            setIsCompact={setIsCompact}
+          />
+          <DataTable<Task>
+            {...{
+              rows,
+              rowHeight: 52,
+              rowKeyGetter: rowKeyById,
+              columns,
+              enableVirtualization: true,
+              enableStickyHeader: true,
+              limit: tableLimit,
+              error,
+              isLoading,
+              isFetching,
+              isFiltered: isBoardSearchActive(parsedSearch),
+              hasNextPage,
+              fetchMore,
+              selectedRows: selectedRowIds,
+              onSelectedRowsChange: handleSelectedRowsChange,
+              isRowSelectionDisabled,
+              isCompact,
+              sortColumns,
+              onSortColumnsChange,
+              NoRowsComponent: noRowsComponent,
+            }}
+          />
+        </div>
+      </ScrollReset>
     </SearchScope>
   );
 }

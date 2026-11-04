@@ -36,6 +36,7 @@ export const mockLabel = (key = 'label:default', name?: string): LabelModel =>
     return {
       ...mockProductColumns('label', { name: resolvedName, description: null, keywords: '' }),
       // Specific columns
+      number: 0,
       color: faker.color.rgb().toLowerCase(),
       mode: 'secondary' as const,
       slug: labelSlug(resolvedName),
@@ -50,7 +51,7 @@ export const mockLabel = (key = 'label:default', name?: string): LabelModel =>
 /** Label wire response omits stored audit-user ID columns. */
 export const mockLabelResponse = (key = 'label:default', name?: string) => {
   const { createdBy: _createdBy, updatedBy: _updatedBy, ...label } = mockLabel(key, name);
-  return label;
+  return { ...label, number: withFakerSeed(`${key}:number`, () => faker.number.int({ min: 1, max: 999 })) };
 };
 
 export const mockBatchLabelsResponse = (count = 2) => mockBatchResponse(mockLabelResponse, count);

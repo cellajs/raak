@@ -1,17 +1,9 @@
 import type { DeepPartial } from '../src/config-builder/types.ts';
-import type { config as _default } from './config.default.ts';
+import { config } from './config.default.ts';
 
 export const staging = {
-  mode: 'staging',
-  name: 'Raak STAGING',
-  slug: 'raak-staging',
+  name: `${config.name} STAGING`,
+  slug: `${config.slug}-staging`,
 
-  domain: 'raak.dev',
-  // Same-origin: every public service is a path under the staging app host.
-  frontendUrl: 'https://staging.raak.dev',
-  backendUrl: 'https://staging.raak.dev/api',
-  backendAuthUrl: 'https://staging.raak.dev/api/auth',
-  yjsUrl: 'wss://staging.raak.dev/yjs',
-  mcpUrl: 'https://staging.raak.dev/mcp',
-  oauthUrl: 'https://staging.raak.dev/oauth',
-} satisfies DeepPartial<typeof _default>;
+  origin: `https://staging.${config.domain}`,
+} satisfies DeepPartial<typeof config>;

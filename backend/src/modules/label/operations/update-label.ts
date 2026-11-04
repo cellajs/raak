@@ -10,7 +10,7 @@ import { type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { type UpdateLabelValues, updateLabel } from '#/modules/label/label-queries';
 import { labelContract, type labelUpdateStxBodySchema } from '#/modules/label/label-schema';
 import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
-import { getValidChannel } from '#/permissions';
+import { getValidChannel } from '#/permissions/get-valid-channel';
 import { getValidProduct } from '#/permissions/get-valid-product';
 import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
 
@@ -19,27 +19,17 @@ type UpdateLabelInput = z.infer<typeof labelUpdateStxBodySchema>;
 /** Field ops that unlink a tracked primary label from its organization setupConfig entry. */
 const trackedFields = ['name', 'color', 'icon', 'slug'] as const;
 
-/**
- * Also the label's Yjs materializer: `materializeDescriptionOp` calls it with `materialized` for a collaborative epic
- * description the relay posts. `serverOrigin` stamps the fields with the server clock, for a transaction the server
- * built (the Yjs relay).
- */
-export async function updateLabelOp(
-  ctx: OrgContext,
-  id: string,
-  input: UpdateLabelInput,
-  opts: { serverOrigin?: boolean; materialized?: boolean } = {},
-): Promise<LabelModel> {
+/** Also the label's Yjs materializer: `materializeDescriptionOp` calls it for a collaborative epic description the relay posts. */
+export async function updateLabelOp(ctx: OrgContext, id: string, input: UpdateLabelInput): Promise<LabelModel> {
   const { ops: rawOps, stx } = input;
-  const { serverOrigin, materialized } = opts;
 
   return tenantContext(ctx, async (txCtx) => {
     const { entity: before } = await getValidProduct(txCtx, id, 'label', 'update', { forUpdate: true });
 
-    // Epic documentation and secondary <-> epic transitions are member-level: any project
-    // member may document an epic or toggle a label's epic mode. Ops limited to those fields
+    // Epic documentation, secondary <-> epic transitions and a move in the labels list are member-level: any project
+    // member may document an epic, toggle a label's epic mode or drag it. Ops limited to those fields
     // skip the project-admin gate below. Only epics accept a description.
-    const memberLevelOnly = Object.keys(rawOps).every((key) => key === 'description' || key === 'mode');
+    const memberLevelOnly = Object.keys(rawOps).every((key) => key === 'description' || key === 'mode' || key === 'displayOrder');
     if ('description' in rawOps && before.mode !== 'epic') {
       throw new AppError(409, 'label_description_epic_only', 'warn', { entityType: 'label' });
     }
@@ -57,7 +47,7 @@ export async function updateLabelOp(
       await getValidChannel(txCtx, before.projectId, 'project', 'update');
     }
 
-    const resolved = serverOrigin ? labelContract.resolveServerUpdateOps(before, rawOps) : labelContract.resolveUpdateOps(before, rawOps, stx);
+    const resolved = labelContract.resolveUpdateOps(before, rawOps, stx);
 
     const values: UpdateLabelValues = {
       ...(resolved.changed ? resolved.values : {}),
@@ -97,7 +87,7 @@ export async function updateLabelOp(
 
     const updatedLabel = await updateLabel(txCtx, { id, values });
     // Inside the transaction, `before`/`after` index-aligned as the mutation bus contract requires.
-    await dispatchMutation(txCtx, 'label.updated', { before: [before], after: [updatedLabel], materialized });
+    await dispatchMutation(txCtx, 'label.updated', { before: [before], after: [updatedLabel] });
     return updatedLabel;
   });
 }

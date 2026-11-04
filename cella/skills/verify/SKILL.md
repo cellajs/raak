@@ -7,35 +7,36 @@ description: Build, launch, and drive the cella frontend to verify UI changes at
 
 ## Launch
 
-- Dev server: `cd frontend && pnpm dev` (plain HTTP). The main checkout serves http://localhost:3000; a linked git worktree runs on ports of its own, which Vite prints ([Dev ports](../../../shared/README.md#dev-ports)). Marketing pages (`/about`, `/features`, `/sync-engine`, `/docs`) render without the backend; the "Offline · Connection lost" toast without a backend is expected, not a regression.
-- Never pass `--port`, and never start a server on the main checkout's ports from a worktree: the app URLs come from the config, so a server on another port fails with "Failed to fetch". 3020/4020 and the like belong to other apps (projectcampus).
+- Dev server: `cd frontend && pnpm dev` (plain HTTP). The main checkout serves `appConfig.frontendUrl`, http://localhost:3000 for app number 0; a linked git worktree runs on ports of its own, which Vite prints ([Dev ports](../../../shared/README.md#dev-ports)). Marketing pages (`/about`, `/features`, `/sync-engine`, `/docs`) render without the backend; the "Offline · Connection lost" toast without a backend is expected, not a regression.
+- Never pass `--port`, and never start a server on the main checkout's ports from a worktree: the app URLs come from the config, so a server on another port fails with "Failed to fetch". Ports of another `devAppIndex` belong to other apps.
+- The configured ports are the developer's, in the main checkout too. Use the stack that answers on `appConfig.frontendUrl`, ask the developer to start it, or run your own with `DEV_PORT_OFFSET=50 pnpm dev` on the shared database (one CDC worker reads its slot: the second stack shows no live updates) or as a [throwaway stack](#a-throwaway-database). Keep it attached to your session, never `nohup`, and end it with `DEV_PORT_OFFSET=50 pnpm killports`: a stack left behind blocks the developer's `pnpm dev`.
 - A worktree's Vite proxies `/api` to the worktree's own backend, which migrates the database named in `backend/.env` on boot: the main checkout's, unless the worktree has its own. Give a branch with migrations its own database first ([A throwaway database](#a-throwaway-database)), and never run a second CDC worker on a shared one: it waits for the slot the running one holds and reports degraded meanwhile.
 - When you start the stack yourself, capture its stdout: `pnpm dev > <scratch>/dev-stack.log 2>&1` (background). pino writes no file, and backend errors are there.
-- Stack health: the API's `/health?depth=full` shows the `cdc` component `healthy`, or the `reason` it is not. The worker's own `curl http://localhost:<devPorts.cdcHealth>/health?depth=full` adds `replication.status` (`active` while it reads), `setupProblems` and `failure`.
+- Stack health: the API's `/health?depth=full` shows the `cdc` component `healthy`, or the `reason` it is not. The worker's own `curl http://localhost:<services.cdc.port>/health?depth=full` adds `replication.status` (`active` while it reads), `setupProblems` and `failure`.
 - Typecheck: `cd frontend && pnpm ts` (tsgo). Lint: `pnpm exec biome check <file>` from repo root.
 
 ## A throwaway database
 
-Clean seeded data, or a branch with migrations, beside the stack you already run. Variables in the environment win over `backend/.env`, so nothing in the checkout changes. Offset 40 and port 5440 are free: `pnpm a11y:run` takes 70 and 5470, and linked worktrees take the hundreds.
+Clean seeded data, or a branch with migrations, beside the stack you already run. Variables in the environment win over `backend/.env`, so nothing in the checkout changes. Offset 50 and port 5440 are free: `pnpm a11y:run` takes 70 and 5470, and linked worktrees take the hundreds. Offset 40 puts a service on port 4045, which `fetch` refuses, so the config will not build.
 
 ```sh
 # The image `pnpm docker` built (`docker images | grep db`), with the `-c` flags of `db` in backend/compose.yaml
 docker run -d --name scratch_db -e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5440:5432 <image> -c wal_level=logical -c shared_preload_libraries=pg_cron -c cron.database_name=postgres
 
-export DEV_PORT_OFFSET=40 ADMIN_EMAIL=admin-test@cellajs.com SYSTEM_ADMIN_IP_ALLOWLIST='*'
+export DEV_PORT_OFFSET=50 ADMIN_EMAIL=admin-test@cellajs.com SYSTEM_ADMIN_IP_ALLOWLIST='*'
 export DATABASE_URL=postgres://runtime_role:dev_password@0.0.0.0:5440/postgres
 export DATABASE_ADMIN_URL=postgres://postgres:postgres@0.0.0.0:5440/postgres
 export DATABASE_CDC_URL=postgres://admin_role:dev_password@0.0.0.0:5440/postgres
 
 pnpm seed                                                                  # migrates, then seeds
-(cd backend && NODE_ENV=development pnpm exec tsx src/main.ts) &            # the API, 40 ports up
-(cd frontend && NODE_ENV=development pnpm exec vite --mode development) &   # the app, 40 ports up
+(cd backend && NODE_ENV=development pnpm exec tsx src/main.ts) &            # the API, 50 ports up
+(cd frontend && NODE_ENV=development pnpm exec vite --mode development) &   # the app, 50 ports up
 ```
 
 - Every command runs with those exports: `pnpm seed` without them seeds the database you work in. An agent's shell keeps no exports between calls, so put them in a wrapper script that ends in `exec "$@"` and run each command through it.
 - The API and Vite serve pages and writes. Nothing here starts the CDC worker or the relay, so pages get no live updates.
 - Both Vite servers share `frontend/node_modules/.vite`: the second re-bundles the dependencies there, and the first re-bundles once more at its next start.
-- Afterwards stop the two listeners (`lsof -tiTCP:<port> -sTCP:LISTEN`) and `docker rm -fv scratch_db`.
+- Afterwards `DEV_PORT_OFFSET=50 pnpm killports` and `docker rm -fv scratch_db`.
 
 ## Drive (browser)
 
@@ -53,4 +54,4 @@ pnpm seed                                                                  # mig
 - `use-scroll-visibility.ts` ignores single-frame scroll jumps > 150px (`maxGestureDelta`) and has a 500ms initial cooldown, so `window.scrollBy(0, 1000)` will NOT hide floating nav buttons. Simulate gestures: repeated `page.mouse.wheel(0, ~100)` ticks at ~60ms intervals, after waiting ~1s post-load.
 - Floating nav buttons: `#floating-nav` container, item ids like `marketing-menu` / `docs-menu`; hidden = `opacity-0` class on the button.
 - Auth routes (check-email, magic links, SSO) run `isNoBot` (`backend/src/middlewares/is-no-bot.ts`), which answers 400 `maybe_bot` to headless Chromium's `HeadlessChrome` user agent. A script that walks the auth flow sets `userAgent` on its context to the same string without `Headless`.
-- The dev-mode "Testing credentials" banner, fixed to the bottom of public pages, can overlap bottom-anchored UI in screenshots.
+- The dev-mode "Sign in as the seeded admin" banner, fixed to the bottom of public pages, can overlap bottom-anchored UI in screenshots.

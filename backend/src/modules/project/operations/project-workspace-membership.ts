@@ -4,7 +4,7 @@ import { AppError } from '#/core/error';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { insertMembershipRows } from '#/modules/memberships/memberships-queries';
 import { deleteProjectMembership, findMaxDisplayOrder } from '#/modules/project/project-queries';
-import { getValidChannel } from '#/permissions';
+import { getValidChannel } from '#/permissions/get-valid-channel';
 
 type ProjectMembership = UserContext['var']['memberships'][number] & { channelType: 'project'; projectId: string };
 
@@ -33,18 +33,12 @@ export function requireProjectMembership(ctx: UserContext, project: { id: string
   return membership;
 }
 
-/**
- * Files the caller's project membership under a workspace, at the end of the caller's order there, or with a null
- * `workspaceId` takes it out of its workspace. The membership keeps its role.
- */
-export async function setProjectMembershipWorkspace(ctx: UserContext, membership: ProjectMembership, workspaceId: string | null) {
+/** Files the caller's project membership under a workspace, at the end of the caller's order there. The membership keeps its role. */
+export async function setProjectMembershipWorkspace(ctx: UserContext, membership: ProjectMembership, workspaceId: string) {
   const updatedMembership = await ctx.var.db.transaction(async (tx) => {
     const txCtx: DbContext = { var: { db: tx } };
-    const maxOrder = workspaceId
-      ? await findMaxDisplayOrder(txCtx, { userId: membership.userId, channelType: membership.channelType, workspaceId })
-      : null;
-
-    const displayOrder = workspaceId ? (maxOrder === null ? defaultOrder : maxOrder + orderGap) : membership.displayOrder;
+    const maxOrder = await findMaxDisplayOrder(txCtx, { userId: membership.userId, channelType: membership.channelType, workspaceId });
+    const displayOrder = maxOrder === null ? defaultOrder : maxOrder + orderGap;
 
     await deleteProjectMembership(txCtx, { membershipId: membership.id, userId: membership.userId });
 

@@ -97,27 +97,33 @@ export const zStxBase = z.object({
 });
 
 /**
- * A live change of product rows, naming the rows, their path and sequence range but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
+ * A live change of product rows, naming each row with its sequence position and the write that changed it, but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
  */
 export const zStreamChange = z.object({
   action: z.enum(['create', 'update', 'delete', 'moveOut']),
   productType: z.enum(['task', 'label', 'attachment']),
-  subjectId: z.string(),
   organizationId: z.string(),
   tenantId: z.string().nullable(),
-  path: z.string().nullable(),
-  seq: z.int().nullable(),
   channelId: z.string().nullable(),
-  stx: zStxBase.nullable(),
-  actorId: z.string().nullable(),
-  batchUntilSeq: z.int().nullable(),
-  count: z.int().nullable(),
+  rows: z.array(
+    z.object({
+      subjectId: z.string(),
+      seq: z.int().nullable(),
+      stx: zStxBase.nullable(),
+      actorId: z.string().nullable(),
+    }),
+  ),
+  overflow: z
+    .object({
+      afterSeq: z.int().nullable(),
+      untilSeq: z.int().nullable(),
+      subjectIds: z.array(z.string()).nullable(),
+    })
+    .nullable(),
   spreadWindow: z.int().nullable(),
   propagation: z
     .object({
       embeddedProduct: z.enum(['task', 'label', 'attachment']),
-      hostProduct: z.enum(['task', 'label', 'attachment']),
-      hostColumn: z.string(),
       update: z.array(z.string()),
       remove: z.array(z.string()),
     })
@@ -131,7 +137,7 @@ export const zStreamSignal = z.object({
   type: z.string(),
   organizationId: z.string().nullable(),
   subjectId: z.string().nullable(),
-  version: z.int().nullable(),
+  version: z.int().optional(),
 });
 
 /**
@@ -523,7 +529,6 @@ export const zProject = z.object({
           .object({
             accepted: z.number(),
             reviewed: z.number(),
-            delivered: z.number(),
             finished: z.number(),
             started: z.number(),
             unstarted: z.number(),
@@ -566,12 +571,13 @@ export const zTask = z.object({
   deletedBy: zActorRef.nullable(),
   public: z.boolean(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+  number: z.int().gte(-2147483648).lte(2147483647),
   expandable: z.boolean(),
   summary: z.string().max(1000000),
   summaryLength: z.int().gte(-2147483648).lte(2147483647),
   primaryLabelId: z.uuid(),
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
-  status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
+  status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(1), z.literal(0)]),
   statusChangedAt: z.string(),
   checkboxCount: z.int().gte(-2147483648).lte(2147483647),
   checkedCount: z.int().gte(-2147483648).lte(2147483647),
@@ -910,6 +916,7 @@ export const zLabel = z.object({
   deletedBy: z.uuid().nullable(),
   public: z.boolean(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+  number: z.int().gte(-2147483648).lte(2147483647),
   color: z.string().max(255).nullable(),
   mode: z.enum(['primary', 'secondary', 'epic']),
   slug: z.string().max(255),
@@ -1462,18 +1469,11 @@ export const zCheckSlugPath = z.object({
 export const zCheckSlugResponse = z.void();
 
 export const zPostAppCatchupBody = z.object({
-  cursor: z.string().max(50).optional(),
   views: z
     .array(
       z.object({
-        key: z.string().max(512),
         organizationId: z.string().max(50),
-        prefixes: z.array(z.string().max(512)).min(1).max(64),
-        entityTypes: z
-          .array(z.enum(['task', 'label', 'attachment']))
-          .min(1)
-          .max(64),
-        depth: z.enum(['self', 'subtree']).optional(),
+        entityType: z.enum(['task', 'label', 'attachment']),
         cursor: z.int().gte(0),
       }),
     )
@@ -1493,10 +1493,10 @@ export const zPostAppCatchupResponse = z.object({
         .array(
           z.object({
             embeddedProduct: z.enum(['task', 'label', 'attachment']),
-            hostProduct: z.enum(['task', 'label', 'attachment']),
-            hostColumn: z.string(),
             update: z.array(z.string()),
             remove: z.array(z.string()),
+            overflow: z.boolean().optional(),
+            untilSeq: z.int().optional(),
           }),
         )
         .optional(),
@@ -1505,14 +1505,13 @@ export const zPostAppCatchupResponse = z.object({
   views: z
     .array(
       z.object({
-        key: z.string(),
+        organizationId: z.string(),
+        entityType: z.enum(['task', 'label', 'attachment']),
         status: z.enum(['ok', 'opaque', 'forbidden']),
-        frontiers: z.record(z.string(), z.int()).optional(),
-        counts: z.record(z.string(), z.int()).optional(),
+        frontier: z.int().optional(),
       }),
     )
     .optional(),
-  cursor: z.string().nullable(),
   generation: z.int().optional(),
 });
 
@@ -1979,13 +1978,14 @@ export const zGetPublicTaskResponse = zTask;
 
 export const zGetPublicTasksQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
+  sort: z.enum(['number', 'projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(1000).optional().default(40),
   status: z.string().max(1000000).optional(),
   type: z.string().max(1000000).optional(),
   labels: z.string().max(1000000).optional(),
+  assigned: z.string().max(1000000).optional(),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50),
 });
@@ -2019,8 +2019,36 @@ export const zGetTaskCoverPath = z.object({
   id: z.string().max(50),
 });
 
+export const zResolveTaskLinkByNumberPath = z.object({
+  tenantId: z.string().max(50),
+  number: z.int().gt(0),
+});
+
+/**
+ * Task link resolution data
+ */
+export const zResolveTaskLinkByNumberResponse = z.object({
+  taskId: z.string(),
+  projectId: z.string(),
+  projectSlug: z.string(),
+  organizationId: z.string(),
+  organizationSlug: z.string(),
+  tenantId: z.string(),
+  public: z.boolean(),
+});
+
+export const zGetTaskCoverByNumberPath = z.object({
+  tenantId: z.string().max(50),
+  number: z.int().gt(0),
+});
+
 export const zRedirectToTaskPath = z.object({
   id: z.string().max(50),
+});
+
+export const zRedirectToTaskByNumberPath = z.object({
+  tenantId: z.string().max(50),
+  number: z.int().gt(0),
 });
 
 export const zGetTenantsQuery = z.object({
@@ -2524,7 +2552,6 @@ export const zCreateProjectsResponse = z.object({
                   .object({
                     accepted: z.number(),
                     reviewed: z.number(),
-                    delivered: z.number(),
                     finished: z.number(),
                     started: z.number(),
                     unstarted: z.number(),
@@ -2672,73 +2699,6 @@ export const zAssignProjectWorkspaceResponse = zProject.and(
               .object({
                 accepted: z.number(),
                 reviewed: z.number(),
-                delivered: z.number(),
-                finished: z.number(),
-                started: z.number(),
-                unstarted: z.number(),
-                iced: z.number(),
-              })
-              .optional(),
-          })
-          .optional(),
-        members: z.array(zUserMinimalBase).optional(),
-      })
-      .optional(),
-  }),
-);
-
-export const zRemoveProjectWorkspacePath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * A project that organizes tasks and members within an organization.
- */
-export const zRemoveProjectWorkspaceResponse = zProject.and(
-  z.object({
-    included: z
-      .object({
-        membership: zMembershipBase,
-        counts: z
-          .object({
-            membership: z.object({
-              admin: z.number(),
-              member: z.number(),
-              guest: z.number(),
-              pending: z.number(),
-              total: z.number(),
-            }),
-            entities: z.object({
-              task: z.number(),
-              label: z.number(),
-              attachment: z.number(),
-            }),
-            entitiesSelf: z.object({
-              task: z.number(),
-              label: z.number(),
-              attachment: z.number(),
-            }),
-            activity: z.object({
-              task: z.object({
-                created: z.number().nullable(),
-                updated: z.number().nullable(),
-              }),
-              label: z.object({
-                created: z.number().nullable(),
-                updated: z.number().nullable(),
-              }),
-              attachment: z.object({
-                created: z.number().nullable(),
-                updated: z.number().nullable(),
-              }),
-            }),
-            taskStatusCounts: z
-              .object({
-                accepted: z.number(),
-                reviewed: z.number(),
-                delivered: z.number(),
                 finished: z.number(),
                 started: z.number(),
                 unstarted: z.number(),
@@ -2808,7 +2768,6 @@ export const zMoveProjectToWorkspaceResponse = zProject.and(
               .object({
                 accepted: z.number(),
                 reviewed: z.number(),
-                delivered: z.number(),
                 finished: z.number(),
                 started: z.number(),
                 unstarted: z.number(),
@@ -2905,10 +2864,6 @@ export const zGetWorkspacesQuery = z.object({
   limit: z.int().gte(1).lte(1000).optional().default(40),
   organizationId: z.string().max(50).optional(),
   role: z.enum(['admin', 'member', 'guest']).optional(),
-  excludeArchived: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
   include: z.string().max(255).optional(),
 });
 
@@ -3523,6 +3478,7 @@ export const zGetPendingMembershipsResponse = z.object({
       role: z.enum(['admin', 'member', 'guest']),
       createdAt: z.string(),
       remindedAt: z.string().nullable(),
+      linkExpiresAt: z.string().nullable(),
       createdBy: zActorRef.nullable(),
     }),
   ),
@@ -3768,7 +3724,7 @@ export const zGetTasksPath = z.object({
 
 export const zGetTasksQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
+  sort: z.enum(['number', 'projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(1000).optional().default(40),
@@ -3777,6 +3733,7 @@ export const zGetTasksQuery = z.object({
   status: z.string().max(1000000).optional(),
   type: z.string().max(1000000).optional(),
   labels: z.string().max(1000000).optional(),
+  assigned: z.string().max(1000000).optional(),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
@@ -3808,7 +3765,7 @@ export const zCreateTasksBody = z
       name: z.string().max(255).optional(),
       description: z.string().max(1000000).nullable(),
       id: z.uuid(),
-      status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
+      status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(1), z.literal(0)]),
       primaryLabelId: z.uuid().optional(),
       displayOrder: z.number().optional(),
       labels: z.array(z.uuid()).max(50).optional(),
@@ -3865,7 +3822,7 @@ export const zUpdateTaskBody = z.object({
   ops: z.object({
     name: z.string().max(255).optional(),
     description: z.string().max(1000000).nullish(),
-    status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]).optional(),
+    status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(1), z.literal(0)]).optional(),
     primaryLabelId: z.uuid().optional(),
     displayOrder: z.number().optional(),
     labels: z

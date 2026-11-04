@@ -1,30 +1,40 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import { GripVerticalIcon } from 'lucide-react';
+import { AnimatePresence, cancelFrame, frame, motion } from 'motion/react';
+import { type FocusEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelName } from 'shared/config/labels-config';
+import { DropIndicator } from '~/modules/common/drop-indicator';
 import { HighlightText } from '~/modules/common/match-highlight/highlight-text';
+import { ReorderHandle, type ReorderPosition } from '~/modules/common/reorder-handle/reorder-handle';
+import { LabelFilterCount } from '~/modules/label/label-filter-count';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
-import { LabelTileDetails, labelTileReveal } from '~/modules/label/label-tile-details';
+import { isLabelData, labelDragData } from '~/modules/label/label-order';
+import { LabelTileDetails } from '~/modules/label/label-tile-details';
+import { labelTileReveal } from '~/modules/label/label-tile-reveal';
 import { labelTileStore, useLabelTileStore } from '~/modules/label/label-tile-store';
 import { useLabelUpdateMutation } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps } from '~/modules/label/types';
-import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
+import { ProductRef } from '~/modules/task/product-ref';
 import { itemFocusBarClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
+import { buttonVariants } from '~/modules/ui/button';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
-import { formatCount } from '~/utils/format-count';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
+import { getScrollParent } from '~/utils/scroll-parent';
 import { tw } from '~/utils/tw';
 
-// Like a task card's actions: hidden until the tile is hovered or holds focus, then each slides in from the right like the
-// close button. On a collapsed tile pointer events follow, so a tap lands on the tile and expands it. Focus from a tap must
-// not reveal there: the buttons would appear under the finger between press and release, and the browser then fires no click.
+// Like a task card's actions: on a collapsed tile hidden until it is hovered or holds focus, then each slides in from the right
+// like the close button; an open tile shows them throughout. On a collapsed tile pointer events follow, so a tap lands on the
+// tile and expands it. Focus from a tap must not reveal there: the buttons would appear under the finger between press and
+// release, and the browser then fires no click.
 const actionSlide = tw(
   'translate-x-3 opacity-0 transition-[translate,opacity,color,background-color] duration-200 ease-out motion-reduce:transition-none',
 );
@@ -34,29 +44,43 @@ const restingActionsReveal = tw(
 const restingActionsPointer = tw(
   'pointer-events-none group-hover/label-tile:pointer-events-auto group-focus-visible/label-tile:pointer-events-auto has-data-dropdowner-active:pointer-events-auto has-data-dropdowner-done:pointer-events-auto group-has-[:focus-visible]/label-tile:pointer-events-auto',
 );
-// A phone has no hover, so an open tile shows them throughout
-const openActionsReveal = tw(
-  'group-focus-within/label-tile:translate-x-0 group-focus-within/label-tile:opacity-100 group-hover/label-tile:translate-x-0 group-hover/label-tile:opacity-100 group-has-data-dropdowner-active/label-tile:translate-x-0 group-has-data-dropdowner-done/label-tile:translate-x-0 group-has-data-dropdowner-active/label-tile:opacity-100 group-has-data-dropdowner-done/label-tile:opacity-100 max-sm:translate-x-0 max-sm:opacity-100',
-);
 
-interface LabelTileProps extends Pick<LabelsHostProps, 'singleExpand'> {
+/** Holds a tile where it is while the open one above it collapses. Scroll anchoring would, but a sticky panel turns it off and Safari has none. */
+const holdTileInPlace = (tile: HTMLElement) => {
+  const top = tile.getBoundingClientRect().top;
+  const scrollParent = getScrollParent(tile);
+  const end = performance.now() + labelTileReveal.transition.duration * 1000 + 50;
+  // After motion's render: earlier, each correction would lag the collapse by a frame
+  const hold = () => {
+    const shift = tile.getBoundingClientRect().top - top;
+    if (shift) scrollParent.scrollBy({ top: shift, behavior: 'instant' });
+    if (performance.now() >= end) cancelFrame(hold);
+  };
+  frame.postRender(hold, true);
+};
+
+interface LabelTileProps extends Pick<LabelsHostProps, 'onAction'> {
   row: LabelRow;
+  /** Its read-only projects, by a guest membership or public access. Any one locks the whole label, as a rename or delete acts on all its projects. */
+  lockedByProjectIds: string[];
   /** A tile in the board panel is a board item: one Tab stop for the list, arrow keys between tiles. */
   onBoard?: boolean;
   showProjectUsage?: boolean;
+  /** Its place in the list, when a drag or an arrow press on its grip can move it. */
+  position?: ReorderPosition;
+  onMove?: (step: -1 | 1) => void;
 }
 
 /** DOM id of a label tile, so a label link can scroll its tile into view. */
 export const labelTileDomId = (labelId: string) => `label-tile-${labelId}`;
 
-/** A click expands the tile in place, like a task card; a click on the expanded name renames it, and on the board Enter does both. */
-export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: LabelTileProps) {
+/** A click expands the tile in place, like a task card; a click or Tab on the expanded name renames it, and on the board Enter does both. */
+export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProjectUsage, position, onMove }: LabelTileProps) {
   const { t } = useTranslation();
 
-  const expanded = useLabelTileStore((state) => !!state.expandedIds[row.id]);
+  const expanded = useLabelTileStore((state) => state.expandedId === row.id);
+  const isReadOnly = lockedByProjectIds.length > 0;
 
-  // Read-only viewers (guest membership or public access) cannot rename, switch mode or delete
-  const isReadOnly = useIsProjectReadOnly(row.projectId);
   const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
   const [editingName, setEditingName] = useState<string | null>(null);
 
@@ -66,6 +90,39 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
   // Off the board (the mobile drawer) a tile keeps its controls in the Tab order. On it, as with a task card, a collapsed
   // tile is one Tab stop: Enter opens it, and only then does Tab reach its controls, cycling inside it.
   useItemControlsTabOrder(tileRef, domId, onBoard ? isCurrent && expanded : true, { trap: onBoard });
+
+  const gripRef = useRef<HTMLButtonElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+  const canReorder = !!onBoard && !isReadOnly && !!position;
+
+  // A collapsed tile drags as a whole, as a task card does; an open one by its grip, so its name and fields keep text selection
+  useEffect(() => {
+    const element = tileRef.current;
+    const dragHandle = expanded ? gripRef.current : element;
+    if (!canReorder || !element || !dragHandle) return;
+    return draggable({
+      element,
+      dragHandle,
+      getInitialData: () => labelDragData(row.id),
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
+    });
+  }, [canReorder, expanded, row.id]);
+
+  useEffect(() => {
+    const element = tileRef.current;
+    if (!onBoard || !element) return;
+    return dropTargetForElements({
+      element,
+      canDrop: ({ source }) => isLabelData(source.data) && source.data.id !== row.id,
+      getIsSticky: () => true,
+      getData: ({ input }) => attachClosestEdge(labelDragData(row.id), { element, input, allowedEdges: ['top', 'bottom'] }),
+      onDrag: ({ self }) => setClosestEdge(extractClosestEdge(self.data)),
+      onDragLeave: () => setClosestEdge(null),
+      onDrop: () => setClosestEdge(null),
+    });
+  }, [onBoard, row.id]);
 
   // Mounting as the current tile: take the focus a keypress left for it, and hold the list's Tab stop
   useEffect(() => {
@@ -81,7 +138,13 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
     }
     // A collapsed name spans the tile: a click on it focuses the tile, as on a task card, so the arrow keys go on from it
     if (onBoard) focusItem(domId);
-    labelTileStore.getState().expand(row.id, singleExpand);
+    if (tileRef.current && labelTileStore.getState().expandedId) holdTileInPlace(tileRef.current);
+    labelTileStore.getState().expand(row.id);
+  };
+
+  // Keyboard only: a press goes through handleNameClick, where one on a collapsed tile just opens it
+  const handleNameFocus = (event: FocusEvent<HTMLButtonElement>) => {
+    if (expanded && !isReadOnly && event.currentTarget.matches(':focus-visible')) setEditingName(row.name);
   };
 
   // Back to the tile after a keyboard rename, once the field has unmounted: blurring it first would commit again
@@ -90,7 +153,7 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
   };
 
   const collapse = () => labelTileStore.getState().collapse(row.id);
-  const actionClass = cn(actionSlide, expanded ? openActionsReveal : restingActionsReveal);
+  const actionClass = cn(actionSlide, expanded ? 'translate-x-0 opacity-100' : restingActionsReveal);
 
   const handleTileFocus = () => {
     if (onBoard && boardFocusStore.getState().currentItemId !== domId) setCurrentItem(domId);
@@ -126,7 +189,8 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
   const commitName = () => {
     const name = labelName(editingName?.trim() ?? '', row.mode);
     setEditingName(null);
-    if (!name || name === row.name) return;
+    // Compared raw as well: Tab passes through this field, and must not slugify an older name nobody edited
+    if (!name || name === row.name || editingName === row.name) return;
     // Secondary slug groups rename every sibling row; epics rename their single row
     const ids = row.mode === 'epic' ? [row.id] : row.siblingIds;
     for (const id of ids) updateLabel.mutate({ id, ops: { name } });
@@ -147,7 +211,10 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
           onBoard &&
             'outline-none before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary before:opacity-0',
           onBoard && itemFocusBarClass,
-          'focus-within:bg-muted/50 hover:bg-muted/50',
+          // An open tile keeps the hover tint, so it stands out among the closed ones
+          'pointer-fine:focus-within:bg-card hover:bg-card focus-visible:bg-card has-[:focus-visible]:bg-card',
+          expanded && 'bg-card',
+          isDragging && 'opacity-30',
           !expanded && !(onBoard && isCurrent) && 'resting-text transition-[color]',
         )}
       >
@@ -158,6 +225,7 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
             {editingName !== null ? (
               <Input
                 value={editingName}
+                aria-label={t('c:name')}
                 autoFocus
                 onChange={(event) => setEditingName(event.target.value)}
                 onBlur={commitName}
@@ -170,6 +238,7 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
                 aria-expanded={expanded}
                 title={expanded && !isReadOnly ? t('c:edit') : undefined}
                 onClick={handleNameClick}
+                onFocus={handleNameFocus}
                 className={cn(
                   '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0',
                   // Collapsed, an after-overlay stretches the button over the whole tile; the action buttons sit above it
@@ -181,13 +250,11 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
                 </span>
               </button>
             )}
-            {!expanded && (
-              <span className="ml-1 shrink-0 whitespace-nowrap text-muted-foreground text-xs tabular-nums">
-                {formatCount(row.usedCount)} / {formatCount(row.totalCount)}
-              </span>
-            )}
+            {expanded && <ProductRef number={row.number} />}
+            {/* z-1 lifts it above the collapsed name's overlay: a press filters the board, the rest of the tile opens it */}
+            <LabelFilterCount name={row.name} slug={row.slug} count={row.usedCount} onAction={onAction} />
             {!expanded && row.mode === 'epic' && (
-              <Badge variant="secondary" className="ml-auto shrink-0">
+              <Badge variant="secondary" className="shrink-0">
                 {t('c:epic')}
               </Badge>
             )}
@@ -196,6 +263,19 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
           {/* Floating and in-flow actions share the row's right padding, so they keep their place when the tile
               expands; close joins on their left */}
           <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : ['absolute inset-y-0 right-4', restingActionsPointer])}>
+            {expanded && canReorder && position && onMove && (
+              <ReorderHandle
+                ref={gripRef}
+                id={row.id}
+                name={row.name}
+                index={position.index}
+                total={position.total}
+                onMove={onMove}
+                className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), actionClass, 'focus-inset size-8')}
+              >
+                <GripVerticalIcon className="size-3.5" />
+              </ReorderHandle>
+            )}
             <AnimatePresence initial={false}>
               {expanded && (
                 <CardCloseButton
@@ -216,10 +296,11 @@ export function LabelTile({ row, singleExpand, onBoard, showProjectUsage }: Labe
         <AnimatePresence initial={false}>
           {expanded && (
             <motion.div key="details" {...labelTileReveal}>
-              <LabelTileDetails row={row} canManage={!isReadOnly} showProjectUsage={showProjectUsage} />
+              <LabelTileDetails row={row} lockedByProjectIds={lockedByProjectIds} showProjectUsage={showProjectUsage} />
             </motion.div>
           )}
         </AnimatePresence>
+        {closestEdge && <DropIndicator edge={closestEdge} gap={0.25} />}
       </div>
     </li>
   );

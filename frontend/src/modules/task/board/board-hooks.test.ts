@@ -1,13 +1,18 @@
 import '~/query/tests/query-client-env';
 import { describe, expect, it } from 'vitest';
-import type { EnrichedProject } from '~/modules/project/types';
+import type { ProjectWithMembership } from '~/modules/project/types';
 import type { BoardResizablePanel, ProjectResizablePanel } from '~/modules/task/types';
 import { computePanelReorder, getPanelDisplayOrder, sortPanelsByOrder } from './board-hooks';
 
 const makeProjectPanel = (projectId: string, displayOrder: number, panelId = projectId): ProjectResizablePanel => ({
   kind: 'project',
   panelId,
-  project: { id: projectId, tenantId: 't', organizationId: 'o', membership: { id: `m-${projectId}`, displayOrder } } as unknown as EnrichedProject,
+  project: {
+    id: projectId,
+    tenantId: 't',
+    organizationId: 'o',
+    membership: { id: `m-${projectId}`, displayOrder },
+  } as unknown as ProjectWithMembership,
 });
 
 // A status panel of a project, as prepareBoardPanels makes it: its offset keeps it from tying with the project's panel.
@@ -41,7 +46,7 @@ describe('getPanelDisplayOrder', () => {
     const bare: BoardResizablePanel = {
       kind: 'project',
       panelId: 'p',
-      project: { id: 'p', tenantId: 't', organizationId: 'o' } as unknown as EnrichedProject,
+      project: { id: 'p', tenantId: 't', organizationId: 'o' } as unknown as ProjectWithMembership,
     };
     expect(getPanelDisplayOrder(bare)).toBe(0);
   });

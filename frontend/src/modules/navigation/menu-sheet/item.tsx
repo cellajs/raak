@@ -7,6 +7,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { IconComponent } from '~/modules/common/icons/types';
 import { toaster } from '~/modules/common/toaster/toaster';
 import type { UserMenuItem } from '~/modules/me/types';
+import { canMute } from '~/modules/navigation/menu-sheet/helpers/can-mute';
 import { isSubmenuShown } from '~/modules/navigation/menu-sheet/helpers/is-submenu-shown';
 import { useMenuItemUnseenCount } from '~/modules/navigation/menu-sheet/helpers/use-menu-item-unseen-count';
 import { SubmenuConnector } from '~/modules/navigation/menu-sheet/submenu-connector';
@@ -32,7 +33,8 @@ export function MenuSheetItem({ item, isSubitem, icon: Icon }: MenuSheetItemProp
   const hasSubmenu = isSubmenuShown(item);
   const unseenCount = useMenuItemUnseenCount(item, hasSubmenu);
 
-  const { to, params, search } = getChannelRoute(item, isSubitem);
+  // A parent's page holds no place for an archived sub-row, so it opens its own
+  const { to, params, search } = getChannelRoute(item, isSubitem && !item.membership.archived);
 
   return (
     <Link
@@ -56,7 +58,7 @@ export function MenuSheetItem({ item, isSubitem, icon: Icon }: MenuSheetItemProp
     >
       <span className="absolute inset-y-3 left-0 w-1 rounded-lg bg-primary opacity-0 transition-opacity group-data-[link-active=true]/menu-sheet-item:opacity-100" />
       {/* Every avatar gap is 1rem: half below the row above, half above this avatar */}
-      {isSubitem && <SubmenuConnector className="-top-2 h-4" />}
+      {isSubitem && !item.membership.archived && <SubmenuConnector className="-top-2 h-4" />}
       <span className="relative mx-3 my-2 size-8 shrink-0 group-data-[subitem=true]/menu-sheet-item:mx-4 group-data-[subitem=true]/menu-sheet-item:size-6">
         <EntityAvatar
           className={cn(
@@ -69,7 +71,7 @@ export function MenuSheetItem({ item, isSubitem, icon: Icon }: MenuSheetItemProp
           name={item.name}
           url={item.thumbnailUrl}
         />
-        {item.membership.muted && (
+        {item.membership.muted && canMute(item) && (
           <span className="absolute right-0 bottom-0 flex size-3.5 items-center justify-center rounded-tl-lg bg-card opacity-80">
             <BellOffIcon className="size-2.5" strokeWidth={2} />
           </span>

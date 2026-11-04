@@ -44,11 +44,12 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
   const lastScrolledSlugRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!projectSlug || projectSlug === lastScrolledSlugRef.current) return;
-    lastScrolledSlugRef.current = projectSlug;
     const targetProject = projects.find((project) => project.slug === projectSlug);
     if (!targetProject) return;
     const targetPanel = panels.find((panel) => panel.kind === 'project' && panel.project.id === targetProject.id);
     if (!targetPanel) return;
+    // Only once found: a project just added can reach the board after its first render
+    lastScrolledSlugRef.current = projectSlug;
     boardLayoutRef.current?.expandAndScrollToPanel(targetPanel.panelId);
   }, [projectSlug, panels, projects]);
 

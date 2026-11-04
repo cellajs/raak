@@ -21,10 +21,10 @@ import {
 } from '~/modules/attachment/query-mutations';
 import { attachmentsSearchDefaults } from '~/modules/attachment/search-params-schemas';
 import { registerDescriptionDerivation } from '~/modules/common/blocknote/description-derivation';
-import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-owned-fields';
+import { registerDescriptionColumns } from '~/modules/common/blocknote/yjs-owned-fields';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
-import { cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
+import { cacheRemove, cacheUpdate, cancelKeepingMark, removeDetailQueriesById, writeKeepingMark } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
@@ -33,9 +33,8 @@ import { createCacheFinder } from '~/query/basic/find-in-list-cache';
 import { liveItems, offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
+import { syncedListOptions } from '~/query/basic/synced-list-options';
 import type { OrgRoutableItemData } from '~/query/basic/types';
-import { addMutationRegistrar } from '~/query/mutation-registry';
-import { registerVariablesVersion } from '~/query/offline/mutation-variables';
 import { prepareProductDelete } from '~/query/offline/prepare-delete';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
@@ -61,17 +60,13 @@ registerEntityQueryKeys('attachment', keys, ({ organizationId, tenantId, channel
 });
 export const attachmentQueryKeys = keys;
 
-/** The columns `update-attachment.ts` stores from a description. */
-const descriptionDerivedKeys = ['keywords'];
-
-// A derived column follows the description's stamp.
-registerYjsOwnedFields('attachment', ['description', ...descriptionDerivedKeys]);
-// The derivation `update-attachment.ts` runs on every description write.
+// The columns `update-attachment.ts` stores from a description, and the derivation it runs on every description write.
+registerDescriptionColumns('attachment', ['keywords']);
 registerDescriptionDerivation('attachment', (description) => ({ keywords: deriveDocument(description).keywords }));
 
 const handleError = createResourceError('attachment');
 
-/** Refetches the organization's lists once no other attachment mutation is pending. */
+/** Marks the organization's lists for a refetch; the active ones refetch now unless another attachment mutation is pending. */
 const invalidateOrgLists = (queryClient: QueryClient, organizationId: string) =>
   invalidateIfLastMutation(queryClient, keys.all, keys.list.org(organizationId));
 
@@ -79,7 +74,7 @@ const invalidateOrgLists = (queryClient: QueryClient, organizationId: string) =>
 const patchCachedAttachment = (queryClient: QueryClient, organizationId: string, row: Attachment, ops: UpdateAttachmentVars['ops']) => {
   const patched = { ...row, ...ops, updatedAt: new Date().toISOString() };
   cacheUpdate(keys.list.org(organizationId), [patched]);
-  queryClient.setQueryData(keys.detail.byId(row.id), patched);
+  writeKeepingMark(queryClient, keys.detail.byId(row.id), () => patched);
 };
 
 type AttachmentsListParams = AttachmentFilters & {
@@ -100,14 +95,16 @@ export const attachmentsListQueryOptions = (params: AttachmentsListParams) => {
 
   const filters = { q, sort, order };
 
-  return infiniteQueryOptions({
-    queryKey: keys.list.filtered(organizationId, filters),
-    ...offsetPaging(limit, (offset, signal) =>
-      getAttachments({ path: { tenantId, organizationId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }).then(liveItems),
-    ),
-    meta: { persist: false },
-    staleTime: syncStaleTime,
-  });
+  return syncedListOptions(
+    infiniteQueryOptions({
+      queryKey: keys.list.filtered(organizationId, filters),
+      ...offsetPaging(limit, (offset, signal) =>
+        getAttachments({ path: { tenantId, organizationId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }).then(liveItems),
+      ),
+      meta: { persist: false },
+      staleTime: syncStaleTime,
+    }),
+  );
 };
 
 /**
@@ -117,16 +114,19 @@ export const attachmentsListQueryOptions = (params: AttachmentsListParams) => {
 const orgListSpansHomes = hierarchy.possibleHomeChannels('attachment').some((type) => type !== 'organization');
 
 export const attachmentsCanonicalOptions = ({ organizationId, tenantId }: { organizationId: string; tenantId: string }) => {
-  return queryOptions({
-    queryKey: orgListSpansHomes ? keys.list.filtered(organizationId, { channelId: organizationId }) : keys.list.home(organizationId),
-    queryFn: async () => {
-      return fetchAllPages(
-        ({ limit, offset }) => getAttachments({ path: { tenantId, organizationId }, query: { limit, offset } }).then(liveItems),
-        1000,
-      );
-    },
-    staleTime: syncStaleTime,
-  });
+  return syncedListOptions(
+    queryOptions({
+      queryKey: orgListSpansHomes ? keys.list.filtered(organizationId, { channelId: organizationId }) : keys.list.home(organizationId),
+      queryFn: async () => {
+        return fetchAllPages(
+          ({ limit, offset }) => getAttachments({ path: { tenantId, organizationId }, query: { limit, offset } }).then(liveItems),
+          1000,
+        );
+      },
+      staleTime: syncStaleTime,
+    }),
+    { organizationId, tenantId },
+  );
 };
 
 export const attachmentQueryOptions = (tenantId: string, organizationId: string, id: string) =>
@@ -170,7 +170,7 @@ export const attachmentCreateOptions = (
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ tenantId, organizationId, data }) => {
     const orgKey = keys.list.org(organizationId);
-    await queryClient.cancelQueries({ queryKey: orgKey });
+    await cancelKeepingMark(queryClient, orgKey);
     const optimisticAttachments = data.map((attachment) => createOptimisticEntity(zAttachment, { ...attachment, tenantId, organizationId }));
     insertEntitiesIntoHome(queryClient, optimisticAttachments);
     return { optimisticAttachments };
@@ -199,8 +199,8 @@ const attachmentUpdateOptions = (
   mutationFn: updateAttachmentMutationFn,
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ organizationId, id, ops }) => {
-    await queryClient.cancelQueries({ queryKey: keys.list.org(organizationId) });
-    await queryClient.cancelQueries({ queryKey: keys.detail.byId(id) });
+    await cancelKeepingMark(queryClient, keys.list.org(organizationId));
+    await cancelKeepingMark(queryClient, keys.detail.byId(id));
 
     const previousAttachment = findAttachmentInCache(id);
     if (previousAttachment) patchCachedAttachment(queryClient, organizationId, previousAttachment, ops);
@@ -212,7 +212,7 @@ const attachmentUpdateOptions = (
     handleError('update', error);
     if (context?.previousAttachment) {
       cacheUpdate(keys.list.org(variables.organizationId), [context.previousAttachment]);
-      queryClient.setQueryData(keys.detail.byId(context.previousAttachment.id), context.previousAttachment);
+      writeKeepingMark(queryClient, keys.detail.byId(context.previousAttachment.id), () => context.previousAttachment);
     }
   },
   onSuccess: (updatedAttachment, variables) => {
@@ -220,12 +220,7 @@ const attachmentUpdateOptions = (
     const detailKey = keys.detail.byId(updatedAttachment.id);
     const cached = findAttachmentInCache(updatedAttachment.id);
     const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
-    const merged = mergeServerResponse({
-      cached,
-      serverEntity: updatedAttachment,
-      mutatedKeys,
-      derivedKeys: { description: descriptionDerivedKeys },
-    });
+    const merged = mergeServerResponse({ queryClient, cached, serverEntity: updatedAttachment, mutatedKeys });
     writeEntityToCache({ entity: merged, listKey: orgKey, detailKey, queryClient });
   },
   onSettled: (_data, error, variables) => {
@@ -244,7 +239,7 @@ const attachmentDeleteOptions = (
     const orgKey = keys.list.org(organizationId);
     const attachmentIds = rows.map((row) => row.id);
     removePendingMutations(queryClient, keys.update, attachmentIds);
-    await queryClient.cancelQueries({ queryKey: orgKey });
+    await cancelKeepingMark(queryClient, orgKey);
     cacheRemove(orgKey, rows);
     removeDetailQueriesById(queryClient, keys.detail.base, attachmentIds);
     return { deletedAttachments: rows };
@@ -324,34 +319,25 @@ export const useAttachmentDeleteMutation = (tenantId: string, organizationId: st
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
-// Mutation defaults (offline persistence)
-addMutationRegistrar((queryClient: QueryClient) => {
-  queryClient.setQueryDefaults(keys.detail.base, {
-    queryFn: ({ queryKey, meta }) => {
-      const id = queryKey[2] as string;
-      const cached = findAttachmentInCache(id);
-      const { organizationId, tenantId } = resolveQueryOrgTenantIds(meta, cached, 'attachment');
-      return getAttachment({ path: { id, organizationId, tenantId } });
-    },
-  });
-
-  queryClient.setMutationDefaults(keys.create, attachmentCreateOptions(queryClient));
-  queryClient.setMutationDefaults(keys.update, attachmentUpdateOptions(queryClient));
-  queryClient.setMutationDefaults(keys.delete, attachmentDeleteOptions(queryClient));
-
-  // A placeholder turns into its file once a row with stored keys reaches the cache: from sync, a create or a key link.
-  queryClient.getQueryCache().subscribe((event) => {
-    if (event.type !== 'updated' || event.query.queryKey[0] !== 'attachment' || !hasPendingUploads()) return;
-    clearStoredUploads((id) => {
-      const row = findAttachmentInCache(id);
-      return !!row && !isPendingUpload(row);
-    });
-  });
+// Mutation defaults (offline persistence): set when the module loads, before the cache restore hydrates a queued mutation.
+queryClient.setQueryDefaults(keys.detail.base, {
+  queryFn: ({ queryKey }) => {
+    const id = queryKey[2] as string;
+    const cached = findAttachmentInCache(id);
+    const { organizationId, tenantId } = resolveQueryOrgTenantIds(cached, 'attachment');
+    return getAttachment({ path: { id, organizationId, tenantId } });
+  },
 });
 
-// Version 2 of a delete carries its rows under `rows`; a bundle of version 1 queued them as `attachments`.
-registerVariablesVersion(keys.delete, 2, (variables) => {
-  if (typeof variables !== 'object' || variables === null || !('attachments' in variables)) return null;
-  const { attachments, ...rest } = variables;
-  return Array.isArray(attachments) ? { ...rest, rows: attachments } : null;
+queryClient.setMutationDefaults(keys.create, attachmentCreateOptions(queryClient));
+queryClient.setMutationDefaults(keys.update, attachmentUpdateOptions(queryClient));
+queryClient.setMutationDefaults(keys.delete, attachmentDeleteOptions(queryClient));
+
+// A placeholder turns into its file once a row with stored keys reaches the cache: from sync, a create or a key link.
+queryClient.getQueryCache().subscribe((event) => {
+  if (event.type !== 'updated' || event.query.queryKey[0] !== 'attachment' || !hasPendingUploads()) return;
+  clearStoredUploads((id) => {
+    const row = findAttachmentInCache(id);
+    return !!row && !isPendingUpload(row);
+  });
 });

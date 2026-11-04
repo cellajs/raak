@@ -6,15 +6,7 @@ import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schem
 import { membershipBaseSchema } from '#/modules/memberships/memberships-schema';
 import { workspacesTable } from '#/modules/workspace/workspace-db';
 import { mockWorkspaceResponse } from '#/modules/workspace/workspace-mocks';
-import {
-  batchResponseSchema,
-  booleanTransformSchema,
-  includeQuerySchema,
-  paginationQuerySchema,
-  validIdSchema,
-  validNameSchema,
-  validTempIdSchema,
-} from '#/schemas';
+import { batchResponseSchema, includeQuerySchema, paginationQuerySchema, validIdSchema, validNameSchema, validTempIdSchema } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
 import { auditShape } from '#/schemas/entity-base';
 import { toolsConfigSchema } from '#/schemas/tools-config';
@@ -56,6 +48,5 @@ export const workspaceListQuerySchema = paginationQuerySchema.extend({
   order: z.enum(['asc', 'desc']).default('asc'),
   organizationId: validIdSchema.optional(),
   role: z.enum(roles.all).optional(),
-  excludeArchived: booleanTransformSchema,
   include: includeQuerySchema,
 });

@@ -16,7 +16,7 @@ export function AboutPage() {
     <>
       <MarketingNav />
 
-      <main>
+      <main className="focus:outline-hidden">
         <Hero title="about:title_1" text="about:tagline" demo={<AboutDemo />} />
 
         <div className="my-12">

@@ -1,5 +1,5 @@
 import '~/query/tests/query-client-env';
-import type { EntityType, ProductEntityType } from 'shared';
+import type { EntityType } from 'shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Synthetic sub-org hierarchy as a real builder instance: 'task' is a product homed at the
@@ -31,11 +31,11 @@ vi.mock('shared', async (importOriginal) => {
 const { createEntityKeys } = await import('~/query/basic/create-query-keys');
 const { registerEntityQueryKeys, registerEqualityFilterKeys, syncChunkSize } = await import('~/query/basic/entity-query-registry');
 const { queryClient } = await import('~/query/query-client');
-const { fetchEntityAndUpdateList, fetchRangeAndPatch } = await import('~/query/realtime/cache-ops');
+const { fetchRangeAndPatch, removeEntityDetailsBelow } = await import('~/query/realtime/cache-ops');
 
 // The synthetic 'task' and 'comment' types exist only in this file's shared mock, hence the casts.
 const TASK = 'task' as EntityType;
-const comment = 'comment' as ProductEntityType;
+const comment = 'comment' as EntityType;
 
 describe('realtime cache ops', () => {
   afterEach(() => {
@@ -85,6 +85,38 @@ describe('realtime cache ops', () => {
     expect(ids(keys.list.home('org-1'))).toEqual(['task-2']);
     // A sibling channel's list holds rows homed elsewhere: no splice.
     expect(ids(keys.list.home('org-1', 'project-2'))).toEqual([]);
+  });
+
+  it('applies each row of one range by its own rule: a rename in place, a tombstone out, a move to its new home, new rows in turn', async () => {
+    const keys = createEntityKeys<Record<string, never>>(TASK);
+    const task = (id: string, seq: number, extra: Record<string, unknown> = {}) => ({
+      id,
+      organizationId: 'org-1',
+      projectId: 'project-1',
+      seq,
+      ...extra,
+    });
+    registerEntityQueryKeys(TASK, keys, async () => ({
+      items: [
+        task('task-1', 5, { name: 'renamed' }),
+        task('task-2', 6, { deletedAt: '2026-06-16T20:00:00.000Z' }),
+        task('task-3', 7, { projectId: 'project-2' }),
+        task('task-4', 8),
+        task('task-5', 9),
+      ],
+      total: 5,
+    }));
+    queryClient.setQueryData(keys.list.home('org-1', 'project-1'), { items: [task('task-1', 1), task('task-2', 2), task('task-3', 3)], total: 3 });
+    queryClient.setQueryData(keys.list.home('org-1', 'project-2'), { items: [], total: 0 });
+
+    await fetchRangeAndPatch(TASK, 'org-1', 'tenant-1', { afterSeq: 4, untilSeq: 9 }, keys);
+
+    const list = (projectId: string) =>
+      queryClient.getQueryData<{ items: { id: string; name?: string }[]; total: number }>(keys.list.home('org-1', projectId));
+    expect(list('project-1')?.items.map(({ id }) => id)).toEqual(['task-5', 'task-4', 'task-1']);
+    expect(list('project-1')?.items[2]?.name).toBe('renamed');
+    expect(list('project-1')?.total).toBe(3);
+    expect(list('project-2')).toMatchObject({ items: [{ id: 'task-3' }], total: 1 });
   });
 
   it('updates a cached row in place without invalidating filtered lists', async () => {
@@ -146,6 +178,30 @@ describe('realtime cache ops', () => {
   });
 });
 
+describe('details of rows a frame removes without naming them', () => {
+  afterEach(() => queryClient.clear());
+
+  it('must not keep a cached detail of the type below the channel, and leaves those of another channel', () => {
+    const keys = createEntityKeys<Record<string, never>>(TASK);
+    registerEntityQueryKeys(TASK, keys);
+    const task = (id: string, projectId: string) => ({ id, organizationId: 'org-1', projectId });
+    for (const [id, projectId] of [
+      ['t1', 'p1'],
+      ['t2', 'p2'],
+    ]) {
+      queryClient.setQueryData(keys.detail.byId(id), task(id, projectId));
+    }
+
+    removeEntityDetailsBelow(TASK, 'p1');
+    expect(queryClient.getQueryData(keys.detail.byId('t1'))).toBeUndefined();
+    expect(queryClient.getQueryData(keys.detail.byId('t2'))).toEqual(task('t2', 'p2'));
+
+    // A frame without a channel names the organization, an ancestor of every row.
+    removeEntityDetailsBelow(TASK, 'org-1');
+    expect(queryClient.getQueryData(keys.detail.byId('t2'))).toBeUndefined();
+  });
+});
+
 describe('filtered list refetch for a new row', () => {
   afterEach(() => {
     queryClient.clear();
@@ -157,10 +213,9 @@ describe('filtered list refetch for a new row', () => {
   const listKey = (filters: Record<string, unknown>) => [...commentKeys.list.org('org-1'), filters];
 
   // Comment lists are declared to hold only rows whose itemId equals the filter's.
-  function registerComments(items: { id: string; organizationId: string; itemId?: string }[] = [newComment]) {
+  function registerComments(items: { id: string; organizationId: string; itemId?: string }[]) {
     registerEntityQueryKeys(comment, commentKeys, async () => ({ items, total: items.length }));
     registerEqualityFilterKeys(comment, ['itemId']);
-    queryClient.setQueryDefaults(commentKeys.detail.base, { queryFn: async () => newComment });
   }
 
   function seedLists(filtersByName: Record<string, Record<string, unknown>>) {
@@ -182,23 +237,6 @@ describe('filtered list refetch for a new row', () => {
     noItem: { sort: 'createdAt' },
   };
 
-  it('refetches on a create notification only the lists whose declared filter the row matches', async () => {
-    registerComments();
-    seedLists(lists);
-
-    await fetchEntityAndUpdateList(comment, 'comment-2', commentKeys, 'create', 'org-1', 'tenant-1');
-
-    expect(isInvalidated(lists.otherItem)).toBe(false);
-    expect(isInvalidated(lists.otherItemSorted)).toBe(false);
-    expect(isInvalidated(lists.sameItem)).toBe(true);
-    // Filters combine with AND: another item rules the row out whatever the search or other filters say
-    expect(isInvalidated(lists.otherItemSearch)).toBe(false);
-    expect(isInvalidated(lists.otherItemUndeclared)).toBe(false);
-    expect(isInvalidated(lists.sameItemSearch)).toBe(true);
-    expect(isInvalidated(lists.sameItemUndeclared)).toBe(true);
-    expect(isInvalidated(lists.noItem)).toBe(true);
-  });
-
   it('refetches after a delta fetch only the lists that one of the new rows can belong to', async () => {
     registerComments([newComment, { id: 'comment-3', organizationId: 'org-1', itemId: 'item-3' }]);
     seedLists({ ...lists, thirdItem: { itemId: 'item-3' } });
@@ -206,10 +244,15 @@ describe('filtered list refetch for a new row', () => {
     await fetchRangeAndPatch(comment, 'org-1', 'tenant-1', { afterSeq: 8, untilSeq: 10 }, commentKeys);
 
     expect(isInvalidated(lists.otherItem)).toBe(false);
+    expect(isInvalidated(lists.otherItemSorted)).toBe(false);
     expect(isInvalidated(lists.sameItem)).toBe(true);
     expect(isInvalidated({ itemId: 'item-3' })).toBe(true);
+    // Filters combine with AND: another item rules the row out whatever the search or other filters say
     expect(isInvalidated(lists.otherItemSearch)).toBe(false);
+    expect(isInvalidated(lists.otherItemUndeclared)).toBe(false);
     expect(isInvalidated(lists.sameItemSearch)).toBe(true);
+    expect(isInvalidated(lists.sameItemUndeclared)).toBe(true);
+    expect(isInvalidated(lists.noItem)).toBe(true);
   });
 
   it('refetches a filtered list it cannot rule a new row out of: the row lacks the declared field, or the type declares none', async () => {

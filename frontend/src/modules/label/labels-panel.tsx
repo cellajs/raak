@@ -16,7 +16,7 @@ export function LabelsPanel({ entity, entityId, windowScroll }: LabelsPanelProps
     <LocalPanelShell
       panelId={LABELS_PANEL_ID}
       icon={<TagIcon />}
-      title={t('c:label_other').toLowerCase()}
+      title={t('c:label_other')}
       windowScroll={windowScroll}
       collapsedContent={<CollapsedPanelStrip panelId={LABELS_PANEL_ID} name={t('c:label_other')} className="sm:border-0" />}
     >

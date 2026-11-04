@@ -16,7 +16,8 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, type Plugin, type UserConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
 import rootPkg from '../package.json' with { type: 'json' };
-import { appConfig, urlEnvNames } from '../shared/index.ts';
+import { appConfig, originEnvName, servicePaths } from '../shared/index.ts';
+import { frontendDevPort } from '../shared/src/utils/tool-ports.ts';
 import { codeTheme } from './src/utils/code-theme.ts';
 import { docsEditor } from './vite/docs-editor.ts';
 import { docsFrontmatter } from './vite/docs-frontmatter.ts';
@@ -130,7 +131,7 @@ const repoRoot = path.resolve(import.meta.dirname, '..');
 const repoLinks = { repoRoot, repoUrl: appConfig.company.githubUrl, docRoutes: repoDocRoutes };
 
 // Tunnel mode: frontendUrl is the public ngrok origin (no port); Vite still listens locally.
-const devPort = Number(frontendUrl.port) || appConfig.devPorts.frontend;
+const devPort = frontendDevPort();
 const isTunneled = frontendUrl.hostname !== 'localhost';
 
 // Release identifier for error/replay tagging (Maple serviceVersion). Git SHA
@@ -156,8 +157,8 @@ const viteConfig = {
     // service prefixes to their local ports. Services serve under their own prefix
     // (backend self-mounts /api, yjs strips /yjs), so no path rewrite here.
     proxy: {
-      '/api': {
-        target: `http://localhost:${appConfig.devPorts.api}`,
+      [servicePaths.backend]: {
+        target: `http://localhost:${appConfig.services.backend.port}`,
         // The proxy ends the browser's response only when the upstream one ends: a stream cut off by a stopping API closes without
         // ending, so its browser side is destroyed here. A complete response has ended before it closes and is left alone.
         configure: (proxy) => {
@@ -168,9 +169,9 @@ const viteConfig = {
           });
         },
       },
-      '/yjs': { target: `ws://localhost:${appConfig.devPorts.yjs}`, ws: true },
-      '/mcp': { target: `http://localhost:${appConfig.devPorts.mcp}` },
-      '/oauth': { target: `http://localhost:${appConfig.devPorts.oauth}` },
+      [servicePaths.yjs]: { target: `ws://localhost:${appConfig.services.yjs.port}`, ws: true },
+      [servicePaths.mcp]: { target: `http://localhost:${appConfig.services.mcp.port}` },
+      [servicePaths.oauth]: { target: `http://localhost:${appConfig.services.oauth.port}` },
     },
     // Tunnel mode: ngrok terminates TLS and forwards plain HTTP. Accept the public
     // Host header and point HMR websockets back at the public origin.
@@ -319,7 +320,7 @@ const viteConfig = {
               // Yjs helpers with no BlockNote behind them. Claimed before the on-demand group, whose editor
               // modules would otherwise capture them: the sign-out check reads them and must not load the editor.
               name: 'yjs-app',
-              test: /[\\/]common[\\/]blocknote[\\/](ydoc-label|yjs-connections|yjs-http|yjs-resync|query|unsaveable-notices)\./,
+              test: /[\\/]common[\\/]blocknote[\\/](ydoc-label|yjs-connections|yjs-http|query|unsaveable-notices)\./,
               minSize: 0,
             },
             {
@@ -365,6 +366,18 @@ const viteConfig = {
   optimizeDeps: { exclude: ['sdk', 'react-scan'] },
   clearScreen: false,
   plugins: [
+    // The app answers only at `frontendUrl`: the loopback address the server binds is another origin to the API's absolute URLs.
+    {
+      name: 'print-frontend-url',
+      apply: 'serve',
+      configureServer(server) {
+        const printUrls = server.printUrls.bind(server);
+        server.printUrls = () => {
+          if (server.resolvedUrls) server.resolvedUrls.local = [`${appConfig.frontendUrl}/`];
+          printUrls();
+        };
+      },
+    },
     // Generates src/routes/routeTree.gen.ts from file-based routes. Must run before react().
     tanstackRouter(routerOptions),
     // Compile content and repository Markdown to React before the React plugin.
@@ -459,12 +472,12 @@ const viteConfig = {
   },
   define: {
     // The bundle re-evaluates shared/src/config-builder/app-config.ts in the
-    // browser, so mode selection and the URL overrides it reads must survive
+    // browser, so mode selection and the origin override it reads must survive
     // into this replacement object; NODE_ENV alone silently rebakes production.
     // The dev port offset is passed as resolved here: the browser cannot derive it from the checkout.
     'process.env': {
       ...Object.fromEntries(
-        ['NODE_ENV', 'APP_MODE', ...Object.values(urlEnvNames)].filter((key) => process.env[key] !== undefined).map((key) => [key, process.env[key]]),
+        ['NODE_ENV', 'APP_MODE', originEnvName].filter((key) => process.env[key] !== undefined).map((key) => [key, process.env[key]]),
       ),
       ...(appConfig.devPortOffset ? { DEV_PORT_OFFSET: String(appConfig.devPortOffset) } : {}),
     },

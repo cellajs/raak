@@ -1,6 +1,6 @@
 import type { Label } from 'sdk';
-import { isUnconditionalCan } from 'shared';
 import { CollaborativeBlockNote } from '~/modules/common/blocknote/collaborative-blocknote';
+import { useCan } from '~/modules/entities/use-can';
 import { useLabelDescriptionUpdate } from '~/modules/label/use-label-description-update';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { useProjectMembers } from '~/modules/project/use-project-members';
@@ -11,9 +11,10 @@ const editorClass = tw('w-full border-none bg-transparent [&>.bn-editor]:min-h-2
 const gutterClass = tw('pt-3 pr-4 pb-5 pl-2 sm:pl-9');
 
 /** Collaborative editor for an epic label's description. Checklists are task-only and labels have no attachment host yet, so both block kinds are excluded. */
-export function LabelDescriptionForm({ label }: { label: Label }) {
+export function LabelDescriptionForm({ label, isLocked }: { label: Label; isLocked: boolean }) {
   const project = findProjectByIdOrSlug(label.projectId, label.tenantId);
-  const canEdit = isUnconditionalCan(project?.can?.label?.update);
+  const can = useCan();
+  const canEdit = !isLocked && !!project && can('update', 'label', project);
 
   const projectMembers = useProjectMembers(label.projectId, label.tenantId, label.organizationId);
   const updateData = useLabelDescriptionUpdate(label);

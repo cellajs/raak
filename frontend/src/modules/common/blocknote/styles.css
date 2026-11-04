@@ -142,26 +142,6 @@ li:has(.is-focused) {
   visibility: visible;
 }
 
-.bn-grid-suggestion-menu-item[aria-selected="true"],
-.bn-grid-suggestion-menu-item:hover {
-  background-color: var(--accent) !important;
-}
-
-.bn-grid-suggestion-menu-empty-item,
-.bn-grid-suggestion-menu-loader {
-  padding: 0.5rem;
-}
-
-.bn-grid-suggestion-menu {
-  max-height: 25rem !important;
-  background-color: var(--popover) !important;
-  border: 0.05rem solid var(--border) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 0.05rem 4px 0 rgb(0 0 0 / 0.1) !important;
-  gap: 0.75rem !important;
-  padding: 0.5rem !important;
-}
-
 /* Our PopoverContent has no width of its own, unlike the shadcn one BlockNote's kit expects: the caption and link forms shrank to a 0px input. */
 .bn-form-popover {
   width: 18rem;
@@ -191,13 +171,20 @@ li:has(.is-focused) {
   height: 2rem;
 }
 
-.bn-link-toolbar > button:hover {
-  background-color: var(--muted);
+@media (hover: hover) {
+  .bn-link-toolbar > button:hover {
+    background-color: var(--muted);
+  }
 }
 
-.bn-container.bn-shadcn a:hover,
 .bn-container.bn-shadcn a:focus-visible {
   text-decoration-color: color-mix(in oklch, currentColor var(--link-decoration-strong), transparent);
+}
+
+@media (hover: hover) {
+  .bn-container.bn-shadcn a:hover {
+    text-decoration-color: color-mix(in oklch, currentColor var(--link-decoration-strong), transparent);
+  }
 }
 
 .bn-container.bn-shadcn a:active {
@@ -218,9 +205,14 @@ li:has(.is-focused) {
   transition: opacity 0.15s ease;
 }
 
-.bn-shadcn .bn-side-menu:hover,
 .bn-shadcn .bn-side-menu:focus-within {
   opacity: 1;
+}
+
+@media (hover: hover) {
+  .bn-shadcn .bn-side-menu:hover {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 639px) {
@@ -288,8 +280,10 @@ li:has(.is-focused) {
   padding-right: 0.5rem;
 }
 
-.bn-toolbar.bn-formatting-toolbar button:hover {
-  background-color: var(--muted);
+@media (hover: hover) {
+  .bn-toolbar.bn-formatting-toolbar button:hover {
+    background-color: var(--muted);
+  }
 }
 
 /* Unlayered, so it outranks the gap-1 that @blocknote/shadcn appends to a checkable menu item. */
