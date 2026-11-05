@@ -7,7 +7,11 @@ export type TaskDropdownType = 'labels' | 'assignedTo' | 'status' | 'primaryLabe
 type TaskSubscriptionProps = { taskId?: string };
 
 /** Layout props for the CSS-var-width dropdowns (labels/members/status). */
-type DropdownLayoutProps = TaskSubscriptionProps & { triggerWidth?: number };
+type DropdownLayoutProps = TaskSubscriptionProps & {
+  triggerWidth?: number;
+  /** For an opener the task hotkeys do not reach, such as the selection bar: its picker shows no key hints. */
+  hideHotkeys?: boolean;
+};
 
 export type SelectLabelsProps = DropdownLayoutProps & {
   value: TaskLabel[];

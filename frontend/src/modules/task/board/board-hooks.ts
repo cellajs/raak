@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import { type RefObject, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,18 +8,9 @@ import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
 import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
 import { LABELS_PANEL_ID } from '~/modules/label/types';
 import type { ProjectWithMembership } from '~/modules/project/types';
-import { useStartWith, useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import {
-  normalizePanelWidths,
-  prepareBoardPanels,
-  projectPanelName,
-  publicBoardPanels,
-  sortByMembership,
-  statusTabLists,
-} from '~/modules/task/helpers/board-helpers';
+import { normalizePanelWidths, prepareBoardPanels, projectPanelName, sortByMembership, statusTabLists } from '~/modules/task/helpers/board-helpers';
 import { isBoardSearchActive } from '~/modules/task/helpers/search-filter';
 import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
-import { publicTasksBoardQueryOptions } from '~/modules/task/public-query';
 import type { BoardResizablePanel } from '~/modules/task/types';
 
 // Finite anchors keep the fractional reorder math working when a neighboring panel is dragged against them
@@ -32,7 +22,7 @@ export function getPanelDisplayOrder(panel: BoardResizablePanel, localOrders: Re
   const localOrder = localOrders[panel.panelId];
   if (localOrder !== undefined) return localOrder;
 
-  if (panel.kind === 'project') return (panel.project.membership?.displayOrder ?? kindDefaultOrders.project) + (panel.orderOffset ?? 0);
+  if (panel.kind === 'project') return panel.project.membership?.displayOrder ?? kindDefaultOrders.project;
 
   return kindDefaultOrders[panel.kind];
 }
@@ -75,7 +65,6 @@ export function computePanelReorder(
   localOrders: Record<string, number> | undefined,
   newOrder: string[],
   sourcePanelId: string,
-  options?: { persist?: 'auto' | 'local' },
 ): PanelReorderResult {
   const panelById = new Map(panels.map((panel) => [panel.panelId, panel]));
   const sourcePanel = panelById.get(sourcePanelId);
@@ -99,7 +88,7 @@ export function computePanelReorder(
   if (newDisplayOrder === null) return null;
 
   const sourceProject = sourcePanel.kind === 'project' ? sourcePanel.project : undefined;
-  if (options?.persist !== 'local' && sourceProject?.membership) {
+  if (sourceProject?.membership) {
     if (newDisplayOrder === sourceProject.membership.displayOrder) return null;
     return {
       kind: 'membership',
@@ -115,26 +104,31 @@ export function computePanelReorder(
   return { kind: 'local', panelId: sourcePanelId, displayOrder: newDisplayOrder };
 }
 
+interface PanelLayoutOptions {
+  extraPanels?: BoardResizablePanel[];
+  /** A project page's panels follow the flow and never reorder, so stored local orders do not apply. Its labels panel starts collapsed. */
+  projectPage?: boolean;
+}
+
 /** The board's panels in display order with their stored widths; the loading skeleton lays out the same way. */
-export function usePanelLayout(boardId: string, projects: ProjectWithMembership[], extraPanels?: BoardResizablePanel[], publicView = false) {
-  const storedStatusPanels = useTaskBoardStore((state) => state.statusPanels[boardId]);
-  const publicProjectId = publicView ? projects[0]?.id : undefined;
-  const { data: publicTasks } = useQuery({ ...publicTasksBoardQueryOptions(publicProjectId ?? ''), enabled: !!publicProjectId });
-  const startWith = useStartWith(boardId);
+export function usePanelLayout(
+  boardId: string,
+  projects: ProjectWithMembership[],
+  { extraPanels = [], projectPage = false }: PanelLayoutOptions = {},
+) {
   const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
   const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);
 
-  const publicPanels = publicProjectId ? publicBoardPanels(publicTasks?.items) : undefined;
-  const projectPanels = prepareBoardPanels(projects, publicPanels?.statusPanels ?? storedStatusPanels, startWith, publicPanels?.withoutRest);
-  const panels = sortPanelsByOrder([...projectPanels, ...(extraPanels ?? [])], localOrders);
-  const defaultLayout = normalizePanelWidths(storedBoardLayout ?? {}, panels);
+  const boardPanels = [...prepareBoardPanels(projects, projectPage), ...extraPanels];
+  const panels = projectPage ? boardPanels : sortPanelsByOrder(boardPanels, localOrders);
+  const defaultLayout = normalizePanelWidths(storedBoardLayout ?? {}, panels, projectPage ? [LABELS_PANEL_ID] : []);
 
   return { panels, defaultLayout };
 }
 
-export function useBoardPanels(boardId: string, projects: ProjectWithMembership[], extraPanels?: BoardResizablePanel[], publicView = false) {
+export function useBoardPanels(boardId: string, projects: ProjectWithMembership[], options?: PanelLayoutOptions) {
   const { t } = useTranslation();
-  const { panels, defaultLayout } = usePanelLayout(boardId, projects, extraPanels, publicView);
+  const { panels, defaultLayout } = usePanelLayout(boardId, projects, options);
   const prunePanelOrders = useBoardStore((state) => state.prunePanelOrders);
   const updateBoardLayout = useBoardStore((state) => state.updateBoardLayout);
 
@@ -148,10 +142,10 @@ export function useBoardPanels(boardId: string, projects: ProjectWithMembership[
   const layoutPanels: BoardLayoutPanel[] = panels.map((panel) => ({
     panelId: panel.panelId,
     label:
-      panel.kind === 'project' ? projectPanelName(panel.project, panel.statuses) : t(panel.kind === 'labels' ? 'c:label_other' : 'c:getting_started'),
+      panel.kind === 'project' ? projectPanelName(panel.project, panel.group) : t(panel.kind === 'labels' ? 'c:label_other' : 'c:getting_started'),
   }));
 
-  // A layout holds mounted panels only: a status panel turned off keeps its stored width for when it returns
+  // A report holds the panels mounted now, a must-fit one only those with a chosen width: the others keep theirs
   const handleLayoutChanged = (layout: Record<string, number>) => {
     updateBoardLayout(boardId, { ...boardStore.getState().boardLayouts[boardId], ...layout });
   };

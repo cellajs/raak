@@ -3,7 +3,7 @@ import { MotionConfig, motion, type Variants } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TooltipButton } from '~/modules/common/tooltip-button';
-import { taskCardGhostClass } from '~/modules/task/task-styles';
+import { cardIconButtonClass, taskCardGhostClass } from '~/modules/task/task-styles';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
@@ -31,8 +31,14 @@ export function CardCloseButton({ onClick, animateIn = true, className }: CardCl
     <MotionConfig reducedMotion="user">
       <motion.span className="inline-flex" variants={slide} initial={animateIn ? 'hidden' : false} animate="shown" exit="gone">
         <TooltipButton toolTipContent={t('c:close')} side="top" sideOffset={5} hideWhenDetached>
-          <Button onClick={onClick} aria-label={t('c:collapse')} variant="ghost" size="xs" className={cn('size-8 p-0', className)}>
-            <XIcon className="size-4.5" />
+          <Button
+            onClick={onClick}
+            aria-label={t('c:collapse')}
+            variant="ghost"
+            size="xs"
+            className={cn('size-8 p-0', cardIconButtonClass, className)}
+          >
+            <XIcon className="size-4" />
           </Button>
         </TooltipButton>
       </motion.span>
@@ -49,13 +55,13 @@ export function CardCloseExit() {
     <MotionConfig reducedMotion="user">
       <motion.span
         aria-hidden
-        className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), 'size-8 p-0', taskCardGhostClass)}
+        className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), 'size-8 p-0', taskCardGhostClass, cardIconButtonClass)}
         variants={slide}
         initial="shown"
         animate="gone"
         onAnimationComplete={() => setDone(true)}
       >
-        <XIcon className="size-4.5" />
+        <XIcon className="size-4" />
       </motion.span>
     </MotionConfig>
   );

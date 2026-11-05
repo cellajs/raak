@@ -76,7 +76,7 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
     <MotionConfig reducedMotion="user">
       {!publicView && <UnseenTasksSnapshot key={boardId} />}
       <SearchScope q={q}>
-        <BoardHeader boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />
+        <BoardHeader projects={projects} workspace={workspace} publicView={publicView} />
         {pageProject && (
           // Its padding stands in for the page's gap, cancelled by the margin, so the measured height holds the space the banner takes from the board
           <div ref={bannerRef} className="flex flex-col gap-2 empty:hidden max-sm:px-2 max-sm:pb-2 sm:-mb-2 sm:pb-2 md:-mb-3 md:pb-3">

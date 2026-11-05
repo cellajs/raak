@@ -12,7 +12,7 @@ import { isTouchInteraction } from '~/utils/input-modality';
 
 type StatusOption = (typeof statusOptions)[number];
 
-export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWidth = 240 }: SelectStatusProps) {
+export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWidth = 240, hideHotkeys }: SelectStatusProps) {
   const { t } = useTranslation();
 
   const { data: liveTask } = useTaskQuery(taskId);
@@ -58,7 +58,7 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
           className="rounded-none leading-normal focus-visible:ring-transparent"
           placeholder={t('c:select_resource', { resource: t('c:status') })}
         />
-        <ComboboxHotkeyHint searching={!!searchValue.length}>S</ComboboxHotkeyHint>
+        {!hideHotkeys && <ComboboxHotkeyHint searching={!!searchValue.length}>S</ComboboxHotkeyHint>}
         <ComboboxList>
           {(status: StatusOption) => {
             const index = statusOptions.findIndex((option) => option.value === status.value);
@@ -67,7 +67,7 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
                 <status.icon />
                 <div className="grow">{t(`c:${status.verb}`)}</div>
                 <ComboboxItemIndicator className="text-success" />
-                <HotkeyIndexBadge index={searchValue ? undefined : index} />
+                <HotkeyIndexBadge index={searchValue || hideHotkeys ? undefined : index} />
               </ComboboxItem>
             );
           }}

@@ -16,7 +16,7 @@ export function PublicProjectRouteComponent() {
   const view = publicProjectApi.useSearch({ select: (search) => search.view });
   const { data } = useSuspenseQuery(publicProjectQueryOptions(projectId));
   const projects = [data];
-  // Not the project's id: a member's status panels and widths on that board are not for the public view
+  // Not the project's id: a member's panel widths on that board are not for the public view
   const boardId = `public-${data.id}`;
 
   return (

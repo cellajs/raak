@@ -141,7 +141,7 @@ export function useBoardSearchFilters(
     if (id === noAssignee) return t('c:no_one');
     return assignees[id]?.name.split(' ')[0] ?? t('c:member');
   };
-  const assigneeIcon = (id: string, className: string) =>
+  const assigneeIcon = (id: string, className?: string) =>
     id === noAssignee ? (
       <NoAssigneeAvatar aria-hidden className={cn('shrink-0', className)} />
     ) : (
@@ -161,6 +161,7 @@ export function useBoardSearchFilters(
     groups: [
       {
         key: 'assigned',
+        isUnlabeled: true,
         label: t('c:assigned_to'),
         isIconOnly: true,
         options: assigneeIds.map((id) => ({
@@ -175,6 +176,7 @@ export function useBoardSearchFilters(
       },
       {
         key: 'status',
+        isUnlabeled: true,
         label: t('c:status'),
         options: statusesToPick.map(({ status, name, icon: Icon }) => ({
           value: status,
@@ -188,6 +190,7 @@ export function useBoardSearchFilters(
       },
       {
         key: 'type',
+        isUnlabeled: true,
         label: t('c:type'),
         options: typeSlugs.map((slug) => ({
           value: slug,
@@ -201,6 +204,7 @@ export function useBoardSearchFilters(
       },
       {
         key: 'labels',
+        isUnlabeled: true,
         label: t('c:label_other'),
         isCompact: true,
         matchIcon: <TagIcon className="size-3.5 shrink-0 text-muted-foreground" />,
@@ -237,7 +241,7 @@ export function useBoardSearchFilters(
         group: 'assigned',
         value: id,
         label: assigneeName(id),
-        icon: assigneeIcon(id, 'size-4.5'),
+        start: assigneeIcon(id),
         onRemove: () => write('assigned', toggleFilterValue(search.assignees.join(','), id)),
       })),
       ...search.labels.map((slug) => ({

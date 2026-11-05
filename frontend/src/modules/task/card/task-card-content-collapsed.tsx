@@ -5,7 +5,6 @@ import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
 import { TaskSummaryHtml } from '~/modules/task/card/task-summary-html';
-import { ProductRef } from '~/modules/task/product-ref';
 import { taskCardActionsRevealClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
@@ -27,7 +26,6 @@ export function TaskCardContentCollapsed({ task, animateClose = false, onEditReq
       {/* Grows to the card edge so the fade under the options button sits at the edge */}
       <div className="task-summary-fade mt-1 mb-1 ml-0.5 min-w-0 grow leading-tight">
         <TaskSummaryHtml className="inline leading-tight sm:font-[450]" task={task} />
-        <ProductRef number={task.number} className="ml-1.5" />
         <TaskCardSummaryButtons task={task} />
         <TaskMatchReason task={task} className="mt-1" />
       </div>

@@ -19,7 +19,7 @@ interface PanelDragHandleButtonProps {
   /** Per-panel layout classes (collapsed vs expanded shape). */
   className?: string;
   /** Leading icon or avatar; when the board is reorderable it swaps to a drag grip on hover. */
-  icon: ReactNode;
+  icon?: ReactNode;
   /** Chip shown under the pointer while dragging; defaults to a chip with the name. */
   preview?: ReactNode;
   /** Trailing label content (kept visible on hover), shown only while the panel is expanded. */
@@ -39,22 +39,24 @@ export function PanelDragHandleButton({ name, fallbackLabel, className, icon, pr
 
   const content = (
     <>
-      <span className="relative inline-flex shrink-0 items-center justify-center">
-        <span
-          className={cn(
-            'inline-flex',
-            panelDrag &&
-              'transition-[opacity,filter] group-hover/drag:opacity-30 group-hover/drag:blur-[1px] group-focus/drag:opacity-30 group-focus/drag:blur-[1px]',
-          )}
-        >
-          {icon}
-        </span>
-        {panelDrag && (
-          <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover/drag:opacity-100 group-focus/drag:opacity-100">
-            <GripVerticalIcon className="size-4 shrink-0" />
+      {(icon || panelDrag) && (
+        <span className="relative inline-flex shrink-0 items-center justify-center">
+          <span
+            className={cn(
+              'inline-flex',
+              panelDrag &&
+                'transition-[opacity,filter] group-hover/drag:opacity-30 group-hover/drag:blur-[1px] group-focus/drag:opacity-30 group-focus/drag:blur-[1px]',
+            )}
+          >
+            {icon}
           </span>
-        )}
-      </span>
+          {panelDrag && (
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover/drag:opacity-100 group-focus/drag:opacity-100">
+              <GripVerticalIcon className="size-4 shrink-0" />
+            </span>
+          )}
+        </span>
+      )}
       {children && <span className={cn('min-w-0 truncate', hintFadeOut)}>{children}</span>}
     </>
   );
@@ -63,7 +65,8 @@ export function PanelDragHandleButton({ name, fallbackLabel, className, icon, pr
     return (
       <Button
         variant="ghost"
-        className={className}
+        // aria-expanded names the panel's state here; ghost's open-menu fill would mark every open panel
+        className={cn('aria-expanded:bg-transparent', className)}
         aria-label={fallbackLabel}
         aria-expanded={panelCollapse ? !isCollapsed : undefined}
         onClick={panelCollapse?.onToggleCollapsed}
