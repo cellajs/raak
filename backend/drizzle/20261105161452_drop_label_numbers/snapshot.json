@@ -1,0 +1,63 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "67e30257-2c66-4568-af7a-eff38499454b",
+  "prevIds": [
+    "49498b72-7112-41ec-afa8-fbaf962f6acd"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "labels",
+        "labels_organization_number_unique"
+      ],
+      "writes": [
+        "s|idx|public.labels_organization_number_unique",
+        "n|idx|public.labels_organization_number_unique",
+        "e|idx|public.labels_organization_number_unique",
+        "n|rel|public.labels_organization_number_unique"
+      ],
+      "reads": [
+        "n|tbl|public.labels",
+        "n|sch|public",
+        "e|col|public.labels.organization_id",
+        "e|col|public.labels.number"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.labels.number.organization_id"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "labels",
+        "number"
+      ],
+      "writes": [
+        "s|col|public.labels.number",
+        "n|col|public.labels.number",
+        "e|col|public.labels.number"
+      ],
+      "reads": [
+        "n|tbl|public.labels",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"labels\",\"number\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"labels_organization_number_unique\"]"
+    }
+  ]
+}
