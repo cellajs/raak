@@ -7,7 +7,7 @@ import { publicTasksBoardQueryOptions } from '~/modules/task/public-query';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskStatus } from '~/modules/task/task-properties';
-import type { Task } from '~/modules/task/types';
+import type { ProjectPageGroup, Task } from '~/modules/task/types';
 import { stableArray } from '~/utils/stable-array';
 
 interface ProjectBoardPanelProps {
@@ -15,11 +15,12 @@ interface ProjectBoardPanelProps {
   publicView?: boolean;
   panelId?: string;
   statuses?: TaskStatus[];
+  group?: ProjectPageGroup;
   windowScroll?: boolean;
 }
 
 /** Fetches a project's canonical tasks and merges the open draft task. */
-export function ProjectBoardPanel({ project, publicView, panelId, statuses, windowScroll }: ProjectBoardPanelProps) {
+export function ProjectBoardPanel({ project, publicView, panelId, statuses, group, windowScroll }: ProjectBoardPanelProps) {
   // Reads and writes refs during render: stableArray keeps the previous task arrays so a panel whose tasks did not change skips re-rendering.
   'use no memo';
   const queryOptions = publicView
@@ -36,7 +37,7 @@ export function ProjectBoardPanel({ project, publicView, panelId, statuses, wind
   const projectTasksRef = useRef<Task[]>([]);
   const panelTasksRef = useRef<Task[]>([]);
 
-  // Mobile creates through a dialog, so no draft row enters its list. Status panels give the draft to the panel of its status.
+  // Mobile creates through a dialog, so no draft row enters its list. A panel of some statuses lists the draft while it has one of them.
   const rawProjectTasks: Task[] = !isMobile && draftTask ? [...data.items, draftTask] : data.items;
   const projectTasks = stableArray(projectTasksRef.current, rawProjectTasks);
   projectTasksRef.current = projectTasks;
@@ -53,6 +54,7 @@ export function ProjectBoardPanel({ project, publicView, panelId, statuses, wind
       publicView={publicView}
       panelId={panelId ?? project.id}
       statuses={statuses}
+      group={group}
       windowScroll={windowScroll}
     />
   );

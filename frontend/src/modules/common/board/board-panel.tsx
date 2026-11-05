@@ -77,6 +77,8 @@ export interface CollapsedSection {
 }
 
 interface CollapsedPanelViewProps {
+  /** Written down the strip from its top, for a panel whose collapsed header shows no mark of its own. */
+  title?: string;
   /** The count in the middle; a panel without one leaves it out. */
   mainCount?: number;
   sections?: CollapsedSection[];
@@ -95,6 +97,9 @@ const collapsedCountClass = tw('absolute top-[calc(50%-0.625rem)] left-0 w-12 te
 const stickyCountClass = tw('sticky top-[calc(50vh-0.625rem)] w-12 text-center font-medium text-faint-foreground text-sm');
 // The body ends its flow here, so this pins from below, on the same line as the strip's count
 const stickyPreviewCountClass = tw('sticky bottom-[calc(50vh-0.625rem)] h-0 w-12 text-center font-medium text-faint-foreground text-sm');
+
+const collapsedTitleClass = tw('w-12 py-3 text-center font-semibold text-sm leading-12 [writing-mode:vertical-rl]');
+const stickyTitleClass = tw('sticky top-[calc(var(--sticky-stack-nav,0px)+var(--sticky-stack-pin,0px))]');
 
 interface CollapsedSectionsProps {
   sections: CollapsedSection[];
@@ -123,7 +128,7 @@ function CollapsedSections({ sections, position, windowScroll }: CollapsedSectio
     ));
 }
 
-export function CollapsedPanelView({ mainCount, sections = emptySections, expand, windowScroll, className }: CollapsedPanelViewProps) {
+export function CollapsedPanelView({ title, mainCount, sections = emptySections, expand, windowScroll, className }: CollapsedPanelViewProps) {
   const stripClass = cn(
     'relative flex flex-1 snap-center flex-col border-panel-edge group-data-[highlighted=true]/paneldrop:border-primary sm:border',
     className,
@@ -131,6 +136,7 @@ export function CollapsedPanelView({ mainCount, sections = emptySections, expand
   const content = (
     <>
       <CollapsedSections sections={sections} position="top" windowScroll={windowScroll} />
+      {title && <div className={cn(collapsedTitleClass, windowScroll && stickyTitleClass, hintFadeOut)}>{title}</div>}
       {windowScroll && mainCount !== undefined && <div className={cn(stickyCountClass, hintFadeOut)}>{formatCount(mainCount)}</div>}
       <div className="grow" />
       {!windowScroll && mainCount !== undefined && <div className={cn(collapsedCountClass, hintFadeOut)}>{formatCount(mainCount)}</div>}

@@ -1,0 +1,70 @@
+/* The # slot of ProductRefButton: # at rest, a copy icon on hover, a check drawn in once copied. As wide as the icons,
+   with the # at its end so it meets the number as plain text would; the badge's left padding gives up what the # leaves. */
+[data-ref-slot] {
+  display: inline-grid;
+  align-items: center;
+  justify-items: end;
+  width: 0.833em;
+  margin-right: 0.083em;
+}
+
+[data-ref-slot] > * {
+  grid-area: 1 / 1;
+  transition:
+    opacity 140ms,
+    transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[data-ref-slot] > svg {
+  width: 0.833em;
+  height: 0.833em;
+  opacity: 0;
+}
+
+/* pathLength 1: the stroke draws from 1 to 0. Leaving, it fades first and resets after, so it never un-draws. */
+[data-ref-check] path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0s 200ms;
+}
+
+@media (hover: hover) {
+  [data-product-ref]:not([data-copied]):hover [data-ref-hash] {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  [data-product-ref]:not([data-copied]):hover [data-ref-copy] {
+    opacity: 1;
+  }
+}
+
+/* Unlayered, so it outranks the badge's hover utilities */
+[data-product-ref][data-copied] {
+  background-color: color-mix(in oklab, var(--success) 16%, var(--secondary));
+  color: var(--success);
+}
+
+[data-copied] [data-ref-hash] {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.4);
+}
+
+[data-copied] [data-ref-check] {
+  opacity: 1;
+}
+
+[data-copied] [data-ref-check] path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 280ms cubic-bezier(0.65, 0, 0.35, 1) 60ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-ref-slot] > * {
+    transform: none !important;
+  }
+
+  [data-copied] [data-ref-check] path {
+    transition: none;
+  }
+}

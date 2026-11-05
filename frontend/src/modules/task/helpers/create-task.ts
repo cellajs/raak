@@ -5,7 +5,7 @@ import { blocknoteHasContent } from '~/modules/common/blocknote/helpers/blocknot
 import { boardStore } from '~/modules/common/board/board-store';
 import { draftStore } from '~/modules/common/form-draft/draft-store';
 import { taskBoardStore } from '~/modules/task/board/task-board-store';
-import { statusPanelId } from '~/modules/task/helpers/board-helpers';
+import { projectPagePanelId } from '~/modules/task/helpers/board-helpers';
 import { focusWhenMounted, setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
@@ -19,10 +19,11 @@ export const revealDraftHostPanel = (projectId: string, draftStatus: TaskStatus)
   const boardId = boardStore.getState().activeBoardId;
   if (!boardId) return;
 
-  const { statusPanels, setPanelSectionExpanded } = taskBoardStore.getState();
-  if (statusPanels[boardId]?.includes(draftStatus)) return boardStore.getState().setPanelCollapsed(statusPanelId(projectId, draftStatus), false);
+  // A project page's board has its project's id. Collapse state is shared per panel id, so only this board's panel opens.
+  if (boardId === projectId) return boardStore.getState().setPanelCollapsed(projectPagePanelId(projectId, draftStatus), false);
 
   boardStore.getState().setPanelCollapsed(projectId, false);
+  const { setPanelSectionExpanded } = taskBoardStore.getState();
   if (draftStatus === TaskStatus.Accepted) setPanelSectionExpanded(boardId, projectId, 'accepted', true);
   if (draftStatus === TaskStatus.Iced) setPanelSectionExpanded(boardId, projectId, 'iced', true);
 };

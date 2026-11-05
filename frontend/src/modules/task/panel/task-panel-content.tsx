@@ -2,16 +2,19 @@ import { memo } from 'react';
 import type { Project } from 'sdk';
 import { Virtualizer, WindowVirtualizer } from 'virtua';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
+import type { TKey } from '~/lib/i18n-locales';
 import { BoardPanelBody } from '~/modules/common/board/board-panel';
 import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { MotionTaskCard } from '~/modules/task/card/motion-task-card';
+import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { DraftTaskItem } from '~/modules/task/draft-task-item';
 import { foldsSection, hasSectionBar } from '~/modules/task/helpers/board-helpers';
 import { revealDraftHostPanel } from '~/modules/task/helpers/create-task';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { usePanelScrolling } from '~/modules/task/hooks/use-panel-scrolling';
+import { EditingTaskPill } from '~/modules/task/panel/editing-task-pill';
 import { ListFocusScope } from '~/modules/task/panel/list-focus-scope';
 import { OlderAcceptedHint, PanelStatusSection } from '~/modules/task/panel/panel-status-section';
 import { PanelTasksContext } from '~/modules/task/panel/panel-tasks-context';
@@ -33,15 +36,17 @@ const raisedRowClass = tw('[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=ed
 
 interface TaskPanelContentProps {
   project: Project;
-  /** The board panel showing these tasks: the project's, or a status panel of it. */
+  /** The board panel showing these tasks: the project's, or a project page panel of it. */
   panelId: string;
+  /** Shown in place of the full placeholder when the panel lists nothing. */
+  emptyTitle?: TKey;
   tasks: TaskProps['task'][];
   counts: TaskCounts;
   /** When true, uses WindowVirtualizer and grows with content (no internal scrolling) */
   windowScroll?: boolean;
 }
 
-export const TaskPanelContent = memo(function TaskPanelContent({ project, panelId, tasks, counts, windowScroll }: TaskPanelContentProps) {
+export const TaskPanelContent = memo(function TaskPanelContent({ project, panelId, emptyTitle, tasks, counts, windowScroll }: TaskPanelContentProps) {
   const isMobile = useBreakpointBelow('sm');
   const isWorkspaceRoute = useIsWorkspaceRoute();
   const hasSelectedTasks = useTaskInteractionStore((state) => state.selectedTaskIds.length > 0);
@@ -61,11 +66,15 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   const showsOlderHint = !counts.showAccepted && counts.acceptedCutOff > 0;
   const hasContent = !!tasks.length || !!counts.accepted || !!counts.iced || showsOlderHint;
   const draftIndex = tasks.findIndex(isDraftTask);
-  // The sticky status headers would overlap the create form
   const hostsDraft = draftIndex !== -1;
-  // Mounted wherever the panel is scrolled, so the form is measured before the jump to it.
-  // An unmeasured form is jumped to by estimate: a blank panel while it mounts, then visible corrections.
-  const keepDraftMounted = hostsDraft ? [draftIndex] : undefined;
+  const editingIndex = useTaskCardStore((state) => tasks.findIndex(({ id }) => state.states[id] === 'editing'));
+  const hostsEditor = editingIndex !== -1;
+  // A pinned status bar would sit over the text being written: the create form's, or the editing card's
+  const unpinsBars = hostsDraft || hostsEditor;
+  // The form stays mounted wherever the panel is scrolled, so it is measured before the jump to it: an unmeasured
+  // form is jumped to by estimate, a blank panel while it mounts, then visible corrections. The editing card stays
+  // mounted so a long scroll doesn't rebuild its editor and drop its undo history.
+  const keptMounted = [draftIndex, editingIndex].filter((index) => index !== -1);
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     revealDraftHostPanel(project.id, newStatus);
@@ -83,7 +92,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
       windowMode={sectionWindowMode}
       virtualizerRef={virtualizerRef}
       onToggle={handleSectionToggle}
-      suppressed={hostsDraft}
+      suppressed={unpinsBars}
     />
   );
   const topSlot = foldsSection('accepted', counts) ? statusSection('accepted') : undefined;
@@ -96,13 +105,10 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   // Keyboard focus scrolls a card only to the viewport edge, under a pinned section bar (h-9). The margin holds even
   // while a bar is slid away: it slides in on the scroll that focus makes, too late for a margin that followed it.
   const cardScrollMargin = cn(
-    windowScroll &&
-      !foldsSection('accepted', counts) &&
-      '[&_[data-task-card-id]]:scroll-mt-[calc(var(--sticky-stack-nav)+var(--sticky-stack-pin,0px))]',
-    foldsSection('accepted', counts) &&
-      !hostsDraft &&
-      '[&_[data-task-card-id]]:scroll-mt-[calc(var(--sticky-stack-nav)+var(--sticky-stack-pin,0px)+--spacing(9))]',
-    foldsSection('iced', counts) && !hostsDraft && '[&_[data-task-card-id]]:scroll-mb-9',
+    foldsSection('accepted', counts) && !unpinsBars
+      ? '[&_[data-task-card-id]]:scroll-mt-[calc(var(--sticky-stack-nav)+var(--sticky-stack-pin,0px)+--spacing(9))]'
+      : windowScroll && '[&_[data-task-card-id]]:scroll-mt-[calc(var(--sticky-stack-nav)+var(--sticky-stack-pin,0px))]',
+    foldsSection('iced', counts) && !unpinsBars && '[&_[data-task-card-id]]:scroll-mb-9',
   );
 
   const renderTask = (task: TaskProps['task']) => {
@@ -113,7 +119,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
   return (
     <PanelTasksContext.Provider value={tasks}>
       <BoardPanelBody hasSelection={hasSelectedTasks} windowScroll={windowScroll} collapsedCount={collapsedMainCount(counts)}>
-        {/* Above the scroll area, so the list's virtualizer needs no offset for it. A project page shows one panel per status, so it would repeat there. */}
+        {/* Above the scroll area, so the list's virtualizer needs no offset for it. A project page shows it once, above its panels. */}
         {isWorkspaceRoute && (
           <TaskGuestAlert projectId={project.id} className="max-sm:mx-3 max-sm:mt-1 max-sm:mb-2 sm:rounded-none sm:border-0 sm:border-b" />
         )}
@@ -133,7 +139,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
                   </WindowVirtualizer>
                 </ListFocusScope>
               ) : (
-                <TaskPanelEmpty project={project} />
+                <TaskPanelEmpty project={project} title={emptyTitle} />
               )}
             </div>
 
@@ -166,7 +172,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
                     as="ul"
                     item="li"
                     scrollRef={scrollViewportRef}
-                    keepMounted={keepDraftMounted}
+                    keepMounted={keptMounted.length ? keptMounted : undefined}
                     shift={shift}
                     startMargin={hasSectionBar('accepted', counts) ? 36 : 0}
                   >
@@ -174,12 +180,21 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, panelI
                   </Virtualizer>
                 </ListFocusScope>
               ) : (
-                <TaskPanelEmpty project={project} />
+                <TaskPanelEmpty project={project} title={emptyTitle} />
               )}
             </div>
 
             {bottomSlot}
           </ScrollArea>
+        )}
+        {hostsEditor && (
+          <EditingTaskPill
+            task={tasks[editingIndex]}
+            index={editingIndex}
+            scrollRef={scrollViewportRef}
+            windowMode={sectionWindowMode}
+            listRef={virtualizerRef}
+          />
         )}
       </BoardPanelBody>
     </PanelTasksContext.Provider>

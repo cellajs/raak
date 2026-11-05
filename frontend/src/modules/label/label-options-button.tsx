@@ -13,6 +13,7 @@ import { DeleteLabels } from '~/modules/label/delete-labels';
 import { labelTileStore } from '~/modules/label/label-tile-store';
 import { findLabelInCache } from '~/modules/label/query';
 import type { LabelRow } from '~/modules/label/types';
+import { cardIconButtonClass } from '~/modules/task/task-styles';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
@@ -81,9 +82,9 @@ export function LabelOptionsButton({ row, canManage, className }: LabelOptionsBu
         aria-label={t('c:resource_options', { resource: t('c:label') })}
         variant="ghost"
         size="xs"
-        className={cn('size-8 data-dropdowner-active:bg-muted', className)}
+        className={cn('size-8 data-dropdowner-active:bg-muted', cardIconButtonClass, className)}
       >
-        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4.5" />
+        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4" />
       </Button>
     </TooltipButton>
   );

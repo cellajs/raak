@@ -16,7 +16,7 @@ export const taskCardVariants = cva('', {
   },
 });
 
-/** A status's text color: its button's label, and a read-only card's status. */
+/** A read-only card's status name. */
 export const statusTextColors = {
   0: 'text-green-800 dark:text-green-300',
   1: 'text-orange-800 dark:text-orange-300',
@@ -26,25 +26,8 @@ export const statusTextColors = {
   6: 'text-sky-800 dark:text-sky-300',
 } as const;
 
-// Borderless: a board full of one status would read as a column of boxes. --sc tints the fill.
-export const statusButtonVariants = cva(
-  'border-transparent bg-[rgb(var(--sc)_/_0.12)] hover:border-transparent hover:bg-[rgb(var(--sc)_/_0.25)] group-hover/task:bg-[rgb(var(--sc)_/_0.17)] group-[.is-focused]/task:bg-[rgb(var(--sc)_/_0.17)]',
-  {
-    variants: {
-      status: {
-        0: `${statusTextColors[0]} [--sc:34_197_94]`,
-        1: `${statusTextColors[1]} [--sc:249_115_22]`,
-        3: `${statusTextColors[3]} [--sc:234_179_8]`,
-        4: `${statusTextColors[4]} [--sc:100_116_139]`,
-        5: `${statusTextColors[5]} [--sc:100_116_139]`,
-        6: `${statusTextColors[6]} [--sc:14_165_233]`,
-      },
-    },
-  },
-);
-
 // Classes, as svg attributes cannot follow the theme. The icons keep their fill and stroke attributes: search chips select on them to recolor.
-/** Draws a status icon in the text color around it, so it matches the verb or name beside it. */
+/** Draws a status icon in the text color around it, so it matches the status name beside it. */
 export const statusIconInTextClass = tw('[&_[fill]:not([fill=none])]:fill-current [&_[stroke]]:stroke-current');
 
 /** The status icons' colors: a darker step in light mode, where the 500 steps stay under 3:1 on white. Backlog stays a quiet grey. */
@@ -74,6 +57,9 @@ export const itemFocusBarClass = tw(
 export const taskCardFocusBarClass = tw(
   'pointer-fine:group-focus-within/task:before:opacity-100 group-focus-visible/task:before:opacity-100 group-has-[:focus-visible]/task:before:opacity-100 group-has-[[aria-haspopup][aria-expanded=true]]/task:before:opacity-100 group-has-data-dropdowner-active/task:before:opacity-100',
 );
+
+/** A card's icon-only controls (close, options, add labels): a step under full at rest, full on their own hover. */
+export const cardIconButtonClass = tw('text-foreground-soft hover:text-foreground');
 
 /** A ghost button on a task card: its open fill stays translucent like its hover, since a solid grey goes dead over the status gradient. */
 export const taskCardGhostClass = tw('aria-expanded:bg-hover');

@@ -17,7 +17,6 @@ import type { TaskCounts } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { Collapsible, CollapsibleContent, collapsiblePanelClass } from '~/modules/ui/collapsible';
 import { cn } from '~/utils/cn';
-import { dateMini } from '~/utils/date-mini';
 
 interface PanelStatusSectionProps {
   type: TogglableStatusType;
@@ -49,11 +48,17 @@ export function PanelStatusSection({
   const isActive = hasSectionBar(type, counts);
   const isTop = type === 'accepted';
   // Pinning lives here so scroll flips re-render only this header, not the panel
-  const isEdgePinned = useSectionEdgePinned({ edge: isTop ? 'top' : 'bottom', active: isActive, scrollRef, windowMode, listRef: virtualizerRef });
+  const isEdgePinned = useSectionEdgePinned({
+    edge: isTop ? 'top' : 'bottom',
+    active: isActive && !suppressed,
+    scrollRef,
+    windowMode,
+    listRef: virtualizerRef,
+  });
   // A bar with keyboard focus stays pinned, so that focus never rests on a bar slid out of view. A click's focus does not
   // hold it: the bar would stay after the toggle until something else took focus.
   const [hasFocus, setHasFocus] = useState(false);
-  const isPinned = (isEdgePinned || hasFocus) && !suppressed;
+  const isPinned = !suppressed && (isEdgePinned || hasFocus);
 
   const setPanelSectionExpanded = useTaskBoardStore((state) => state.setPanelSectionExpanded);
   const boardId = useBoardStore((state) => state.activeBoardId)!;
@@ -132,7 +137,6 @@ export function PanelStatusSection({
               'sticky',
               // The top bar pins below a page-level sticky nav (mobile tabs); the other to the bottom
               isTop ? (isPinned ? 'top-[calc(var(--sticky-stack-nav)+var(--sticky-stack-pin,0px))]' : '-top-9') : isPinned ? 'bottom-0' : '-bottom-9',
-              isTop ? 'text-editing:-top-9' : 'text-editing:-bottom-9',
             ],
       )}
     >
@@ -149,20 +153,21 @@ export function PanelStatusSection({
         // The press nudges only the text: moved, the button would part from the wrapper's fill and line
         press={false}
         className={cn(
-          'group/bar focus-inset flex w-full justify-start rounded-none border-0 bg-transparent px-2 text-sm duration-300 ease-in-out hover:bg-transparent dark:hover:bg-transparent',
+          'group/bar focus-inset flex w-full justify-start rounded-none border-0 bg-transparent px-2 text-sm duration-300 ease-in-out hover:bg-transparent max-sm:px-2.5 dark:hover:bg-transparent',
           // The bar overlaps the wrapper's line, so bar and line together stay the h-9 the list's insets are laid out for
           isTop ? '-mb-px' : '-mt-px',
           isIced ? 'hover:text-sky-900 dark:hover:text-sky-200' : 'hover:text-green-900 dark:hover:text-green-200',
         )}
       >
-        <span className="group-active/bar:press relative flex w-full items-center gap-1">
+        {/* The count centers over the cards' type buttons and the label starts on their title edge */}
+        <span className="group-active/bar:press relative flex w-full items-center gap-0.5">
           <span className="min-w-8 text-center">{count}</span>
-          <span className={cn('ml-1.5 flex gap-1', hintFadeOut)}>
+          <span className={cn('flex gap-1', hintFadeOut)}>
             <span>{t(`c:${statusOptionsByValue[isTop ? TaskStatus.Accepted : TaskStatus.Iced].name}`).toLowerCase()}</span>
             {!isIced && (
               <>
                 <span>{t('c:since')}</span>
-                <span>{dateMini(dayjs().subtract(boardAcceptedCutOffDays, 'day').toISOString())}</span>
+                <span>{dayjs().subtract(boardAcceptedCutOffDays, 'day').format('MMM D')}</span>
               </>
             )}
             <ChevronDownIcon data-rotate={isExpanded} className="absolute right-2.5 transition-transform data-[rotate=true]:rotate-180" />
@@ -172,8 +177,8 @@ export function PanelStatusSection({
       {hasOnlyOlderAccepted && (
         <Collapsible open={isTile}>
           <CollapsibleContent className={collapsiblePanelClass}>
-            {/* The left padding lines the note up with the bar's label: its padding, the count's min-w-8, the gap and ml-1.5 */}
-            <p className={cn('pt-1 pr-4 pb-4 pl-12.5 text-sm', hintFadeOut)}>
+            {/* The left padding lines the note up with the bar's label: its padding, the count's min-w-8 and the gap */}
+            <p className={cn('pt-1 pr-4 pb-4 pl-10.5 text-sm max-sm:pl-11', hintFadeOut)}>
               <OlderAcceptedText i18nKey="c:older_accepted_table_only" count={counts.acceptedCutOff} />
             </p>
           </CollapsibleContent>

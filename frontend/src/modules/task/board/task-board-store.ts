@@ -4,7 +4,6 @@ import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { myMembershipsQueryOptions } from '~/modules/me/query';
-import { statusOptionsByValue, type TaskStatus } from '~/modules/task/task-properties';
 import { findMembership } from '~/query/enrichment/helpers';
 import { idbKvStorage } from '~/query/idb-kv-storage';
 
@@ -31,10 +30,6 @@ const withoutSearch = (searches: RecentBoardSearch[], search: RecentBoardSearch)
 
 interface TaskBoardState {
   panelPrefs: Record<string, Record<string, PanelPrefs>>; // boardId → projectId → PanelPrefs
-  /** boardId → statuses with a panel of their own. Only a project page sets them, so a workspace board stays one column per project. */
-  statusPanels: Record<string, TaskStatus[]>;
-  /** boardId → the status its status panels start with, accepted when absent. Only a project page sets it. */
-  startWith: Record<string, TogglableStatusType>;
   /** projectId → whether its page shows the header, once the viewer chose on this device. */
   projectHeaderShown: Record<string, boolean>;
   /** Project or workspace id → its recent searches, most recent first. A label belongs to its project, so a search does not carry over. */
@@ -42,18 +37,14 @@ interface TaskBoardState {
 
   saveRecentSearch: (channelId: string, search: RecentBoardSearch) => void;
   removeRecentSearch: (channelId: string, search: RecentBoardSearch) => void;
-  setStartWith: (boardId: string, status: TogglableStatusType) => void;
   setProjectHeaderShown: (projectId: string, shown: boolean) => void;
-  toggleStatusPanel: (boardId: string, status: TaskStatus) => void;
   setPanelSectionExpanded: (boardId: string, projectId: string, status: TogglableStatusType, expanded: boolean) => void;
 
   reset: () => void; // Resets in-memory state to initial (call on sign-out)
 }
 
-const initStore: Pick<TaskBoardState, 'panelPrefs' | 'statusPanels' | 'startWith' | 'projectHeaderShown' | 'recentSearches'> = {
+const initStore: Pick<TaskBoardState, 'panelPrefs' | 'projectHeaderShown' | 'recentSearches'> = {
   panelPrefs: {},
-  statusPanels: {},
-  startWith: {},
   projectHeaderShown: {},
   recentSearches: {},
 };
@@ -76,22 +67,9 @@ export const useTaskBoardStore = create<TaskBoardState>()(
           });
         },
 
-        setStartWith: (boardId, status) => {
-          set((state) => {
-            state.startWith[boardId] = status;
-          });
-        },
-
         setProjectHeaderShown: (projectId, shown) => {
           set((state) => {
             state.projectHeaderShown[projectId] = shown;
-          });
-        },
-
-        toggleStatusPanel: (boardId, status) => {
-          set((state) => {
-            const statuses = state.statusPanels[boardId] ?? [];
-            state.statusPanels[boardId] = statuses.includes(status) ? statuses.filter((other) => other !== status) : [...statuses, status];
           });
         },
 
@@ -108,23 +86,19 @@ export const useTaskBoardStore = create<TaskBoardState>()(
         reset: () => set(initStore),
       })),
       {
-        version: 4,
+        version: 5,
         name: 'task-board',
         skipHydration: true,
         storage: createJSONStorage(() => idbKvStorage('task-board')),
-        // v1 held split columns, and which bars were unfolded: not worth carrying over. v2 can hold a panel of the retired Delivered (2), and has no recent searches. Before v4 a recent search had no members.
+        // v1 held split columns, and which bars were unfolded: not worth carrying over. v2 has no recent searches, and before v4 a recent search had no members. Before v5 a project page could choose status panels and their order.
         migrate: (persisted, version) => {
           if (version < 2) return initStore;
-          const state = persisted as typeof initStore;
-          const statusPanels = Object.entries(state.statusPanels).map(([boardId, statuses]) => [
-            boardId,
-            statuses.filter((status) => status in statusOptionsByValue),
-          ]);
+          const { statusPanels, startWith, ...state } = persisted as typeof initStore & { statusPanels?: unknown; startWith?: unknown };
           const recentSearches = Object.entries(state.recentSearches ?? {}).map(([channelId, searches]) => [
             channelId,
             searches.map((search) => ({ ...search, assigned: search.assigned ?? [] })),
           ]);
-          return { ...state, statusPanels: Object.fromEntries(statusPanels), recentSearches: Object.fromEntries(recentSearches) };
+          return { ...state, recentSearches: Object.fromEntries(recentSearches) };
         },
       },
     ),
@@ -132,9 +106,6 @@ export const useTaskBoardStore = create<TaskBoardState>()(
 );
 
 export { useTaskBoardStore as taskBoardStore };
-
-/** The status a board's status panels start with. */
-export const useStartWith = (boardId: string): TogglableStatusType => useTaskBoardStore((state) => state.startWith[boardId]) ?? 'accepted';
 
 /** Whether a project page shows its header. Until the viewer chooses, only a guest gets it: anyone else comes to work on the board. */
 export const useProjectHeaderShown = (projectId: string): boolean => {

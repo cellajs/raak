@@ -209,15 +209,16 @@ export function BoardLayout({
 
   // Window-scroll mode clips horizontal overflow without creating a scroll container, so section
   // bars and card headers stay sticky to the window.
+  // isolate: the board stacks as one layer, so its sticky headers and rings stay under the page's search field and tabs
   if (autoHeight) {
-    return <div className="overflow-x-clip transition">{panelGroup}</div>;
+    return <div className="isolate overflow-x-clip transition">{panelGroup}</div>;
   }
 
   // contain on x bounces the board at its ends: on auto the overscroll chains to the page, which Chrome slides sideways as a whole.
   // On y the page has nothing to scroll in this mode, so a panel scrolled to its end would only bounce the whole page.
   return (
     <ScrollArea
-      className="transition sm:h-[calc(100dvh-var(--board-offset-sm,4rem))] md:h-[calc(100dvh-var(--board-offset-md,4.88rem))]"
+      className="isolate transition sm:h-[calc(100dvh-var(--board-offset-sm,4rem))] md:h-[calc(100dvh-var(--board-offset-md,4.88rem))]"
       viewportClassName="overflow-y-hidden! overscroll-contain"
       horizontalScroll
       autoScrollOnDrag="horizontal"

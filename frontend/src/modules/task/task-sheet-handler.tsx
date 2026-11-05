@@ -11,9 +11,10 @@ import { ReadOnlyScope } from '~/modules/project/use-read-only';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { subscribeToTaskCache } from '~/modules/task/helpers/active-task';
+import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
 import { focusItem } from '~/modules/task/helpers/focus-item';
-import { productRef } from '~/modules/task/helpers/product-ref';
 import { suppressGlowAttr, triggerTaskGlow } from '~/modules/task/helpers/task-glow';
+import { ProductRefButton } from '~/modules/task/product-ref';
 import { taskKeys } from '~/modules/task/query';
 import { taskSheetParam } from '~/modules/task/search-params-schemas';
 import type { Task } from '~/modules/task/types';
@@ -57,12 +58,20 @@ function TaskSheetTitle({ taskId }: TaskSheetTitleProps) {
               {project.public && <PublicBadge size="sm" />}
             </span>
           </TooltipButton>
-          <Separator orientation="vertical" className="data-vertical:h-4" />
+          <Separator orientation="vertical" className="bg-input data-vertical:h-4" />
         </>
       )}
       <span className="flex items-center gap-2">
         {t('c:task')}
-        {!!number && <span className="font-normal text-muted-foreground">{productRef(number)}</span>}
+        {!!number && (
+          <ProductRefButton
+            number={number}
+            onCopy={async () => {
+              const task = findSheetTask(taskId);
+              return !!task && copyTasksToClipboard([task]);
+            }}
+          />
+        )}
       </span>
     </span>
   );
@@ -108,7 +117,6 @@ export function TaskSheetHandler() {
       title: t('c:task'),
       titleContent: taskSheetId ? <TaskSheetTitle taskId={taskSheetId} /> : t('c:task'),
       closeSheetOnEsc: false,
-      headerClassName: 'static',
     },
   });
 

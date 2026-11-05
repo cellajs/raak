@@ -16,7 +16,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
   const showExplainer = useShowExplainer(!!workspace);
 
   const extraPanels = buildBoardExtraPanels({ showExplainer });
-  const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
+  const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, { extraPanels });
   useExpandLabelsPanel(boardLayoutRef);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);

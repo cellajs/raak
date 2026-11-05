@@ -6,7 +6,7 @@ import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-on
 import { CardTooltip } from '~/modules/task/card/card-tooltip';
 import { openTaskFieldDropdown, taskFieldTriggerId } from '~/modules/task/helpers/open-task-dropdown';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
-import { taskCardGhostClass, taskCardMetaClass } from '~/modules/task/task-styles';
+import { cardIconButtonClass, taskCardGhostClass, taskCardMetaClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
@@ -45,8 +45,9 @@ export function TaskCardLabels({ task, isSheet = false, isCompact = false }: Tas
       size="xs"
       className={cn(
         taskCardGhostClass,
-        taskCardMetaClass,
-        hasLabels ? cn('min-w-0 px-1', !isCompact && 'h-auto min-h-8 py-1.5') : cn('size-8 shrink-0 p-0', readOnlyHide),
+        hasLabels
+          ? cn(taskCardMetaClass, 'min-w-0 px-1', !isCompact && 'h-auto min-h-8 py-1.5')
+          : cn('size-8 shrink-0 p-0', cardIconButtonClass, readOnlyHide),
       )}
       {...readOnlyInert}
     >
@@ -68,10 +69,16 @@ export function TaskCardLabels({ task, isSheet = false, isCompact = false }: Tas
             )}
         </span>
       ) : (
-        <TagPlusIcon className="size-4.5" />
+        <TagPlusIcon className="size-4" />
       )}
     </Button>
   );
 
-  return hasLabels ? button : <CardTooltip content={t('c:add_resource', { resource: t('c:label_other') })}>{button}</CardTooltip>;
+  return hasLabels ? (
+    button
+  ) : (
+    <CardTooltip content={t('c:add_resource', { resource: t('c:label_other') })} side="bottom">
+      {button}
+    </CardTooltip>
+  );
 }

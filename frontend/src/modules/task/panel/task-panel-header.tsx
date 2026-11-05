@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { ChevronsLeftRightIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
@@ -10,22 +11,19 @@ import { PublicBadge } from '~/modules/project/public-badge';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { NewTaskButton } from '~/modules/task/board/new-task-button';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
-import { listStatusNames } from '~/modules/task/helpers/board-helpers';
+import { projectPanelName } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
-import { PanelStatusIcon, PanelStatusTitle } from '~/modules/task/panel/panel-status-title';
 import { panelHandleClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
-import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { findMembership } from '~/query/enrichment/helpers';
 import { cn } from '~/utils/cn';
 
-interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'statuses'> {
+interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'group'> {
   isInWorkspace: boolean;
   isCollapsed: boolean;
-  count: number;
 }
 
-function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: PanelLeadingProps) {
+function PanelLeading({ project, group, isInWorkspace, isCollapsed }: PanelLeadingProps) {
   const { t } = useTranslation();
   // Off outside a workspace: a public board may have no session to ask with
   const { data: role } = useQuery({
@@ -46,7 +44,7 @@ function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: 
           </span>
         }
         preview={<EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl} />}
-        className={cn(panelHandleClass, 'min-w-0 no-underline', isCollapsed ? 'w-full justify-center' : 'pr-2')}
+        className={cn(panelHandleClass, 'group/panel-lead min-w-0 no-underline', isCollapsed ? 'w-full justify-center' : 'pr-2')}
       >
         {!isCollapsed && (
           // The header's full height: the handle clips its label, so the name rises and the role shows within this box
@@ -54,13 +52,13 @@ function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: 
             <span
               className={cn(
                 'block truncate pt-1.5 font-semibold leading-5',
-                role && 'transition-transform duration-100 ease-in-out group-hover/panel-head:-translate-y-1.5 group-hover/panel-head:delay-300',
+                role && 'transition-transform duration-100 ease-in-out group-hover/panel-lead:-translate-y-1.5 group-hover/panel-lead:delay-300',
               )}
             >
               {project.name}
             </span>
             {role && (
-              <span className="pointer-events-none absolute top-5 left-0 text-muted-foreground text-xs leading-3 opacity-0 transition-opacity duration-100 ease-in-out group-hover/panel-head:opacity-100 group-hover/panel-head:delay-300">
+              <span className="pointer-events-none absolute top-5 left-0 text-muted-foreground text-xs leading-3 opacity-0 transition-opacity duration-100 ease-in-out group-hover/panel-lead:opacity-100 group-hover/panel-lead:delay-300">
                 {t(role)}
               </span>
             )}
@@ -70,30 +68,30 @@ function PanelLeading({ project, statuses, isInWorkspace, isCollapsed, count }: 
     );
   }
 
-  // In a project view the project identity lives in the page header
-  const name = statuses ? listStatusNames(statuses) : t('c:task_other');
+  // In a project view the project identity lives in the page header. Collapsed, the handle shows what a press does.
+  const name = projectPanelName(project, group);
   return (
     <PanelDragHandleButton
       name={name}
       fallbackLabel={name}
-      icon={<PanelStatusIcon statuses={statuses} isCollapsed={isCollapsed} />}
+      icon={isCollapsed && <ChevronsLeftRightIcon className="size-4 shrink-0" />}
       className={cn(panelHandleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
     >
-      {!isCollapsed && <PanelStatusTitle statuses={statuses} count={count} />}
+      {!isCollapsed && <span className="font-semibold leading-6">{name}</span>}
     </PanelDragHandleButton>
   );
 }
 
-interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses' | 'windowScroll'> {
+interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'group' | 'windowScroll'> {
   panelId: string;
-  count: number;
 }
 
 /** A project's panel header. */
-export function TaskPanelHeader({ project, publicView, statuses, panelId, windowScroll, count }: TaskPanelHeaderProps) {
+export function TaskPanelHeader({ project, publicView, group, panelId, windowScroll }: TaskPanelHeaderProps) {
   const { t } = useTranslation();
 
-  const isInWorkspace = useIsWorkspaceRoute();
+  // A project page panel is named by its group; a panel without one is a workspace board's project
+  const isInWorkspace = !group;
 
   const isCollapsed = useBoardStore((state) => !!state.panelCollapseState[panelId]);
   const isReadOnly = useIsProjectReadOnly(project.id);
@@ -112,8 +110,8 @@ export function TaskPanelHeader({ project, publicView, statuses, panelId, window
 
   return (
     <BoardPanelHeader
-      className={cn('group/panel-head bg-card', windowScroll && 'sticky top-0')}
-      leading={<PanelLeading project={project} statuses={statuses} isInWorkspace={isInWorkspace} isCollapsed={isCollapsed} count={count} />}
+      className={cn('bg-card', windowScroll && 'sticky top-0')}
+      leading={<PanelLeading project={project} group={group} isInWorkspace={isInWorkspace} isCollapsed={isCollapsed} />}
       actions={actionsSlot}
       isCollapsed={isCollapsed}
     />
