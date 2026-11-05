@@ -1,28 +1,17 @@
 import { useRef } from 'react';
 import { BoardLayout, type BoardLayoutHandle } from '~/modules/common/board/board-layout';
-import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
 import { LabelsPanel } from '~/modules/label/labels-panel';
-import { buildBoardExtraPanels, computePanelReorder, useBoardPanels, useExpandLabelsPanel } from '~/modules/task/board/board-hooks';
+import { buildBoardExtraPanels, useBoardPanels, useExpandLabelsPanel } from '~/modules/task/board/board-hooks';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 
+/** A project page's board: To do, In progress and Done, then the labels panel for members. */
 export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardProps) {
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
   const extraPanels = buildBoardExtraPanels({ publicView });
-  const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels, publicView);
+  const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, { extraPanels, projectPage: true });
   useExpandLabelsPanel(boardLayoutRef);
-
-  const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
-
-  // All reorders on a single-project board persist device-locally: membership displayOrder
-  // is owned by the workspace board and must not change from here.
-  const handlePanelReorder = (newOrder: string[], sourcePanelId: string) => {
-    const localOrders = boardStore.getState().boardPanelOrders[boardId];
-    const result = computePanelReorder(panels, localOrders, newOrder, sourcePanelId, { persist: 'local' });
-    if (result?.kind !== 'local') return;
-    setPanelOrder(boardId, result.panelId, result.displayOrder);
-  };
 
   return (
     <BoardLayout
@@ -34,8 +23,6 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
       panelFade="marked"
       autoHeight={publicView}
       mustFit={publicView}
-      reorderable={!publicView}
-      onPanelReorder={handlePanelReorder}
     >
       {(panelId) => {
         const panel = panels.find((candidate) => candidate.panelId === panelId);
@@ -48,6 +35,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
             panelId={panel.panelId}
             publicView={publicView}
             statuses={panel.statuses}
+            group={panel.group}
             windowScroll={publicView}
           />
         );

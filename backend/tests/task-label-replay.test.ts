@@ -114,7 +114,6 @@ describe('Replayed task and label creates', async () => {
     const replay = await sendLabels([first]);
     expect(replay.status).toBe(200);
     expect(replay.data.map((row) => row.id)).toEqual([first.id]);
-    expect(replay.data[0].number).toBeGreaterThan(0);
 
     const second = labelBody(crypto.randomUUID());
     const batch = await sendLabels([first, second]);

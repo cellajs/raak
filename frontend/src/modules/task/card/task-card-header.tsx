@@ -9,8 +9,9 @@ import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskDragHandle } from '~/modules/task/card/task-drag-handle';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
+import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
 import { focusItem } from '~/modules/task/helpers/focus-item';
-import { ProductRef } from '~/modules/task/product-ref';
+import { ProductRefButton } from '~/modules/task/product-ref';
 import { taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { useOpenUserSheet } from '~/modules/user/use-open-user-sheet';
@@ -37,7 +38,7 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
   const { createdBy } = task;
   const creatorAvatar = createdBy && (
-    <EntityAvatar type="user" id={createdBy.id} name={createdBy.name} url={createdBy.thumbnailUrl} className="size-6" />
+    <EntityAvatar type="user" id={createdBy.id} name={createdBy.name} url={createdBy.thumbnailUrl} className="size-7" />
   );
 
   return (
@@ -48,7 +49,6 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
         <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
       </div>
       <div className="ml-1 flex w-full items-center gap-1">
-        {!isSheet && <ProductRef number={task.number} className="mr-1" />}
         {createdBy && (
           <>
             <TooltipButton toolTipContent={createdBy.name} side="top" sideOffset={5} hideWhenDetached>
@@ -66,12 +66,13 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
               )}
             </TooltipButton>
             <TooltipButton toolTipContent={`${t('c:created_at')} ${dateShort(task.createdAt)}`} side="top" sideOffset={5} hideWhenDetached>
-              <span className="text-muted-foreground ml-1 text-center text-[0.8125rem]">
-                {isOnline ? <RelativeDate date={task.createdAt} /> : t('c:update_on_online')}
+              <span className="text-muted-foreground ml-1 text-[0.8125rem] whitespace-nowrap">
+                {isOnline ? <RelativeDate date={task.createdAt} compact /> : t('c:update_on_online')}
               </span>
             </TooltipButton>
           </>
         )}
+        {!isSheet && <ProductRefButton number={task.number} onCopy={() => copyTasksToClipboard([task])} className="ml-1.5" />}
 
         <div className="grow" />
 

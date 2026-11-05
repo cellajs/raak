@@ -204,13 +204,13 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         tabIndex={isSheet || isFocused ? 0 : -1}
         ref={taskRef}
         className={cn(
-          'group/task relative rounded-none border-0 border-b bg-transparent bg-linear-to-br from-transparent via-transparent via-78% py-0 focus-visible:outline-hidden sm:py-0',
+          'group/task relative rounded-none border-0 border-b bg-transparent bg-linear-to-br from-transparent via-transparent via-58% py-0 focus-visible:outline-hidden sm:py-0',
           isDragging && 'opacity-30',
-          // Hover, current and an open card spread the status gradient; the tint is for unstarted cards, which have no gradient.
+          // Hover, current and an open card take the card fill, the only change on unstarted cards, which have no gradient.
           // An open card keeps it, so it stands out among the closed ones.
-          showsCurrent && 'is-focused bg-card via-58%',
-          !isSheet && effectiveState !== 'collapsed' && 'bg-card via-58%',
-          isSheet ? 'grow p-3 pt-0 sm:px-5' : 'hover:bg-card transition-[background-color,color,--tw-gradient-via-position] hover:via-58%',
+          showsCurrent && 'is-focused bg-card',
+          !isSheet && effectiveState !== 'collapsed' && 'bg-card',
+          isSheet ? 'grow p-3 pt-0 sm:px-5' : 'hover:bg-card transition-[background-color,color]',
           // A selected card keeps full strength, so it stands out among the resting ones
           !isSheet && effectiveState === 'collapsed' && !showsCurrent && !isSelected && 'resting-text',
           // A touch long-press on a collapsed card must start a drag, never a text selection or the iOS callout.

@@ -11,16 +11,19 @@ export type Task = GetTaskResponse & { _draft?: boolean };
 /** The label shape embedded in a task, a subset of the full label. */
 export type TaskLabel = NonNullable<Task['labels']>[number];
 
+/** A project page panel, named by its translation key. */
+export type ProjectPageGroup = 'to_do' | 'in_progress' | 'done';
+
 /** A board column: a project panel or a local panel (explainer, labels), told apart by `kind`. */
 export type BoardResizablePanel =
   | {
       kind: 'project';
       project: ProjectWithMembership;
       panelId: string;
-      /** The statuses it lists, in workflow order; all of them when absent. */
+      /** Absent on a workspace panel, which lists every status. */
       statuses?: TaskStatus[];
-      /** Added to the project's order, so a status panel never ties with the project's panel. */
-      orderOffset?: number;
+      /** A project page panel's group, which names it. */
+      group?: ProjectPageGroup;
     }
   | { kind: 'explainer'; panelId: string }
   | { kind: 'labels'; panelId: string };
@@ -30,7 +33,7 @@ export type ProjectResizablePanel = Extract<BoardResizablePanel, { kind: 'projec
 
 export type TaskCounts = {
   total: number;
-  /** Whether this panel folds accepted / iced into a section: not when it lacks them or lists nothing else. */
+  /** Whether this panel folds accepted / iced into a bar: only a panel of every status does, so both are the same. */
   showAccepted: boolean;
   showIced: boolean;
   /** Count of accepted / iced tasks in this panel (0 when the section isn't shown here). */

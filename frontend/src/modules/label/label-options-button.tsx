@@ -13,6 +13,7 @@ import { DeleteLabels } from '~/modules/label/delete-labels';
 import { labelTileStore } from '~/modules/label/label-tile-store';
 import { findLabelInCache } from '~/modules/label/query';
 import type { LabelRow } from '~/modules/label/types';
+import { cardIconButtonClass } from '~/modules/task/task-styles';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
@@ -31,7 +32,7 @@ export function LabelOptionsButton({ row, canManage, className }: LabelOptionsBu
   const deleteIds = row.mode === 'epic' ? [row.id] : row.siblingIds;
 
   const handleCopyLink = async () => {
-    const link = `${window.location.origin}${window.location.pathname}?labelPageId=${row.number > 0 ? row.number : row.id}`;
+    const link = `${window.location.origin}${window.location.pathname}?labelPageId=${row.id}`;
     if (await copyToClipboard(link)) dropdowner.getState().complete(t('c:copied'));
   };
 
@@ -81,9 +82,9 @@ export function LabelOptionsButton({ row, canManage, className }: LabelOptionsBu
         aria-label={t('c:resource_options', { resource: t('c:label') })}
         variant="ghost"
         size="xs"
-        className={cn('data-dropdowner-active:bg-muted size-8', className)}
+        className={cn('data-dropdowner-active:bg-muted size-8', cardIconButtonClass, className)}
       >
-        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4.5" />
+        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4" />
       </Button>
     </TooltipButton>
   );

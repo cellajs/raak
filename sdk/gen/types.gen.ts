@@ -1212,7 +1212,6 @@ export type Label = {
   deletedAt: string | null;
   public: boolean;
   seq: number;
-  number: number;
   color: string | null;
   mode: 'primary' | 'secondary' | 'epic';
   slug: string;

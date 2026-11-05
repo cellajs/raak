@@ -6,7 +6,6 @@ import { DisplayOptions } from '~/modules/task/board/display-options';
 import { NewTaskButton } from '~/modules/task/board/new-task-button';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
 import { ProjectHeaderToggle } from '~/modules/task/board/project-header-toggle';
-import { StatusPanelsMenu } from '~/modules/task/board/status-panels-menu';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { BoardSearchBar, type BoardSearchScope, pageSearchScope } from '~/modules/task/board-search';
 import { sortTasksAsOnBoard } from '~/modules/task/helpers/board-helpers';
@@ -17,12 +16,7 @@ import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
 import { WorkspaceActionButtons } from '~/modules/workspace/header/action-buttons';
 
-export function BoardHeader({
-  boardId,
-  projects,
-  workspace,
-  publicView,
-}: Pick<ResolvedBoardProps, 'boardId' | 'projects' | 'workspace' | 'publicView'>) {
+export function BoardHeader({ projects, workspace, publicView }: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) {
   const isMobile = useBreakpointBelow('sm');
   const tabProject = useTabProject(projects);
   const isInWorkspace = !!workspace;
@@ -52,7 +46,7 @@ export function BoardHeader({
           clearSelection={clearSelection}
           organizationId={queryParams?.organizationId ?? ''}
           tenantId={queryParams?.tenantId ?? ''}
-          orderTasks={(tasks) => sortTasksAsOnBoard(tasks, projects)}
+          orderTasks={(tasks) => sortTasksAsOnBoard(tasks, projects, !!pageProject)}
         />
       )}
 
@@ -73,7 +67,6 @@ export function BoardHeader({
             {isInWorkspace && <WorkspaceActionButtons />}
             {pageProject && <ProjectActionsMenu project={pageProject} />}
             {!publicView && projects.length > 0 && <LabelsDrawerButton entity={scope.entity} entityId={scope.entityId} />}
-            {pageProject && <StatusPanelsMenu boardId={boardId} className="max-sm:hidden" />}
             <DisplayOptions className="max-sm:hidden" />
             {/* Focus view hides app chrome, which public pages do not have */}
             {!publicView && <FocusView iconOnly />}

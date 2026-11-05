@@ -7,9 +7,9 @@ export const assignNumberFunctionName = 'assign_product_number';
 export const numberTriggerName = (tableName: string) => `${tableName}_number_trigger`;
 
 /**
- * Numbers tasks and labels per organization. A row inserted at 0, which is what the client placeholder and every
- * insert path send, takes the next value of its organization's counter row; the upsert's row lock serializes
- * concurrent inserts of one organization, and each table's unique index is the backstop. A number above 0 passes
+ * Numbers the rows of each numbered product type per organization. A row inserted at 0, which is what the client
+ * placeholder and every insert path send, takes the next value of its organization's counter row; the upsert's row
+ * lock serializes concurrent inserts of one organization, and each table's unique index is the backstop. A number above 0 passes
  * through, so a backfill or an import can bring its own. The UPDATE branch keeps a number where it is.
  */
 function run(): SideEffectBlock {

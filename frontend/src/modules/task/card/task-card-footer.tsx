@@ -15,13 +15,7 @@ import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handle
 import { NoAssigneeAvatar } from '~/modules/task/no-assignee-avatar';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import {
-  statusButtonVariants,
-  statusIconInTextClass,
-  statusTextColors,
-  taskCardAvatarRestClass,
-  taskCardGhostClass,
-} from '~/modules/task/task-styles';
+import { statusIconInTextClass, statusTextColors, taskCardAvatarRestClass, taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Button } from '~/modules/ui/button';
@@ -80,7 +74,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
         )}
         {isReadOnly ? (
           // A fact, not a control
-          <TooltipButton toolTipContent={statusTooltip} side="top">
+          <TooltipButton toolTipContent={statusTooltip} side="bottom">
             <div className={cn('flex h-8 items-center gap-1.5 text-sm font-medium', statusTextColors[task.status], statusIconInTextClass)}>
               <StatusIcon aria-hidden className="size-4 shrink-0" />
               <span>
@@ -91,38 +85,37 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
           </TooltipButton>
         ) : (
           // On the group, not per button: moving between the two would close one tooltip and open another. Also reaches a disabled button.
-          <TooltipButton toolTipContent={statusTooltip} side="top">
-            {/* Split: the icon tells where the task stands and opens the status menu, the verb takes the next step */}
+          <TooltipButton toolTipContent={statusTooltip} side="bottom">
+            {/* Split: the icon tells where the task stands and opens the status menu, the verb takes the next step. Only the icon has colour: a tinted button paired the current status's colour with the next step's word. */}
             <div data-task-status-control={task.id} className="relative flex">
               <Button
                 id={taskFieldTriggerId('status', task.id, isSheet)}
                 onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'status', handlers, currentTarget)}
                 aria-label={`${t('c:status')}: ${t(`c:${statusName}`)}`}
-                variant="outline-ghost"
+                variant="secondary"
                 size="xs"
                 press={false}
-                className={cn('rounded-r-none border-r-0 px-2', statusButtonVariants({ status: task.status }), statusIconInTextClass)}
+                className="rounded-r-none border-r-0 px-2"
               >
                 <StatusIcon aria-hidden className="size-4 shrink-0" />
               </Button>
               <Button
                 onClick={() => handlers.onStatusChange(statusOptionsByValue[task.status].next)}
                 disabled={task.status === TaskStatus.Accepted}
-                variant="outline-ghost"
+                variant="secondary"
                 size="xs"
                 press={false}
-                className={cn('mr-1 rounded-l-none disabled:opacity-100', statusButtonVariants({ status: task.status }))}
+                className="rounded-l-none disabled:opacity-100"
               >
                 {t(`c:${statusOptionsByValue[task.status].action}`)}
               </Button>
-              {/* The action keeps its mr-1, which the check's tooltip must not center over */}
-              <TaskStartCheck taskId={task.id} className="right-1" />
+              <TaskStartCheck taskId={task.id} />
             </div>
           </TooltipButton>
         )}
         <TaskCardLabels task={task} isSheet={isSheet} isCompact={!isSheet || isMobile} />
         {/* Its edge on the card's, so a lone avatar centers under the options button */}
-        <CardTooltip content={assigneeTooltip} className="ml-auto">
+        <CardTooltip content={assigneeTooltip} side="bottom" className="ml-auto">
           <Button
             id={taskFieldTriggerId('assignedTo', task.id, isSheet)}
             onClick={({ currentTarget }) => openTaskFieldDropdown(task, 'assignedTo', handlers, currentTarget)}
@@ -143,11 +136,11 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
                       name={user.name}
                       url={user.thumbnailUrl}
                       // Overlapping greys would merge. The only assignee question on a board is "is this mine?", so your own keeps its color.
-                      className={cn('not-first:ring-background size-7 not-first:ring-1', user.id !== currentUserId && taskCardAvatarRestClass)}
+                      className={cn('ring-background/70 size-7 ring-1', user.id !== currentUserId && taskCardAvatarRestClass)}
                     />
                   ))}
                 </AvatarGroupList>
-                <AvatarOverflowIndicator className="size-7 text-xs" />
+                <AvatarOverflowIndicator className="ring-background/70 size-7 text-xs ring-1" />
               </AvatarGroup>
             ) : (
               <NoAssigneeAvatar className="size-7" />

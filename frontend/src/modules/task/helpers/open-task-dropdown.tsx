@@ -43,6 +43,7 @@ export const taskDropdownContent = (props: TaskDropdownProps) => {
           taskId={props.taskId}
           triggerWidth={props.triggerWidth}
           initialSelectedCollapsed={props.initialSelectedCollapsed}
+          hideHotkeys={props.hideHotkeys}
         />
       );
     case 'assignedTo':
@@ -53,10 +54,19 @@ export const taskDropdownContent = (props: TaskDropdownProps) => {
           onChange={props.onChange}
           taskId={props.taskId}
           triggerWidth={props.triggerWidth}
+          hideHotkeys={props.hideHotkeys}
         />
       );
     case 'status':
-      return <SelectStatus value={props.value} onChange={props.onChange} taskId={props.taskId} triggerWidth={props.triggerWidth} />;
+      return (
+        <SelectStatus
+          value={props.value}
+          onChange={props.onChange}
+          taskId={props.taskId}
+          triggerWidth={props.triggerWidth}
+          hideHotkeys={props.hideHotkeys}
+        />
+      );
     case 'primaryLabel':
       return <SelectPrimaryLabel value={props.value} projectId={props.projectId} onChange={props.onChange} taskId={props.taskId} />;
   }

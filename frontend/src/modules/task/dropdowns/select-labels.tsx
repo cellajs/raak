@@ -80,7 +80,15 @@ const combineTaskLabels = (results: { data?: { items: Label[] } }[]): Label[] =>
 // Labels are lowercase slugs, so the input is normalized as it is typed
 const normalizeLabelInput = (value: string) => (value.trim() ? value.replaceAll(' ', '-') : value).toLowerCase();
 
-export function SelectLabels({ value: currentLabels, projectId, onChange, taskId, triggerWidth = 320, initialSelectedCollapsed }: SelectLabelsProps) {
+export function SelectLabels({
+  value: currentLabels,
+  projectId,
+  onChange,
+  taskId,
+  triggerWidth = 320,
+  initialSelectedCollapsed,
+  hideHotkeys,
+}: SelectLabelsProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const inDrawer = useInDropdownerDrawer();
@@ -166,7 +174,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
         <span className="pointer-events-none flex size-4 items-center justify-center">
           {isSelected && <CheckIcon className="text-success size-4 pointer-coarse:size-5" />}
         </span>
-        <HotkeyIndexBadge index={searchValue ? undefined : hotkeyIndex} />
+        <HotkeyIndexBadge index={searchValue || hideHotkeys ? undefined : hotkeyIndex} />
       </ComboboxItem>
     );
   };
@@ -359,7 +367,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             </AnimatePresence>
           )}
         </div>
-        <ComboboxHotkeyHint searching={!!searchValue}>L</ComboboxHotkeyHint>
+        {!hideHotkeys && <ComboboxHotkeyHint searching={!!searchValue}>L</ComboboxHotkeyHint>}
         {!searchValue && selectedLabels.length > 0 && (
           <button
             type="button"

@@ -1207,7 +1207,6 @@ export const zLabel = z.object({
   deletedAt: z.string().nullable(),
   public: z.boolean(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
-  number: z.int().gte(-2147483648).lte(2147483647),
   color: z.string().max(255).nullable(),
   mode: z.enum(['primary', 'secondary', 'epic']),
   slug: z.string().max(255),

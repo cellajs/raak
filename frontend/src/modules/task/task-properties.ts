@@ -18,15 +18,15 @@ export enum TaskStatus {
 /** Accepted tasks past this many days are left out of the board query. */
 export const boardAcceptedCutOffDays = 14;
 
-// status: the id in URLs, the API and saved searches, so a rename changes name only (Finished reads as Delivered, Accepted as Done).
-// action: the next step from a status, on its card's button. verb: the step that moves a task into it, as the status menu lists it; Backlog keeps its name.
+// status: the id in URLs, the API and saved searches, so a rename changes name only (Finished reads as Delivered).
+// action: the next step from a status, on its card's button; Accepted has none and shows its name. verb: the step that moves a task into it, as the status menu lists it; Backlog keeps its name.
 export const statusOptions = [
   {
     value: TaskStatus.Accepted,
-    action: 'done',
+    action: 'accepted',
     next: TaskStatus.Accepted,
     status: 'accepted',
-    name: 'done',
+    name: 'accepted',
     verb: 'accept',
     icon: AcceptedIcon,
   },
@@ -58,7 +58,7 @@ export const statusOptions = [
     verb: 'unstarted',
     icon: UnstartedIcon,
   },
-  { value: TaskStatus.Iced, action: 'iced', next: TaskStatus.Unstarted, status: 'iced', name: 'iced', verb: 'ice', icon: IcedIcon },
+  { value: TaskStatus.Iced, action: 'thaw', next: TaskStatus.Unstarted, status: 'iced', name: 'iced', verb: 'ice', icon: IcedIcon },
 ] as const;
 
 /** Value-keyed lookup: the enum values have a gap, so `statusOptions[value]` misses. */

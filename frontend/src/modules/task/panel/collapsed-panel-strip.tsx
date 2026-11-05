@@ -9,6 +9,7 @@ import { findItemPanelId, registerPanelNav } from '~/modules/task/helpers/panel-
 interface CollapsedPanelStripProps {
   panelId: string;
   name: string;
+  title?: string;
   mainCount?: number;
   sections?: CollapsedSection[];
   windowScroll?: boolean;

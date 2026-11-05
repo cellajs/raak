@@ -1,10 +1,10 @@
-import { EllipsisVerticalIcon, ExpandIcon, InfoIcon, PlusIcon, SettingsIcon, SlidersHorizontalIcon, TagIcon } from 'lucide-react';
+import { ChevronsLeftRightIcon, EllipsisVerticalIcon, ExpandIcon, InfoIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useMeasure } from '~/hooks/use-measure';
 import { collapsedPanelMinWidth, panelMinWidth } from '~/modules/common/board/board-layout';
-import { BoardPanelHeader } from '~/modules/common/board/board-panel';
+import { BoardPanelHeader, CollapsedPanelView } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -19,10 +19,8 @@ import { buildBoardExtraPanels, usePanelLayout, useShowExplainer, useStatusTabLi
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
 import { StatusTabNav } from '~/modules/task/board/status-tab-nav';
-import { foldsStatus } from '~/modules/task/helpers/board-helpers';
+import { listsEveryStatus, projectPanelName } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
-import { PanelStatusIcon, PanelStatusTitle } from '~/modules/task/panel/panel-status-title';
-import { TaskStatus } from '~/modules/task/task-properties';
 import { newTaskButtonClass, panelHandleClass, statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
 import type { BoardResizablePanel } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
@@ -67,7 +65,7 @@ export function BoardSkeleton({
   const extraPanels = buildBoardExtraPanels({ showExplainer, publicView });
 
   const boardProjects = useWithMembership(projects);
-  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, boardProjects, extraPanels, publicView);
+  const { panels: boardPanels, defaultLayout: defaultSizes } = usePanelLayout(boardId, boardProjects, { extraPanels, projectPage });
   const fit = useBoardStore((state) => state.boardFits[boardId] ?? false);
   const panels: SkeletonColumn[] = isMobile ? [{ kind: 'mobile', panelId: 'mobilePanel' }] : boardPanels;
   const { ref: rowFrameRef, bounds: rowFrame } = useMeasure<HTMLDivElement>();
@@ -118,30 +116,37 @@ export function BoardSkeleton({
         );
       case 'labels':
         return (
-          <LocalPanelShell panelId={panel.panelId} icon={<TagIcon />} title={t('c:label_other')} windowScroll={windowScroll}>
+          <LocalPanelShell
+            panelId={panel.panelId}
+            icon={<TagIcon />}
+            title={t('c:label_other')}
+            windowScroll={windowScroll}
+            isCollapsed={isCollapsed(panel.panelId)}
+          >
             <LocalPanelBodySkeleton />
           </LocalPanelShell>
         );
       case 'explainer':
         return (
-          <LocalPanelShell panelId={panel.panelId} icon={<InfoIcon />} title={t('c:getting_started')} windowScroll={windowScroll}>
+          <LocalPanelShell
+            panelId={panel.panelId}
+            icon={<InfoIcon />}
+            title={t('c:getting_started')}
+            windowScroll={windowScroll}
+            isCollapsed={isCollapsed(panel.panelId)}
+          >
             <LocalPanelBodySkeleton />
           </LocalPanelShell>
         );
       default:
         return (
           <>
-            <PanelHeaderSkeleton
-              project={panel.project}
-              projectPage={projectPage}
-              statuses={panel.statuses}
-              isCollapsed={isCollapsed(panel.panelId)}
-            />
-            <PanelBodySkeleton
-              rows={isCollapsed(panel.panelId) ? 0 : rowCount}
-              showAccepted={foldsStatus(panel.statuses, TaskStatus.Accepted)}
-              showIced={foldsStatus(panel.statuses, TaskStatus.Iced)}
-            />
+            <PanelHeaderSkeleton project={panel.project} group={panel.group} isCollapsed={isCollapsed(panel.panelId)} />
+            {panel.group && isCollapsed(panel.panelId) ? (
+              <CollapsedPanelView title={projectPanelName(panel.project, panel.group)} windowScroll={windowScroll} />
+            ) : (
+              <PanelBodySkeleton rows={isCollapsed(panel.panelId) ? 0 : rowCount} folds={listsEveryStatus(panel.statuses)} />
+            )}
           </>
         );
     }
@@ -242,13 +247,6 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
         </Button>
       )}
 
-      {showsProjectControls && (
-        <Button variant="outline" className="max-sm:hidden">
-          <SlidersHorizontalIcon />
-          <span className="max-xl:sr-only">{t('c:view')}</span>
-        </Button>
-      )}
-
       <DisplayOptions className="max-sm:hidden" />
 
       <Button variant="outline" className="max-lg:hidden">
@@ -265,11 +263,7 @@ export function MobilePanelSkeleton() {
 
   return (
     <>
-      <PanelBodySkeleton
-        rowHeight={mobileRowHeight}
-        showAccepted={foldsStatus(statuses, TaskStatus.Accepted)}
-        showIced={foldsStatus(statuses, TaskStatus.Iced)}
-      />
+      <PanelBodySkeleton rowHeight={mobileRowHeight} folds={listsEveryStatus(statuses)} />
       <div inert>
         <FloatingAction icon={PlusIcon} label={t('c:create_resource', { resource: t('c:task') })} onClick={() => {}} />
       </div>
@@ -281,14 +275,14 @@ interface PanelBodySkeletonProps {
   /** A collapsed panel has none: its strip shows only the status bars at its ends. */
   rows?: number;
   rowHeight?: number;
-  showAccepted?: boolean;
-  showIced?: boolean;
+  /** Whether the accepted and iced bars stand at its ends. */
+  folds?: boolean;
 }
 
-function PanelBodySkeleton({ rows = rowCount, rowHeight = desktopRowHeight, showAccepted = true, showIced = true }: PanelBodySkeletonProps) {
+function PanelBodySkeleton({ rows = rowCount, rowHeight = desktopRowHeight, folds = true }: PanelBodySkeletonProps) {
   return (
     <div className="border-panel-edge flex min-h-0 w-full flex-1 flex-col overflow-hidden sm:border">
-      {showAccepted && (
+      {folds && (
         <div
           className={cn('h-9 shrink-0 border-t border-t-transparent', statusSectionColors.accepted.border.top, statusSectionColors.accepted.fill)}
         />
@@ -300,7 +294,7 @@ function PanelBodySkeleton({ rows = rowCount, rowHeight = desktopRowHeight, show
         </div>
       ))}
       <div className="grow" />
-      {showIced && <div className={cn('h-9 shrink-0', statusSectionColors.iced.border.bottom, statusSectionColors.iced.fill)} />}
+      {folds && <div className={cn('h-9 shrink-0', statusSectionColors.iced.border.bottom, statusSectionColors.iced.fill)} />}
     </div>
   );
 }
@@ -316,12 +310,11 @@ function LocalPanelBodySkeleton() {
   );
 }
 
-interface PanelHeaderSkeletonProps extends Pick<BoardPanelProps, 'project' | 'statuses'> {
-  projectPage: boolean;
+interface PanelHeaderSkeletonProps extends Pick<BoardPanelProps, 'project' | 'group'> {
   isCollapsed: boolean;
 }
 
-function PanelHeaderSkeleton({ projectPage, project, statuses, isCollapsed }: PanelHeaderSkeletonProps) {
+function PanelHeaderSkeleton({ project, group, isCollapsed }: PanelHeaderSkeletonProps) {
   const { t } = useTranslation();
   const isReadOnly = useIsProjectReadOnly(project.id);
 
@@ -331,20 +324,19 @@ function PanelHeaderSkeleton({ projectPage, project, statuses, isCollapsed }: Pa
       isCollapsed={isCollapsed}
       leading={
         <div className={cn(buttonVariants({ variant: 'ghost' }), panelHandleClass, 'truncate', isCollapsed && 'w-full justify-center')}>
-          {projectPage ? (
-            <PanelStatusIcon statuses={statuses} isCollapsed={isCollapsed} />
+          {group ? (
+            isCollapsed && <ChevronsLeftRightIcon className="size-4 shrink-0" />
           ) : (
             <span className="relative flex">
               <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
               {project.public && <PublicBadge />}
             </span>
           )}
-          {!isCollapsed &&
-            (projectPage ? <PanelStatusTitle statuses={statuses} /> : <div className="truncate leading-6 font-semibold">{project.name}</div>)}
+          {!isCollapsed && <div className="truncate leading-6 font-semibold">{projectPanelName(project, group)}</div>}
         </div>
       }
       actions={
-        !projectPage && (
+        !group && (
           <>
             {isReadOnly && (
               <Badge soft className="text-xs font-normal">

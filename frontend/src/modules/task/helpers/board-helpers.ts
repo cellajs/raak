@@ -1,5 +1,6 @@
 import i18n from 'i18next';
-import { panelMinWidth } from '~/modules/common/board/board-layout';
+import type { TKey } from '~/lib/i18n-locales';
+import { collapsedPanelMinWidth, panelMinWidth } from '~/modules/common/board/board-layout';
 import type { ProjectWithMembership } from '~/modules/project/types';
 import { useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
@@ -8,7 +9,7 @@ import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import type { BoardResizablePanel, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
+import type { BoardResizablePanel, ProjectPageGroup, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
 
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
@@ -29,13 +30,16 @@ export const sortByMembership = (projects: ProjectWithMembership[]) => {
   return [...projects].sort((a, b) => (a.membership?.displayOrder ?? 0) - (b.membership?.displayOrder ?? 0));
 };
 
-/** Orders tasks as the board shows them: panels by membership, then status and display order. */
-export const sortTasksAsOnBoard = (tasks: Task[], projects: ProjectWithMembership[]) => {
+/** Orders tasks as the board shows them: panels by membership, on a project page by its panels, then status and display order. */
+export const sortTasksAsOnBoard = (tasks: Task[], projects: ProjectWithMembership[], projectPage = false) => {
   const panelIndex = new Map(sortByMembership(projects).map((project, index) => [project.id, index]));
-  return [...tasks].sort((a, b) => (panelIndex.get(a.projectId) ?? 0) - (panelIndex.get(b.projectId) ?? 0) || compareTaskOrder(a, b));
+  const pageIndex = (task: Task) => (projectPage ? groupIndex(task.status) : 0);
+  return [...tasks].sort(
+    (a, b) => (panelIndex.get(a.projectId) ?? 0) - (panelIndex.get(b.projectId) ?? 0) || pageIndex(a) - pageIndex(b) || compareTaskOrder(a, b),
+  );
 };
 
-// The path a task takes, with iced off the end of it. Panel titles read in this order.
+// The path a task takes, with iced off the end of it.
 export const statusPath: TaskStatus[] = [TaskStatus.Unstarted, TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed, accepted, iced];
 
 /** The statuses as a panel lists them from the bottom up, iced first: the order of the mobile tabs. */
@@ -51,67 +55,36 @@ export const countTasksByStatus = ({ items }: { items: Task[] }) => {
   return counts;
 };
 
-/** A status panel's place on a board that starts with this status. */
-const statusListIndex = (status: TaskStatus, startWith: TogglableStatusType) => (startWith === 'iced' ? iced - status : status);
+/** The project page's panels in flow order, with what each says while it lists nothing. */
+const projectPageGroups: { group: ProjectPageGroup; statuses: TaskStatus[]; emptyTitle: TKey }[] = [
+  { group: 'to_do', statuses: [TaskStatus.Unstarted, iced], emptyTitle: 'c:nothing_to_do' },
+  { group: 'in_progress', statuses: [TaskStatus.Reviewed, TaskStatus.Finished, TaskStatus.Started], emptyTitle: 'c:nothing_in_progress' },
+  { group: 'done', statuses: [accepted], emptyTitle: 'c:nothing_done_recently' },
+];
 
-/** The panel id of a status with a panel of its own. */
-export const statusPanelId = (projectId: string, status: TaskStatus) => `${projectId}-status-${statusOptionsByValue[status].status}`;
+const groupIndex = (status: TaskStatus) => projectPageGroups.findIndex(({ statuses }) => statuses.includes(status));
 
-/** One panel per project; on a board with status panels, the project's panel keeps the statuses left over, unless `withoutRest`. Status panels line up from the status the board starts with, and the project's panel follows them. */
-export const prepareBoardPanels = (
-  projects: ProjectWithMembership[],
-  statusPanels: TaskStatus[] = [],
-  startWith: TogglableStatusType = 'accepted',
-  withoutRest = false,
-) =>
-  sortByMembership(projects).flatMap((project): ProjectResizablePanel[] => {
-    const panel: ProjectResizablePanel = { kind: 'project', project, panelId: project.id };
-    if (!statusPanels.length) return [panel];
+const groupPanelId = (projectId: string, group: ProjectPageGroup) => `${projectId}-${group}`;
 
-    const leftOver = statusPath.filter((status) => !statusPanels.includes(status));
-    return [
-      ...(leftOver.length && !withoutRest ? [{ ...panel, statuses: leftOver, orderOffset: iced + 1 }] : []),
-      ...statusPanels.map((status) => ({
-        ...panel,
-        panelId: statusPanelId(project.id, status),
-        statuses: [status],
-        orderOffset: statusListIndex(status, startWith),
-      })),
-    ];
-  });
+/** The id of the project page panel that lists this status. */
+export const projectPagePanelId = (projectId: string, status: TaskStatus) => groupPanelId(projectId, projectPageGroups[groupIndex(status)].group);
 
-// The work in progress gets its own columns. The rest panel folds accepted and iced into its bars, which makes four panels at most: all open from a 1280 window.
-const publicStatusPanelOrder = [TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed];
+/** What an empty project page panel says it would hold. */
+export const projectPageEmptyTitle = (group: ProjectPageGroup) => projectPageGroups.find((entry) => entry.group === group)?.emptyTitle;
 
-/** The status panels of a public board, whose viewers have no menu and keep no choice. Before the tasks load it assumes all of them, like a skeleton. */
-export const publicBoardPanels = (tasks?: { status: TaskStatus }[]) => {
-  if (!tasks) return { statusPanels: publicStatusPanelOrder, withoutRest: false };
-  const statusPanels = publicStatusPanelOrder.filter((status) => tasks.some((task) => task.status === status));
-  return { statusPanels, withoutRest: tasks.every((task) => statusPanels.includes(task.status)) };
-};
+/** One panel per project on a workspace board; on a project page, the project's To do, In progress and Done. */
+export const prepareBoardPanels = (projects: ProjectWithMembership[], projectPage = false) =>
+  sortByMembership(projects).flatMap((project): ProjectResizablePanel[] =>
+    projectPage
+      ? projectPageGroups.map(({ group, statuses }) => ({ kind: 'project', project, panelId: groupPanelId(project.id, group), statuses, group }))
+      : [{ kind: 'project', project, panelId: project.id }],
+  );
 
-/** Whether a panel folds this status into a bar: when it lists the status among others. */
-export const foldsStatus = (statuses: TaskStatus[] | undefined, status: TaskStatus) =>
-  !statuses || (statuses.length > 1 && statuses.includes(status));
+/** Whether a panel lists every status, which is the one panel that folds accepted and iced into bars. */
+export const listsEveryStatus = (statuses: TaskStatus[] | undefined) => !statuses;
 
-const statusNames = (statuses: TaskStatus[]) => statuses.map((status) => i18n.t(`c:${statusOptionsByValue[status].name}`));
-
-/** Every status of a panel by name, where its title abbreviates them. */
-export const listStatusNames = (statuses: TaskStatus[]) => statusNames(statuses).join(', ');
-
-/** A panel's title: "Started" for one status, "Backlog and iced" for two, "Delivered … done" for more. Its icons tell which are in between. */
-export const formatStatusesLabel = (statuses: TaskStatus[]): string => {
-  const names = statusNames(statuses);
-  if (names.length < 2) return names.join();
-
-  const first = names[0];
-  const last = names[names.length - 1].toLowerCase();
-  return names.length === 2 ? i18n.t('c:status_pair', { first, second: last }) : i18n.t('c:status_range', { from: first, to: last });
-};
-
-/** A project panel's name: the project, and for a panel of some statuses those too. */
-export const projectPanelName = (project: { name: string }, statuses?: TaskStatus[]) =>
-  statuses ? `${project.name}: ${formatStatusesLabel(statuses)}` : project.name;
+/** A panel's name: its project's, or on a project page its group's. */
+export const projectPanelName = (project: { name: string }, group?: ProjectPageGroup) => (group ? i18n.t(`c:${group}`) : project.name);
 
 export const sectionBarId = (type: TogglableStatusType, projectId: string) => `section-${type}-${projectId}`;
 
@@ -122,8 +95,11 @@ export const foldsSection = (type: TogglableStatusType, counts: TaskCounts) => (
 export const hasSectionBar = (type: TogglableStatusType, counts: TaskCounts) =>
   type === 'iced' ? counts.showIced && !!counts.iced : counts.showAccepted && (!!counts.accepted || counts.acceptedCutOff > 0);
 
-export const normalizePanelWidths = (storedLayout: Record<string, number>, panels: BoardResizablePanel[]) =>
-  Object.fromEntries(panels.map(({ panelId }) => [panelId, storedLayout[panelId] ?? panelMinWidth]));
+/** The stored width of each panel, else its default: collapsed for those in `startCollapsed`, the minimum for the rest. */
+export const normalizePanelWidths = (storedLayout: Record<string, number>, panels: BoardResizablePanel[], startCollapsed: string[] = []) =>
+  Object.fromEntries(
+    panels.map(({ panelId }) => [panelId, storedLayout[panelId] ?? (startCollapsed.includes(panelId) ? collapsedPanelMinWidth : panelMinWidth)]),
+  );
 
 /** Board identity of the last `resetTaskInteraction` call, to skip same-board re-entries. */
 let lastInteractionBoardKey: string | null = null;

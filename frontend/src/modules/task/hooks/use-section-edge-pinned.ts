@@ -9,7 +9,7 @@ type ListHandle = Pick<VirtualizerHandle, 'scrollOffset' | 'findItemIndex' | 'ge
 interface UseSectionEdgePinnedOptions {
   /** The end of the list the bar sits at and pins to. */
   edge: 'top' | 'bottom';
-  /** False while the bar is not rendered. */
+  /** False while the bar is not rendered or may not pin; it then starts unpinned when it turns true. */
   active: boolean;
   scrollRef: RefObject<HTMLElement | null>;
   /** Scrolls the window when true, else the `scrollRef` viewport. */
@@ -26,6 +26,8 @@ export function useSectionEdgePinned({ edge, active, scrollRef, windowMode, list
   // Compiler gap: pendingEvents++ on a variable the scroll handler captures.
   'use no memo';
   const [pinned, setPinned] = useState(false);
+  // A direction read before the pause would pin the bar the moment it ends, with no scroll to ask for it
+  if (!active && pinned) setPinned(false);
 
   useEffect(() => {
     if (!active) return;

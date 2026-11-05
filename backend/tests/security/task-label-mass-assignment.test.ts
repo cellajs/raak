@@ -189,25 +189,4 @@ describe('Task and label columns outside the body pick', async () => {
     expect(updated.response.status).toBe(200);
     expect(await taskRow(id)).toMatchObject({ name: 'Renamed', number });
   });
-
-  it('keeps the number the server assigned to a label', async () => {
-    const id = generateId();
-    const created = await call(createLabels, {
-      path,
-      body: [{ id, name: 'numbered', color: null, projectId, stx: mockStxBase(), number: 424242 }] as never,
-      headers: headers(admin),
-    });
-    expect(created.response.status).toBe(201);
-    const { number } = await labelRow(id);
-    expect(number).toBeGreaterThan(0);
-    expect(number).not.toBe(424242);
-
-    const updated = await call(updateLabel, {
-      path: { ...path, id },
-      body: { ops: { name: 'renamed', number: 424242 }, stx: mockStxFor('name') } as never,
-      headers: headers(admin),
-    });
-    expect(updated.response.status).toBe(200);
-    expect(await labelRow(id)).toMatchObject({ name: 'renamed', number });
-  });
 });

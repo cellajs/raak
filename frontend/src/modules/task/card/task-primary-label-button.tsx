@@ -36,13 +36,13 @@ export function TaskPrimaryLabelButton({ task, isSheet = false }: TaskPrimaryLab
           taskCardDimClass,
           taskCardGhostClass,
           // On a board the icon centers over the status column; a sheet has none, so its glyph sits on the text edge
-          'focus-inset -ml-0.5 px-1.5 group-data-[sheet=true]/task:-ml-[calc(0.375rem+1px)] group-data-[sheet=true]/task:opacity-100',
+          'focus-inset -ml-px px-1.5 group-data-[sheet=true]/task:-ml-[calc(0.375rem+1px)] group-data-[sheet=true]/task:opacity-100',
           showsMark && 'relative opacity-100',
         )}
         {...readOnlyInert}
       >
         {showsMark && <span aria-hidden className={cn('task-unseen-halo', labelIconColorClass(task.primaryLabel?.color))} />}
-        <PrimaryLabelIcon label={task.primaryLabel} className={cn('size-4.5', showsMark && 'relative')} />
+        <PrimaryLabelIcon label={task.primaryLabel} className={cn('size-4', showsMark && 'relative')} />
       </Button>
     </CardTooltip>
   );

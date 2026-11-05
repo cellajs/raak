@@ -59,7 +59,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
     if (!projectId) return;
 
     const bulk = buildBulkFieldHandlers(tasks, { taskMutation, user });
-    const base = { triggerId: `selected-tasks-${dropdownType}`, triggerRef: { current: currentTarget } };
+    const base = { triggerId: `selected-tasks-${dropdownType}`, triggerRef: { current: currentTarget }, hideHotkeys: true };
 
     if (dropdownType === 'status') return { ...base, dropdownType, value: bulk.status, onChange: bulk.onStatusChange };
     if (dropdownType === 'labels') return { ...base, dropdownType, projectId, ...bulk.labels };

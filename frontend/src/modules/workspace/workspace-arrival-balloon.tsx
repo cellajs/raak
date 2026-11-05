@@ -80,7 +80,7 @@ function ArrivalPlacement({ project }: BalloonProps) {
   return (
     <>
       <div ref={setAnchor} />
-      {/* Above the sticky status bars (z-85), as the drop ring in BoardPanel */}
+      {/* Above the sticky status bars, as the drop ring in BoardPanel */}
       <div aria-hidden className="ring-info pointer-events-none absolute inset-0 z-90 rounded-t-lg ring-2 ring-inset" />
       {anchor && (
         <Popover open onOpenChange={(open) => !open && clearArrival()}>

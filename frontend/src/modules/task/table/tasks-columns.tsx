@@ -16,7 +16,8 @@ import { SeenMark } from '~/modules/seen/seen-mark';
 import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
 import { TaskSummaryHtml } from '~/modules/task/card/task-summary-html';
 import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
-import { productRef } from '~/modules/task/helpers/product-ref';
+import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
+import { ProductRefButton } from '~/modules/task/product-ref';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
@@ -95,9 +96,9 @@ export const useColumns = (opts: {
       name: '#',
       sortable: true,
       minBreakpoint: 'sm',
-      width: 72,
+      width: 84,
       placeholderValue: '-',
-      renderCell: ({ row }) => productRef(row.number),
+      renderCell: ({ row, tabIndex }) => <ProductRefButton number={row.number} tabIndex={tabIndex} onCopy={() => copyTasksToClipboard([row])} />,
       exportValue: (row) => row.number || null,
     },
     {

@@ -29,7 +29,7 @@ import { isTouchInteraction } from '~/utils/input-modality';
 /** Members listed before "Show all"; the digit hotkeys cover the same range. */
 const initialMembersCount = 6;
 
-export function SelectMembers({ value: currentAssigned, projectId, onChange, taskId, triggerWidth = 320 }: SelectMembersProps) {
+export function SelectMembers({ value: currentAssigned, projectId, onChange, taskId, triggerWidth = 320, hideHotkeys }: SelectMembersProps) {
   // Reads and writes a ref during render to freeze the first member list at mount.
   'use no memo';
   const { t } = useTranslation();
@@ -130,7 +130,7 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
           className="min-h-10 rounded-none leading-normal focus-visible:ring-transparent"
           placeholder={t('c:assign_to')}
         />
-        <ComboboxHotkeyHint searching={!!searchValue.length}>U</ComboboxHotkeyHint>
+        {!hideHotkeys && <ComboboxHotkeyHint searching={!!searchValue.length}>U</ComboboxHotkeyHint>}
         <ScrollArea className={comboboxScrollClass} viewportClassName="sm:min-h-0 sm:overscroll-none">
           <ComboboxList className="max-h-none overflow-visible">
             {(user: UserMinimalBase) => {
@@ -140,7 +140,7 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
                   <EntityAvatar type="user" id={user.id} name={user.name} url={user.thumbnailUrl} className="size-6" />
                   <div className="grow">{user.name}</div>
                   <ComboboxItemIndicator className="text-success" />
-                  <HotkeyIndexBadge index={!searchValue.length && !showAll ? index : undefined} />
+                  <HotkeyIndexBadge index={!searchValue.length && !showAll && !hideHotkeys ? index : undefined} />
                 </ComboboxItem>
               );
             }}

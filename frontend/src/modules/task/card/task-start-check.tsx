@@ -5,7 +5,7 @@ import { create } from 'zustand';
 import { Tooltip, TooltipContent } from '~/modules/ui/tooltip';
 import { cn } from '~/utils/cn';
 
-const checkDuration = 1600;
+export const checkDuration = 1600;
 const closeDuration = 200; // the tooltip's fade-out, before it unmounts
 
 /** Per task: true while "Copied" shows, false while it fades. */
@@ -51,7 +51,7 @@ export function TaskStartCheck({ taskId, className }: TaskStartCheckProps) {
       <span ref={setAnchor} aria-hidden="true" className={cn('pointer-events-none absolute inset-y-0 right-0 left-0', className)} />
       <Tooltip open={check && !!anchor}>
         {/* Unlike a hover tooltip it shows on a phone too: Start is a tap there */}
-        <TooltipContent anchor={anchor} side="top" sideOffset={8} className="flex items-center gap-1.5 max-sm:flex">
+        <TooltipContent anchor={anchor} side="bottom" sideOffset={8} className="flex items-center gap-1.5 max-sm:flex">
           {/* biome-ignore lint/nursery/noTailwindRawColors: on the tooltip's inverted surface the theme's success has the background's lightness */}
           <CheckIcon aria-hidden="true" className="size-3.5 text-green-400 dark:text-green-800" strokeWidth={3} />
           {t('c:copied')}

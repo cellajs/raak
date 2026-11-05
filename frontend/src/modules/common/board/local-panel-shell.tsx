@@ -19,6 +19,8 @@ interface LocalPanelShellProps {
   windowScroll?: boolean;
   /** Fills the panel below its handle while collapsed. */
   collapsedContent?: ReactNode;
+  /** Overrides the stored state, which every board shares per panel id: a loading skeleton knows its own width before the panel group registers. */
+  isCollapsed?: boolean;
   children: ReactNode;
 }
 
@@ -26,8 +28,18 @@ interface LocalPanelShellProps {
  * Frame for the local board panels (explainer, labels): a collapsed icon handle, or a pinned header with
  * drag handle, title and actions above the body. Collapse, size and order persist per `panelId`.
  */
-export function LocalPanelShell({ panelId, icon, title, headerActions, windowScroll, collapsedContent, children }: LocalPanelShellProps) {
-  const isCollapsed = !!useBoardStore((state) => state.panelCollapseState[panelId]);
+export function LocalPanelShell({
+  panelId,
+  icon,
+  title,
+  headerActions,
+  windowScroll,
+  collapsedContent,
+  isCollapsed: collapsedProp,
+  children,
+}: LocalPanelShellProps) {
+  const storedCollapsed = !!useBoardStore((state) => state.panelCollapseState[panelId]);
+  const isCollapsed = collapsedProp ?? storedCollapsed;
 
   // One tree for both states, so the handle stays the same element and keeps focus through a collapse or expand
   return (

@@ -13,7 +13,7 @@ import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
 import { setCurrentItem } from '~/modules/task/helpers/focus-item';
 import { taskShareLink } from '~/modules/task/helpers/task-link';
-import { taskCardGhostClass } from '~/modules/task/task-styles';
+import { cardIconButtonClass, taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
@@ -100,10 +100,10 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
         onClick={({ currentTarget }) => openOptionsDropdown(currentTarget)}
         aria-label={t('c:resource_options', { resource: t('c:task') })}
         variant="ghost"
-        className={cn('focus-inset data-dropdowner-active:bg-foreground/7 size-8', taskCardGhostClass)}
+        className={cn('focus-inset data-dropdowner-active:bg-foreground/7 size-8', taskCardGhostClass, cardIconButtonClass)}
         size="xs"
       >
-        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4.5" />
+        <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4" />
       </Button>
     </TooltipButton>
   );
