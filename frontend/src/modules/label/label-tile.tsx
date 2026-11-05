@@ -21,7 +21,6 @@ import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
-import { ProductRef } from '~/modules/task/product-ref';
 import { itemFocusBarClass } from '~/modules/task/task-styles';
 import { Badge } from '~/modules/ui/badge';
 import { buttonVariants } from '~/modules/ui/button';
@@ -250,7 +249,6 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
                 </span>
               </button>
             )}
-            {expanded && <ProductRef number={row.number} />}
             {/* z-1 lifts it above the collapsed name's overlay: a press filters the board, the rest of the tile opens it */}
             <LabelFilterCount name={row.name} slug={row.slug} count={row.usedCount} onAction={onAction} />
             {!expanded && row.mode === 'epic' && (

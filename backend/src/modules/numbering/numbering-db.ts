@@ -5,7 +5,7 @@ import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 
 /** The product types whose rows carry a `number`, each counted apart. */
-export const numberedProductTypes = ['task', 'label'] as const satisfies readonly ProductEntityType[];
+export const numberedProductTypes = ['task'] as const satisfies readonly ProductEntityType[];
 
 /** The last number handed out per organization and product type; `assign_product_number()` is its only writer. */
 export const productNumberingTable = snakeCase.table(
