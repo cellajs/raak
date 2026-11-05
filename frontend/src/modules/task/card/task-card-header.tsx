@@ -75,9 +75,9 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
         <div className="grow" />
 
-        {/* Options come last, where a collapsed card shows them on hover. An open card always shows its own. */}
-        <div className="flex items-center gap-1">
-          {!isSheet && (
+        {/* Options come last, where a collapsed card shows them on hover. An open card always shows its own; a sheet's sit in its title bar. */}
+        {!isSheet && (
+          <div className="flex items-center gap-1">
             <CardCloseButton
               animateIn={animateClose}
               className={cn('focus-inset', taskCardGhostClass)}
@@ -87,9 +87,9 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
                 taskCardStore.getState().setTaskState(task.id, 'collapsed');
               }}
             />
-          )}
-          <TaskOptionsButton task={task} isSheet={isSheet} />
-        </div>
+            <TaskOptionsButton task={task} />
+          </div>
+        )}
       </div>
     </div>
   );

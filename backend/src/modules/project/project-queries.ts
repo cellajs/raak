@@ -1,3 +1,4 @@
+import type { z } from '@hono/zod-openapi';
 import { and, count, eq, getColumns, inArray, max, type SQL, sql } from 'drizzle-orm';
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
@@ -9,6 +10,7 @@ import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { type InsertProjectModel, projectsTable } from '#/modules/project/project-db';
+import type { projectListQuerySchema } from '#/modules/project/project-schema';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { buildChannelListReadWhere, type ChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 import type { CollectionReadFilter } from '#/permissions/collection-scope';
@@ -151,13 +153,11 @@ export const resolveProjectNarrowing = async (
 export const unconditionalProjectIds = (filter: CollectionReadFilter): string[] =>
   filter.scopes.filter((scope) => scope.channelType === 'project' && !scope.condition && !scope.deeperChannels).flatMap((scope) => scope.channelIds);
 
-interface FindProjectsPaginatedOpts {
+interface FindProjectsPaginatedOpts extends Pick<z.infer<typeof projectListQuerySchema>, 'sort' | 'order'> {
   userId: string;
   /** Lists the projects of archived tenants too. */
   isSystemAdmin: boolean;
   q?: string;
-  sort: 'id' | 'name' | 'createdAt' | 'displayOrder';
-  order: 'asc' | 'desc';
   offset: number;
   limit: number;
   organizationId?: string;

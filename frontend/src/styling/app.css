@@ -12,7 +12,7 @@
   --board-panel-offset: 146px; /* chrome above a project panel body: md board offset (78px) + 68px panel header row */
   --local-panel-offset: 78px; /* chrome above a local panel frame (its header renders inside the frame) */
   --task-sheet-offset: 3rem; /* sheet chrome above a task card rendered in a sheet */
-  --task-sheet-offset-sm: 3.25rem;
+  --task-sheet-offset-sm: 3.5rem;
 }
 
 /* A project page's header stands above the board row, and its filing banner below the search bar, so the same offsets

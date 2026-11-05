@@ -377,7 +377,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
             </span>
           </button>
         )}
-        <ScrollArea className={comboboxScrollClass} viewportClassName="sm:min-h-0 sm:overscroll-contain">
+        <ScrollArea className={comboboxScrollClass} viewportClassName="sm:min-h-0 sm:overscroll-none">
           <ComboboxList className="max-h-none overflow-visible p-1!">
             {searchValue ? (
               searchResults.length > 0 ? (

@@ -34,7 +34,7 @@ import { offsetPaging, pageQuery, refetchOnMountForIncluded } from '~/query/basi
 import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { getSimilarQueries } from '~/query/basic/mutate-query';
 import { preserveIncluded } from '~/query/basic/preserve-included';
-import type { MutationData } from '~/query/types';
+import type { MutationData, QueryData } from '~/query/types';
 
 type ProjectFilters = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 'offset'>;
 
@@ -74,11 +74,10 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
 
   return infiniteQueryOptions({
     queryKey: keys.list.filtered(filters),
-    ...offsetPaging(limit, async (offset, signal) => {
-      const result = await getProjects({ query: { ...filters, include, ...pageQuery(limit, offset) }, signal });
-      // The enrichment pipeline adds membership, can and ancestorSlugs to cached entries.
-      return result as { items: EnrichedProject[]; total: number };
-    }),
+    ...offsetPaging(
+      limit,
+      (offset, signal): Promise<QueryData<EnrichedProject>> => getProjects({ query: { ...filters, include, ...pageQuery(limit, offset) }, signal }),
+    ),
     refetchOnMount: refetchOnMountForIncluded(include),
   });
 };
@@ -87,7 +86,7 @@ export const projectQueryOptions = (id: string, organizationId: string, tenantId
   queryOptions({
     queryKey: keys.detail.byId(id),
     // A project page's board needs the task count to tell how many accepted tasks it leaves out
-    queryFn: async () => (await getProject({ path: { id, organizationId, tenantId }, query: { include: 'counts' } })) as EnrichedProject,
+    queryFn: (): Promise<EnrichedProject> => getProject({ path: { id, organizationId, tenantId }, query: { include: 'counts' } }),
     placeholderData: () => findProjectByIdOrSlug(id, tenantId),
     structuralSharing: preserveIncluded,
   });

@@ -3234,7 +3234,7 @@
             }
           },
           "stx": {
-            "$ref": "#/components/schemas/StxBase"
+            "$ref": "#/components/schemas/StxStored"
           }
         },
         "required": [
@@ -5121,10 +5121,6 @@
           "deletedAt": {
             "type": ["string", "null"]
           },
-          "deletedBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
           "public": {
             "type": "boolean"
           },
@@ -5171,7 +5167,7 @@
             "format": "uuid"
           },
           "stx": {
-            "$ref": "#/components/schemas/StxBase"
+            "$ref": "#/components/schemas/StxStored"
           }
         },
         "required": [
@@ -5184,7 +5180,6 @@
           "description",
           "keywords",
           "deletedAt",
-          "deletedBy",
           "public",
           "seq",
           "number",
@@ -11123,36 +11118,44 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 1000000
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "status",
             "in": "query"
           },
           {
             "schema": {
               "type": "string",
-              "maxLength": 1000000
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "type",
             "in": "query"
           },
           {
             "schema": {
               "type": "string",
-              "maxLength": 1000000
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "labels",
             "in": "query"
           },
           {
             "schema": {
               "type": "string",
-              "maxLength": 1000000
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "assigned",
             "in": "query"
           },
@@ -18234,9 +18237,11 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 255
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "modes",
             "in": "query"
           },
@@ -22195,36 +22200,44 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 1000000
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "status",
             "in": "query"
           },
           {
             "schema": {
               "type": "string",
-              "maxLength": 1000000
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "type",
             "in": "query"
           },
           {
             "schema": {
               "type": "string",
-              "maxLength": 1000000
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "labels",
             "in": "query"
           },
           {
             "schema": {
               "type": "string",
-              "maxLength": 1000000
+              "maxLength": 2048,
+              "description": "Comma-separated values"
             },
             "required": false,
+            "description": "Comma-separated values",
             "name": "assigned",
             "in": "query"
           },

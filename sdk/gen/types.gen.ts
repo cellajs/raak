@@ -763,7 +763,7 @@ export type Task = {
     projectId: string;
   } | null;
   assignedTo: Array<UserMinimalBase>;
-  stx: StxBase;
+  stx: StxStored;
 };
 
 /**
@@ -1210,7 +1210,6 @@ export type Label = {
   description: string | null;
   keywords: string;
   deletedAt: string | null;
-  deletedBy: string | null;
   public: boolean;
   seq: number;
   number: number;
@@ -1222,7 +1221,7 @@ export type Label = {
   displayOrder: number | null;
   projectId: string;
   organizationId: string;
-  stx: StxBase;
+  stx: StxStored;
 };
 
 /**
@@ -4690,9 +4689,21 @@ export type GetPublicTasksData = {
     order?: 'asc' | 'desc';
     offset?: number;
     limit?: number;
+    /**
+     * Comma-separated values
+     */
     status?: string;
+    /**
+     * Comma-separated values
+     */
     type?: string;
+    /**
+     * Comma-separated values
+     */
     labels?: string;
+    /**
+     * Comma-separated values
+     */
     assigned?: string;
     acceptedCutOff?: number;
     projectId: string;
@@ -7137,6 +7148,9 @@ export type GetLabelsData = {
      * Range read for sync: the last sequence position to return. Requires afterSeq.
      */
     untilSeq?: number;
+    /**
+     * Comma-separated values
+     */
     modes?: string;
     projectId?: string;
     workspaceId?: string;
@@ -8651,9 +8665,21 @@ export type GetTasksData = {
      * Range read for sync: the last sequence position to return. Requires afterSeq.
      */
     untilSeq?: number;
+    /**
+     * Comma-separated values
+     */
     status?: string;
+    /**
+     * Comma-separated values
+     */
     type?: string;
+    /**
+     * Comma-separated values
+     */
     labels?: string;
+    /**
+     * Comma-separated values
+     */
     assigned?: string;
     acceptedCutOff?: number;
     projectId?: string;

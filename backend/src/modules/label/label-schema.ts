@@ -7,7 +7,16 @@ import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schem
 import { labelsTable } from '#/modules/label/label-db';
 import { mockLabelResponse } from '#/modules/label/label-mocks';
 import { placementFieldsSchema, validatePlacement } from '#/permissions/product-placement';
-import { batchResponseSchema, maxLength, productListQuerySchema, stxBaseSchema, validIdSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  csvQuerySchema,
+  maxLength,
+  orderSchema,
+  productListQuerySchema,
+  stxStoredSchema,
+  validIdSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { iconNameSchema } from '#/schemas/icon-name-schema';
 import { labelSlugSchema } from '#/schemas/label-slug-schema';
 import { pick } from '#/utils/pick';
@@ -27,9 +36,9 @@ const labelCreateSchema = labelInsertSchema.pick({ name: true }).extend({
 
 export const labelSchema = z
   .object({
-    ...labelSelectSchema.omit({ stx: true, createdBy: true, updatedBy: true }).shape,
+    ...labelSelectSchema.omit({ stx: true, createdBy: true, updatedBy: true, deletedBy: true }).shape,
     mode: z.enum(labelModes),
-    stx: stxBaseSchema,
+    stx: stxStoredSchema,
   })
   .openapi('Label', {
     description: 'A label used to categorize and filter tasks within a project.',
@@ -74,14 +83,8 @@ export const labelUpdateStxBodySchema = labelContract.updateBodySchema;
 
 export const labelListQuerySchema = productListQuerySchema({
   sort: z.enum(['name']).default('name'),
-  order: z.enum(['asc', 'desc']).default('asc'),
-  /** Comma-separated label modes, e.g. `?modes=secondary,epic`. */
-  modes: z
-    .string()
-    .max(maxLength.field)
-    .optional()
-    .transform((val) => (val ? val.split(',').map((s) => s.trim()) : undefined))
-    .pipe(z.array(z.enum(labelModes)).max(labelModes.length).optional()),
+  order: orderSchema.default('asc'),
+  modes: csvQuerySchema(z.enum(labelModes), labelModes.length),
   projectId: validIdSchema.optional(),
   workspaceId: validIdSchema.optional(),
 }).refine((data) => !data.projectId || !data.workspaceId, { message: 'Only one of projectId or workspaceId can be provided' });

@@ -20,7 +20,6 @@ export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject
       id: 'project-members',
       triggerRef: triggerRef || fallbackContentRef,
       side: 'right',
-      headerClassName: 'static',
       title: i18n.t('c:project_members'),
       description: <NamedText i18nKey="c:project_members.text" name={project.name} />,
     },

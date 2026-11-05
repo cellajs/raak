@@ -1,5 +1,4 @@
 import type { Pgoutput } from 'pg-logical-replication';
-import type { ChannelIdColumns } from 'shared';
 import { isChannel } from 'shared';
 import { entityCountPrefix } from '#/modules/entities/counter-keys';
 import { resourceLimits } from '../constants';
@@ -163,8 +162,7 @@ export class TransactionBuffer {
     if (activity.entityType && isChannel(activity.entityType)) return false;
 
     for (const idColumn of channelIdColumnKeys) {
-      // fork: a channel that is no product ancestor (workspace) has no activities column, so the key may be absent
-      const value = (activity as Partial<ChannelIdColumns>)[idColumn];
+      const value = activity[idColumn];
       if (typeof value === 'string' && this.deletedChannelIds.has(value)) {
         return true;
       }

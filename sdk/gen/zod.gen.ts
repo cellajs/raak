@@ -736,7 +736,7 @@ export const zTask = z.object({
     })
     .nullable(),
   assignedTo: z.array(zUserMinimalBase),
-  stx: zStxBase,
+  stx: zStxStored,
 });
 
 /**
@@ -1205,7 +1205,6 @@ export const zLabel = z.object({
   description: z.string().max(1000000).nullable(),
   keywords: z.string().max(1000000),
   deletedAt: z.string().nullable(),
-  deletedBy: z.uuid().nullable(),
   public: z.boolean(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
   number: z.int().gte(-2147483648).lte(2147483647),
@@ -1217,7 +1216,7 @@ export const zLabel = z.object({
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327).nullable(),
   projectId: z.uuid(),
   organizationId: z.uuid(),
-  stx: zStxBase,
+  stx: zStxStored,
 });
 
 /**
@@ -2330,10 +2329,10 @@ export const zGetPublicTasksQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(1000).optional().default(40),
-  status: z.string().max(1000000).optional(),
-  type: z.string().max(1000000).optional(),
-  labels: z.string().max(1000000).optional(),
-  assigned: z.string().max(1000000).optional(),
+  status: z.string().max(2048).optional(),
+  type: z.string().max(2048).optional(),
+  labels: z.string().max(2048).optional(),
+  assigned: z.string().max(2048).optional(),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50),
 });
@@ -3483,7 +3482,7 @@ export const zGetLabelsQuery = z.object({
   limit: z.int().gte(1).lte(1000).optional().default(40),
   afterSeq: z.int().gte(0).optional(),
   untilSeq: z.int().gte(0).optional(),
-  modes: z.string().max(255).optional(),
+  modes: z.string().max(2048).optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
 });
@@ -4116,10 +4115,10 @@ export const zGetTasksQuery = z.object({
   limit: z.int().gte(1).lte(1000).optional().default(40),
   afterSeq: z.int().gte(0).optional(),
   untilSeq: z.int().gte(0).optional(),
-  status: z.string().max(1000000).optional(),
-  type: z.string().max(1000000).optional(),
-  labels: z.string().max(1000000).optional(),
-  assigned: z.string().max(1000000).optional(),
+  status: z.string().max(2048).optional(),
+  type: z.string().max(2048).optional(),
+  labels: z.string().max(2048).optional(),
+  assigned: z.string().max(2048).optional(),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),

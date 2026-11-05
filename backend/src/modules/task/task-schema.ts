@@ -10,10 +10,12 @@ import { TaskStatus } from '#/modules/task/task-properties';
 import { placementFieldsSchema, validatePlacement } from '#/permissions/product-placement';
 import {
   batchResponseSchema,
+  csvQuerySchema,
   maxLength,
+  orderSchema,
   paginationQuerySchema,
   productListQuerySchema,
-  stxBaseSchema,
+  stxStoredSchema,
   uniqueIdsSchema,
   validIdSchema,
   validUuidSchema,
@@ -36,7 +38,7 @@ export const taskSchema = z
     assignedTo: z.array(userMinimalBaseSchema),
     ...auditShape,
     ...tombstoneShape,
-    stx: stxBaseSchema,
+    stx: stxStoredSchema,
   })
   .openapi('Task', {
     description: 'A task representing a unit of work, assignable to users with status tracking and labels.',
@@ -74,8 +76,8 @@ export const taskContract = evolutionContract.product('task', {
 
 export const taskUpdateStxBodySchema = taskContract.updateBodySchema;
 
-// Comma-separated values of one filter: a task matches when it holds one of them
-const taskFilterValuesSchema = z.string().max(maxLength.html).optional();
+// A task matches when it holds one of them. Plain strings: a name a bookmark kept after it went is ignored, not refused.
+const taskFilterValuesSchema = csvQuerySchema(z.string().max(maxLength.field));
 
 const taskListQueryShape = {
   status: taskFilterValuesSchema,
@@ -84,7 +86,7 @@ const taskListQueryShape = {
   // User ids, or `none` for tasks assigned to no one
   assigned: taskFilterValuesSchema,
   sort: z.enum(['number', 'projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
-  order: z.enum(['asc', 'desc']).default('asc'),
+  order: orderSchema.default('asc'),
   acceptedCutOff: z.coerce.number().positive().optional(),
   projectId: validIdSchema.optional(),
   workspaceId: validIdSchema.optional(),

@@ -1,3 +1,4 @@
+import type { z } from '@hono/zod-openapi';
 import { and, asc, count, eq, getColumns, inArray, ne, notInArray, type SQL, sql } from 'drizzle-orm';
 import type { EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
@@ -11,6 +12,7 @@ import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { type InsertWorkspaceModel, workspacesTable } from '#/modules/workspace/workspace-db';
+import type { workspaceListQuerySchema } from '#/modules/workspace/workspace-schema';
 import { getOrderColumns } from '#/utils/order-column';
 import { searchFilter } from '#/utils/sql';
 
@@ -106,13 +108,11 @@ export const moveWorkspaceMemberships = async (ctx: ActorContext, { ids, updated
   return holders.map(({ userId }) => userId);
 };
 
-interface FindWorkspacesPaginatedOpts {
+interface FindWorkspacesPaginatedOpts extends Pick<z.infer<typeof workspaceListQuerySchema>, 'sort' | 'order'> {
   userId: string;
   /** Lists the workspaces of archived tenants too. */
   isSystemAdmin: boolean;
   q?: string;
-  sort: 'id' | 'name' | 'createdAt' | 'displayOrder';
-  order: 'asc' | 'desc';
   offset: number;
   limit: number;
   organizationId?: string;

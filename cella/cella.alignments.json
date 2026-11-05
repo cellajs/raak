@@ -1,32 +1,6 @@
 {
   "pending": [
-    "20261104T1600-entity-type-outputs",
-    "20261104T1619-shared-declarations",
-    "20261104T1620-channel-role-unions",
-    "20261104T1629-scope-context",
-    "20261104T1632-tab-text-labels",
-    "20261104T1642-yjs-doc-key",
-    "20261104T1652-typed-mutation-payload",
-    "20261104T1656-cdc-activity-type",
-    "20261104T1732-title-bar-sticks",
-    "20261104T1746-draft-store-untyped",
-    "20261104T1746-enriched-channel-annotation",
-    "20261104T1746-seen-tracked-body",
-    "20261104T1752-description-block-type",
-    "20261104T1752-memberships-base-rows",
-    "20261104T1753-schema-derived-types",
-    "20261104T1759-attachment-keys-default",
     "20261104T1806-pr-title-check",
-    "20261104T1809-attachment-size-number",
-    "20261104T1813-a11y-sdk-client",
-    "20261104T1815-biome-26",
-    "20261104T1816-tailwind-raw-colors",
-    "20261104T1821-bench-attachment-home",
-    "20261104T1843-read-pace-actor-subject",
-    "20261104T1848-search-params-strings",
-    "20261104T1949-one-status-dot",
-    "20261104T1950-infra-deploy-ipam-write",
-    "20261104T1955-stx-stored-on-responses",
-    "20261104T1955-writer-ids-off-the-wire"
+    "20261104T1950-infra-deploy-ipam-write"
   ]
 }

@@ -9,6 +9,7 @@ import { projectQueryKeys } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { ReadOnlyScope } from '~/modules/project/use-read-only';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
+import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { subscribeToTaskCache } from '~/modules/task/helpers/active-task';
 import { focusItem } from '~/modules/task/helpers/focus-item';
@@ -68,6 +69,18 @@ function TaskSheetTitle({ taskId }: TaskSheetTitleProps) {
   );
 }
 
+// flex-1, not ml-auto: the close button's own ml-auto would split the free space and leave this mid-bar
+function TaskSheetOptions({ taskId }: TaskSheetTitleProps) {
+  const task = useSyncExternalStore(subscribeToTaskCache, () => findSheetTask(taskId));
+  if (!task) return null;
+
+  return (
+    <div className="-my-1 flex flex-1 justify-end">
+      <TaskOptionsButton task={task} isSheet />
+    </div>
+  );
+}
+
 /** Opens and closes the task sheet from the `taskSheetId` search param. */
 export function TaskSheetHandler() {
   const { t } = useTranslation();
@@ -107,8 +120,8 @@ export function TaskSheetHandler() {
       className: 'p-0',
       title: t('c:task'),
       titleContent: taskSheetId ? <TaskSheetTitle taskId={taskSheetId} /> : t('c:task'),
+      titleAside: taskSheetId && <TaskSheetOptions taskId={taskSheetId} />,
       closeSheetOnEsc: false,
-      headerClassName: 'static',
     },
   });
 
