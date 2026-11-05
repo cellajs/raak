@@ -14,7 +14,7 @@ import { SearchScope } from '~/modules/common/match-highlight/match-scope';
 import { ScrollReset } from '~/modules/common/scroll-reset';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
-import { isBoardSearchActive, matchesBoardSearch, parseBoardSearch } from '~/modules/task/helpers/search-filter';
+import { boardSearchQuery, isBoardSearchActive, matchesBoardSearch, parseBoardSearch } from '~/modules/task/helpers/search-filter';
 import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
 import { useColumns } from '~/modules/task/table/tasks-columns';
@@ -47,7 +47,9 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   });
   const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
 
-  const { q, sort, order, status, type, labels, assigned } = search;
+  const { q, sort, order } = search;
+  // Strings, so the effect below compares by value: the hook hands out new lists whenever any key changes
+  const { status, type, labels, assigned } = boardSearchQuery(search);
   const parsedSearch = parseBoardSearch(search);
 
   const [columns, setColumns] = useColumnVisibility(useColumns({ hideProject: !workspace, organization, tenantId, projects }));
@@ -61,8 +63,8 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const queryOptions = queryParams
-    ? tasksTableQueryOptions({ ...search, ...queryParams })
-    : publicTasksTableQueryOptions({ ...search, projectId: projects[0]?.id });
+    ? tasksTableQueryOptions({ ...search, status, type, labels, assigned, ...queryParams })
+    : publicTasksTableQueryOptions({ ...search, status, type, labels, assigned, projectId: projects[0]?.id });
 
   // biome-ignore lint/suspicious/noExplicitAny: union of query options with different key shapes
   const { data, error, isLoading, isFetching, fetchNextPage, hasNextPage } = useInfiniteQuery(queryOptions as any) as {

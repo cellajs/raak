@@ -2,7 +2,6 @@ import { useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
-import { filterValues } from '~/modules/task/helpers/search-filter';
 import { cn } from '~/utils/cn';
 import { formatCount } from '~/utils/format-count';
 
@@ -17,7 +16,7 @@ interface LabelFilterCountProps {
 /** A label's task count, which puts the label in the board search or takes it out. */
 export function LabelFilterCount({ name, slug, count, onAction, className }: LabelFilterCountProps) {
   const { t } = useTranslation();
-  const isPressed = useSearch({ strict: false, select: (search) => filterValues(search.labels).includes(slug) });
+  const isPressed = useSearch({ strict: false, select: (search) => !!search.labels?.includes(slug) });
   return (
     <TooltipButton toolTipContent={t('c:filter')} side="top" sideOffset={5}>
       <button

@@ -26,6 +26,7 @@ import { useTaskListsSnapshot } from '~/modules/task/hooks/use-task-lists-snapsh
 import { NoAssigneeAvatar } from '~/modules/task/no-assignee-avatar';
 import { publicTasksBoardQueryOptions } from '~/modules/task/public-query';
 import { taskKeys } from '~/modules/task/query';
+import { boardFilterList } from '~/modules/task/search-params-schemas';
 import { statusOptions } from '~/modules/task/task-properties';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { useUserStore } from '~/modules/user/user-store';
@@ -129,7 +130,7 @@ export function useBoardSearchFilters(
   const { statuses, types, labels, assignees }: ReturnType<typeof countOptions> = counted ? JSON.parse(counted) : noCounts;
 
   const statusName = (name: (typeof statusOptions)[number]['name']) => t(`c:${name}`);
-  const write = (key: 'status' | 'type' | 'labels' | 'assigned', value: string | undefined) => setSearch({ [key]: value });
+  const write = (key: 'status' | 'type' | 'labels' | 'assigned', values: string[]) => setSearch({ [key]: values });
 
   const typeSlugs = Object.keys(types).sort((a, b) => types[a].name.localeCompare(types[b].name));
   const labelSlugs = Object.keys(labels).sort((a, b) => labels[b].count - labels[a].count);
@@ -170,8 +171,8 @@ export function useBoardSearchFilters(
           count: assignees[id].count,
           isSelected: search.assignees.includes(id),
         })),
-        onToggle: (id: string) => write('assigned', toggleFilterValue(search.assignees.join(','), id)),
-        onReplace: (from: string, to: string) => write('assigned', replaceFilterValue(search.assignees.join(','), from, to)),
+        onToggle: (id: string) => write('assigned', toggleFilterValue(search.assignees, id)),
+        onReplace: (from: string, to: string) => write('assigned', replaceFilterValue(search.assignees, from, to)),
       },
       {
         key: 'status',
@@ -183,8 +184,8 @@ export function useBoardSearchFilters(
           count: statuses[status] ?? 0,
           isSelected: search.statuses.includes(status),
         })),
-        onToggle: (status: string) => write('status', toggleFilterValue(search.statuses.join(','), status)),
-        onReplace: (from: string, to: string) => write('status', replaceFilterValue(search.statuses.join(','), from, to)),
+        onToggle: (status: string) => write('status', toggleFilterValue(search.statuses, status)),
+        onReplace: (from: string, to: string) => write('status', replaceFilterValue(search.statuses, from, to)),
       },
       {
         key: 'type',
@@ -196,8 +197,8 @@ export function useBoardSearchFilters(
           count: types[slug].count,
           isSelected: search.types.includes(slug),
         })),
-        onToggle: (slug: string) => write('type', toggleFilterValue(search.types.join(','), slug)),
-        onReplace: (from: string, to: string) => write('type', replaceFilterValue(search.types.join(','), from, to)),
+        onToggle: (slug: string) => write('type', toggleFilterValue(search.types, slug)),
+        onReplace: (from: string, to: string) => write('type', replaceFilterValue(search.types, from, to)),
       },
       {
         key: 'labels',
@@ -211,8 +212,8 @@ export function useBoardSearchFilters(
           count: labels[slug].count,
           isSelected: search.labels.includes(slug),
         })),
-        onToggle: (slug: string) => write('labels', toggleFilterValue(search.labels.join(','), slug)),
-        onReplace: (from: string, to: string) => write('labels', replaceFilterValue(search.labels.join(','), from, to)),
+        onToggle: (slug: string) => write('labels', toggleFilterValue(search.labels, slug)),
+        onReplace: (from: string, to: string) => write('labels', replaceFilterValue(search.labels, from, to)),
       },
     ].filter((group) => group.options.length > 0),
     chips: [
@@ -222,7 +223,7 @@ export function useBoardSearchFilters(
         value: slug,
         label: types[slug]?.name ?? slug,
         icon: types[slug] && <PrimaryLabelIcon label={types[slug]} className="text-current!" />,
-        onRemove: () => write('type', toggleFilterValue(search.types.join(','), slug)),
+        onRemove: () => write('type', toggleFilterValue(search.types, slug)),
       })),
       ...statusChips.map(({ status, name, icon: Icon }) => ({
         key: `status:${status}`,
@@ -230,7 +231,7 @@ export function useBoardSearchFilters(
         value: status,
         label: statusName(name),
         icon: <Icon className={statusChipIconClass} />,
-        onRemove: () => write('status', toggleFilterValue(search.statuses.join(','), status)),
+        onRemove: () => write('status', toggleFilterValue(search.statuses, status)),
       })),
       ...search.assignees.map((id) => ({
         key: `assigned:${id}`,
@@ -238,14 +239,14 @@ export function useBoardSearchFilters(
         value: id,
         label: assigneeName(id),
         icon: assigneeIcon(id, 'size-4.5'),
-        onRemove: () => write('assigned', toggleFilterValue(search.assignees.join(','), id)),
+        onRemove: () => write('assigned', toggleFilterValue(search.assignees, id)),
       })),
       ...search.labels.map((slug) => ({
         key: `labels:${slug}`,
         group: 'labels',
         value: slug,
         label: labels[slug]?.name ?? slug,
-        onRemove: () => write('labels', toggleFilterValue(search.labels.join(','), slug)),
+        onRemove: () => write('labels', toggleFilterValue(search.labels, slug)),
       })),
     ],
     recents: recents.map((recent) => ({
@@ -260,14 +261,7 @@ export function useBoardSearchFilters(
         ...recent.assigned.map((id) => ({ label: assigneeName(id), icon: assigneeIcon(id, 'size-4.5') })),
         ...recent.labels.map((slug) => ({ label: labels[slug]?.name ?? slug })),
       ],
-      onPick: () =>
-        setSearch({
-          q: recent.q,
-          status: recent.status.join(',') || undefined,
-          type: recent.type.join(',') || undefined,
-          labels: recent.labels.join(',') || undefined,
-          assigned: recent.assigned.join(',') || undefined,
-        }),
+      onPick: () => setSearch({ q: recent.q, status: recent.status, type: recent.type, labels: recent.labels, assigned: recent.assigned }),
       onRemove: () => removeRecent(channelId, recent),
     })),
     onSearchEnd: (next) => {
@@ -295,8 +289,19 @@ export function useFitBoardSearch(scopeId: string, projects: Pick<EnrichedProjec
       return isQueryData<Task>(data) ? data.items : [];
     });
     const { search } = router.state.location;
-    const fitted = fitBoardSearch(search, tasks, userId);
-    if (fitted.type === search.type && fitted.labels === search.labels && fitted.assigned === search.assigned) return;
+    const current = {
+      type: boardFilterList.parse(search.type),
+      labels: boardFilterList.parse(search.labels),
+      assigned: boardFilterList.parse(search.assigned),
+    };
+    const fitted = fitBoardSearch(current, tasks, userId);
+    // Fitting only drops values, so an unchanged length is an unchanged filter
+    if (
+      fitted.type.length === current.type.length &&
+      fitted.labels.length === current.labels.length &&
+      fitted.assigned.length === current.assigned.length
+    )
+      return;
     router.navigate({ to: '.', replace: true, resetScroll: false, search: (prev) => ({ ...prev, ...fitted }) });
   });
 

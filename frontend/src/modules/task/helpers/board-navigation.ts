@@ -1,5 +1,5 @@
 import { toggleFilterValue } from '~/modules/task/helpers/search-filter';
-import { taskSheetParam } from '~/modules/task/search-params-schemas';
+import { boardFilterList, taskSheetParam } from '~/modules/task/search-params-schemas';
 import { getRouter } from '~/routes/-router-instance';
 
 /** Opens the task sheet through its search param, as a new history entry so back closes it. */
@@ -18,6 +18,6 @@ export const toggleLabelFilter = (slug: string) => {
     to: '.',
     replace: true,
     resetScroll: false,
-    search: (prev) => ({ ...prev, labels: toggleFilterValue(prev.labels, slug) }),
+    search: (prev) => ({ ...prev, labels: toggleFilterValue(boardFilterList.parse(prev.labels), slug) }),
   });
 };
