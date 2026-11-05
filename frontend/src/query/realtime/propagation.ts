@@ -127,7 +127,7 @@ function patchSingleHost(
         return fresh;
       });
 
-    // Every copy kept keeps the host too: a rewrite would re-render it for nothing
+    // Every copy kept returns the host itself: a rewrite would mark its query fresh with unchanged data
     if (!replaced && patched.length === embedded.length) return host;
     return { ...host, [hostColumn]: patched };
   }
