@@ -1,4 +1,3 @@
-import type { Block } from '@blocknote/core';
 import { getSearchableTextFromBlocks } from 'shared/blocknote';
 import { deriveDocument } from 'shared/utils/derive-description-core';
 import { validUuidSchema } from '#/schemas';
@@ -31,7 +30,6 @@ export const deriveDescriptionProps = (description: string | null | undefined): 
     summaryLength,
     ...storedCounts,
     attachments: storedCounts.attachments.filter((id) => validUuidSchema.safeParse(id).success),
-    // DescriptionBlock is looser than @blocknote/core's Block union (custom block types).
-    keywords: extractKeywords(getSearchableTextFromBlocks(blocks as unknown as Block[])),
+    keywords: extractKeywords(getSearchableTextFromBlocks(blocks)),
   };
 };

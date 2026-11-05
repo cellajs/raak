@@ -51,14 +51,14 @@ function PanelLeading({ project, group, isInWorkspace, isCollapsed }: PanelLeadi
           <span className="relative block h-8">
             <span
               className={cn(
-                'block truncate pt-1.5 font-semibold leading-5',
+                'block truncate pt-1.5 leading-5 font-semibold',
                 role && 'transition-transform duration-100 ease-in-out group-hover/panel-lead:-translate-y-1.5 group-hover/panel-lead:delay-300',
               )}
             >
               {project.name}
             </span>
             {role && (
-              <span className="pointer-events-none absolute top-5 left-0 text-muted-foreground text-xs leading-3 opacity-0 transition-opacity duration-100 ease-in-out group-hover/panel-lead:opacity-100 group-hover/panel-lead:delay-300">
+              <span className="text-muted-foreground pointer-events-none absolute top-5 left-0 text-xs leading-3 opacity-0 transition-opacity duration-100 ease-in-out group-hover/panel-lead:opacity-100 group-hover/panel-lead:delay-300">
                 {t(role)}
               </span>
             )}
@@ -77,7 +77,7 @@ function PanelLeading({ project, group, isInWorkspace, isCollapsed }: PanelLeadi
       icon={isCollapsed && <ChevronsLeftRightIcon className="size-4 shrink-0" />}
       className={cn(panelHandleClass, 'min-h-8 truncate', isCollapsed ? 'w-full justify-center' : 'pr-2')}
     >
-      {!isCollapsed && <span className="font-semibold leading-6">{name}</span>}
+      {!isCollapsed && <span className="leading-6 font-semibold">{name}</span>}
     </PanelDragHandleButton>
   );
 }
@@ -99,7 +99,7 @@ export function TaskPanelHeader({ project, publicView, group, panelId, windowScr
   const actionsSlot = !isCollapsed ? (
     <>
       {isReadOnly && isInWorkspace && (
-        <Badge soft className="font-normal text-xs">
+        <Badge soft className="text-xs font-normal">
           {t('c:read_only')}
         </Badge>
       )}

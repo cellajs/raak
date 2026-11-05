@@ -32,7 +32,7 @@ export function ProjectHeaderToggle({ project }: ProjectHeaderToggleProps) {
         ) : (
           <>
             <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} className="size-full" />
-            <span className="absolute inset-0 flex items-center justify-center rounded-md bg-background/75 opacity-0 transition-opacity group-hover/header-toggle:opacity-100 group-focus-visible/header-toggle:opacity-100">
+            <span className="bg-background/75 absolute inset-0 flex items-center justify-center rounded-md opacity-0 transition-opacity group-hover/header-toggle:opacity-100 group-focus-visible/header-toggle:opacity-100">
               <PanelTopOpenIcon />
             </span>
             {project.public && <PublicBadge />}

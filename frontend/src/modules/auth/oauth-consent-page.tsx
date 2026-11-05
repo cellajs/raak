@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ConsentDetails } from 'shared/oauth-consent';
 import type { TKey } from '~/lib/i18n-locales';
-import type { ConsentDetails } from '~/lib/oauth-interaction';
 import { AuthHeader } from '~/modules/auth/auth-header';
 import { consentDetailsQueryOptions, useDecideConsentMutation } from '~/modules/auth/query';
 import { ErrorNotice } from '~/modules/common/error-notice';
@@ -64,9 +64,9 @@ export function OAuthConsentPage() {
       </div>
 
       {refusal ? (
-        <p className="text-center text-destructive text-sm">{t(refusalLabels[refusal])}</p>
+        <p className="text-destructive text-center text-sm">{t(refusalLabels[refusal])}</p>
       ) : (
-        <p className="text-center text-muted-foreground text-xs">{t('c:oauth_consent_user.text', { name: data.user.name })}</p>
+        <p className="text-muted-foreground text-center text-xs">{t('c:oauth_consent_user.text', { name: data.user.name })}</p>
       )}
 
       <div className="flex justify-center gap-3">

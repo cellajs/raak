@@ -47,7 +47,7 @@ export function ProductRefButton({ number, onCopy, tabIndex, className }: Produc
         data-product-ref
         data-copied={copied || undefined}
         className={cn(
-          'cursor-pointer gap-0 pl-1.5 font-normal text-muted-foreground tabular-nums transition-[color,background-color,box-shadow] duration-150 hover:bg-muted-hover hover:text-foreground',
+          'text-muted-foreground hover:bg-muted-hover hover:text-foreground cursor-pointer gap-0 pl-1.5 font-normal tabular-nums transition-[color,background-color,box-shadow] duration-150',
           className,
         )}
       >

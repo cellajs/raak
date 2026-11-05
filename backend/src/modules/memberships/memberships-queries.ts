@@ -1,4 +1,5 @@
-import { and, count, eq, inArray, lte, max, type SQL, sql } from 'drizzle-orm';
+import type { z } from '@hono/zod-openapi';
+import { and, count, eq, inArray, lte, type SQL, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { DbContext, OrgContext } from '#/core/context';
@@ -7,6 +8,7 @@ import { actorsTable } from '#/modules/actors/actors-db';
 import { lastPostedAtOrder, memberCountsSelect } from '#/modules/memberships/helpers/member-counts';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { type InsertMembershipModel, membershipsTable } from '#/modules/memberships/memberships-db';
+import type { memberListQuerySchema } from '#/modules/memberships/memberships-schema';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { emailsTable } from '#/modules/user/emails-db';
 import { lastSeenOrder, memberSelect, userActorJoin } from '#/modules/user/helpers/select';
@@ -121,7 +123,7 @@ interface UpdateMembershipOpts {
   values: Partial<typeof membershipsTable.$inferInsert>;
 }
 
-/** Updates a membership of the request's organization and returns the row; undefined when none has the id. */
+/** Updates a membership of the request's organization and returns the row; null when none has the id. */
 export const updateMembership = async (ctx: OrgContext, { id, values }: UpdateMembershipOpts) => {
   const { db, organizationId } = ctx.var;
   const [updated] = await db
@@ -129,16 +131,14 @@ export const updateMembership = async (ctx: OrgContext, { id, values }: UpdateMe
     .set(values)
     .where(and(eq(membershipsTable.id, id), eq(membershipsTable.organizationId, organizationId)))
     .returning();
-  return updated;
+  return updated ?? null;
 };
 
-interface FindMembersPaginatedOpts {
+interface FindMembersPaginatedOpts extends Pick<z.infer<typeof memberListQuerySchema>, 'sort' | 'order'> {
   organizationId: string;
   entityId: string;
   entityType: ChannelEntityType;
   q?: string;
-  sort: 'id' | 'name' | 'email' | 'createdAt' | 'lastSeenAt' | 'role' | 'lastPostedAt';
-  order: 'asc' | 'desc';
   offset: number;
   limit: number;
   role?: EntityRole;
@@ -278,8 +278,9 @@ interface FindMaxDisplayOrdersOpts {
 
 /** Each user's highest membership `displayOrder`, the baseline for the next; a user without memberships has no row. */
 export const findMaxDisplayOrders = async (ctx: DbContext, { userIds }: FindMaxDisplayOrdersOpts) => {
+  // Grouped by user, so max() covers at least one notNull displayOrder: drizzle's max() would type it nullable.
   return ctx.var.db
-    .select({ userId: membershipsTable.userId, maxOrder: max(membershipsTable.displayOrder) })
+    .select({ userId: membershipsTable.userId, maxOrder: sql<number>`max(${membershipsTable.displayOrder})`.mapWith(Number) })
     .from(membershipsTable)
     .where(inArray(membershipsTable.userId, userIds))
     .groupBy(membershipsTable.userId);

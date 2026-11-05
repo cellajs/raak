@@ -15,7 +15,7 @@ import type {
 } from '../docs-types.ts';
 import { generateOperationHash } from './operation-hash.ts';
 import { resolveSchema, resolveSchemaProperty } from './schema-resolvers.ts';
-import type { OpenApiOperation, OpenApiReferenceObject, OpenApiResponseObject, OpenApiSpec, OpenApiTag } from './types.ts';
+import type { OpenApiOperation, OpenApiReferenceObject, OpenApiResponseObject, OpenApiSpec, OpenApiTag, OpenApiTagKind } from './types.ts';
 
 /** Map from pluralized tag names to singular entity types (e.g., 'users' -> 'user') */
 const tagToEntityType = new Map<string, string>(config.entityTypes.map((entityType) => [`${entityType}s`, entityType]));
@@ -39,7 +39,7 @@ function pickContentType(content: Record<string, unknown>): string | undefined {
 }
 
 /** Groups tag names by their registered kind; unregistered tags land under 'other'. */
-function groupTagsByKind(tags: readonly string[], tagKindMap: Map<string, string>): Record<string, string[]> {
+function groupTagsByKind(tags: readonly string[], tagKindMap: ReadonlyMap<string, OpenApiTagKind>): Record<string, string[]> {
   const byKind: Record<string, string[]> = {};
   for (const tag of tags) {
     const kind = tagKindMap.get(tag) ?? 'other';
@@ -174,15 +174,15 @@ function buildRequest(op: OpenApiOperation, spec: OpenApiSpec): GenRequest | und
 /** Pure function, kept separate from the plugin handler for testability. */
 export function parseOpenApiSpec(spec: OpenApiSpec): ParsedOpenApiSpec {
   const operations: GenOperationSummary[] = [];
-  const tagMap = new Map<string, { description?: string; count: number; kind?: string }>();
+  const tagMap = new Map<string, { description?: string; count: number; kind?: OpenApiTagKind }>();
   const tagDetailsMap = new Map<string, GenOperationDetail[]>();
   // Count operations dropped by a hidden-kind tag so the overview can report the documented/hidden split.
   let hiddenOperationCount = 0;
 
-  const extensionDefs = (spec.info?.['x-extensions'] ?? []) as GenExtensionDefinition[];
+  const extensionDefs = (spec.info['x-extensions'] ?? []) as GenExtensionDefinition[];
 
   // Tag kinds: module feeds the sidebar, schema feeds the schemas page buckets, hidden drops its operations.
-  const tagKindMap = new Map<string, string>();
+  const tagKindMap = new Map<string, OpenApiTagKind>();
   const excludedTags = new Set<string>();
   const hiddenTags = new Set<string>();
   const schemaKindTags: { name: string; description: string; isDefault: boolean }[] = [];
@@ -239,7 +239,7 @@ export function parseOpenApiSpec(spec: OpenApiSpec): ParsedOpenApiSpec {
       const extensions: Record<string, string[]> = {};
       const extensionNames: string[] = [];
       for (const ext of extensionDefs) {
-        const value = op[ext.key as `x-${string}`];
+        const value = op[ext.key];
         if (!Array.isArray(value)) continue;
         extensions[ext.id] = value;
         for (const id of value) if (ext.values?.[id]?.name) extensionNames.push(ext.values[id].name);
@@ -297,12 +297,11 @@ export function parseOpenApiSpec(spec: OpenApiSpec): ParsedOpenApiSpec {
     kind: data.kind,
   }));
 
-  const specInfo = spec.info || {};
   const info: GenInfoSummary = {
-    title: specInfo.title ?? '',
-    version: specInfo.version ?? '',
-    description: specInfo.description ?? '',
-    openapiVersion: spec.openapi ?? '',
+    title: spec.info.title,
+    version: spec.info.version,
+    description: spec.info.description ?? '',
+    openapiVersion: spec.openapi,
     // documented = emitted to the docs; hidden = dropped by a hidden-kind tag. Service-disabled ops count as neither.
     documentedOperationCount: operations.length,
     hiddenOperationCount,
@@ -317,7 +316,7 @@ export function parseOpenApiSpec(spec: OpenApiSpec): ParsedOpenApiSpec {
   for (const [schemaName, schemaValue] of Object.entries(spec.components?.schemas ?? {})) {
     const resolvedSchema = resolveSchema(schemaValue, spec);
 
-    const xTags = (schemaValue as { 'x-tags'?: unknown })['x-tags'];
+    const xTags = schemaValue['x-tags'];
     const declaredTags = Array.isArray(xTags) ? (xTags as unknown[]).filter((t): t is string => typeof t === 'string') : [];
     const schemaTag = declaredTags.find((t) => schemaTagNameSet.has(t)) ?? defaultSchemaTag;
     schemaTagCounts.set(schemaTag, (schemaTagCounts.get(schemaTag) ?? 0) + 1);
@@ -344,15 +343,15 @@ export function parseOpenApiSpec(spec: OpenApiSpec): ParsedOpenApiSpec {
 
   // Sorted by owner, module, and name for stable output; untagged schemas sort last at their level.
   componentSchemas.sort((a, b) => {
-    const ownerA = a.tagsByKind?.owner?.[0] ?? '';
-    const ownerB = b.tagsByKind?.owner?.[0] ?? '';
+    const ownerA = a.tagsByKind.owner?.[0] ?? '';
+    const ownerB = b.tagsByKind.owner?.[0] ?? '';
     if (ownerA !== ownerB) {
       if (!ownerA) return 1;
       if (!ownerB) return -1;
       return ownerA.localeCompare(ownerB);
     }
-    const moduleA = a.tagsByKind?.module?.[0] ?? '';
-    const moduleB = b.tagsByKind?.module?.[0] ?? '';
+    const moduleA = a.tagsByKind.module?.[0] ?? '';
+    const moduleB = b.tagsByKind.module?.[0] ?? '';
     if (moduleA !== moduleB) {
       if (!moduleA) return 1;
       if (!moduleB) return -1;

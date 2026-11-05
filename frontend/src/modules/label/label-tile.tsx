@@ -38,10 +38,10 @@ const actionSlide = tw(
   'translate-x-3 opacity-0 transition-[translate,opacity,color,background-color] duration-200 ease-out motion-reduce:transition-none',
 );
 const restingActionsReveal = tw(
-  'group-hover/label-tile:translate-x-0 group-hover/label-tile:opacity-100 group-focus-visible/label-tile:translate-x-0 group-focus-visible/label-tile:opacity-100 group-has-[:focus-visible]/label-tile:translate-x-0 group-has-data-dropdowner-active/label-tile:translate-x-0 group-has-data-dropdowner-done/label-tile:translate-x-0 group-has-[:focus-visible]/label-tile:opacity-100 group-has-data-dropdowner-active/label-tile:opacity-100 group-has-data-dropdowner-done/label-tile:opacity-100',
+  'group-hover/label-tile:translate-x-0 group-hover/label-tile:opacity-100 group-focus-visible/label-tile:translate-x-0 group-focus-visible/label-tile:opacity-100 group-has-data-dropdowner-active/label-tile:translate-x-0 group-has-data-dropdowner-active/label-tile:opacity-100 group-has-data-dropdowner-done/label-tile:translate-x-0 group-has-data-dropdowner-done/label-tile:opacity-100 group-has-[:focus-visible]/label-tile:translate-x-0 group-has-[:focus-visible]/label-tile:opacity-100',
 );
 const restingActionsPointer = tw(
-  'pointer-events-none group-hover/label-tile:pointer-events-auto group-focus-visible/label-tile:pointer-events-auto has-data-dropdowner-active:pointer-events-auto has-data-dropdowner-done:pointer-events-auto group-has-[:focus-visible]/label-tile:pointer-events-auto',
+  'pointer-events-none group-hover/label-tile:pointer-events-auto group-focus-visible/label-tile:pointer-events-auto group-has-[:focus-visible]/label-tile:pointer-events-auto has-data-dropdowner-active:pointer-events-auto has-data-dropdowner-done:pointer-events-auto',
 );
 
 /** Holds a tile where it is while the open one above it collapses. Scroll anchoring would, but a sticky panel turns it off and Safari has none. */
@@ -208,7 +208,7 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
         className={cn(
           'group/label-tile relative border-b text-sm',
           onBoard &&
-            'outline-none before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary before:opacity-0',
+            'before:bg-primary outline-none before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:opacity-0',
           onBoard && itemFocusBarClass,
           // An open tile keeps the hover tint, so it stands out among the closed ones
           'pointer-fine:focus-within:bg-card hover:bg-card focus-visible:bg-card has-[:focus-visible]:bg-card',
@@ -241,7 +241,7 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
                 className={cn(
                   '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0',
                   // Collapsed, an after-overlay stretches the button over the whole tile; the action buttons sit above it
-                  expanded ? 'font-semibold hover:bg-hover focus-visible:bg-hover' : 'after:absolute after:inset-0',
+                  expanded ? 'hover:bg-hover focus-visible:bg-hover font-semibold' : 'after:absolute after:inset-0',
                 )}
               >
                 <span className="truncate">

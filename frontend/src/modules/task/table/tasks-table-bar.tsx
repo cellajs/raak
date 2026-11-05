@@ -11,6 +11,7 @@ import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
 import { ProjectHeaderToggle } from '~/modules/task/board/project-header-toggle';
 import { BoardSearchBar, pageSearchScope } from '~/modules/task/board-search';
 import { configureForExport } from '~/modules/task/helpers/export-helpers';
+import { boardSearchQuery } from '~/modules/task/helpers/search-filter';
 import { deriveTasksQueryParams, fetchTasksForExport } from '~/modules/task/query';
 import type { ResolvedTasksTableProps } from '~/modules/task/table/tasks-table';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
@@ -46,7 +47,7 @@ export function TasksTableBar({
   const fetchExport = async (limit: number, offset: number) => {
     if (!queryParams) return [];
     const { organizationId, tenantId, ...rest } = queryParams;
-    const tableQueryParams = { ...searchVars, ...rest };
+    const tableQueryParams = { ...searchVars, ...boardSearchQuery(searchVars), ...rest };
     const items = await fetchTasksForExport({ limit, offset, organizationId, tenantId, query: tableQueryParams });
     return configureForExport(items, projects);
   };

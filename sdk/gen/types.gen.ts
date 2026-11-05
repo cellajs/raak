@@ -69,19 +69,6 @@ export type ChannelBase = {
 };
 
 /**
- * The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields and adds its writers as `ActorRef`s.
- */
-export type ProductBase = {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string | null;
-  description: string | null;
-  entityType: 'task' | 'label' | 'attachment';
-  keywords: string;
-};
-
-/**
  * A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.
  */
 export type MembershipBase = {
@@ -121,6 +108,16 @@ export type StxBase = {
    * Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time
    */
   replayed?: boolean;
+};
+
+/**
+ * The sync envelope as a product row stores and returns it: StxBase plus changedFields, the fields the last write changed, which the server sets and the Yjs materializer reads. A request carries StxBase only.
+ */
+export type StxStored = StxBase & {
+  /**
+   * The fields the last write changed, set by the server; absent after a create or a server-driven write
+   */
+  changedFields?: Array<string>;
 };
 
 /**
@@ -207,6 +204,14 @@ export type StreamSignal = {
 };
 
 /**
+ * Why the server ends an app stream. It arrives as an `error` event on `/entities/app/stream` just before the stream closes; `unauthorized` ends it for good, any other code tells the client to reconnect.
+ */
+export type StreamError = {
+  code: 'unauthorized' | 'session_replaced' | 'access_changed' | 'resync';
+  message: string;
+};
+
+/**
  * The request is malformed or fails validation. `type` names the problem, such as `invalid_request`.
  */
 export type BadRequestError = ApiError & {
@@ -287,6 +292,9 @@ export type SsoEntry = {
    */
   status: 'pending' | 'active' | 'disabled';
   federation: {
+    /**
+     * A federation key in appConfig.federations
+     */
     key: string;
     label: string;
   };
@@ -412,6 +420,9 @@ export type MeAuthData = {
     connectionId: string;
     displayName: string;
     federation: {
+      /**
+       * A federation key in appConfig.federations
+       */
       key: string;
       label: string;
     };
@@ -449,7 +460,6 @@ export type MeAuthData = {
     createdAt: string;
     expiresAt: string;
     revokedAt: string | null;
-    revokedBy: string | null;
     revocationReason: 'sign_out' | 'other_session' | 'mfa_enabled' | 'session_cap' | 'replaced' | null;
     steppedUpAt: string | null;
     steppedUpVia: 'passkey' | 'totp' | 'email' | 'sso' | null;
@@ -753,7 +763,7 @@ export type Task = {
     projectId: string;
   } | null;
   assignedTo: Array<UserMinimalBase>;
-  stx: StxBase;
+  stx: StxStored;
 };
 
 /**
@@ -769,7 +779,15 @@ export type Tenant = {
      * Caps per tenant on entities, service accounts and API keys (0 = unlimited)
      */
     quotas: {
-      [key: string]: number;
+      user: number;
+      organization: number;
+      workspace: number;
+      project: number;
+      task: number;
+      label: number;
+      attachment: number;
+      serviceAccount: number;
+      apiKey: number;
     };
     rateLimits: {
       /**
@@ -1127,7 +1145,7 @@ export type Attachment = {
         slug: null;
       }
     | null;
-  stx: StxBase;
+  stx: StxStored;
   description: string | null;
   keywords: string;
   deletedAt: string | null;
@@ -1164,7 +1182,7 @@ export type Attachment = {
    * MIME type of the server-converted variant; null when none.
    */
   convertedContentType: string | null;
-  size: string;
+  size: number;
   /**
    * Storage object keys per variant, keyed by variant name; only generated variants are present.
    */
@@ -1192,7 +1210,6 @@ export type Label = {
   description: string | null;
   keywords: string;
   deletedAt: string | null;
-  deletedBy: string | null;
   public: boolean;
   seq: number;
   color: string | null;
@@ -1203,7 +1220,7 @@ export type Label = {
   displayOrder: number | null;
   projectId: string;
   organizationId: string;
-  stx: StxBase;
+  stx: StxStored;
 };
 
 /**
@@ -1302,7 +1319,6 @@ export type ApiKey = {
   > | null;
   expiresAt: string | null;
   revokedAt: string | null;
-  revokedBy: string | null;
   createdBy:
     | {
         id: string;
@@ -1329,6 +1345,19 @@ export type GetAuthHealthData = {
   url: '/auth/health';
 };
 
+export type GetAuthHealthErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetAuthHealthError = GetAuthHealthErrors[keyof GetAuthHealthErrors];
+
 export type GetAuthHealthResponses = {
   /**
    * Auth health status
@@ -1340,6 +1369,9 @@ export type GetAuthHealthResponses = {
      * Federations with a connected institution, for the "sign in with your institution" entrance
      */
     federations: Array<{
+      /**
+       * A federation key in appConfig.federations
+       */
       key: string;
       label: string;
     }>;
@@ -1400,9 +1432,17 @@ export type GetPendingMfaData = {
 
 export type GetPendingMfaErrors = {
   /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetPendingMfaError = GetPendingMfaErrors[keyof GetPendingMfaErrors];
@@ -2216,6 +2256,10 @@ export type GithubErrors = {
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GithubError = GithubErrors[keyof GithubErrors];
@@ -2239,6 +2283,10 @@ export type GoogleErrors = {
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GoogleError = GoogleErrors[keyof GoogleErrors];
@@ -2262,6 +2310,10 @@ export type MicrosoftErrors = {
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type MicrosoftError = MicrosoftErrors[keyof MicrosoftErrors];
@@ -2410,6 +2462,10 @@ export type GetSsoEntryErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetSsoEntryError = GetSsoEntryErrors[keyof GetSsoEntryErrors];
@@ -2452,6 +2508,10 @@ export type StartSsoErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type StartSsoError = StartSsoErrors[keyof StartSsoErrors];
@@ -2481,6 +2541,10 @@ export type StartSsoFederationErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type StartSsoFederationError = StartSsoFederationErrors[keyof StartSsoFederationErrors];
@@ -2589,6 +2653,10 @@ export type GetStepUpErrors = {
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetStepUpError = GetStepUpErrors[keyof GetStepUpErrors];
@@ -2775,6 +2843,10 @@ export type GetConnectionsErrors = {
    * Forbidden
    */
   403: ForbiddenError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetConnectionsError = GetConnectionsErrors[keyof GetConnectionsErrors];
@@ -3199,9 +3271,17 @@ export type GetMeData = {
 
 export type GetMeErrors = {
   /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetMeError = GetMeErrors[keyof GetMeErrors];
@@ -3321,9 +3401,17 @@ export type GetMyAuthData = {
 
 export type GetMyAuthErrors = {
   /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetMyAuthError = GetMyAuthErrors[keyof GetMyAuthErrors];
@@ -3346,9 +3434,17 @@ export type GetMyInvitationsData = {
 
 export type GetMyInvitationsErrors = {
   /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetMyInvitationsError = GetMyInvitationsErrors[keyof GetMyInvitationsErrors];
@@ -3425,7 +3521,6 @@ export type RevokeMySessionsResponses = {
       createdAt: string;
       expiresAt: string;
       revokedAt: string | null;
-      revokedBy: string | null;
       revocationReason: 'sign_out' | 'other_session' | 'mfa_enabled' | 'session_cap' | 'replaced' | null;
       steppedUpAt: string | null;
       steppedUpVia: 'passkey' | 'totp' | 'email' | 'sso' | null;
@@ -3544,9 +3639,17 @@ export type GetMyMembershipsData = {
 
 export type GetMyMembershipsErrors = {
   /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetMyMembershipsError = GetMyMembershipsErrors[keyof GetMyMembershipsErrors];
@@ -3571,9 +3674,17 @@ export type GetConnectedAppsData = {
 
 export type GetConnectedAppsErrors = {
   /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetConnectedAppsError = GetConnectedAppsErrors[keyof GetConnectedAppsErrors];
@@ -3652,6 +3763,10 @@ export type GetPublicCountsErrors = {
    * Bad request
    */
   400: BadRequestError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetPublicCountsError = GetPublicCountsErrors[keyof GetPublicCountsErrors];
@@ -3712,6 +3827,7 @@ export type GetNotificationsResponses = {
     items: Array<{
       id: string;
       createdAt: string;
+      actorId: string | null;
       type: 'mention' | 'comment' | 'reply';
       entityType: 'task' | 'label' | 'attachment';
       subjectId: string;
@@ -3720,11 +3836,10 @@ export type GetNotificationsResponses = {
       channelType: 'organization' | 'workspace' | 'project';
       organizationId: string;
       tenantId: string;
-      actorId: string | null;
+      readAt: string | null;
       actor: UserMinimalBase | null;
       channelName: string;
       subjectTitle: string;
-      readAt: string | null;
     }>;
     unreadCount: number;
   };
@@ -3784,9 +3899,17 @@ export type GetNotificationPreferencesData = {
 
 export type GetNotificationPreferencesErrors = {
   /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetNotificationPreferencesError = GetNotificationPreferencesErrors[keyof GetNotificationPreferencesErrors];
@@ -3999,9 +4122,17 @@ export type GetPushVapidData = {
 
 export type GetPushVapidErrors = {
   /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetPushVapidError = GetPushVapidErrors[keyof GetPushVapidErrors];
@@ -4183,6 +4314,10 @@ export type GetRequestsErrors = {
    * Forbidden
    */
   403: ForbiddenError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetRequestsError = GetRequestsErrors[keyof GetRequestsErrors];
@@ -4553,9 +4688,21 @@ export type GetPublicTasksData = {
     order?: 'asc' | 'desc';
     offset?: number;
     limit?: number;
+    /**
+     * Comma-separated values
+     */
     status?: string;
+    /**
+     * Comma-separated values
+     */
     type?: string;
+    /**
+     * Comma-separated values
+     */
     labels?: string;
+    /**
+     * Comma-separated values
+     */
     assigned?: string;
     acceptedCutOff?: number;
     projectId: string;
@@ -4846,6 +4993,10 @@ export type GetTenantsErrors = {
    * Forbidden
    */
   403: ForbiddenError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetTenantsError = GetTenantsErrors[keyof GetTenantsErrors];
@@ -5019,6 +5170,10 @@ export type GetUsersErrors = {
    * Forbidden
    */
   403: ForbiddenError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetUsersError = GetUsersErrors[keyof GetUsersErrors];
@@ -5050,6 +5205,9 @@ export type GetUserData = {
   };
   query?: {
     slug?: 'true' | 'false' | boolean;
+    /**
+     * Comma-separated values
+     */
     include?: string;
   };
   url: '/users/users/{relatableUserId}';
@@ -5072,6 +5230,10 @@ export type GetUserErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetUserError = GetUserErrors[keyof GetUserErrors];
@@ -5106,6 +5268,10 @@ export type GetApiProtectedResourceMetadataErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetApiProtectedResourceMetadataError = GetApiProtectedResourceMetadataErrors[keyof GetApiProtectedResourceMetadataErrors];
@@ -5305,6 +5471,9 @@ export type GetOrganizationsData = {
     relatableUserId?: string;
     role?: 'admin' | 'member' | 'guest';
     excludeArchived?: 'true' | 'false' | boolean;
+    /**
+     * Comma-separated values
+     */
     include?: string;
   };
   url: '/organizations';
@@ -5323,6 +5492,10 @@ export type GetOrganizationsErrors = {
    * Forbidden
    */
   403: ForbiddenError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetOrganizationsError = GetOrganizationsErrors[keyof GetOrganizationsErrors];
@@ -5347,6 +5520,9 @@ export type GetOrganizationData = {
   };
   query?: {
     slug?: 'true' | 'false' | boolean;
+    /**
+     * Comma-separated values
+     */
     include?: string;
   };
   url: '/{tenantId}/organizations/{id}';
@@ -5369,6 +5545,10 @@ export type GetOrganizationErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetOrganizationError = GetOrganizationErrors[keyof GetOrganizationErrors];
@@ -5745,6 +5925,9 @@ export type GetProjectsData = {
     role?: 'admin' | 'member' | 'guest';
     excludeArchived?: 'true' | 'false' | boolean;
     scope?: 'memberships' | 'organization';
+    /**
+     * Comma-separated values
+     */
     include?: string;
   };
   url: '/projects';
@@ -5763,6 +5946,10 @@ export type GetProjectsErrors = {
    * Forbidden
    */
   403: ForbiddenError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetProjectsError = GetProjectsErrors[keyof GetProjectsErrors];
@@ -5788,6 +5975,9 @@ export type GetProjectData = {
   };
   query?: {
     slug?: 'true' | 'false' | boolean;
+    /**
+     * Comma-separated values
+     */
     include?: string;
   };
   url: '/{tenantId}/{organizationId}/projects/{id}';
@@ -5810,6 +6000,10 @@ export type GetProjectErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetProjectError = GetProjectErrors[keyof GetProjectErrors];
@@ -6239,6 +6433,9 @@ export type GetWorkspacesData = {
     limit?: number;
     organizationId?: string;
     role?: 'admin' | 'member' | 'guest';
+    /**
+     * Comma-separated values
+     */
     include?: string;
   };
   url: '/workspaces';
@@ -6253,6 +6450,10 @@ export type GetWorkspacesErrors = {
    * Unauthorized
    */
   401: UnauthorizedError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetWorkspacesError = GetWorkspacesErrors[keyof GetWorkspacesErrors];
@@ -6278,6 +6479,9 @@ export type GetWorkspaceData = {
   };
   query?: {
     slug?: 'true' | 'false' | boolean;
+    /**
+     * Comma-separated values
+     */
     include?: string;
   };
   url: '/{tenantId}/{organizationId}/workspaces/{id}';
@@ -6300,6 +6504,10 @@ export type GetWorkspaceErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetWorkspaceError = GetWorkspaceErrors[keyof GetWorkspaceErrors];
@@ -6368,7 +6576,13 @@ export type DeleteAttachmentsData = {
   body: {
     ids: Array<string>;
     stx?: {
+      /**
+       * Unique mutation ID
+       */
       mutationId: string;
+      /**
+       * Tab/instance identifier for echo prevention
+       */
       sourceId: string;
     };
   };
@@ -6514,7 +6728,10 @@ export type CreateAttachmentsData = {
      * MIME type of the uploaded file (e.g. image/png).
      */
     contentType: string;
-    size: string;
+    size: number;
+    /**
+     * Storage object keys per variant, keyed by variant name; only generated variants are present.
+     */
     keys: {
       original: string;
       preview?: string;
@@ -6702,6 +6919,10 @@ export type GetAttachmentErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetAttachmentError = GetAttachmentErrors[keyof GetAttachmentErrors];
@@ -6835,7 +7056,13 @@ export type DeleteLabelsData = {
   body: {
     ids: Array<string>;
     stx?: {
+      /**
+       * Unique mutation ID
+       */
       mutationId: string;
+      /**
+       * Tab/instance identifier for echo prevention
+       */
       sourceId: string;
     };
   };
@@ -6920,6 +7147,9 @@ export type GetLabelsData = {
      * Range read for sync: the last sequence position to return. Requires afterSeq.
      */
     untilSeq?: number;
+    /**
+     * Comma-separated values
+     */
     modes?: string;
     projectId?: string;
     workspaceId?: string;
@@ -7141,6 +7371,10 @@ export type GetLabelErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetLabelError = GetLabelErrors[keyof GetLabelErrors];
@@ -7238,6 +7472,10 @@ export type GetMcpProtectedResourceMetadataErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetMcpProtectedResourceMetadataError = GetMcpProtectedResourceMetadataErrors[keyof GetMcpProtectedResourceMetadataErrors];
@@ -7675,7 +7913,13 @@ export type GetMembersData = {
     entityId: string;
     entityType: 'organization' | 'workspace' | 'project';
     role?: 'admin' | 'member' | 'guest';
+    /**
+     * Comma-separated values
+     */
     include?: string;
+    /**
+     * Comma-separated values
+     */
     userIds?: string;
   };
   url: '/{tenantId}/{organizationId}/memberships/members';
@@ -7698,6 +7942,10 @@ export type GetMembersErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetMembersError = GetMembersErrors[keyof GetMembersErrors];
@@ -7786,6 +8034,10 @@ export type GetPendingMembershipsErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetPendingMembershipsError = GetPendingMembershipsErrors[keyof GetPendingMembershipsErrors];
@@ -7912,7 +8164,7 @@ export type MarkSeenData = {
     /**
      * Entity type for all IDs in this batch
      */
-    entityType: 'task' | 'label' | 'attachment';
+    entityType: 'task';
   };
   path: {
     tenantId: string;
@@ -7999,6 +8251,10 @@ export type GetServiceAccountsErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetServiceAccountsError = GetServiceAccountsErrors[keyof GetServiceAccountsErrors];
@@ -8175,6 +8431,10 @@ export type GetApiKeysErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetApiKeysError = GetApiKeysErrors[keyof GetApiKeysErrors];
@@ -8313,7 +8573,13 @@ export type DeleteTasksData = {
   body: {
     ids: Array<string>;
     stx?: {
+      /**
+       * Unique mutation ID
+       */
       mutationId: string;
+      /**
+       * Tab/instance identifier for echo prevention
+       */
       sourceId: string;
     };
   };
@@ -8398,9 +8664,21 @@ export type GetTasksData = {
      * Range read for sync: the last sequence position to return. Requires afterSeq.
      */
     untilSeq?: number;
+    /**
+     * Comma-separated values
+     */
     status?: string;
+    /**
+     * Comma-separated values
+     */
     type?: string;
+    /**
+     * Comma-separated values
+     */
     labels?: string;
+    /**
+     * Comma-separated values
+     */
     assigned?: string;
     acceptedCutOff?: number;
     projectId?: string;
@@ -8623,6 +8901,10 @@ export type GetTaskErrors = {
    * Not found
    */
   404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
 };
 
 export type GetTaskError = GetTaskErrors[keyof GetTaskErrors];

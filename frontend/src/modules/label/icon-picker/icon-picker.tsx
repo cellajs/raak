@@ -29,7 +29,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
   return (
     <div className={cn('flex w-72 flex-col gap-2', className)}>
       <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('c:search')} autoFocus={!isTouchInteraction()} />
-      {matches.length === 0 && <span className="p-2 text-muted-foreground text-sm">{t('c:no_results')}</span>}
+      {matches.length === 0 && <span className="text-muted-foreground p-2 text-sm">{t('c:no_results')}</span>}
       <div className="grid max-h-64 grid-cols-8 gap-1 overflow-y-auto" role="listbox" aria-label={t('c:search')}>
         {matches.slice(0, maxVisible).map((name) => (
           <button
@@ -39,13 +39,13 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
             aria-selected={name === value}
             title={name}
             onClick={() => onChange(name)}
-            className={cn('flex items-center justify-center rounded-md p-1.5 hover:bg-hover', name === value && 'bg-accent ring-1 ring-ring')}
+            className={cn('hover:bg-hover flex items-center justify-center rounded-md p-1.5', name === value && 'bg-accent ring-ring ring-1')}
           >
             <NamedIcon name={name} className="size-5" />
           </button>
         ))}
       </div>
-      {matches.length > maxVisible && <span className="px-1 text-muted-foreground text-xs">{`${matches.length - maxVisible}+`}</span>}
+      {matches.length > maxVisible && <span className="text-muted-foreground px-1 text-xs">{`${matches.length - maxVisible}+`}</span>}
     </div>
   );
 }

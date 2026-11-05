@@ -204,13 +204,13 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         tabIndex={isSheet || isFocused ? 0 : -1}
         ref={taskRef}
         className={cn(
-          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-58% via-transparent py-0 focus-visible:outline-hidden sm:py-0',
+          'group/task relative rounded-none border-0 border-b bg-transparent bg-linear-to-br from-transparent via-transparent via-58% py-0 focus-visible:outline-hidden sm:py-0',
           isDragging && 'opacity-30',
           // Hover, current and an open card take the card fill, the only change on unstarted cards, which have no gradient.
           // An open card keeps it, so it stands out among the closed ones.
           showsCurrent && 'is-focused bg-card',
           !isSheet && effectiveState !== 'collapsed' && 'bg-card',
-          isSheet ? 'grow p-3 pt-0 sm:px-5' : 'transition-[background-color,color] hover:bg-card',
+          isSheet ? 'grow p-3 pt-0 sm:px-5' : 'hover:bg-card transition-[background-color,color]',
           // A selected card keeps full strength, so it stands out among the resting ones
           !isSheet && effectiveState === 'collapsed' && !showsCurrent && !isSelected && 'resting-text',
           // A touch long-press on a collapsed card must start a drag, never a text selection or the iOS callout.
@@ -224,7 +224,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         <CardContent
           id={`${task.id}-content`}
           className={cn(
-            'relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 max-sm:px-3! sm:before:-left-px',
+            'before:bg-primary relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:opacity-0 max-sm:px-3! sm:before:-left-px',
             isSheet ? 'group-focus-visible/task:before:opacity-100' : taskCardFocusBarClass,
             // The header's own py-1 makes up the rest, so opening a card leaves its buttons where the collapsed row had them
             !isSheet && effectiveState !== 'collapsed' && 'pt-0.5',

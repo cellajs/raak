@@ -30,8 +30,8 @@ export function AboutPage() {
       <main className="focus:outline-hidden">
         <Hero title="about:title_1" text={isMobile ? undefined : 'about:text_1'}>
           {joinedToWaitlist ? (
-            <span className="flex items-center justify-between gap-2 rounded-full border-2 border-success px-4 py-3.5 ring-4 ring-primary/5">
-              <CheckIcon className="size-8 text-success" />
+            <span className="border-success ring-primary/5 flex items-center justify-between gap-2 rounded-full border-2 px-4 py-3.5 ring-4">
+              <CheckIcon className="text-success size-8" />
               <span className="p-2">{t('c:in_waitlist')}</span>
             </span>
           ) : (

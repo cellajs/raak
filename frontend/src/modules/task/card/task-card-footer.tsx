@@ -58,7 +58,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
   const canSelect = !isReadOnly && !isOtherProjectSelected;
 
   return (
-    <div className="group-not-data-[state=collapsed]/task:fade-in flex flex-col group-not-data-[state=collapsed]/task:animate-in group-not-data-[state=collapsed]/task:duration-300">
+    <div className="group-not-data-[state=collapsed]/task:fade-in group-not-data-[state=collapsed]/task:animate-in flex flex-col group-not-data-[state=collapsed]/task:duration-300">
       <div className="@container/footer flex items-center gap-1">
         {hasCheckboxColumn && (
           <div className="mx-1 flex size-5 shrink-0 items-center justify-center">
@@ -75,7 +75,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
         {isReadOnly ? (
           // A fact, not a control
           <TooltipButton toolTipContent={statusTooltip} side="bottom">
-            <div className={cn('flex h-8 items-center gap-1.5 font-medium text-sm', statusTextColors[task.status], statusIconInTextClass)}>
+            <div className={cn('flex h-8 items-center gap-1.5 text-sm font-medium', statusTextColors[task.status], statusIconInTextClass)}>
               <StatusIcon aria-hidden className="size-4 shrink-0" />
               <span>
                 <span className="sr-only">{t('c:status')}: </span>
@@ -136,11 +136,11 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
                       name={user.name}
                       url={user.thumbnailUrl}
                       // Overlapping greys would merge. The only assignee question on a board is "is this mine?", so your own keeps its color.
-                      className={cn('size-7 ring-1 ring-background/70', user.id !== currentUserId && taskCardAvatarRestClass)}
+                      className={cn('ring-background/70 size-7 ring-1', user.id !== currentUserId && taskCardAvatarRestClass)}
                     />
                   ))}
                 </AvatarGroupList>
-                <AvatarOverflowIndicator className="size-7 text-xs ring-1 ring-background/70" />
+                <AvatarOverflowIndicator className="ring-background/70 size-7 text-xs ring-1" />
               </AvatarGroup>
             ) : (
               <NoAssigneeAvatar className="size-7" />

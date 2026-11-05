@@ -4,6 +4,7 @@ export {
   channelEntityTypeSchema,
   cookieSchema,
   countryCodeSchema,
+  csvQuerySchema,
   entityIdParamSchema,
   entityTypeSchema,
   entityWithTypeQuerySchema,
@@ -12,13 +13,13 @@ export {
   type IncludeOption,
   idInTenantOrgParamSchema,
   idsBodySchema,
-  idsWithStxBodySchema,
   includeQuerySchema,
   integerQuerySchema,
   languageSchema,
   locationSchema,
   maxLength,
   noDuplicateSlugsRefine,
+  orderSchema,
   paginationQuerySchema,
   productEntityTypeSchema,
   productListQuerySchema,
@@ -50,6 +51,7 @@ export {
   type CatchupOrganizationSummary,
   type CatchupView,
   type StreamChange,
+  type StreamErrorPayload,
   type StreamSignal,
   streamCatchupBodySchema,
 } from '#/schemas/stream-schemas';
@@ -59,4 +61,11 @@ export {
   paginationSchema,
   productListResponseSchema,
 } from '#/schemas/success-response-schemas';
-export { type StxBase, stxBaseSchema } from '#/schemas/sync-transaction-schemas';
+export {
+  idsWithStxBodySchema,
+  type StxBase,
+  type StxStored,
+  /** @public */
+  stxBaseSchema,
+  stxStoredSchema,
+} from '#/schemas/sync-transaction-schemas';

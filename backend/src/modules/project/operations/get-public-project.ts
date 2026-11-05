@@ -1,5 +1,6 @@
-import type { ActorContext } from '#/core/context';
+import type { DbContext, ScopeContext } from '#/core/context';
 import { withActorRef } from '#/modules/actors/actor-refs';
+import type { AccessContext } from '#/permissions/access';
 import { getValidChannel } from '#/permissions/get-valid-channel';
 
 /**
@@ -7,7 +8,7 @@ import { getValidChannel } from '#/permissions/get-valid-channel';
  * anonymous caller, whom only the public read grant lets in: a project that is not public reads as missing.
  * @throws AppError 404 `not_found` when the project is missing or not public.
  */
-export async function getPublicProjectOp(ctx: ActorContext, id: string, bySlug?: boolean) {
+export async function getPublicProjectOp(ctx: DbContext & ScopeContext & AccessContext, id: string, bySlug?: boolean) {
   const { entity: project } = await getValidChannel(ctx, id, 'project', 'read', bySlug);
   const projectWithAudit = await withActorRef(ctx, project);
   return { ...projectWithAudit, membership: null, included: {} };

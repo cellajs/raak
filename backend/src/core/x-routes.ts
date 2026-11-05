@@ -7,7 +7,6 @@ import {
   createMetadataExtensions,
   createSpecificationExtensions,
   type ExtensionPropId,
-  extensionPropIds,
   type GuardContext,
   type SecurityRequirement,
   toolAction,
@@ -16,6 +15,7 @@ import {
 } from '#/core/openapi-extensions';
 import { checksAuthoringRules, recordDocumentedErrors } from '#/core/openapi-validation';
 import { configSwitchGate } from '#/middlewares/config-switch';
+import { readLimiter } from '#/middlewares/rate-limiter/limiters';
 import { type ErrorCode, sharedErrorResponses } from '#/schemas/error-response-schemas';
 
 /**
@@ -92,6 +92,8 @@ const chainErrors = (config: RouteOptions, xMiddlewares: XMiddlewareHandler[]): 
  * order: the error page (a 302 route), the config switch gate (`xEnabledBy`), `xGuard`, `xRateLimiter`, the
  * route's own `middleware`, then validation and the handler. The switch needs no caller, so a route that is off
  * answers before any guard shows how it authenticates; `middleware` runs after the guards and may read the actor.
+ * A GET route that declares no limiter takes `readLimiter`, and a limiter a guard runs itself (`limiters`) is
+ * documented on every route that lists the guard.
  * The route documents the error statuses its chain answers with (`chainErrors`) beside its own responses, where
  * `errors()` lists what the handler throws; a status the route declares keeps the route's own response. Where
  * authoring rules are checked, `errors()` of a status the chain already answers is refused at load, so every listed
@@ -100,7 +102,9 @@ const chainErrors = (config: RouteOptions, xMiddlewares: XMiddlewareHandler[]): 
  */
 export const createXRoute = <P extends string, R extends Omit<RouteOptions, 'path'> & { path: P }>(config: R): XRoute<R> => {
   const route = `${config.operationId} (${config.method} ${config.path})`;
-  const extensionMiddleware = collectExtensionMiddleware(config);
+  // A read declares a limiter only where its own budget differs from the read pace.
+  const limited = config.method === 'get' && !config.xRateLimiter?.length ? { ...config, xRateLimiter: [readLimiter] } : config;
+  const extensionMiddleware = collectExtensionMiddleware(limited);
   const existing = [config.middleware ?? []].flat();
 
   // The operation name first, then the error page, so every refusal finds both, the switch gate's included.
@@ -109,9 +113,10 @@ export const createXRoute = <P extends string, R extends Omit<RouteOptions, 'pat
   const switchGate = config.xEnabledBy ? [configSwitchGate(config.xEnabledBy)] : [];
   const middleware = [...operation, ...errorPage, ...switchGate, ...extensionMiddleware, ...existing];
 
-  const xMiddlewares = middleware.filter(
-    (mw): mw is XMiddlewareHandler => '__extensionType' in mw && typeof (mw as XMiddlewareHandler).__extensionType === 'string',
-  );
+  // Each marked middleware, then the limiters a guard runs itself, so the document lists them and their errors.
+  const xMiddlewares = middleware
+    .filter((mw): mw is XMiddlewareHandler => '__extensionType' in mw && typeof mw.__extensionType === 'string')
+    .flatMap((mw) => [mw, ...(mw.__limiters ?? [])]);
   assertGuardOrder(route, xMiddlewares);
   const specificationExtensions = createSpecificationExtensions((key) =>
     xMiddlewares.filter((mw) => mw.__extensionType === key && mw.name).map((mw) => mw.name),
@@ -149,17 +154,15 @@ export const createXRoute = <P extends string, R extends Omit<RouteOptions, 'pat
   }
 
   // Extension props leave the route config: middleware runs, metadata returns under its `x-*` key, `xScope` went into security.
-  const cleanConfig = {
-    ...Object.fromEntries(Object.entries(config).filter(([key]) => !extensionPropIds.includes(key))),
-    ...createMetadataExtensions(config),
-  } as Omit<R, ExtensionPropId>;
+  const { xGuard: _guard, xRateLimiter: _rateLimiter, xTool: _tool, xEnabledBy: _enabledBy, xScope: _scope, ...routeConfig } = config;
+  const cleanConfig = { ...routeConfig, ...createMetadataExtensions(config) };
 
   return createRoute({ security, ...cleanConfig, responses, middleware, ...specificationExtensions });
 };
 
 type JsonResponse<S extends z.ZodType> = {
   description: string;
-  content: { 'application/json': { schema: S; example?: unknown } };
+  content: { 'application/json': { schema: S; example?: z.output<S> } };
 };
 
 /**
@@ -167,7 +170,7 @@ type JsonResponse<S extends z.ZodType> = {
  * from the schema's own example or where the schema is inline and has none.
  * @param description A label of a few words, then optionally a blank line and a detail the docs show when the row opens.
  */
-export const json = <S extends z.ZodType>(description: string, schema: S, example?: unknown): JsonResponse<S> => ({
+export const json = <S extends z.ZodType>(description: string, schema: S, example?: z.output<S>): JsonResponse<S> => ({
   description,
   content: { 'application/json': example === undefined ? { schema } : { schema, example } },
 });
@@ -203,17 +206,7 @@ export const xRoute = <P extends string, R extends DraftOptions & { path: P }>(c
 
 /**
  * Finishes a module's routes with `createXRoute`: `operationId` defaults to the route's key and `tags` to the module's,
- * set before `summary` so the document keeps its key order.
+ * both ahead of the draft's own keys so the document keeps its key order.
  */
 export const createXRoutes = <T extends Record<string, Draft>>(tags: string[], drafts: T): XRoutes<T> =>
-  Object.fromEntries(
-    Object.entries(drafts).map(([key, draft]) => {
-      const entries: [string, unknown][] = Object.entries(draft);
-      if (!draft.tags) {
-        const summary = entries.findIndex(([name]) => name === 'summary');
-        entries.splice(summary === -1 ? entries.length : summary, 0, ['tags', tags]);
-      }
-      if (!draft.operationId) entries.unshift(['operationId', key]);
-      return [key, createXRoute(Object.fromEntries(entries) as Parameters<typeof createXRoute>[0])];
-    }),
-  ) as XRoutes<T>;
+  Object.fromEntries(Object.entries(drafts).map(([key, draft]) => [key, createXRoute({ operationId: key, tags, ...draft })])) as XRoutes<T>;

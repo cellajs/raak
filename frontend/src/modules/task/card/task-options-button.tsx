@@ -100,7 +100,7 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
         onClick={({ currentTarget }) => openOptionsDropdown(currentTarget)}
         aria-label={t('c:resource_options', { resource: t('c:task') })}
         variant="ghost"
-        className={cn('focus-inset size-8 data-dropdowner-active:bg-foreground/7', taskCardGhostClass, cardIconButtonClass)}
+        className={cn('focus-inset data-dropdowner-active:bg-foreground/7 size-8', taskCardGhostClass, cardIconButtonClass)}
         size="xs"
       >
         <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4" />

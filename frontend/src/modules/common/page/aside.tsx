@@ -6,20 +6,21 @@ import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollSpy } from '~/hooks/use-scroll-spy';
 import type { PlacementDescriptor } from '~/lib/placements';
 import type { IconComponent } from '~/modules/common/icons/types';
+import type { TabLabel } from '~/modules/common/page/tab-nav-shell';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 import { getHasNavigated } from '~/utils/nav-transition';
 
-interface PageAsideItem extends PlacementDescriptor {
-  icon?: IconComponent;
-  /** Classes for this tab's row, applied after the shared ones. */
-  className?: string;
-}
+type PageAsideItem = Omit<PlacementDescriptor, 'label'> &
+  TabLabel & {
+    icon?: IconComponent;
+    className?: string;
+  };
 
 interface PageAsideProps<T> {
   tabs: readonly T[];
   className?: string;
-  /** Focuses the first row on mount after a navigation, from sm up. */
+  /** Focuses the first row after a navigation, from sm up. */
   autoFocus?: boolean;
 }
 
@@ -38,7 +39,8 @@ export function PageAside<T extends PageAsideItem>({ tabs, className, autoFocus 
 
   return (
     <div className={cn('flex w-full flex-col gap-1', className)}>
-      {tabs.map(({ id, label, icon: Icon, resource, className: tabClassName }, index) => {
+      {tabs.map((tab: PageAsideItem, index) => {
+        const { id, icon: Icon, resource, className: tabClassName } = tab;
         const destructive = id.includes('delete');
         return (
           <Button
@@ -50,10 +52,8 @@ export function PageAside<T extends PageAsideItem>({ tabs, className, autoFocus 
               'w-full justify-start',
               // The ghost hover swaps the text color, so a destructive row restates its own
               destructive && 'text-destructive hover:text-destructive',
-              // Rows at rest sit back like the page tabs; hover, focus and the active row come forward
               !destructive && 'text-muted-foreground focus-visible:text-foreground data-spy-active:text-foreground',
               'transition-[color,background-color]',
-              // Fill and weight carry the active row; the ring is an edge only a reader who asked for contrast needs
               'more-contrast:data-spy-active:inset-ring more-contrast:data-spy-active:inset-ring-input data-spy-active:bg-accent data-spy-active:font-medium',
               tabClassName,
             )}
@@ -75,7 +75,7 @@ export function PageAside<T extends PageAsideItem>({ tabs, className, autoFocus 
             }
           >
             {Icon && <Icon className="size-5" />}
-            {t(label, { resource: resource ? t(resource) : '' })}
+            {'text' in tab ? tab.text : t(tab.label, { resource: resource ? t(resource) : '' })}
           </Button>
         );
       })}

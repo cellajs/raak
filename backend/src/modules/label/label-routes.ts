@@ -1,6 +1,6 @@
 import { createXRoutes, errors, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
-import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
+import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchLabelsResponse, mockPaginatedLabelsResponse } from '#/modules/label/label-mocks';
 import {
   labelCreateManyStxBodySchema,
@@ -37,7 +37,6 @@ const labelRoutes = createXRoutes(['labels', 'app', 'product'], {
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xScope: 'label:read',
-    xRateLimiter: [syncReadLimiter],
     summary: 'Get list of labels',
     description: 'Returns a list of labels for a given project or workspace.',
     request: { params: tenantOrgParamSchema, query: labelListQuerySchema },
@@ -48,7 +47,6 @@ const labelRoutes = createXRoutes(['labels', 'app', 'product'], {
     path: '/older-accepted-counts',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xScope: 'task:read',
-    xRateLimiter: [syncReadLimiter],
     summary: 'Get older accepted task counts per label',
     description: 'Returns, per label id, how many tasks of a project were accepted before the cut-off of `acceptedCutOff` days ago.',
     request: { params: tenantOrgParamSchema, query: labelOlderAcceptedCountsQuerySchema },

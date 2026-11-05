@@ -1,6 +1,6 @@
 import { createXRoutes, errors, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
-import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
+import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchTasksResponse, mockTasksResponse } from '#/modules/task/task-mocks';
 import {
   taskCreateManyStxBodySchema,
@@ -47,7 +47,6 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     method: 'get',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
-    xRateLimiter: [syncReadLimiter],
     xTool: {
       description: 'Search tasks by keyword, status, label, or project. Returns matching task summaries with status and assignees.',
       approvalRequired: false,
@@ -62,7 +61,6 @@ const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
     method: 'get',
     path: '/unseen',
     xGuard: [userGuard, tenantGuard, orgGuard],
-    xRateLimiter: [syncReadLimiter],
     summary: 'Get unseen task ids',
     description:
       'Returns the ids of the newest tasks that are new to the current user: not seen yet, and created after the user joined. Newest first.',

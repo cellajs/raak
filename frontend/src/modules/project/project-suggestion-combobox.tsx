@@ -89,7 +89,7 @@ export function ProjectSuggestionCombobox({
       onInputValueChange={setSearchQuery}
       filter={() => true}
     >
-      <div className="relative flex min-h-10 w-full items-center rounded-md border border-input bg-background p-1.5 pr-10">
+      <div className="border-input bg-background relative flex min-h-10 w-full items-center rounded-md border p-1.5 pr-10">
         {/* The chips sit outside the trigger, since their remove buttons cannot nest in it; it still announces the selection */}
         <ComboboxPrimitive.Trigger
           ref={triggerRef}
@@ -110,7 +110,7 @@ export function ProjectSuggestionCombobox({
             </span>
           )}
         </div>
-        <ChevronDownIcon className="pointer-events-none absolute right-0 mx-2 shrink-0 text-faint-foreground" />
+        <ChevronDownIcon className="text-faint-foreground pointer-events-none absolute right-0 mx-2 shrink-0" />
       </div>
 
       <ComboboxContent className="p-0">

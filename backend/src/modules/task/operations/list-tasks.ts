@@ -1,7 +1,7 @@
 import { and, arrayOverlaps, asc, desc, eq, inArray, not, or, type SQL, sql } from 'drizzle-orm';
 import { foldText, parseTerms } from 'shared/utils/text-match';
 import type { z } from 'zod';
-import type { ActorContext } from '#/core/context';
+import type { DbContext, ScopeContext } from '#/core/context';
 import { requestScopeWhere } from '#/db/utils/request-scope';
 import { hydrateTasks } from '#/modules/task/operations/hydrate-task';
 import { tasksTable } from '#/modules/task/task-db';
@@ -27,12 +27,15 @@ const statusByName: Record<string, TaskStatus> = {
   iced: TaskStatus.Iced,
 };
 
-const filterValues = (value?: string) => (value ? value.split(',') : []);
-
 const noAssignee = 'none';
 
 /** A page of the tasks in `projectIds` that match the list query, hydrated with their projects' members and labels. */
-export const listTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean; range?: SeqRange }) => {
+export const listTasks = async (
+  ctx: DbContext & ScopeContext,
+  projectIds: string[],
+  queryInfo: QueryInfo,
+  opts?: { publicOnly?: boolean; range?: SeqRange },
+) => {
   const { q, status, type, labels, assigned, sort, order, acceptedCutOff, limit, offset } = queryInfo;
   const rangeRead = seqRangeRead(tasksTable, opts?.range);
 
@@ -54,19 +57,16 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
   });
 
   // Slugs hold across a workspace's projects, where each project has its own label rows
-  const statuses = filterValues(status).flatMap((name) => statusByName[name] ?? []);
-  const typeSlugs = filterValues(type);
-  const typeIds = tasksLabels.filter(({ slug }) => typeSlugs.includes(slug)).map(({ id }) => id);
-  const labelSlugs = filterValues(labels);
-  const labelIds = tasksLabels.filter(({ slug }) => labelSlugs.includes(slug)).map(({ id }) => id);
+  const statuses = status.flatMap((name) => statusByName[name] ?? []);
+  const typeIds = tasksLabels.filter(({ slug }) => type.includes(slug)).map(({ id }) => id);
+  const labelIds = tasksLabels.filter(({ slug }) => labels.includes(slug)).map(({ id }) => id);
 
   // Hydration leaves out assignees who left the project, so a task is assigned only to the members it shows
   const memberIds = tasksUsers.map(({ id }) => id);
-  const assignedValues = filterValues(assigned);
-  const assigneeIds = assignedValues.filter((id) => memberIds.includes(id));
+  const assigneeIds = assigned.filter((id) => memberIds.includes(id));
   const assigneeFilter = or(
     assigneeIds.length ? arrayOverlaps(tasksTable.assignedTo, assigneeIds) : undefined,
-    assignedValues.includes(noAssignee) ? (memberIds.length ? not(arrayOverlaps(tasksTable.assignedTo, memberIds)) : sql`true`) : undefined,
+    assigned.includes(noAssignee) ? (memberIds.length ? not(arrayOverlaps(tasksTable.assignedTo, memberIds)) : sql`true`) : undefined,
   );
 
   const orderBy =
@@ -86,9 +86,9 @@ export const listTasks = async (ctx: ActorContext, projectIds: string[], queryIn
     ...rangeRead.where,
     ...keywordFilters,
     statuses.length ? inArray(tasksTable.status, statuses) : undefined,
-    typeSlugs.length ? inArray(tasksTable.primaryLabelId, typeIds) : undefined,
-    labelSlugs.length ? (labelIds.length ? arrayOverlaps(tasksTable.labels, labelIds) : sql`false`) : undefined,
-    assignedValues.length ? (assigneeFilter ?? sql`false`) : undefined,
+    type.length ? inArray(tasksTable.primaryLabelId, typeIds) : undefined,
+    labels.length ? (labelIds.length ? arrayOverlaps(tasksTable.labels, labelIds) : sql`false`) : undefined,
+    assigned.length ? (assigneeFilter ?? sql`false`) : undefined,
     requestScopeWhere(ctx, tasksTable, 'task'),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,

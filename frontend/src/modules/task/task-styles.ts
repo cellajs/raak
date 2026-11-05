@@ -1,3 +1,4 @@
+// biome-ignore-all lint/nursery/noTailwindRawColors: the task status palette, one hue per status tuned per theme, which no theme role carries
 import { cva } from 'class-variance-authority';
 import { tw } from '~/utils/tw';
 
@@ -50,12 +51,12 @@ export const taskDescriptionGutterClass = tw`pb-4 ${taskTextEdgeClass}`;
 
 /** A board item's focus bar shows while focus is on or in it, or in a menu or dropdown opened from it, not merely while it is current. */
 export const itemFocusBarClass = tw(
-  'pointer-fine:focus-within:before:opacity-100 focus-visible:before:opacity-100 has-[:focus-visible]:before:opacity-100 has-[[aria-haspopup][aria-expanded=true]]:before:opacity-100 has-data-dropdowner-active:before:opacity-100',
+  'focus-visible:before:opacity-100 has-data-dropdowner-active:before:opacity-100 has-[:focus-visible]:before:opacity-100 has-[[aria-haspopup][aria-expanded=true]]:before:opacity-100 pointer-fine:focus-within:before:opacity-100',
 );
 
 /** `itemFocusBarClass` for the bar a task card draws on its content. */
 export const taskCardFocusBarClass = tw(
-  'pointer-fine:group-focus-within/task:before:opacity-100 group-focus-visible/task:before:opacity-100 group-has-[:focus-visible]/task:before:opacity-100 group-has-[[aria-haspopup][aria-expanded=true]]/task:before:opacity-100 group-has-data-dropdowner-active/task:before:opacity-100',
+  'group-focus-visible/task:before:opacity-100 group-has-data-dropdowner-active/task:before:opacity-100 group-has-[:focus-visible]/task:before:opacity-100 group-has-[[aria-haspopup][aria-expanded=true]]/task:before:opacity-100 pointer-fine:group-focus-within/task:before:opacity-100',
 );
 
 /** A card's icon-only controls (close, options, add labels): a step under full at rest, full on their own hover. */
@@ -74,12 +75,12 @@ export const taskCardAvatarRestClass = tw(
 
 /** A task card's metadata, which brightens with the card on hover or focus. */
 export const taskCardMetaClass = tw(
-  'text-foreground-soft transition-colors pointer-fine:group-focus-within/task:text-foreground group-hover/task:text-foreground group-focus-visible/task:text-foreground group-[.is-focused]/task:text-foreground group-has-[:focus-visible]/task:text-foreground',
+  'text-foreground-soft pointer-fine:group-focus-within/task:text-foreground group-hover/task:text-foreground group-focus-visible/task:text-foreground group-[.is-focused]/task:text-foreground group-has-[:focus-visible]/task:text-foreground transition-colors',
 );
 
 /** Reveals a task card's action buttons on hover or focus; keep in step with `.task-summary-fade` in card-glow.css. */
 export const taskCardActionsRevealClass = tw(
-  'opacity-0 transition-opacity pointer-fine:group-focus-within/task:opacity-100 group-hover/task:opacity-100 group-focus-visible/task:opacity-100 group-[.is-focused]/task:opacity-100 has-data-dropdowner-done:opacity-100 group-has-[:focus-visible]/task:opacity-100 group-data-[sheet=true]/task:opacity-100',
+  'opacity-0 transition-opacity group-hover/task:opacity-100 group-focus-visible/task:opacity-100 group-has-[:focus-visible]/task:opacity-100 group-data-[sheet=true]/task:opacity-100 group-[.is-focused]/task:opacity-100 has-data-dropdowner-done:opacity-100 pointer-fine:group-focus-within/task:opacity-100',
 );
 
 /** Shared by the panel header's drag handle and the board skeleton's stand-in, so the strip keeps its shape through loading. */
@@ -88,18 +89,25 @@ export const panelHandleClass = tw('flex h-auto items-center justify-start gap-2
 /** Shared by the "+ Task" button and the board skeleton's stand-ins. */
 export const newTaskButtonClass = tw('relative hidden rounded sm:inline-flex');
 
-export const taskBarClass = tw('z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2');
+export const taskBarClass = tw('bg-background z-85 flex items-center max-sm:justify-between max-sm:p-2 sm:gap-2');
 
 /** Shared by the panel section headers, the collapsed panel and the board skeleton, so a strip keeps its fill through a collapse. */
 export const statusSectionColors = {
   accepted: {
     fill: 'bg-background bg-linear-to-b from-green-500/18 to-green-500/26 dark:from-green-500/15 dark:to-green-500/22',
+    hoverFill: 'hover:from-green-500/26 hover:to-green-500/36 dark:hover:from-green-500/22 dark:hover:to-green-500/32',
     text: 'text-green-800 dark:text-green-300',
+    hoverText: 'hover:text-green-900 dark:hover:text-green-200',
     border: { top: 'border-b border-b-green-600/30 dark:border-b-green-400/20', bottom: 'border-t border-t-green-600/30 dark:border-t-green-400/20' },
   },
   iced: {
     fill: 'bg-background bg-linear-to-b from-sky-500/18 to-sky-500/26 dark:from-sky-500/15 dark:to-sky-500/22',
+    hoverFill: 'hover:from-sky-500/26 hover:to-sky-500/36 dark:hover:from-sky-500/22 dark:hover:to-sky-500/32',
     text: 'text-sky-800 dark:text-sky-300',
+    hoverText: 'hover:text-sky-900 dark:hover:text-sky-200',
     border: { top: 'border-b border-b-sky-600/30 dark:border-b-sky-400/20', bottom: 'border-t border-t-sky-600/30 dark:border-t-sky-400/20' },
   },
 } as const;
+
+/** The opaque fill of the hint that points to accepted tasks in the table. */
+export const olderAcceptedHintFill = tw('bg-green-50 dark:bg-green-950');

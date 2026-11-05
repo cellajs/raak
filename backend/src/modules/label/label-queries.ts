@@ -1,3 +1,4 @@
+import type { z } from '@hono/zod-openapi';
 import { and, asc, count, eq, inArray, isNull, ne, type SQL, sql } from 'drizzle-orm';
 import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
@@ -11,6 +12,7 @@ import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { heatClock } from '#/modules/label/helpers/label-heat';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
+import type { labelListQuerySchema } from '#/modules/label/label-schema';
 import { projectsTable } from '#/modules/project/project-db';
 import type { StxBase } from '#/schemas/sync-transaction-schemas';
 import { getOrderColumns } from '#/utils/order-column';
@@ -204,7 +206,7 @@ export const propagateSetupConfigLabels = async (
   }
 };
 
-interface FindLabelsPaginatedOpts {
+interface FindLabelsPaginatedOpts extends Pick<z.infer<typeof labelListQuerySchema>, 'sort' | 'order'> {
   organizationId: string;
   /** The caller's read scope, from the permission layer; the request scope is added here. */
   filters: SQL[];
@@ -212,8 +214,6 @@ interface FindLabelsPaginatedOpts {
   orgWide: boolean;
   q?: string;
   modes?: LabelModel['mode'][];
-  sort: 'name';
-  order: 'asc' | 'desc';
   limit: number;
   offset: number;
   /** A range read for sync: deleted rows included, in sequence order, total from the page length. */

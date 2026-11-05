@@ -12,7 +12,7 @@ interface TaskCardDragPreviewProps {
 
 export function TaskCardDragPreview({ task }: TaskCardDragPreviewProps) {
   return (
-    <Card tabIndex={0} className={cn('rounded-none border bg-card/50 opacity-60', taskCardVariants({ status: task.status }))}>
+    <Card tabIndex={0} className={cn('bg-card/50 rounded-none border opacity-60', taskCardVariants({ status: task.status }))}>
       <CardContent className="flex flex-col p-4">
         <div className="flex w-full gap-1">
           <div className="-ml-0.5">

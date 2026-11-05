@@ -1,8 +1,8 @@
 import { z } from '@hono/zod-openapi';
 import { schemaTags } from '#/core/openapi-helpers';
 import { hlcMaxLength, isValidHLC } from '#/core/stx/hlc';
-import { boundedRecord } from '#/schemas/common-schemas';
-import { mockStxBase } from '#/schemas/sync-transaction-mocks';
+import { boundedRecord, idsBodySchema } from '#/schemas/common-schemas';
+import { mockStxBase, mockStxStored } from '#/schemas/sync-transaction-mocks';
 
 /** Used for both storage and request validation. */
 export const stxBaseSchema = z
@@ -25,3 +25,25 @@ export const stxBaseSchema = z
 export const nullableStxBaseSchema = z.union([stxBaseSchema, z.null()]);
 
 export type StxBase = z.infer<typeof stxBaseSchema>;
+
+/** A product row's stx after a write: the base plus the fields the write changed, which the server sets. */
+export const stxStoredSchema = stxBaseSchema
+  .extend({
+    changedFields: z
+      .array(z.string().max(64))
+      .max(100)
+      .optional()
+      .describe('The fields the last write changed, set by the server; absent after a create or a server-driven write'),
+  })
+  .openapi('StxStored', {
+    description:
+      'The sync envelope as a product row stores and returns it: StxBase plus changedFields, the fields the last write changed, which the server sets and the Yjs materializer reads. A request carries StxBase only.',
+    example: mockStxStored(),
+    'x-tags': schemaTags('base', 'cella'),
+  });
+
+export type StxStored = z.infer<typeof stxStoredSchema>;
+
+/** The optional stx is what prevents echoing the change back to its source. */
+export const idsWithStxBodySchema = (maxItems = 50) =>
+  idsBodySchema(maxItems).extend({ stx: stxBaseSchema.pick({ mutationId: true, sourceId: true }).optional() });

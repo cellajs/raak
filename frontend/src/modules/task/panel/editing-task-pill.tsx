@@ -139,16 +139,16 @@ export function EditingTaskPill({ task, index, scrollRef, windowMode, listRef }:
       <div
         inert={!edge}
         className={cn(
-          'flex h-8 items-center rounded-full bg-background shadow-floating transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none',
+          'bg-background shadow-floating flex h-8 items-center rounded-full transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none',
           edge ? 'pointer-events-auto' : cn('opacity-0', shownEdge === 'top' ? '-translate-y-1.5' : 'translate-y-1.5'),
         )}
       >
         <TooltipButton toolTipContent={t('c:back_to_task')} side={tooltipSide}>
-          <Button variant="ghost" size="sm" className="h-8 gap-1.5 rounded-r-none rounded-l-full pr-2 pl-3" onClick={() => returnToCard()}>
+          <Button variant="ghost" size="sm" className="h-8 gap-1.5 rounded-l-full rounded-r-none pr-2 pl-3" onClick={() => returnToCard()}>
             {shownEdge === 'top' ? <ArrowUpIcon /> : <ArrowDownIcon />}
             {t('c:editing')}
             {ref && (
-              <Badge variant="secondary" className="pl-1.5 font-normal text-muted-foreground tabular-nums">
+              <Badge variant="secondary" className="text-muted-foreground pl-1.5 font-normal tabular-nums">
                 {ref}
               </Badge>
             )}
@@ -164,7 +164,7 @@ export function EditingTaskPill({ task, index, scrollRef, windowMode, listRef }:
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 rounded-r-full rounded-l-none"
+            className="size-8 rounded-l-none rounded-r-full"
             onClick={() => taskCardStore.getState().setTaskState(task.id, 'expanded')}
             aria-label={t('c:stop_editing')}
           >

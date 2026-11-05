@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProductEntityType } from 'shared';
+import { yjsFragmentName } from 'shared/utils/yjs-protocol';
 import type * as Y from 'yjs';
-import { cachedEntityName, firstLineOf, firstLineOfUpdates, yDocFragment, yDocLabel } from '~/modules/common/blocknote/ydoc-label';
+import { cachedEntityName, firstLineOf, firstLineOfUpdates, yDocLabel } from '~/modules/common/blocknote/ydoc-label';
 import { type UnstoredYDoc, watchUnstoredYDocs } from '~/modules/common/blocknote/yjs-connections';
 import { loadYDoc, type UnsavedYDoc, watchUnsavedYDocs } from '~/modules/common/blocknote/yjs-store';
 import { Button } from '~/modules/ui/button';
@@ -54,7 +55,7 @@ export function useUnsavedEdits(): UnsavedEdit[] | undefined {
 
 /** The first line of an unsaved document, from memory, its parked row or its stored rows. */
 async function readFirstLine({ entityId, entityType, parked, yDoc }: Omit<UnsavedEdit, 'key'>): Promise<string | null> {
-  if (yDoc) return firstLineOf(yDoc.getXmlFragment(yDocFragment));
+  if (yDoc) return firstLineOf(yDoc.getXmlFragment(yjsFragmentName));
   if (!entityType) return null;
   if (parked) {
     const row = await getLocalUserDb()?.unsaveableYDocs.where('[entityType+entityId]').equals([entityType, entityId]).last();
@@ -85,7 +86,7 @@ function UnsavedEditItem({ edit }: { edit: UnsavedEdit }) {
   return (
     <li className="flex items-baseline justify-between gap-3">
       <span className="truncate">{yDocLabel({ entityId, entityType, firstLine })}</span>
-      <span className="shrink-0 text-muted-foreground text-xs">{parked ? t('c:cannot_save') : t('c:not_saved')}</span>
+      <span className="text-muted-foreground shrink-0 text-xs">{parked ? t('c:cannot_save') : t('c:not_saved')}</span>
     </li>
   );
 }
@@ -103,10 +104,11 @@ export function UnsavedEditsDialog({ edits, onConfirm, onCancel }: UnsavedEditsD
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+        {/* Keep editing is the way out, so the dialog adds no close button */}
+        <DialogHeader closeButton={false}>
           <DialogTitle>{t('c:confirm.sign_out_unsaved')}</DialogTitle>
-          <DialogDescription>{t('c:sign_out_unsaved.text')}</DialogDescription>
         </DialogHeader>
+        <DialogDescription>{t('c:sign_out_unsaved.text')}</DialogDescription>
         <ul className="flex max-h-60 flex-col gap-1.5 overflow-y-auto text-sm">
           {edits.map((edit) => (
             <UnsavedEditItem key={edit.key} edit={edit} />

@@ -1,6 +1,5 @@
 import { GlobeIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { TKey } from '~/lib/i18n-locales';
 import { type PageTab, PageTabNav } from '~/modules/common/page/tab-nav';
 import type { ProjectWithMembership } from '~/modules/project/types';
 import { sortByMembership } from '~/modules/task/helpers/board-helpers';
@@ -18,8 +17,7 @@ export function ProjectTabNav({ projects }: ProjectTabNavProps) {
   const tabs = sortByMembership(projects).map(
     (project): PageTab => ({
       id: project.id,
-      // Project names are display strings, not keys; PageTabNav's t() falls back to the raw name.
-      label: project.name as TKey,
+      text: project.name,
       icon: project.public ? <GlobeIcon role="img" aria-label={t('c:public_project')} className="size-4 shrink-0" /> : undefined,
       path: '/$tenantId/$organizationSlug/workspace/$slug',
       search: (prev) => ({ ...prev, projectSlug: project.slug }),

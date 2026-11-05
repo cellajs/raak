@@ -52,7 +52,7 @@ describe('Attachment reach of an organization member', async () => {
       id,
       filename: 'file.pdf',
       contentType: 'application/pdf',
-      size: '1024',
+      size: 1024,
       keys: { original: `blob:http://localhost:3000/${id}` },
       projectId: home,
       stx: { mutationId: id, sourceId: 'test', fieldTimestamps: {} },
@@ -104,7 +104,7 @@ describe('Attachment reach of an organization member', async () => {
       projectId,
       bucketName: 'test-bucket',
       contentType: 'image/png',
-      size: '1024',
+      size: 1024,
       stx: mockStxBase(),
     };
     // The outsider uploaded theirs while still a project member

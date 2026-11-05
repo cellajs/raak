@@ -40,7 +40,7 @@ function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
       }}
       onClick={() => openTaskSheet(row.id)}
     >
-      <div className="whitespace-pre-wrap py-1 leading-5">
+      <div className="py-1 leading-5 whitespace-pre-wrap">
         {row.summary ? <TaskSummaryHtml task={row} className="pointer-events-none" /> : <span className="text-muted">-</span>}
         <TaskMatchReason task={row} className="mt-1 whitespace-normal" />
       </div>
@@ -112,7 +112,7 @@ export const useColumns = (opts: {
             <span className="mr-2 inline-flex shrink-0" data-tooltip="compact" data-tooltip-content={row.primaryLabel.name}>
               <PrimaryLabelIcon label={row.primaryLabel} />
             </span>
-            <span className="in-data-[is-compact=true]:sr-only truncate">{row.primaryLabel.name}</span>
+            <span className="truncate in-data-[is-compact=true]:sr-only">{row.primaryLabel.name}</span>
           </>
         );
       },
@@ -232,7 +232,7 @@ export const useColumns = (opts: {
           <div className="flex flex-col">
             {row.labels.map((label) => (
               <div key={label.id} className="flex items-center gap-1">
-                <DotIcon className="size-2 shrink-0 rounded-md text-background" style={{ background: label.color || undefined }} strokeWidth={4} />
+                <DotIcon className="text-background size-2 shrink-0 rounded-md" style={{ background: label.color || undefined }} strokeWidth={4} />
                 <span className="text-xs">
                   <HighlightText text={label.name} />
                 </span>

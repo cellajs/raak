@@ -10,9 +10,9 @@ import {
   mockUuid,
   withFakerSeed,
 } from '#/mocks';
-import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
 import { mockMembershipBase } from '#/modules/memberships/memberships-mocks';
-import type { InsertWorkspaceModel, WorkspaceModel } from '#/modules/workspace/workspace-db';
+import type { InsertWorkspaceModel } from '#/modules/workspace/workspace-db';
+import { mockActorRefs } from '#/schemas/entity-base-mocks';
 
 const workspaceName = mockUniqueEnforcer();
 
@@ -37,11 +37,9 @@ export const mockWorkspace = (suffix?: string): InsertWorkspaceModel => {
 
 /**
  * Generates a mock workspace API response with deterministic seeding.
- * Adds API-only fields (membership, counts) to the base mock.
+ * Adds API-only fields (writer references, membership, counts) to the base mock.
  */
-export const mockWorkspaceResponse = (
-  key = 'workspace:default',
-): WorkspaceModel & { included: { membership: MembershipBaseModel; counts: ReturnType<typeof generateMockChannelCounts> } } =>
+export const mockWorkspaceResponse = (key = 'workspace:default') =>
   withFakerSeed(key, () => {
     const createdAt = mockPastIsoDate();
     const workspaceId = mockUuid();
@@ -57,7 +55,11 @@ export const mockWorkspaceResponse = (
       tenantId,
     });
 
-    return { ...base, included: { membership, counts: generateMockChannelCounts('workspace', `${key}:counts`) } };
+    return {
+      ...base,
+      ...mockActorRefs(base, key),
+      included: { membership, counts: generateMockChannelCounts('workspace', `${key}:counts`) },
+    };
   });
 
 export const mockPaginatedWorkspacesResponse = (count = 2) => mockPaginated(mockWorkspaceResponse, count);

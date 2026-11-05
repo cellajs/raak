@@ -6,13 +6,14 @@ import { appConfig } from 'shared';
 import { testDatabaseUrl } from 'shared/test-db';
 import { assumeMemberAttachmentPolicy } from 'shared/testing/member-policy';
 import { generateId } from 'shared/utils/entity-id';
+import { yjsFragmentName } from 'shared/utils/yjs-protocol';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 import { subjectSegment } from '#/middlewares/rate-limiter/helpers';
 import { yjsHttpLimiter } from '#/middlewares/rate-limiter/limiters';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { rateLimitsTable } from '#/modules/auth/rate-limits-db';
-import { stateToBlocksJson, yjsFragmentName } from '#/modules/yjs/helpers/description-update';
+import { stateToBlocksJson } from '#/modules/yjs/helpers/description-update';
 import { decodeLogNotice, yjsHttpChunkBytes, yjsLogChannel } from '#/modules/yjs/helpers/yjs-log';
 import { mergeLog } from '#/modules/yjs/helpers/yjs-state';
 import type { AppendYjsUpdateOpts } from '#/modules/yjs/operations/append-yjs-update';
@@ -465,7 +466,7 @@ describe.skipIf(appConfig.services.yjs.enabled === false)('Yjs over HTTP', async
       expect((await pull(limited.sessionCookie, own.id)).response.status).toBe(200);
 
       // The budget is spent, by pulls and pushes alike.
-      const key = `${yjsHttpLimiter.keyPrefix}:${subjectSegment('userId', limited.id)}`;
+      const key = `${yjsHttpLimiter.keyPrefix}:${subjectSegment('actorId', limited.id)}`;
       const [bucket] = await adminDb
         .update(rateLimitsTable)
         .set({ points: yjsHttpLimiter.buckets[0].limits.points })

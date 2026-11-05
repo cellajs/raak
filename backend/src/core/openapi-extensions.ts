@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
 import type { AccessScope, AccessScopedEntityType, ConfigSwitch, EntityActionType } from 'shared';
 import type { Env } from '#/core/context';
+import type { RateLimitPolicy } from '#/middlewares/rate-limiter/types';
 import type { ErrorCode } from '#/schemas/error-response-schemas';
 
 type MiddlewareArray<E extends Env = Env> = readonly MiddlewareHandler<E>[];
@@ -48,12 +49,17 @@ export type XMiddlewareHandler<E extends Env = Env> = MiddlewareHandler<E> & {
   __provides?: GuardContext[];
   /** For guards: the context this guard reads, which a guard before it on the route must provide. */
   __requires?: GuardContext[];
+  /** For guards: the limiters this guard runs itself, which every route that lists the guard documents. */
+  __limiters?: XMiddlewareHandler[];
 };
 
-type SpecificationExtensions = Record<ExtensionType, string[]>;
+/** The extension types whose values are middleware: `x-guard` and `x-rate-limiter`. */
+type MiddlewareExtensionType = { [K in ExtensionType]: (typeof extensionMap)[K]['kind'] extends 'middleware' ? K : never }[ExtensionType];
 
-/** Value metadata for individual extension values (e.g., each limiter or guard) */
-export type ExtensionValueMetadata = { name?: string; description: string };
+type SpecificationExtensions = Record<MiddlewareExtensionType, string[]>;
+
+/** What one extension value (a limiter, a guard) documents: its label, its text and, for a limiter, its budget. */
+export type ExtensionValueMetadata = { name?: string; description: string; policy?: RateLimitPolicy };
 
 type ExtensionEntry = { key: string; id: string; description: string; values?: Record<string, ExtensionValueMetadata> };
 
@@ -70,7 +76,10 @@ export type XTool = {
 /** The action an MCP tool performs: a GET route reads, any other writes. With the tool's entity it names the scope. */
 export const toolAction = (method: string): EntityActionType => (method.toUpperCase() === 'GET' ? 'read' : 'update');
 
-/** When adding an extension to `extensionMap`, add its prop here too. `xScope` is the one prop without an `x-*` key. */
+/**
+ * When adding an extension to `extensionMap`, add its prop here and to the props `createXRoute` takes out of the route
+ * config. `xScope` is the one prop without an `x-*` key.
+ */
 export type XRouteProps = {
   /**
    * The scope a scoped API key or access token needs on a route whose guards accept one; it fills that route's
@@ -88,16 +97,13 @@ export type XRouteProps = {
 export type ExtensionPropId = keyof XRouteProps;
 
 /** The middleware a route's extension props hold (`xGuard`, `xRateLimiter`), in the order they apply. */
-export const collectExtensionMiddleware = (config: Record<string, unknown>): MiddlewareHandler<Env>[] =>
+export const collectExtensionMiddleware = (config: XRouteProps): MiddlewareHandler<Env>[] =>
   Object.values(extensionMap)
-    .filter(({ kind }) => kind === 'middleware')
-    .flatMap(({ id }) => (config[id] as MiddlewareHandler<Env>[]) ?? []);
-
-/** Every prop of `XRouteProps`: the extension ids (`xGuard`, `xRateLimiter`, `xTool`, `xEnabledBy`) and `xScope`, kept out of the spec. */
-export const extensionPropIds: readonly string[] = [...Object.values(extensionMap).map(({ id }) => id), 'xScope'];
+    .filter((extension) => extension.kind === 'middleware')
+    .flatMap(({ id }) => config[id] ?? []);
 
 /** The metadata extensions a route declares, under their spec keys (`xTool` as `x-tool`, `xEnabledBy` as `x-enabled-by`). */
-export const createMetadataExtensions = (config: Record<string, unknown>): Record<string, unknown> =>
+export const createMetadataExtensions = (config: XRouteProps): Record<string, unknown> =>
   Object.fromEntries(
     Object.entries(extensionMap)
       .filter(([, { id, kind }]) => kind === 'metadata' && config[id] !== undefined)
@@ -105,8 +111,10 @@ export const createMetadataExtensions = (config: Record<string, unknown>): Recor
   );
 
 /** A route's `x-guard` and `x-rate-limiter` lists: `getValue` names the route's middleware of each type. */
-export function createSpecificationExtensions(getValue: (key: ExtensionType) => string[]): SpecificationExtensions {
-  const keys = (Object.keys(extensionMap) as ExtensionType[]).filter((key) => extensionMap[key].kind === 'middleware');
+export function createSpecificationExtensions(getValue: (key: MiddlewareExtensionType) => string[]): SpecificationExtensions {
+  const keys = (Object.keys(extensionMap) as ExtensionType[]).filter(
+    (key): key is MiddlewareExtensionType => extensionMap[key].kind === 'middleware',
+  );
   return Object.fromEntries(keys.map((key) => [key, getValue(key)])) as SpecificationExtensions;
 }
 
@@ -116,11 +124,7 @@ export function createSpecificationExtensions(getValue: (key: ExtensionType) => 
  */
 export function buildExtensionEntries(valueMetadata: ReadonlyMap<string, ReadonlyMap<string, ExtensionValueMetadata>>): ExtensionEntry[] {
   return Object.entries(extensionMap).map(([key, metadata]) => {
-    const values: Record<string, ExtensionValueMetadata> = {};
-    for (const [functionName, meta] of valueMetadata.get(key) ?? []) {
-      values[functionName] = { ...(meta.name ? { name: meta.name } : {}), description: meta.description };
-    }
-
+    const values = Object.fromEntries(valueMetadata.get(key) ?? []);
     return { key, ...metadata, ...(Object.keys(values).length > 0 ? { values } : {}) };
   });
 }

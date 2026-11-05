@@ -9,6 +9,7 @@ import { projectQueryKeys } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { ReadOnlyScope } from '~/modules/project/use-read-only';
 import { taskCardStore } from '~/modules/task/card/task-card-store';
+import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { subscribeToTaskCache } from '~/modules/task/helpers/active-task';
 import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
@@ -43,7 +44,6 @@ interface TaskSheetTitleProps {
 function TaskSheetTitle({ taskId }: TaskSheetTitleProps) {
   const { t } = useTranslation();
   const projectId = useSyncExternalStore(subscribeToTaskCache, () => findSheetTask(taskId)?.projectId);
-  const number = useSyncExternalStore(subscribeToTaskCache, () => findSheetTask(taskId)?.number);
   const getProject = () => findSheetProject(projectId);
   const project = useSyncExternalStore(subscribeToQueryCache, getProject, getProject);
 
@@ -61,19 +61,22 @@ function TaskSheetTitle({ taskId }: TaskSheetTitleProps) {
           <Separator orientation="vertical" className="bg-input data-vertical:h-4" />
         </>
       )}
-      <span className="flex items-center gap-2">
-        {t('c:task')}
-        {!!number && (
-          <ProductRefButton
-            number={number}
-            onCopy={async () => {
-              const task = findSheetTask(taskId);
-              return !!task && copyTasksToClipboard([task]);
-            }}
-          />
-        )}
-      </span>
+      {t('c:task')}
     </span>
+  );
+}
+
+// The ref sits here, not in the title: the title is the sheet's accessible name and clips at one line.
+// flex-1, not ml-auto: the close button's own ml-auto would split the free space and leave the options mid-bar.
+function TaskSheetAside({ taskId }: TaskSheetTitleProps) {
+  const task = useSyncExternalStore(subscribeToTaskCache, () => findSheetTask(taskId));
+  if (!task) return null;
+
+  return (
+    <div className="-my-1 flex flex-1 items-center justify-end">
+      <ProductRefButton number={task.number} onCopy={() => copyTasksToClipboard([task])} className="mr-auto" />
+      <TaskOptionsButton task={task} isSheet />
+    </div>
   );
 }
 
@@ -116,6 +119,7 @@ export function TaskSheetHandler() {
       className: 'p-0',
       title: t('c:task'),
       titleContent: taskSheetId ? <TaskSheetTitle taskId={taskSheetId} /> : t('c:task'),
+      titleAside: taskSheetId && <TaskSheetAside taskId={taskSheetId} />,
       closeSheetOnEsc: false,
     },
   });

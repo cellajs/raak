@@ -11,6 +11,7 @@ import {
   booleanTransformSchema,
   includeQuerySchema,
   noDuplicateSlugsRefine,
+  orderSchema,
   paginationQuerySchema,
   translatedError,
   validCDNUrlSchema,
@@ -81,7 +82,7 @@ export const projectUpdateBodySchema = projectContract.updateBodySchema;
 
 export const projectListQuerySchema = paginationQuerySchema.extend({
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder'),
-  order: z.enum(['asc', 'desc']).default('asc'),
+  order: orderSchema.default('asc'),
   organizationId: validIdSchema.optional(),
   workspaceId: validIdSchema.optional(),
   relatableUserId: validIdSchema.optional(),

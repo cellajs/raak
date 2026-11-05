@@ -1,5 +1,4 @@
-import type { Block } from '@blocknote/core';
-import { getSearchableTextFromBlocks } from 'shared/blocknote';
+import { getSearchableTextFromBlocks, parseBlocks } from 'shared/blocknote';
 import { foldText, matchesTerms, parseTerms } from 'shared/utils/text-match';
 import type { RecentBoardSearch } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
@@ -15,7 +14,7 @@ const summaryCache = new WeakMap<Task, SearchableText>();
 const searchableText = (cache: WeakMap<Task, SearchableText>, task: Task, document: string | null): SearchableText => {
   const cached = cache.get(task);
   if (cached) return cached;
-  const text = document ? getSearchableTextFromBlocks(JSON.parse(document) as Block[]) : '';
+  const text = document ? getSearchableTextFromBlocks(parseBlocks(document) ?? []) : '';
   const entry = { text, folded: foldText(text) };
   cache.set(task, entry);
   return entry;
@@ -46,63 +45,61 @@ const matchesSearchTerms = (task: Task, terms: string[]) => {
   return numbers.every((number) => task.number === number) && (!words.length || matchesTerms(searchFields(task), words));
 };
 
-/** A board search as it stands in the URL: words in `q`, each filter's values comma-separated. */
+/** A board search as the route reads it: words in `q`, each filter a list of values. A route without a board has none. */
 export interface BoardSearch {
   q?: string;
-  status?: string;
-  type?: string;
-  labels?: string;
-  assigned?: string;
+  status?: string[];
+  type?: string[];
+  labels?: string[];
+  assigned?: string[];
 }
 
 /** The `assigned` value for tasks assigned to no one; user ids never take this form. */
 export const noAssignee = 'none';
 
-export const filterValues = (value?: string) => (value ? value.split(',') : []);
+/** A filter's values after a value's toggle. */
+export const toggleFilterValue = (values: string[], toggled: string) =>
+  values.includes(toggled) ? values.filter((other) => other !== toggled) : [...values, toggled];
 
-/** A filter's value in the URL after a value's toggle; undefined with no value left. */
-export const toggleFilterValue = (value: string | undefined, toggled: string) => {
-  const values = filterValues(value);
-  return (values.includes(toggled) ? values.filter((other) => other !== toggled) : [...values, toggled]).join(',') || undefined;
-};
-
-/** A filter's value in the URL with one value swapped for another, in the same place. */
-export const replaceFilterValue = (value: string, from: string, to: string) =>
-  filterValues(value)
-    .map((other) => (other === from ? to : other))
-    .join(',');
+/** A filter's values with one swapped for another, in the same place. */
+export const replaceFilterValue = (values: string[], from: string, to: string) => values.map((other) => (other === from ? to : other));
 
 const statusNames = new Set<string>(statusOptions.map(({ status }) => status));
 
-export const parseBoardSearch = ({ q, status, type, labels, assigned }: BoardSearch) => ({
+export const parseBoardSearch = ({ q, status = [], type = [], labels = [], assigned = [] }: BoardSearch) => ({
   terms: parseTerms(q),
   // A bookmark or recent search can name a retired status: nothing would match it and no chip could clear it
-  statuses: filterValues(status).filter((name) => statusNames.has(name)),
-  types: filterValues(type),
-  labels: filterValues(labels),
-  assignees: filterValues(assigned),
+  statuses: status.filter((name) => statusNames.has(name)),
+  types: type,
+  labels,
+  assignees: assigned,
 });
 
 export type ParsedBoardSearch = ReturnType<typeof parseBoardSearch>;
 
 /** The filters without the types, labels and assignees none of `tasks` carries: no chip could name them, and nothing would match. You and No one always have a name. */
 export const fitBoardSearch = (
-  { type, labels, assigned }: BoardSearch,
+  { type = [], labels = [], assigned = [] }: BoardSearch,
   tasks: Task[],
   userId?: string,
-): Pick<BoardSearch, 'type' | 'labels' | 'assigned'> => {
+): Required<Pick<BoardSearch, 'type' | 'labels' | 'assigned'>> => {
   const carried = { type: new Set<string>(), labels: new Set<string>(), assigned: new Set([noAssignee, ...(userId ? [userId] : [])]) };
   for (const task of tasks) {
     if (task.primaryLabel) carried.type.add(task.primaryLabel.slug);
     for (const { slug } of task.labels) carried.labels.add(slug);
     for (const { id } of task.assignedTo) carried.assigned.add(id);
   }
-  const keep = (value: string | undefined, known: Set<string>) =>
-    filterValues(value)
-      .filter((other) => known.has(other))
-      .join(',') || undefined;
+  const keep = (values: string[], known: Set<string>) => values.filter((other) => known.has(other));
   return { type: keep(type, carried.type), labels: keep(labels, carried.labels), assigned: keep(assigned, carried.assigned) };
 };
+
+/** The filters as the task list query sends them: each one's values comma-separated, which `csvQuerySchema` reads back. */
+export const boardSearchQuery = ({ status = [], type = [], labels = [], assigned = [] }: BoardSearch) => ({
+  status: status.join(',') || undefined,
+  type: type.join(',') || undefined,
+  labels: labels.join(',') || undefined,
+  assigned: assigned.join(',') || undefined,
+});
 
 export const isBoardSearchActive = ({ terms, statuses, types, labels, assignees }: ParsedBoardSearch) =>
   terms.length > 0 || statuses.length > 0 || types.length > 0 || labels.length > 0 || assignees.length > 0;

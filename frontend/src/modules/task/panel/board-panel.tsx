@@ -126,7 +126,7 @@ export const BoardPanel = memo(function BoardPanel({
             </BoardPanelContent>
           </div>
           {/* Above the sticky status bars, which would cover a recoloured border */}
-          {highlightProject && <div aria-hidden className="pointer-events-none absolute inset-0 z-90 rounded-t-lg ring-4 ring-primary ring-inset" />}
+          {highlightProject && <div aria-hidden className="ring-primary pointer-events-none absolute inset-0 z-90 rounded-t-lg ring-4 ring-inset" />}
         </div>
       )}
     </div>

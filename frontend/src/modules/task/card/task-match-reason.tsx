@@ -17,7 +17,7 @@ export function TaskMatchReason({ task, className }: TaskMatchReasonProps) {
   if (!reason) return null;
 
   return (
-    <div className={cn('flex flex-col gap-0.5 text-muted-foreground text-xs leading-tight', className)}>
+    <div className={cn('text-muted-foreground flex flex-col gap-0.5 text-xs leading-tight', className)}>
       {reason.description && (
         <span>
           <HighlightText text={reason.description} />

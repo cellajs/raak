@@ -50,7 +50,7 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
   const currentSection = spySection || legalOverviewId;
 
   return (
-    <div className={cn('mb-6 flex w-full flex-col gap-2 no-focus-ring:gap-0', className)}>
+    <div className={cn('no-focus-ring:gap-0 mb-6 flex w-full flex-col gap-2', className)}>
       {subjects.map(({ id, label, sections }) => {
         const isActive = id === currentSubject;
         const isExpanded = expanded === id;
@@ -68,7 +68,7 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
           >
             <div className="group/subject relative" data-active={isActive} data-expanded={isExpanded}>
               <div className="pointer-events-none absolute top-5.5 bottom-3 left-2.5 hidden flex-col items-center group-data-[expanded=true]/subject:flex">
-                <div className="w-px flex-1 bg-muted-foreground/30" />
+                <div className="bg-muted-foreground/30 w-px flex-1" />
               </div>
               <CollapsibleTrigger
                 render={
@@ -85,13 +85,13 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
                     }}
                     className={cn(
                       buttonVariants({ variant: 'ghost' }),
-                      'group focus-inset w-full pl-5 text-left font-medium group-data-[active=true]/subject:bg-accent group-data-[active=true]/subject:font-semibold',
+                      'group focus-inset group-data-[active=true]/subject:bg-accent w-full pl-5 text-left font-medium group-data-[active=true]/subject:font-semibold',
                     )}
                   />
                 }
               >
                 {/* Caps the guideline, so it shows only alongside it: same color, on its center line, expanded only */}
-                {isActive && isExpanded && <div className="absolute left-[0.53rem] size-1 rounded-full bg-muted-foreground/30" />}
+                {isActive && isExpanded && <div className="bg-muted-foreground/30 absolute left-[0.53rem] size-1 rounded-full" />}
                 <span className="truncate">{t(label)}</span>
                 <ChevronDownIcon className="invisible ml-auto size-4 opacity-40 transition-transform duration-200 group-hover:visible group-data-[expanded=true]/subject:rotate-180" />
               </CollapsibleTrigger>

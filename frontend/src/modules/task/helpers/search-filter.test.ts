@@ -47,40 +47,40 @@ describe('matchesBoardSearch', () => {
   });
 
   it('widens within a filter and narrows across filters and words', () => {
-    expect(matches({ status: 'started,unstarted' })).toBe(true);
-    expect(matches({ status: 'iced' })).toBe(false);
-    expect(matches({ status: 'delivered' })).toBe(true);
-    expect(parseBoardSearch({ status: 'delivered,iced' }).statuses).toEqual(['iced']);
-    expect(matches({ type: 'chore,bug', labels: 'other,performance' })).toBe(true);
-    expect(matches({ type: 'bug', labels: 'other' })).toBe(false);
-    expect(matches({ q: 'missing', type: 'bug' })).toBe(false);
+    expect(matches({ status: ['started', 'unstarted'] })).toBe(true);
+    expect(matches({ status: ['iced'] })).toBe(false);
+    expect(matches({ status: ['delivered'] })).toBe(true);
+    expect(parseBoardSearch({ status: ['delivered', 'iced'] }).statuses).toEqual(['iced']);
+    expect(matches({ type: ['chore', 'bug'], labels: ['other', 'performance'] })).toBe(true);
+    expect(matches({ type: ['bug'], labels: ['other'] })).toBe(false);
+    expect(matches({ q: 'missing', type: ['bug'] })).toBe(false);
   });
 
   it('filters by assignee, and none for a task assigned to no one', () => {
-    expect(matches({ assigned: 'u2,u1' })).toBe(true);
-    expect(matches({ assigned: 'u2' })).toBe(false);
-    expect(matches({ assigned: 'none' })).toBe(false);
-    expect(matches({ assigned: 'none' }, { assignedTo: [] })).toBe(true);
-    expect(matches({ assigned: 'u1', type: 'chore' })).toBe(false);
+    expect(matches({ assigned: ['u2', 'u1'] })).toBe(true);
+    expect(matches({ assigned: ['u2'] })).toBe(false);
+    expect(matches({ assigned: ['none'] })).toBe(false);
+    expect(matches({ assigned: ['none'] }, { assignedTo: [] })).toBe(true);
+    expect(matches({ assigned: ['u1'], type: ['chore'] })).toBe(false);
   });
 });
 
 describe('fitBoardSearch', () => {
   it('drops the values no task carries, and keeps You and No one', () => {
     const tasks = [task(), task({ assignedTo: [] })];
-    expect(fitBoardSearch({ type: 'chore,bug', labels: 'performance,gone', assigned: 'u2,u1,none,me' }, tasks, 'me')).toEqual({
-      type: 'bug',
-      labels: 'performance',
-      assigned: 'u1,none,me',
+    expect(fitBoardSearch({ type: ['chore', 'bug'], labels: ['performance', 'gone'], assigned: ['u2', 'u1', 'none', 'me'] }, tasks, 'me')).toEqual({
+      type: ['bug'],
+      labels: ['performance'],
+      assigned: ['u1', 'none', 'me'],
     });
-    expect(fitBoardSearch({ type: 'chore', assigned: 'u2' }, tasks)).toEqual({ type: undefined, labels: undefined, assigned: undefined });
+    expect(fitBoardSearch({ type: ['chore'], assigned: ['u2'] }, tasks)).toEqual({ type: [], labels: [], assigned: [] });
   });
 });
 
 describe('replaceFilterValue', () => {
   it('swaps one value in place and leaves the others', () => {
-    expect(replaceFilterValue('started,finished', 'started', 'iced')).toBe('iced,finished');
-    expect(replaceFilterValue('started', 'started', 'iced')).toBe('iced');
+    expect(replaceFilterValue(['started', 'finished'], 'started', 'iced')).toEqual(['iced', 'finished']);
+    expect(replaceFilterValue(['started'], 'started', 'iced')).toEqual(['iced']);
   });
 });
 

@@ -35,7 +35,7 @@ function InfoTile({ id, namespace, layers, image, tileClassName = 'bg-card' }: I
           {/* Decorative: the heading below names it */}
           <img src={`/static/marketing/features/${id}.svg`} alt="" className="mb-2 size-8 object-contain dark:invert" loading="lazy" />
           <h3 className="font-medium">{t(title)}</h3>
-          <p className="grow text-muted-foreground text-sm">{t(text)}</p>
+          <p className="text-muted-foreground grow text-sm">{t(text)}</p>
         </div>
       </div>
     );
@@ -51,7 +51,7 @@ function InfoTile({ id, namespace, layers, image, tileClassName = 'bg-card' }: I
           </Badge>
         ))}
       </div>
-      <p className="mt-2 text-muted-foreground text-sm">{t(text)}</p>
+      <p className="text-muted-foreground mt-2 text-sm">{t(text)}</p>
     </div>
   );
 }
@@ -101,8 +101,8 @@ export function InfoGrid<C extends string>({
           const categoryItems = items.filter((item) => item.category === category);
           return (
             <div key={category}>
-              <h2 className="mb-6 flex items-center gap-2 pl-6 font-semibold text-xl">
-                <CategoryIcon className="size-5 text-muted-foreground" />
+              <h2 className="mb-6 flex items-center gap-2 pl-6 text-xl font-semibold">
+                <CategoryIcon className="text-muted-foreground size-5" />
                 {t(`about:${namespace}.category_${category}` as TKey)}
               </h2>
               <div className="grid gap-4 md:grid-cols-2">{categoryItems.map(renderTile)}</div>

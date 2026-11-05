@@ -1,9 +1,6 @@
 import { type Context, ROOT_CONTEXT, TraceFlags, trace } from '@opentelemetry/api';
 import type { EntityType } from '../../types.ts';
 
-/** Aligned with OTel conventions. */
-export type SpanStatus = 'ok' | 'error' | 'unset';
-
 /** No undefined values. */
 export type CleanSpanAttributes = Record<string, string | number | boolean | null>;
 
@@ -16,10 +13,11 @@ export interface SpanData {
   spanId: string;
   name: string;
   startTime: number;
-  endTime: number | null;
-  duration: number | null;
+  endTime: number;
+  duration: number;
   attributes: CleanSpanAttributes;
-  status: SpanStatus;
+  /** Aligned with OTel conventions. */
+  status: 'ok' | 'error' | 'unset';
   events: SpanEvent[];
   parentSpanId?: string;
 }
@@ -112,12 +110,10 @@ export function computeSpanStats(spans: SpanData[]): SpanStats {
     const prefix = span.name.split('.').slice(0, 2).join('.');
     byPrefix[prefix] = (byPrefix[prefix] || 0) + 1;
 
-    if (span.duration != null) {
-      const total = durations[prefix] ?? { sum: 0, count: 0 };
-      total.sum += span.duration;
-      total.count++;
-      durations[prefix] = total;
-    }
+    const total = durations[prefix] ?? { sum: 0, count: 0 };
+    total.sum += span.duration;
+    total.count++;
+    durations[prefix] = total;
 
     if (span.status === 'error') errorCount++;
   }
@@ -142,17 +138,17 @@ export function cdcAttrs(input: CdcInput): CleanSpanAttributes {
 }
 
 export interface ActivityInput {
-  type?: string | null;
-  action?: string | null;
+  type: string;
+  action: string;
   subjectId?: string | null;
   entityType?: EntityType | null;
 }
 
-/** The attributes of an activity span; an absent field reads `'unknown'`, an absent entity type `null`. */
+/** The attributes of an activity span; an absent subject reads `'unknown'`, an absent entity type `null`. */
 export function activityAttrs(input: ActivityInput): CleanSpanAttributes {
   return {
-    'activity.type': input.type ?? 'unknown',
-    'activity.action': input.action ?? 'unknown',
+    'activity.type': input.type,
+    'activity.action': input.action,
     'activity.subject_id': input.subjectId ?? 'unknown',
     'activity.entity_type': input.entityType ?? null,
   };

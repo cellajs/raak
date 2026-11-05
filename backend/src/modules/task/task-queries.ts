@@ -1,5 +1,5 @@
 import { and, asc, count, eq, inArray, isNull, lte, type SQL, sql } from 'drizzle-orm';
-import type { ActorContext, DbContext } from '#/core/context';
+import type { ActorContext, DbContext, ScopeContext } from '#/core/context';
 import type { DbOrTx } from '#/db/db';
 import type { ActorId } from '#/db/utils/ids';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
@@ -88,7 +88,7 @@ interface FindProjectMembersOpts {
 }
 
 /** Find distinct project members (users) for one or more projects in an organization. */
-export const findProjectMembers = async (ctx: ActorContext, { projectIds }: FindProjectMembersOpts) => {
+export const findProjectMembers = async (ctx: DbContext & ScopeContext, { projectIds }: FindProjectMembersOpts) => {
   const { db } = ctx.var;
   const { organizationId } = requestScope(ctx);
   return db
@@ -104,7 +104,7 @@ interface FindLabelsByProjectsOpts {
 }
 
 /** Find distinct labels for one or more projects in an organization. */
-export const findLabelsByProjects = async (ctx: ActorContext, { projectIds }: FindLabelsByProjectsOpts) => {
+export const findLabelsByProjects = async (ctx: DbContext & ScopeContext, { projectIds }: FindLabelsByProjectsOpts) => {
   const { db } = ctx.var;
   return db
     .selectDistinct(labelEmbeddedSelect)
@@ -119,7 +119,7 @@ interface FindTaskRelationsOpts {
 }
 
 /** Fetch users and labels referenced by one or more tasks (by ID lookups). */
-export const findTaskRelations = async (ctx: ActorContext, { userIds, labelIds }: FindTaskRelationsOpts) => {
+export const findTaskRelations = async (ctx: DbContext & ScopeContext, { userIds, labelIds }: FindTaskRelationsOpts) => {
   const { db } = ctx.var;
   return Promise.all([
     userIds.length > 0

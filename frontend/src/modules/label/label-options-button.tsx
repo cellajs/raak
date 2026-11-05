@@ -82,7 +82,7 @@ export function LabelOptionsButton({ row, canManage, className }: LabelOptionsBu
         aria-label={t('c:resource_options', { resource: t('c:label') })}
         variant="ghost"
         size="xs"
-        className={cn('size-8 data-dropdowner-active:bg-muted', cardIconButtonClass, className)}
+        className={cn('data-dropdowner-active:bg-muted size-8', cardIconButtonClass, className)}
       >
         <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-4" />
       </Button>

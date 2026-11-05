@@ -1,17 +1,11 @@
-import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { tenantContext } from '#/db/tenant-context';
 import { defineBackendModule } from '#/lib/module';
-import { collectLabelHeat, type TaskHeatRow } from '#/modules/label/helpers/label-heat';
+import { collectLabelHeat } from '#/modules/label/helpers/label-heat';
 import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
 import { labelHandlers } from '#/modules/label/label-handlers';
 import { bumpLabelHeat, insertLabels, propagateSetupConfigLabels } from '#/modules/label/label-queries';
 import { updateLabelOp } from '#/modules/label/operations/update-label';
 import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
-
-const primaryLabelsOf = (row: Record<string, unknown> | undefined): PrimaryLabelDefinition[] | undefined =>
-  (row?.setupConfig as { primaryLabels?: PrimaryLabelDefinition[] } | undefined)?.primaryLabels;
-
-const taskHeatRows = (rows: Record<string, unknown>[]) => rows as unknown as TaskHeatRow[];
 
 defineBackendModule({
   name: 'labels',
@@ -31,7 +25,7 @@ defineBackendModule({
       const rows = after.flatMap((project) =>
         buildPrimaryLabelRows({
           entries: setupConfig.primaryLabels,
-          projectId: project.id as string,
+          projectId: project.id,
           organizationId: organization.id,
           tenantId: organization.tenantId,
           createdBy: ctx.var.actor.id,
@@ -43,18 +37,18 @@ defineBackendModule({
     },
     // Labels sort by heat: the tasks written carry it onto their labels, inside the write's transaction.
     'task.created': async (ctx, { after = [] }) => {
-      await bumpLabelHeat(ctx, collectLabelHeat(taskHeatRows(after)));
+      await bumpLabelHeat(ctx, collectLabelHeat(after));
     },
     'task.updated': async (ctx, { before = [], after = [] }) => {
-      await bumpLabelHeat(ctx, collectLabelHeat(taskHeatRows(after), taskHeatRows(before)));
+      await bumpLabelHeat(ctx, collectLabelHeat(after, before));
     },
     // Diff-driven: propagate primary-label edits to tracked child rows only when they changed.
     'organization.updated': async (ctx, { before = [], after = [] }) => {
       for (const [index, org] of after.entries()) {
-        const nextLabels = primaryLabelsOf(org);
-        if (!nextLabels || JSON.stringify(primaryLabelsOf(before[index])) === JSON.stringify(nextLabels)) continue;
+        const nextLabels = org.setupConfig.primaryLabels;
+        if (!nextLabels || JSON.stringify(before[index]?.setupConfig.primaryLabels) === JSON.stringify(nextLabels)) continue;
         await tenantContext(ctx, (txCtx) =>
-          propagateSetupConfigLabels(txCtx, { entries: nextLabels, organizationId: org.id as string, updatedBy: ctx.var.actor.id }),
+          propagateSetupConfigLabels(txCtx, { entries: nextLabels, organizationId: org.id, updatedBy: ctx.var.actor.id }),
         );
       }
     },

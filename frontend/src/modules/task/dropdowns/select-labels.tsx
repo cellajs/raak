@@ -172,7 +172,7 @@ export function SelectLabels({
         <LabelModeIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
         <div className={cn('grow', label.projectId !== projectId && !isSelected && 'text-faint-foreground')}>{label.name}</div>
         <span className="pointer-events-none flex size-4 items-center justify-center">
-          {isSelected && <CheckIcon className="pointer-coarse:size-5 size-4 text-success" />}
+          {isSelected && <CheckIcon className="text-success size-4 pointer-coarse:size-5" />}
         </span>
         <HotkeyIndexBadge index={searchValue || hideHotkeys ? undefined : hotkeyIndex} />
       </ComboboxItem>
@@ -295,7 +295,7 @@ export function SelectLabels({
           enterKeyHint="done"
           className="mt-2"
         />
-        <p className="mt-2 text-muted-foreground text-sm">{t('c:label_name.text')}</p>
+        <p className="text-muted-foreground mt-2 text-sm">{t('c:label_name.text')}</p>
         <Button type="submit" size="lg" className="mt-4" disabled={!newLabelName.trim()}>
           {t('c:create_resource', { resource: t('c:label') })}
         </Button>
@@ -328,7 +328,7 @@ export function SelectLabels({
           ref={trackListScroll}
           className={cn(
             comboboxInputPinClass,
-            'flex items-center max-sm:border-transparent max-sm:border-b max-sm:transition-colors',
+            'flex items-center max-sm:border-b max-sm:border-transparent max-sm:transition-colors',
             listScrolled && 'max-sm:border-border',
           )}
         >
@@ -373,11 +373,11 @@ export function SelectLabels({
             type="button"
             aria-expanded={!selectedCollapsed}
             aria-controls="select-labels-selected-group"
-            className="group-label mx-1 mt-1 flex w-[calc(100%-0.5rem)] shrink-0 items-center gap-2 rounded-sm pointer-coarse:py-2 py-1.5 pr-2 pl-2 pointer-coarse:pl-3 text-xs outline-hidden hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+            className="group-label hover:text-foreground focus-visible:ring-ring mx-1 mt-1 flex w-[calc(100%-0.5rem)] shrink-0 items-center gap-2 rounded-sm py-1.5 pr-2 pl-2 text-xs outline-hidden focus-visible:ring-1 pointer-coarse:py-2 pointer-coarse:pl-3"
             onClick={() => setSelectedCollapsed((collapsed) => !collapsed)}
           >
             {t('c:selected')}
-            {selectedCollapsed && <span className="ml-1 font-normal text-faint-foreground text-xs">{selectedLabels.length}</span>}
+            {selectedCollapsed && <span className="text-faint-foreground ml-1 text-xs font-normal">{selectedLabels.length}</span>}
             <span className="grow" />
             {/* The same box as a row's check, so the two share a column */}
             <span className="flex size-4 items-center justify-center">
@@ -385,7 +385,7 @@ export function SelectLabels({
             </span>
           </button>
         )}
-        <ScrollArea className={comboboxScrollClass} viewportClassName="sm:min-h-0 sm:overscroll-contain">
+        <ScrollArea className={comboboxScrollClass} viewportClassName="sm:min-h-0 sm:overscroll-none">
           <ComboboxList className="max-h-none overflow-visible p-1!">
             {searchValue ? (
               searchResults.length > 0 ? (
@@ -395,7 +395,7 @@ export function SelectLabels({
                 </ComboboxGroup>
               ) : (
                 <>
-                  <div className="p-1.5 text-center text-faint-foreground text-sm">{t('c:no_resource_found', { resource: t('c:label_other') })}</div>
+                  <div className="text-faint-foreground p-1.5 text-center text-sm">{t('c:no_resource_found', { resource: t('c:label_other') })}</div>
                   {inDrawer && (
                     <DrawerRowGroup className="mt-1.5">
                       <Button variant="row" onClick={() => handleCreateClick(searchValue)}>
@@ -425,7 +425,7 @@ export function SelectLabels({
             {!isMobile && createItem}
           </ComboboxList>
           {visibleLabels.length === 0 && searchValue.trim() === '' && (
-            <div className="flex items-center justify-center p-1.5 text-faint-foreground text-sm">
+            <div className="text-faint-foreground flex items-center justify-center p-1.5 text-sm">
               {t('c:no_resource_yet', { resource: t('c:label_other') })}
             </div>
           )}

@@ -1,5 +1,6 @@
 import { type ComponentProps, type ReactNode, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { YjsDocScope } from 'shared';
 import { useDelayedFlag } from '~/hooks/use-delayed-flag';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { BlockNote } from '~/modules/common/blocknote/blocknote-editor';
@@ -9,7 +10,6 @@ import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { useYjsConnection } from '~/modules/common/blocknote/yjs-connections';
 import { isYjsEnabled, useStoredYDoc } from '~/modules/common/blocknote/yjs-store';
 import { useCurrentUser } from '~/modules/user/user-store';
-import type { YjsDocScope } from '~/query/local-user-db';
 import { getRandomColor } from '~/utils/random-color';
 
 // BlockNote's props are a union (filePanel variants), so Omit must distribute over it
@@ -43,7 +43,7 @@ interface SyncStatusProps {
 /** One line above the description saying why it is read-only, or what happens to its edits. */
 function SyncStatus({ text }: SyncStatusProps) {
   return (
-    <p role="status" className="mb-2 text-muted-foreground text-sm">
+    <p role="status" className="text-muted-foreground mb-2 text-sm">
       {text}
     </p>
   );
