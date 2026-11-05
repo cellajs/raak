@@ -25,7 +25,7 @@ docker ps --format '{{.Names}}  {{.Ports}}'
 ```
 
 - Paths under `.claude/worktrees/<name>/` (or another linked worktree) count, the main checkout does not. With two worktrees listed, check without a stack (typecheck, unit tests, a static page) or wait.
-- Once the check is done, stop the listeners (`lsof -tiTCP:<port> -sTCP:LISTEN`) and remove a throwaway container with its volume (`docker rm -fv <name>`).
+- Once the check is done, `pnpm killports` from the worktree ends its listeners, and `docker rm -fv <name>` removes a throwaway container with its volume.
 
 ## A throwaway database
 

@@ -3839,6 +3839,9 @@ export type GetNotificationsResponses = {
       readAt: string | null;
       actor: UserMinimalBase | null;
       channelName: string;
+      channelThumbnailUrl: string | null;
+      organizationName: string;
+      organizationThumbnailUrl: string | null;
       subjectTitle: string;
     }>;
     unreadCount: number;

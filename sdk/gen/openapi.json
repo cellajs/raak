@@ -9580,6 +9580,15 @@
                           "channelName": {
                             "type": "string"
                           },
+                          "channelThumbnailUrl": {
+                            "type": ["string", "null"]
+                          },
+                          "organizationName": {
+                            "type": "string"
+                          },
+                          "organizationThumbnailUrl": {
+                            "type": ["string", "null"]
+                          },
                           "subjectTitle": {
                             "type": "string"
                           }
@@ -9599,6 +9608,9 @@
                           "readAt",
                           "actor",
                           "channelName",
+                          "channelThumbnailUrl",
+                          "organizationName",
+                          "organizationThumbnailUrl",
                           "subjectTitle"
                         ]
                       }
