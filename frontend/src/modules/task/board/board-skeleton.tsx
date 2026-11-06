@@ -1,10 +1,10 @@
-import { ChevronsLeftRightIcon, EllipsisVerticalIcon, ExpandIcon, InfoIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
+import { EllipsisVerticalIcon, ExpandIcon, InfoIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useMeasure } from '~/hooks/use-measure';
 import { collapsedPanelMinWidth, panelMinWidth } from '~/modules/common/board/board-layout';
-import { BoardPanelHeader, CollapsedPanelView } from '~/modules/common/board/board-panel';
+import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -15,12 +15,14 @@ import { FloatingAction } from '~/modules/navigation/floating-nav/floating-actio
 import { PublicBadge } from '~/modules/project/public-badge';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { useWithMembership } from '~/modules/project/use-with-membership';
-import { buildBoardExtraPanels, usePanelLayout, useShowExplainer, useStatusTabList } from '~/modules/task/board/board-hooks';
+import { buildBoardExtraPanels, usePanelLayout, useProjectPageTab, useShowExplainer } from '~/modules/task/board/board-hooks';
 import { DisplayOptions } from '~/modules/task/board/display-options';
+import { PanelTabNav } from '~/modules/task/board/panel-tab-nav';
 import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
-import { StatusTabNav } from '~/modules/task/board/status-tab-nav';
 import { listsEveryStatus, projectPanelName } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
+import { PanelStatusIcons } from '~/modules/task/panel/panel-status-icons';
+import type { TaskStatus } from '~/modules/task/task-properties';
 import { newTaskButtonClass, panelHandleClass, statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
 import type { BoardResizablePanel } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
@@ -62,6 +64,7 @@ export function BoardSkeleton({
   const windowScroll = projectPage && publicView;
 
   const showExplainer = useShowExplainer(isInWorkspace);
+  const phoneTab = useProjectPageTab();
   const extraPanels = buildBoardExtraPanels({ showExplainer, publicView });
 
   const boardProjects = useWithMembership(projects);
@@ -106,12 +109,8 @@ export function BoardSkeleton({
       case 'mobile':
         return (
           <>
-            {isInWorkspace ? (
-              <ProjectTabNav projects={boardProjects} />
-            ) : (
-              projects[0] && <StatusTabNav project={projects[0]} publicView={publicView} />
-            )}
-            <MobilePanelSkeleton />
+            {isInWorkspace ? <ProjectTabNav projects={boardProjects} /> : <PanelTabNav publicView={publicView} />}
+            <MobilePanelSkeleton statuses={isInWorkspace ? undefined : phoneTab?.statuses} />
           </>
         );
       case 'labels':
@@ -141,12 +140,8 @@ export function BoardSkeleton({
       default:
         return (
           <>
-            <PanelHeaderSkeleton project={panel.project} group={panel.group} isCollapsed={isCollapsed(panel.panelId)} />
-            {panel.group && isCollapsed(panel.panelId) ? (
-              <CollapsedPanelView title={projectPanelName(panel.project, panel.group)} windowScroll={windowScroll} />
-            ) : (
-              <PanelBodySkeleton rows={isCollapsed(panel.panelId) ? 0 : rowCount} folds={listsEveryStatus(panel.statuses)} />
-            )}
+            <PanelHeaderSkeleton project={panel.project} statuses={panel.statuses} group={panel.group} isCollapsed={isCollapsed(panel.panelId)} />
+            <PanelBodySkeleton rows={isCollapsed(panel.panelId) ? 0 : rowCount} folds={listsEveryStatus(panel.statuses)} />
           </>
         );
     }
@@ -257,9 +252,8 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
 }
 
 /** The mobile panel while its tasks load, with an inert create button where the live one sits. */
-export function MobilePanelSkeleton() {
+export function MobilePanelSkeleton({ statuses }: { statuses?: TaskStatus[] }) {
   const { t } = useTranslation();
-  const statuses = useStatusTabList();
 
   return (
     <>
@@ -310,11 +304,11 @@ function LocalPanelBodySkeleton() {
   );
 }
 
-interface PanelHeaderSkeletonProps extends Pick<BoardPanelProps, 'project' | 'group'> {
+interface PanelHeaderSkeletonProps extends Pick<BoardPanelProps, 'project' | 'statuses' | 'group'> {
   isCollapsed: boolean;
 }
 
-function PanelHeaderSkeleton({ project, group, isCollapsed }: PanelHeaderSkeletonProps) {
+function PanelHeaderSkeleton({ project, statuses, group, isCollapsed }: PanelHeaderSkeletonProps) {
   const { t } = useTranslation();
   const isReadOnly = useIsProjectReadOnly(project.id);
 
@@ -324,8 +318,8 @@ function PanelHeaderSkeleton({ project, group, isCollapsed }: PanelHeaderSkeleto
       isCollapsed={isCollapsed}
       leading={
         <div className={cn(buttonVariants({ variant: 'ghost' }), panelHandleClass, 'truncate', isCollapsed && 'w-full justify-center')}>
-          {group ? (
-            isCollapsed && <ChevronsLeftRightIcon className="size-4 shrink-0" />
+          {statuses && group ? (
+            <PanelStatusIcons statuses={statuses} />
           ) : (
             <span className="relative flex">
               <EntityAvatar id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />

@@ -5,8 +5,8 @@ import { labelPanelSearchSchema } from '~/modules/label/search-params-schemas';
 
 const taskViewSchema = z.enum(['board', 'table']).default('board').catch('board');
 
-/** Single source for URL stripping and query fallbacks. `order` is desc so the table opens newest-first; board panels sort by displayOrder. */
-export const boardSearchDefaults = { q: '', view: 'board', sort: 'createdAt', order: 'desc' } as const;
+// A phone project page's tab, To do when absent; a link from before the panels named a status, which falls back too
+const panelTabSchema = z.enum(['to_do', 'in_progress', 'done']).optional().catch(undefined);
 
 /** Search param holding the open task's id. Its presence is the sheet's open state. */
 export const taskSheetParam = 'taskSheetId';
@@ -36,6 +36,19 @@ export const tasksTableSearchSchema = zGetTasksQuery.pick({ q: true, sort: true,
 
 const tasksBoardSearchSchema = zGetTasksQuery
   .pick({ q: true })
-  .extend({ projectSlug: z.string().optional(), statusTab: z.string().optional(), ...boardFiltersSchema.shape, ...baseTaskViewSchema.shape });
+  .extend({ projectSlug: z.string().optional(), panelTab: panelTabSchema, ...boardFiltersSchema.shape, ...baseTaskViewSchema.shape });
 
 export const boardSearchSchema = z.object({ ...tasksBoardSearchSchema.shape, ...tasksTableSearchSchema.shape });
+
+/** Single source for URL stripping and query fallbacks. `order` is desc so the table opens newest-first; board panels sort by displayOrder. */
+export const boardSearchDefaults = {
+  q: '',
+  view: 'board',
+  sort: 'createdAt',
+  order: 'desc',
+  // A filter parses to [] when absent; unstripped, a link built from the current search carries it, and its active match fails
+  status: [],
+  type: [],
+  labels: [],
+  assigned: [],
+} satisfies Partial<z.infer<typeof boardSearchSchema>>;

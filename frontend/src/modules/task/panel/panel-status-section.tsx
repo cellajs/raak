@@ -164,7 +164,7 @@ export function PanelStatusSection({
             {!isIced && (
               <>
                 <span>{t('c:since')}</span>
-                <span>{dayjs().subtract(boardAcceptedCutOffDays, 'day').format('MMM D')}</span>
+                <span>{formatAcceptedCutOff()}</span>
               </>
             )}
             <ChevronDownIcon data-rotate={isExpanded} className="absolute right-2.5 transition-transform data-[rotate=true]:rotate-180" />
@@ -185,6 +185,8 @@ export function PanelStatusSection({
   );
 }
 
+const formatAcceptedCutOff = () => dayjs().subtract(boardAcceptedCutOffDays, 'day').format('MMM D');
+
 interface OlderAcceptedTextProps {
   i18nKey: 'c:older_accepted_table_only' | 'c:older_accepted_in_table';
   count: number;
@@ -198,6 +200,7 @@ function OlderAcceptedText({ i18nKey, count }: OlderAcceptedTextProps) {
       t={t}
       i18nKey={i18nKey}
       count={count}
+      values={{ date: formatAcceptedCutOff() }}
       components={{
         table_anchor: <Link to="." resetScroll={false} search={(prev) => ({ ...prev, view: 'table' })} className="link-inline" />,
       }}
@@ -211,10 +214,8 @@ interface OlderAcceptedHintProps {
 
 /** Points to the table for the accepted tasks the board leaves out, in a panel with no accepted bar to carry them. */
 export function OlderAcceptedHint({ count }: OlderAcceptedHintProps) {
-  const colors = statusSectionColors.accepted;
-
   return (
-    <div className={cn('flex gap-4 px-4 py-5 text-xs', olderAcceptedHintFill, colors.border.top, colors.text, hintFadeOut)}>
+    <div className={cn('flex gap-4 px-4 py-5 text-xs', olderAcceptedHintFill, statusSectionColors.accepted.text, hintFadeOut)}>
       <InfoIcon className="shrink-0" />
       <p>
         <OlderAcceptedText i18nKey="c:older_accepted_in_table" count={count} />

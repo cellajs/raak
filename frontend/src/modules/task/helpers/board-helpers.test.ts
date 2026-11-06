@@ -1,56 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectWithMembership } from '~/modules/project/types';
-import {
-  countTasksByStatus,
-  normalizePanelWidths,
-  prepareBoardPanels,
-  projectPagePanelId,
-  statusesBottomUp,
-  statusPath,
-  statusTabLists,
-} from '~/modules/task/helpers/board-helpers';
+import { normalizePanelWidths, prepareBoardPanels, projectPageGroups, projectPagePanelId } from '~/modules/task/helpers/board-helpers';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import type { ProjectResizablePanel, Task } from '~/modules/task/types';
+import type { ProjectResizablePanel } from '~/modules/task/types';
 
 const project = { id: 'p' } as ProjectWithMembership;
-
-describe('statusPath', () => {
-  it('holds every status once', () => {
-    const statuses = Object.values(TaskStatus).filter((value) => typeof value === 'number');
-    expect([...statusPath].sort()).toEqual([...statuses].sort());
-  });
-});
-
-describe('statusesBottomUp', () => {
-  it('runs from iced to accepted', () => {
-    expect(statusesBottomUp).toEqual([
-      TaskStatus.Iced,
-      TaskStatus.Unstarted,
-      TaskStatus.Started,
-      TaskStatus.Finished,
-      TaskStatus.Reviewed,
-      TaskStatus.Accepted,
-    ]);
-  });
-});
+const everyStatus = Object.values(TaskStatus).filter((value) => typeof value === 'number');
 
 describe('statusOptions', () => {
   it('moves a task along the path one status at a time, past the retired gap', () => {
-    const walked = statusPath.slice(0, -2).map((status) => statusOptionsByValue[status].next);
+    const walked = [TaskStatus.Unstarted, TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed].map(
+      (status) => statusOptionsByValue[status].next,
+    );
     expect(walked).toEqual([TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed, TaskStatus.Accepted]);
     expect(statusOptionsByValue[TaskStatus.Iced].next).toBe(TaskStatus.Unstarted);
-  });
-});
-
-describe('statusTabLists', () => {
-  it('lists each status alone under its name', () => {
-    expect(statusTabLists.get('accepted')).toEqual([TaskStatus.Accepted]);
-    expect(statusTabLists.get('unstarted')).toEqual([TaskStatus.Unstarted]);
-    expect(statusTabLists.size).toBe(statusPath.length);
-  });
-
-  it('knows no other tab, inherited names included', () => {
-    expect(statusTabLists.get('constructor')).toBeUndefined();
   });
 });
 
@@ -61,28 +24,21 @@ describe('prepareBoardPanels', () => {
 
   it('lists every status in exactly one project page panel', () => {
     const listed = prepareBoardPanels([project], true).flatMap(({ statuses }) => statuses ?? []);
-    expect(listed.toSorted()).toEqual(statusPath.toSorted());
+    expect(listed.toSorted()).toEqual(everyStatus.toSorted());
   });
 
   it('finds the panel that lists a status by its id', () => {
     const panels = prepareBoardPanels([project], true);
-    for (const status of statusPath) {
+    for (const status of everyStatus) {
       const host = panels.find(({ panelId }) => panelId === projectPagePanelId('p', status));
       expect(host?.statuses).toContain(status);
     }
   });
 });
 
-describe('countTasksByStatus', () => {
-  const items = (...tasks: Partial<Task>[]) => ({ items: tasks as Task[] });
-
-  it('counts each status with tasks and leaves the others out', () => {
-    const counts = countTasksByStatus(items({ status: TaskStatus.Started }, { status: TaskStatus.Started }, { status: TaskStatus.Accepted }));
-    expect(counts).toEqual({ [TaskStatus.Started]: 2, [TaskStatus.Accepted]: 1 });
-  });
-
-  it('leaves out the create-form draft', () => {
-    expect(countTasksByStatus(items({ status: TaskStatus.Unstarted, _draft: true }))).toEqual({});
+describe('projectPageGroups', () => {
+  it('starts a task created from a panel in a status that panel lists', () => {
+    for (const { statuses, entry } of projectPageGroups) expect(statuses).toContain(entry);
   });
 });
 

@@ -8,7 +8,7 @@ import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
-import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
+import { TaskStatus } from '~/modules/task/task-properties';
 import type { BoardResizablePanel, ProjectPageGroup, ProjectResizablePanel, Task, TaskCounts } from '~/modules/task/types';
 
 const iced = TaskStatus.Iced;
@@ -39,28 +39,30 @@ export const sortTasksAsOnBoard = (tasks: Task[], projects: ProjectWithMembershi
   );
 };
 
-// The path a task takes, with iced off the end of it.
-export const statusPath: TaskStatus[] = [TaskStatus.Unstarted, TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed, accepted, iced];
+interface ProjectPageGroupInfo {
+  group: ProjectPageGroup;
+  /** In flow order, as the header's icons read left to right; the arrays are stable, so a phone tab switch alone re-renders the panel. */
+  statuses: TaskStatus[];
+  /** The status a task created from this panel's phone tab starts in. */
+  entry: TaskStatus;
+  /** What the panel says while it lists nothing. */
+  emptyTitle: TKey;
+}
 
-/** The statuses as a panel lists them from the bottom up, iced first: the order of the mobile tabs. */
-export const statusesBottomUp = statusPath.toSorted((a, b) => b - a);
-
-/** The mobile status tabs by their search param. The lists are stable, so a tab switch alone re-renders the memoized panel. */
-export const statusTabLists = new Map<string, TaskStatus[]>(statusPath.map((status) => [statusOptionsByValue[status].status, [status]]));
-
-/** How many tasks of a board list each status holds, for the mobile status tabs. */
-export const countTasksByStatus = ({ items }: { items: Task[] }) => {
-  const counts: Partial<Record<TaskStatus, number>> = {};
-  for (const task of items) if (!isDraftTask(task)) counts[task.status] = (counts[task.status] ?? 0) + 1;
-  return counts;
-};
-
-/** The project page's panels in flow order, with what each says while it lists nothing. */
-const projectPageGroups: { group: ProjectPageGroup; statuses: TaskStatus[]; emptyTitle: TKey }[] = [
-  { group: 'to_do', statuses: [TaskStatus.Unstarted, iced], emptyTitle: 'c:nothing_to_do' },
-  { group: 'in_progress', statuses: [TaskStatus.Reviewed, TaskStatus.Finished, TaskStatus.Started], emptyTitle: 'c:nothing_in_progress' },
-  { group: 'done', statuses: [accepted], emptyTitle: 'c:nothing_done_recently' },
+/** The project page's panels in flow order: its desktop panels and its phone tabs. */
+export const projectPageGroups: ProjectPageGroupInfo[] = [
+  { group: 'to_do', statuses: [iced, TaskStatus.Unstarted], entry: TaskStatus.Unstarted, emptyTitle: 'c:nothing_to_do' },
+  {
+    group: 'in_progress',
+    statuses: [TaskStatus.Started, TaskStatus.Finished, TaskStatus.Reviewed],
+    entry: TaskStatus.Started,
+    emptyTitle: 'c:nothing_in_progress',
+  },
+  { group: 'done', statuses: [accepted], entry: accepted, emptyTitle: 'c:nothing_done_recently' },
 ];
+
+/** A project page panel by its group, as a panel or the phone's tab param names it. */
+export const findProjectPageGroup = (group?: string) => projectPageGroups.find((info) => info.group === group);
 
 const groupIndex = (status: TaskStatus) => projectPageGroups.findIndex(({ statuses }) => statuses.includes(status));
 
@@ -68,9 +70,6 @@ const groupPanelId = (projectId: string, group: ProjectPageGroup) => `${projectI
 
 /** The id of the project page panel that lists this status. */
 export const projectPagePanelId = (projectId: string, status: TaskStatus) => groupPanelId(projectId, projectPageGroups[groupIndex(status)].group);
-
-/** What an empty project page panel says it would hold. */
-export const projectPageEmptyTitle = (group: ProjectPageGroup) => projectPageGroups.find((entry) => entry.group === group)?.emptyTitle;
 
 /** One panel per project on a workspace board; on a project page, the project's To do, In progress and Done. */
 export const prepareBoardPanels = (projects: ProjectWithMembership[], projectPage = false) =>

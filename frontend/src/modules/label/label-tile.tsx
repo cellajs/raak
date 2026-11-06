@@ -2,7 +2,7 @@ import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-d
 import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { GripVerticalIcon } from 'lucide-react';
 import { AnimatePresence, cancelFrame, frame, motion } from 'motion/react';
-import { type FocusEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { type FocusEvent, type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelName } from 'shared/config/labels-config';
 import { DropIndicator } from '~/modules/common/drop-indicator';
@@ -18,6 +18,7 @@ import { useLabelUpdateMutation } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps } from '~/modules/label/types';
 import { boardFocusStore, useBoardFocusStore } from '~/modules/task/board/board-focus-store';
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
+import { gripFoldClass } from '~/modules/task/card/task-drag-handle';
 import { toggleLabelFilter } from '~/modules/task/helpers/board-navigation';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/task/helpers/focus-item';
 import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
@@ -90,15 +91,15 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
   // tile is one Tab stop: Enter opens it, and only then does Tab reach its controls, cycling inside it.
   useItemControlsTabOrder(tileRef, domId, onBoard ? isCurrent && expanded : true, { trap: onBoard });
 
-  const gripRef = useRef<HTMLButtonElement>(null);
+  const [nameButton, setNameButton] = useState<HTMLButtonElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const canReorder = !!onBoard && !isReadOnly && !!position;
 
-  // A collapsed tile drags as a whole, as a task card does; an open one by its grip, so its name and fields keep text selection
+  // A collapsed tile drags as a whole, as a task card does; an open one by its name, so its fields keep text selection. A rename unmounts the name and with it the handle.
   useEffect(() => {
     const element = tileRef.current;
-    const dragHandle = expanded ? gripRef.current : element;
+    const dragHandle = expanded ? nameButton : element;
     if (!canReorder || !element || !dragHandle) return;
     return draggable({
       element,
@@ -107,7 +108,25 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
       onDragStart: () => setIsDragging(true),
       onDrop: () => setIsDragging(false),
     });
-  }, [canReorder, expanded, row.id]);
+  }, [canReorder, expanded, nameButton, row.id]);
+
+  // As on a task card the grip is for the keyboard only, folded away until it has focus
+  const [gripHasFocus, setGripHasFocus] = useState(false);
+  const pendingIndexRef = useRef<number | null>(null);
+  const moveByKey = (step: -1 | 1) => {
+    if (!position || !onMove) return;
+    pendingIndexRef.current = position.index + step;
+    onMove(step);
+  };
+  // Runs after the grip's own effect has focused it again in its new place
+  useLayoutEffect(() => {
+    if (pendingIndexRef.current === position?.index) pendingIndexRef.current = null;
+  });
+  // The blur of a re-inserted tile has no next target: the grip stays unfolded through the move
+  const handleGripBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.relatedTarget && pendingIndexRef.current !== null) return;
+    setGripHasFocus(false);
+  };
 
   useEffect(() => {
     const element = tileRef.current;
@@ -220,37 +239,57 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
         <div className="flex min-h-11 items-center gap-2 px-4 py-1.5">
           {/* A collapsed tile holds the room of its floating button, so a long name's count stays clear of it */}
           <div className={cn('flex min-w-0 grow items-center gap-2', !expanded && 'pr-9')}>
-            {/* Edit and display boxes share height, padding and border so the swap causes no layout shift */}
-            {editingName !== null ? (
-              <Input
-                value={editingName}
-                aria-label={t('c:name')}
-                autoFocus
-                onChange={(event) => setEditingName(event.target.value)}
-                onBlur={commitName}
-                onKeyDown={handleNameKeyDown}
-                className="-ml-1.25 h-7 w-auto grow px-1 font-semibold"
-              />
-            ) : (
-              <button
-                type="button"
-                aria-expanded={expanded}
-                title={expanded && !isReadOnly ? t('c:edit') : undefined}
-                onClick={handleNameClick}
-                onFocus={handleNameFocus}
-                className={cn(
-                  '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0',
-                  // Collapsed, an after-overlay stretches the button over the whole tile; the action buttons sit above it
-                  expanded ? 'hover:bg-hover focus-visible:bg-hover font-semibold' : 'after:absolute after:inset-0',
-                )}
-              >
-                <span className="truncate">
-                  <HighlightText text={row.name} />
-                </span>
-              </button>
-            )}
+            {/* No gap inside: the folded grip takes no room beside the name */}
+            <div className={cn('flex min-w-0 items-center', editingName !== null && 'grow')}>
+              {expanded && canReorder && position && onMove && (
+                <div data-open={gripHasFocus || undefined} className={gripFoldClass} onFocus={() => setGripHasFocus(true)} onBlur={handleGripBlur}>
+                  <div className="min-h-0 min-w-0 overflow-clip">
+                    <ReorderHandle
+                      id={row.id}
+                      name={row.name}
+                      index={position.index}
+                      total={position.total}
+                      onMove={moveByKey}
+                      className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), 'focus-inset size-8')}
+                    >
+                      <GripVerticalIcon className="size-3.5" />
+                    </ReorderHandle>
+                  </div>
+                </div>
+              )}
+              {/* Edit and display boxes share height, padding and border so the swap causes no layout shift */}
+              {editingName !== null ? (
+                <Input
+                  value={editingName}
+                  aria-label={t('c:name')}
+                  autoFocus
+                  onChange={(event) => setEditingName(event.target.value)}
+                  onBlur={commitName}
+                  onKeyDown={handleNameKeyDown}
+                  className="-ml-1.25 h-7 w-auto grow px-1 font-semibold"
+                />
+              ) : (
+                <button
+                  ref={setNameButton}
+                  type="button"
+                  aria-expanded={expanded}
+                  title={expanded && !isReadOnly ? t('c:edit') : undefined}
+                  onClick={handleNameClick}
+                  onFocus={handleNameFocus}
+                  className={cn(
+                    '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0',
+                    // Collapsed, an after-overlay stretches the button over the whole tile; the action buttons sit above it
+                    expanded ? 'hover:bg-hover focus-visible:bg-hover font-semibold' : 'after:absolute after:inset-0',
+                  )}
+                >
+                  <span className="truncate">
+                    <HighlightText text={row.name} />
+                  </span>
+                </button>
+              )}
+            </div>
             {/* z-1 lifts it above the collapsed name's overlay: a press filters the board, the rest of the tile opens it */}
-            <LabelFilterCount name={row.name} slug={row.slug} count={row.usedCount} onAction={onAction} />
+            {editingName === null && <LabelFilterCount name={row.name} slug={row.slug} count={row.usedCount} onAction={onAction} />}
             {!expanded && row.mode === 'epic' && (
               <Badge variant="secondary" className="shrink-0">
                 {t('c:epic')}
@@ -261,19 +300,6 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
           {/* Floating and in-flow actions share the row's right padding, so they keep their place when the tile
               expands; close joins on their left */}
           <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : ['absolute inset-y-0 right-4', restingActionsPointer])}>
-            {expanded && canReorder && position && onMove && (
-              <ReorderHandle
-                ref={gripRef}
-                id={row.id}
-                name={row.name}
-                index={position.index}
-                total={position.total}
-                onMove={onMove}
-                className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }), actionClass, 'focus-inset size-8')}
-              >
-                <GripVerticalIcon className="size-3.5" />
-              </ReorderHandle>
-            )}
             <AnimatePresence initial={false}>
               {expanded && (
                 <CardCloseButton
@@ -294,7 +320,7 @@ export function LabelTile({ row, lockedByProjectIds, onAction, onBoard, showProj
         <AnimatePresence initial={false}>
           {expanded && (
             <motion.div key="details" {...labelTileReveal}>
-              <LabelTileDetails row={row} lockedByProjectIds={lockedByProjectIds} showProjectUsage={showProjectUsage} />
+              <LabelTileDetails row={row} lockedByProjectIds={lockedByProjectIds} showProjectUsage={showProjectUsage} onAction={onAction} />
             </motion.div>
           )}
         </AnimatePresence>

@@ -3,10 +3,10 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '~/modules/common/spinner';
-import { LabelStatusBars } from '~/modules/label/label-status-bars';
+import { LabelStatusBar } from '~/modules/label/label-status-bar';
 import { labelTileReveal } from '~/modules/label/label-tile-reveal';
 import { useLabelUpdateMutation } from '~/modules/label/query';
-import type { LabelRow } from '~/modules/label/types';
+import type { LabelRow, LabelsHostProps } from '~/modules/label/types';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { Switch } from '~/modules/ui/switch';
 import { cn } from '~/utils/cn';
@@ -14,14 +14,14 @@ import { lazyNamed } from '~/utils/lazy-named';
 
 const LabelDescriptionForm = lazyNamed(() => import('~/modules/label/label-description-form'), 'LabelDescriptionForm');
 
-interface LabelTileDetailsProps {
+interface LabelTileDetailsProps extends Pick<LabelsHostProps, 'onAction'> {
   row: LabelRow;
   lockedByProjectIds: string[];
   showProjectUsage?: boolean;
 }
 
 /** Body of an expanded tile: the epic switch, its tasks per status and, for epics, the description. */
-export function LabelTileDetails({ row, lockedByProjectIds, showProjectUsage }: LabelTileDetailsProps) {
+export function LabelTileDetails({ row, lockedByProjectIds, showProjectUsage, onAction }: LabelTileDetailsProps) {
   const { t } = useTranslation();
   const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
 
@@ -58,7 +58,7 @@ export function LabelTileDetails({ row, lockedByProjectIds, showProjectUsage }: 
           </p>
         )}
 
-        <LabelStatusBars row={row} showProjects={showProjectUsage} />
+        <LabelStatusBar row={row} showProjects={showProjectUsage} onAction={onAction} />
       </div>
 
       <AnimatePresence initial={false}>

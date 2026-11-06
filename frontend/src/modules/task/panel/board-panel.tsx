@@ -8,7 +8,7 @@ import { FloatingAction } from '~/modules/navigation/floating-nav/floating-actio
 import type { EnrichedProject } from '~/modules/project/types';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { useProjectPanelPrefs } from '~/modules/task/board/task-board-store';
-import { listsEveryStatus, prepareBoardTasks, projectPageEmptyTitle } from '~/modules/task/helpers/board-helpers';
+import { findProjectPageGroup, listsEveryStatus, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
 import { isBoardSearchActive, matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
@@ -74,7 +74,8 @@ export const BoardPanel = memo(function BoardPanel({
 
   // A project without any task gets the full placeholder in To do; another empty panel only says what it would hold
   const projectHasTasks = projectFetchedCount > 0 || totalTasks > 0;
-  const emptyTitle = group && (group !== 'to_do' || projectHasTasks) ? projectPageEmptyTitle(group) : undefined;
+  const groupInfo = findProjectPageGroup(group);
+  const emptyTitle = groupInfo && (groupInfo.group !== 'to_do' || projectHasTasks) ? groupInfo.emptyTitle : undefined;
 
   const counts = {
     total: filteredTasks.length,
@@ -91,14 +92,12 @@ export const BoardPanel = memo(function BoardPanel({
     <div data-search={isBoardSearchActive(search)} className="group/panel h-full">
       {isMobile ? (
         <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex h-full flex-col">
-          <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} />
+          <TaskPanelContent project={project} panelId={panelId} emptyTitle={emptyTitle} tasks={tasks} counts={counts} />
           {!isReadOnly && (
             <FloatingAction
               icon={PlusIcon}
               label={t('c:create_resource', { resource: t('c:task') })}
-              onClick={(triggerRef) =>
-                openCreateTaskDialog(project.id, project.organizationId, statuses?.length === 1 ? statuses[0] : undefined, triggerRef)
-              }
+              onClick={(triggerRef) => openCreateTaskDialog(project.id, project.organizationId, groupInfo?.entry, triggerRef)}
             />
           )}
           <WorkspaceArrivalBalloon project={project} />
@@ -108,7 +107,14 @@ export const BoardPanel = memo(function BoardPanel({
           ref={panelRef} // The header pins to the window, and the bars and card headers below read this to pin under it
           className={cn('relative flex h-full flex-col', windowScroll && 'min-h-[80vh] [--sticky-stack-nav:3.25rem]')}
         >
-          <TaskPanelHeader project={project} publicView={publicView} group={group} panelId={panelId} windowScroll={windowScroll} />
+          <TaskPanelHeader
+            project={project}
+            publicView={publicView}
+            statuses={statuses}
+            group={group}
+            panelId={panelId}
+            windowScroll={windowScroll}
+          />
           <WorkspaceArrivalBalloon project={project} />
           <div className="flex min-h-0 flex-1 flex-col">
             <BoardPanelContent
