@@ -1,4 +1,4 @@
-import { ArrowRightIcon, Building2Icon, FolderIcon, SearchIcon, UsersIcon, ZapIcon } from 'lucide-react';
+import { Building2Icon, FolderIcon, UsersIcon } from 'lucide-react';
 import type { GetPublicCountsResponse } from 'sdk';
 import { appConfig } from 'shared';
 import type { TKey } from '~/lib/i18n-locales';
@@ -75,14 +75,6 @@ export const counts = [
   { id: 'organization', title: 'c:organization_other', icon: Building2Icon },
   { id: 'project', title: 'c:project_other', icon: FolderIcon },
 ] as const satisfies readonly { id: keyof GetPublicCountsResponse; title: TKey; icon: IconComponent }[];
-
-// About - Highlights
-
-export const highlightItems = [
-  { id: 'search', icon: SearchIcon, className: 'bg-green-500/10 text-green-700 dark:text-green-400' },
-  { id: 'next-step', icon: ArrowRightIcon, className: 'bg-orange-500/10 text-orange-700 dark:text-orange-400' },
-  { id: 'instant', icon: ZapIcon, className: 'bg-sky-500/10 text-sky-700 dark:text-sky-400' },
-];
 
 // Dedicated marketing pages
 

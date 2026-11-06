@@ -153,7 +153,7 @@ export const syncStateTask = task({
 export const exportTask = task({
   id: 'export',
   number: 23,
-  name: 'Export tasks to a spreadsheet',
+  name: 'Export tasks as CSV and PDF',
   type: 'feature',
   status: Unstarted,
   order: 2000,
@@ -198,3 +198,55 @@ export const demoSeed = (isPhone: boolean) => [
   }),
   syncStateTask,
 ];
+
+/** The highlights follow the hero's export task: the search finds it, two people write its todos, it is worked on offline. */
+export const searchQuery = 'export';
+export const searchSeed = [
+  exportTask,
+  task({ id: 'hl-search-pricing', number: 7, name: 'Pricing table export for sales', type: 'chore', status: Finished, order: 800 }),
+  task({ id: 'hl-search-dark', number: 18, name: 'Dark mode for the settings page', type: 'feature', status: Unstarted, order: 900 }),
+  task({
+    id: 'hl-search-keyboard',
+    number: 26,
+    name: 'Export button hides behind the keyboard',
+    type: 'bug',
+    status: Unstarted,
+    order: 900,
+    in: mobileApp,
+  }),
+  task({ id: 'hl-search-share', number: 8, name: 'Share sheet for exported files', type: 'feature', status: Started, order: 800, in: mobileApp }),
+  task({ id: 'hl-search-magic', number: 11, name: 'Sign in with a magic link', type: 'feature', status: Started, order: 700, in: mobileApp }),
+];
+
+// The first is shorter than the second, so the teammate's name label above the second's end clears it
+export const exportTodos = ['CSV download', 'PDF built on the server', 'Mail the file when it is ready'] as const;
+export const exportTodosWhy = 'Customers want their tasks in a spreadsheet, and on paper for the weekly meeting.';
+
+const checklistBlock = (text: string, index: number, checked: boolean) => ({
+  id: `demo-todo-${index}`,
+  type: 'checklistItem',
+  props: { textColor: 'default', textAlignment: 'left', checkboxId: `demo-todo-${index}`, checked },
+  content: [{ type: 'text', text, styles: {} }],
+  children: [],
+});
+
+/** Offline the PDF todo is ticked too: the card holds it until the connection is back. */
+export const offlineTask: Task = {
+  ...task({
+    id: 'hl-offline-export',
+    number: exportTask.number,
+    name: exportTask.name,
+    type: 'feature',
+    status: Started,
+    order: 900,
+    by: 'noor',
+    assigned: ['sam'],
+  }),
+  expandable: true,
+  description: JSON.stringify([
+    ...JSON.parse(summaryOf(exportTask.name)),
+    ...exportTodos.map((todo, index) => checklistBlock(todo, index, index < 2)),
+  ]),
+  checkboxCount: exportTodos.length,
+  checkedCount: 2,
+};

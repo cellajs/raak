@@ -1,11 +1,11 @@
 {
-  "demo_caption": "A team at work in raak. Real interface, made-up tasks.",
+  "demo_caption": "Demonstration with real but simplified interface.",
   "demo_label": "A board of two projects, where a team adds a task, starts one, changes a bug to a chore, adds a label, moves a card to the other project and resizes the panels.",
   "highlights.text_1": "Matches show up in each project at the same time, so you never search one project after another.",
-  "highlights.text_2": "One click moves the work along, right where you see it.",
+  "highlights.text_2": "Edit a description together, with each person's cursor and name in view. Nothing waits for a save.",
   "highlights.text_3": "Tasks are stored locally for offline search and direct updates. Changes are synced as you get back online.",
   "highlights.title_1": "One search, every project",
-  "highlights.title_2": "Every card shows its next step",
+  "highlights.title_2": "Write together, live",
   "highlights.title_3": "Instant, also offline",
   "prerelease": "Prerelease",
   "pricing.plan_1.1": "Unlimited members",
@@ -26,8 +26,8 @@
   "pricing.title_1": "Basic",
   "pricing.title_2": "Pro",
   "showcase.from_cella": "Of all code is from Cella",
-  "tagline": "A fast issue tracker for small teams with many projects.",
+  "tagline": "A very fast issue tracker for small teams with many projects. Fully EU-hosted & free to use.",
   "text_2": "Most issue trackers make you navigate between projects, boards, and issue pages. Raak keeps everything in a single page view.",
-  "title_1": "Every issue. All projects.\nOne page.",
-  "title_2": "An issue tracker that eliminates navigation"
+  "title_1": "493 tasks. 5 projects, 2 public. \nNo navigation.",
+  "title_2": "Fast, simple & fun."
 }
