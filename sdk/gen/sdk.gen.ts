@@ -310,6 +310,9 @@ import type {
   PostAppCatchupData,
   PostAppCatchupErrors,
   PostAppCatchupResponses,
+  ProvisionSampleData,
+  ProvisionSampleErrors,
+  ProvisionSampleResponses,
   PublishOrganizationData,
   PublishOrganizationErrors,
   PublishOrganizationResponses,
@@ -325,6 +328,9 @@ import type {
   RedirectToTaskData,
   RedirectToTaskErrors,
   RedirectToTaskResponses,
+  RemoveSampleData,
+  RemoveSampleErrors,
+  RemoveSampleResponses,
   ResendInvitationWithTokenData,
   ResendInvitationWithTokenErrors,
   ResendInvitationWithTokenResponses,
@@ -530,9 +536,11 @@ import {
   zMembershipInviteResponse,
   zMoveProjectToWorkspaceResponse,
   zPostAppCatchupResponse,
+  zProvisionSampleResponse,
   zPublishOrganizationResponse,
   zPullYjsDocumentResponse,
   zPushYjsUpdateResponse,
+  zRemoveSampleResponse,
   zResendInvitationWithTokenResponse,
   zResendPendingInvitationResponse,
   zResolveTaskLinkByNumberResponse,
@@ -3046,6 +3054,51 @@ export const moveProjectToWorkspace = <ThrowOnError extends boolean = true>(
     responseValidator: async (data) => await zMoveProjectToWorkspaceResponse.parseAsync(data),
     responseStyle: 'data',
     url: '/{tenantId}/{organizationId}/projects/{id}/move',
+    ...options,
+  });
+
+/**
+ * Remove the sample
+ *
+ * Deletes the sample projects with their tasks; the sample team leaves the organization once none is left.
+ *
+ * **DELETE /{tenantId}/{organizationId}/sample** ·· [removeSample](https://www.raak.dev/docs/operations?operationTag=samples#tag/samples/DELETE/{tenantId}/{organizationId}/sample) ·· _samples · app · channel_
+ *
+ * @param {removeSampleData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {string} options.path.organizationId - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 429
+ */
+export const removeSample = <ThrowOnError extends boolean = true>(
+  options: Options<RemoveSampleData, ThrowOnError>,
+): RequestResult<RemoveSampleResponses, RemoveSampleErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<RemoveSampleResponses, RemoveSampleErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zRemoveSampleResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/{tenantId}/{organizationId}/sample',
+    ...options,
+  });
+
+/**
+ * Add the sample
+ *
+ * Adds the current user to the organization's sample: two projects with tasks by a sample team. The first to add it creates it and becomes its admin; every later member joins the same projects.
+ *
+ * **POST /{tenantId}/{organizationId}/sample** ·· [provisionSample](https://www.raak.dev/docs/operations?operationTag=samples#tag/samples/POST/{tenantId}/{organizationId}/sample) ·· _samples · app · channel_
+ *
+ * @param {provisionSampleData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {string} options.path.organizationId - `string`
+ * @param {string=} options.query.workspaceId - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const provisionSample = <ThrowOnError extends boolean = true>(
+  options: Options<ProvisionSampleData, ThrowOnError>,
+): RequestResult<ProvisionSampleResponses, ProvisionSampleErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<ProvisionSampleResponses, ProvisionSampleErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zProvisionSampleResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/{tenantId}/{organizationId}/sample',
     ...options,
   });
 

@@ -20,6 +20,7 @@ import '#/modules/organization/organization-module';
 import '#/modules/project/project-module';
 import '#/modules/push/push-module';
 import '#/modules/requests/requests-module';
+import '#/modules/sample/sample-module';
 import '#/modules/seen/seen-module';
 import '#/modules/service-accounts/service-accounts-module';
 import '#/modules/system/system-module';

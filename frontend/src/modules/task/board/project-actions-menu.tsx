@@ -1,6 +1,6 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, UsersIcon } from 'lucide-react';
+import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, TrashIcon, UsersIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
@@ -8,10 +8,13 @@ import { DropdownActionItem, DropdownActionSeparator } from '~/modules/common/dr
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { NamedText } from '~/modules/common/named-text';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { useCan } from '~/modules/entities/use-can';
 import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import type { EnrichedProject } from '~/modules/project/types';
+import { RemoveSample } from '~/modules/sample/remove-sample';
+import { isSampleProject } from '~/modules/sample/sample-content';
 import { DrawerDisplayOptions } from '~/modules/task/board/display-options';
 import { Button } from '~/modules/ui/button';
 import { OpenInWorkspaceItem } from '~/modules/workspace/open-in-workspace-item';
@@ -37,6 +40,8 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
 
   const { data: myMemberships } = useQuery(myMembershipsQueryOptions());
   const projectMembership = findMembership(myMemberships?.items ?? [], project.id);
+  const can = useCan();
+  const canRemoveSample = isInWorkspace && isSampleProject(project) && can('delete', 'project', project);
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const triggerRef = { current: currentTarget };
@@ -73,6 +78,18 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
             </DropdownActionItem>
             <DropdownActionItem icon={SettingsIcon} onSelect={closeThen(() => openProjectSettingsSheet(project, triggerRef))}>
               {t('c:resource_settings', { resource: t('c:project') })}
+            </DropdownActionItem>
+          </>
+        )}
+        {canRemoveSample && (
+          <>
+            <DropdownActionSeparator />
+            <DropdownActionItem
+              icon={TrashIcon}
+              variant="destructive"
+              confirm={{ title: t('c:confirm.remove_sample'), content: <RemoveSample project={project} /> }}
+            >
+              {t('c:remove_sample')}
             </DropdownActionItem>
           </>
         )}

@@ -1,0 +1,314 @@
+{
+  "people": [
+    { "key": "lena", "id": "01a1b0ba-e200-7000-8000-5a3e1e000001", "firstName": "Lena", "lastName": "Vos" },
+    { "key": "sam", "id": "01a1b0ba-e200-7000-8000-5a3e1e000002", "firstName": "Sam", "lastName": "Okafor" },
+    { "key": "noor", "id": "01a1b0ba-e200-7000-8000-5a3e1e000003", "firstName": "Noor", "lastName": "Haddad" },
+    { "key": "tom", "id": "01a1b0ba-e200-7000-8000-5a3e1e000004", "firstName": "Tom", "lastName": "Berg" }
+  ],
+  "projects": [
+    { "key": "website", "name": "Website", "by": "lena", "age": "6w", "labels": ["design", "copy"] },
+    { "key": "mobile-app", "name": "Mobile app", "by": "lena", "age": "5w", "labels": ["auth", "ios", "android"] }
+  ],
+  "tasks": [
+    {
+      "number": 1,
+      "project": "website",
+      "name": "New homepage hero with the product video",
+      "type": "feature",
+      "status": "accepted",
+      "by": "lena",
+      "assigned": ["noor"],
+      "labels": ["design"],
+      "age": "5w",
+      "statusAge": "3d",
+      "text": ["The first screen shows the board at work. The video loops and has no sound."]
+    },
+    {
+      "number": 2,
+      "project": "website",
+      "name": "Move the blog to the new domain",
+      "type": "chore",
+      "status": "accepted",
+      "by": "sam",
+      "assigned": ["sam"],
+      "age": "5w",
+      "statusAge": "6d",
+      "todos": [
+        { "text": "Redirects from the old paths", "done": true },
+        { "text": "Update the sitemap", "done": true }
+      ]
+    },
+    {
+      "number": 3,
+      "project": "mobile-app",
+      "name": "Swipe a card to change its status",
+      "type": "feature",
+      "status": "accepted",
+      "by": "tom",
+      "assigned": ["tom"],
+      "age": "4w",
+      "statusAge": "2d",
+      "text": ["A short swipe moves the card one step. A long swipe opens the status menu."]
+    },
+    {
+      "number": 4,
+      "project": "website",
+      "name": "Signup form loses the email on back",
+      "type": "bug",
+      "status": "reviewed",
+      "by": "noor",
+      "assigned": ["sam"],
+      "age": "3w",
+      "statusAge": "1d",
+      "text": ["Going back from the password step empties the email field on Safari."]
+    },
+    {
+      "number": 5,
+      "project": "mobile-app",
+      "name": "Upgrade to the new push service",
+      "type": "chore",
+      "status": "finished",
+      "by": "tom",
+      "assigned": ["tom"],
+      "age": "4w",
+      "statusAge": "2d"
+    },
+    {
+      "number": 6,
+      "project": "website",
+      "name": "Customer logos on the pricing page",
+      "type": "feature",
+      "status": "finished",
+      "by": "lena",
+      "assigned": ["noor"],
+      "labels": ["design"],
+      "age": "3w",
+      "statusAge": "1d",
+      "text": ["Six logos in one row, grey at rest. Ask sales which customers said yes."]
+    },
+    {
+      "number": 7,
+      "project": "website",
+      "name": "Pricing table export for sales",
+      "type": "chore",
+      "status": "finished",
+      "by": "lena",
+      "age": "3w",
+      "statusAge": "3d"
+    },
+    {
+      "number": 8,
+      "project": "mobile-app",
+      "name": "Share sheet for exported files",
+      "type": "feature",
+      "status": "started",
+      "by": "tom",
+      "assigned": ["tom"],
+      "age": "3w",
+      "statusAge": "2d"
+    },
+    {
+      "number": 9,
+      "project": "mobile-app",
+      "name": "Offline mode for the task list",
+      "type": "feature",
+      "status": "reviewed",
+      "by": "lena",
+      "assigned": ["sam"],
+      "age": "4w",
+      "statusAge": "5h",
+      "text": ["The list opens without a connection and shows what changed once it is back."],
+      "todos": [
+        { "text": "Keep the last list on the device", "done": true },
+        { "text": "Queue edits while offline", "done": true },
+        { "text": "Show the sync state", "done": false }
+      ]
+    },
+    {
+      "number": 10,
+      "project": "website",
+      "name": "Case study page template",
+      "type": "feature",
+      "status": "started",
+      "by": "lena",
+      "assigned": ["noor"],
+      "labels": ["copy"],
+      "age": "2w",
+      "statusAge": "3d",
+      "text": ["One quote, three numbers and a photo. The first case study goes live with it."]
+    },
+    {
+      "number": 11,
+      "project": "mobile-app",
+      "name": "Sign in with a magic link",
+      "type": "feature",
+      "status": "started",
+      "by": "lena",
+      "assigned": ["tom"],
+      "labels": ["auth"],
+      "age": "3w",
+      "statusAge": "1d",
+      "todos": [
+        { "text": "Open the link in the app", "done": true },
+        { "text": "Fall back to the browser", "done": false }
+      ]
+    },
+    {
+      "number": 12,
+      "project": "website",
+      "name": "Compress the hero images",
+      "type": "chore",
+      "status": "finished",
+      "by": "lena",
+      "assigned": ["sam"],
+      "age": "2w",
+      "statusAge": "2h"
+    },
+    {
+      "number": 13,
+      "project": "website",
+      "name": "Footer links overlap on small phones",
+      "type": "bug",
+      "status": "unstarted",
+      "by": "noor",
+      "labels": ["design"],
+      "age": "2w"
+    },
+    {
+      "number": 14,
+      "project": "mobile-app",
+      "name": "Haptic tick when a task is accepted",
+      "type": "feature",
+      "status": "iced",
+      "by": "tom",
+      "age": "2w",
+      "statusAge": "1w",
+      "text": ["Nice to have. Parked until the new navigation ships."]
+    },
+    {
+      "number": 15,
+      "project": "website",
+      "name": "Newsletter signup in the footer",
+      "type": "feature",
+      "status": "unstarted",
+      "by": "lena",
+      "labels": ["copy"],
+      "age": "12d"
+    },
+    {
+      "number": 16,
+      "project": "mobile-app",
+      "name": "Push notification opens the wrong task",
+      "type": "bug",
+      "status": "unstarted",
+      "by": "sam",
+      "assigned": ["tom"],
+      "age": "10d",
+      "text": ["Tapping a notification while the app is closed opens the task that was open last."]
+    },
+    {
+      "number": 17,
+      "project": "mobile-app",
+      "name": "Crash reports to the team channel",
+      "type": "chore",
+      "status": "unstarted",
+      "by": "sam",
+      "age": "9d"
+    },
+    {
+      "number": 18,
+      "project": "website",
+      "name": "Dark mode for the settings page",
+      "type": "feature",
+      "status": "unstarted",
+      "by": "lena",
+      "assigned": ["noor"],
+      "labels": ["design"],
+      "age": "8d"
+    },
+    {
+      "number": 19,
+      "project": "website",
+      "name": "Typo on the pricing page",
+      "type": "bug",
+      "status": "unstarted",
+      "by": "sam",
+      "age": "7d",
+      "text": ["\"Anual\" in the yearly plan's button."]
+    },
+    {
+      "number": 20,
+      "project": "mobile-app",
+      "name": "Widget with today's tasks",
+      "type": "feature",
+      "status": "iced",
+      "by": "lena",
+      "age": "6d",
+      "statusAge": "5d"
+    },
+    {
+      "number": 21,
+      "project": "mobile-app",
+      "name": "Show the sync state in the header",
+      "type": "feature",
+      "status": "unstarted",
+      "by": "lena",
+      "age": "5d",
+      "text": ["A small dot beside the title: green when everything is saved, grey while offline."]
+    },
+    {
+      "number": 22,
+      "project": "website",
+      "name": "Cookie banner review with legal",
+      "type": "chore",
+      "status": "unstarted",
+      "by": "lena",
+      "labels": ["copy"],
+      "age": "4d"
+    },
+    {
+      "number": 23,
+      "project": "website",
+      "name": "Export tasks as CSV and PDF",
+      "type": "feature",
+      "status": "unstarted",
+      "by": "noor",
+      "age": "3d",
+      "text": ["Customers want their tasks in a spreadsheet, and on paper for the weekly meeting."],
+      "todos": [
+        { "text": "CSV download", "done": false },
+        { "text": "PDF built on the server", "done": false },
+        { "text": "Mail the file when it is ready", "done": false }
+      ]
+    },
+    {
+      "number": 24,
+      "project": "mobile-app",
+      "name": "Avatar upload fails on slow networks",
+      "type": "bug",
+      "status": "unstarted",
+      "by": "tom",
+      "labels": ["android"],
+      "age": "2d"
+    },
+    {
+      "number": 25,
+      "project": "website",
+      "name": "Changelog page",
+      "type": "feature",
+      "status": "unstarted",
+      "by": "lena",
+      "age": "1d"
+    },
+    {
+      "number": 26,
+      "project": "mobile-app",
+      "name": "Export button hides behind the keyboard",
+      "type": "bug",
+      "status": "unstarted",
+      "by": "noor",
+      "labels": ["ios"],
+      "age": "5h"
+    }
+  ]
+}

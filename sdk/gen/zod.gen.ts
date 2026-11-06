@@ -3142,6 +3142,37 @@ export const zMoveProjectToWorkspaceResponse = zProject.and(
   }),
 );
 
+export const zRemoveSamplePath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Success
+ */
+export const zRemoveSampleResponse = z.object({
+  data: z.array(z.unknown()),
+  rejectedIds: z.array(z.string()),
+  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+});
+
+export const zProvisionSamplePath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+export const zProvisionSampleQuery = z.object({
+  workspaceId: z.string().max(50).optional(),
+});
+
+/**
+ * Sample in place
+ */
+export const zProvisionSampleResponse = z.object({
+  created: z.boolean(),
+  projectIds: z.array(z.string()),
+});
+
 export const zDeleteWorkspacesBody = z.object({
   ids: z.array(z.string().max(50)).min(1).max(50),
 });

@@ -6343,6 +6343,121 @@ export type MoveProjectToWorkspaceResponses = {
 
 export type MoveProjectToWorkspaceResponse = MoveProjectToWorkspaceResponses[keyof MoveProjectToWorkspaceResponses];
 
+export type RemoveSampleData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/sample';
+};
+
+export type RemoveSampleErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden
+   */
+  403: ForbiddenError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type RemoveSampleError = RemoveSampleErrors[keyof RemoveSampleErrors];
+
+export type RemoveSampleResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: Array<unknown>;
+    /**
+     * Identifiers of items that could not be processed
+     */
+    rejectedIds: Array<string>;
+    /**
+     * Map of reason code to rejected item IDs
+     */
+    rejectionReasons?: {
+      [key: string]: Array<string>;
+    };
+  };
+};
+
+export type RemoveSampleResponse = RemoveSampleResponses[keyof RemoveSampleResponses];
+
+export type ProvisionSampleData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: {
+    /**
+     * The workspace the caller files the sample projects under; their first one when absent.
+     */
+    workspaceId?: string;
+  };
+  url: '/{tenantId}/{organizationId}/sample';
+};
+
+export type ProvisionSampleErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden
+   */
+  403: ForbiddenError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Conflict
+   */
+  409: ConflictError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type ProvisionSampleError = ProvisionSampleErrors[keyof ProvisionSampleErrors];
+
+export type ProvisionSampleResponses = {
+  /**
+   * Sample in place
+   */
+  200: {
+    /**
+     * Whether this request wrote the sample; false when the organization had it and the caller joined it.
+     */
+    created: boolean;
+    projectIds: Array<string>;
+  };
+};
+
+export type ProvisionSampleResponse = ProvisionSampleResponses[keyof ProvisionSampleResponses];
+
 export type DeleteWorkspacesData = {
   body: {
     ids: Array<string>;
