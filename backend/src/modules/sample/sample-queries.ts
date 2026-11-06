@@ -13,6 +13,15 @@ export const findSampleProjects = async (ctx: DbContext, { organizationId }: { o
     .from(projectsTable)
     .where(and(eq(projectsTable.organizationId, organizationId), inArray(projectsTable.createdBy, samplePersonIds)));
 
+/** Which of these projects the user holds a membership of. */
+export const findHeldProjectIds = async (ctx: DbContext, { userId, projectIds }: { userId: string; projectIds: string[] }) => {
+  const rows = await ctx.var.db
+    .select({ projectId: membershipsTable.channelId })
+    .from(membershipsTable)
+    .where(and(eq(membershipsTable.userId, userId), eq(membershipsTable.channelType, 'project'), inArray(membershipsTable.channelId, projectIds)));
+  return rows.map(({ projectId }) => projectId);
+};
+
 /** Removes every membership the sample people hold in the organization. */
 export const deleteSamplePersonMemberships = async (ctx: DbContext, { organizationId }: { organizationId: string }) =>
   ctx.var.db

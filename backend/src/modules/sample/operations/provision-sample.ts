@@ -4,7 +4,7 @@ import { labelSlug } from 'shared/config/labels-config';
 import { defaultOrder, orderGap } from 'shared/utils/display-order';
 import { generateId } from 'shared/utils/entity-id';
 import slugify from 'slugify';
-import type { ActorContext, UserContext } from '#/core/context';
+import type { ActorContext, OrgContext, UserContext } from '#/core/context';
 import { createServerStx } from '#/core/stx/create-server-stx';
 import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
@@ -20,7 +20,7 @@ import type { ProjectModel } from '#/modules/project/project-db';
 import { insertProjects } from '#/modules/project/project-queries';
 import { sampleDescription } from '#/modules/sample/helpers/sample-description';
 import { sampleContent, sampleMoment, samplePersonId, samplePersonIds, sampleStatus } from '#/modules/sample/sample-content';
-import { findSampleProjects, insertSamplePeople, lockOrganizationSample } from '#/modules/sample/sample-queries';
+import { findHeldProjectIds, findSampleProjects, insertSamplePeople, lockOrganizationSample } from '#/modules/sample/sample-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { insertTasks } from '#/modules/task/task-queries';
@@ -37,7 +37,7 @@ const sampleProjectSlugs = async (ctx: ActorContext, organizationSlug: string) =
 };
 
 /** Writes the sample projects with their labels and tasks, as the sample people made them, and returns the projects. */
-const createSampleProjects = async (ctx: UserContext, txCtx: ActorContext): Promise<ProjectModel[]> => {
+const createSampleProjects = async (ctx: OrgContext, txCtx: ActorContext): Promise<ProjectModel[]> => {
   const { organization } = ctx.var;
   const scope = { tenantId: organization.tenantId, organizationId: organization.id };
 
@@ -124,31 +124,29 @@ const createSampleProjects = async (ctx: UserContext, txCtx: ActorContext): Prom
 };
 
 /**
- * Gives the caller the organization's sample, creating it first when the organization has none: two projects with their
- * labels and tasks as the sample people wrote them, the sample people as members. The caller who creates it becomes its
- * admin, a later caller a member, so each member decides whether the sample is on their board. The caller's memberships
- * are filed under `workspaceId` when given, else under their first workspace.
- * @returns The sample's project ids, and `created` when this request wrote them.
+ * Gives `userId` the organization's sample, creating it first when the organization has none: two projects with their
+ * labels and tasks as the sample people wrote them, the sample people as members. Whoever creates it becomes its admin,
+ * a later member a member. Runs as `ctx`'s actor, whom the caller has allowed to create projects in the organization;
+ * a job or a seed passes an organization context of its own. Memberships go under `workspaceId` when given, else under
+ * the user's first workspace.
+ * @returns The sample's projects, and `created` when this call wrote them.
  * @throws AppError 403 `restrict_by_app` past the tenant's project, label or task quota.
  */
-export async function provisionSampleOp(ctx: UserContext, { workspaceId }: { workspaceId?: string }) {
-  const { user, organization } = ctx.var;
-  canCreateEntity(ctx, buildSubject('project', { organizationId: organization.id }));
-
-  const callerWorkspaceId = workspaceId ? await resolveProjectWorkspaceId(ctx, workspaceId) : undefined;
-  const filing = callerWorkspaceId ? { workspaceId: callerWorkspaceId } : undefined;
+export async function provisionSample(ctx: OrgContext, { userId, workspaceId }: { userId: string; workspaceId?: string }) {
+  const { organization } = ctx.var;
+  const filing = workspaceId ? { workspaceId } : undefined;
   await insertSamplePeople(ctx);
 
-  const { projects, created } = await tenantContext(ctx, async (txCtx) => {
+  return tenantContext(ctx, async (txCtx) => {
     await lockOrganizationSample(txCtx, { organizationId: organization.id });
 
     const existing = await findSampleProjects(txCtx, { organizationId: organization.id });
     if (existing.length) {
-      const held = new Set(ctx.var.memberships.flatMap((membership) => (membership.channelType === 'project' ? [membership.channelId] : [])));
+      const held = new Set(await findHeldProjectIds(txCtx, { userId, projectIds: existing.map(({ id }) => id) }));
       await insertMemberships(txCtx, {
         items: existing
           .filter((project) => !held.has(project.id))
-          .map((project) => ({ userId: user.id, createdBy: user.id, role: 'member' as const, entity: project, extraFields: filing })),
+          .map((project) => ({ userId, createdBy: userId, role: 'member' as const, entity: project, extraFields: filing })),
       });
       return { projects: existing, created: false };
     }
@@ -157,13 +155,26 @@ export async function provisionSampleOp(ctx: UserContext, { workspaceId }: { wor
     const role = hierarchy.getMostPrivilegedRole('project');
     await insertMemberships(txCtx, {
       items: projects.flatMap((project) => [
-        { userId: user.id, createdBy: user.id, role, entity: project, extraFields: filing },
+        { userId, createdBy: userId, role, entity: project, extraFields: filing },
         // No workspace: the sample people never open a menu
-        ...samplePersonIds.map((userId) => ({ userId, createdBy: user.id, role: 'member' as const, entity: project, extraFields: {} })),
+        ...samplePersonIds.map((personId) => ({ userId: personId, createdBy: userId, role: 'member' as const, entity: project, extraFields: {} })),
       ]),
     });
     return { projects, created: true };
   });
+}
+
+/**
+ * Gives the caller the organization's sample, as {@link provisionSample} does, filed under `workspaceId` when given.
+ * @returns The sample's project ids, and `created` when this request wrote them.
+ * @throws AppError 403 when the caller may not create projects in the organization, or past a quota.
+ */
+export async function provisionSampleOp(ctx: UserContext, { workspaceId }: { workspaceId?: string }) {
+  const { user, organization } = ctx.var;
+  canCreateEntity(ctx, buildSubject('project', { organizationId: organization.id }));
+
+  const callerWorkspaceId = workspaceId ? await resolveProjectWorkspaceId(ctx, workspaceId) : undefined;
+  const { projects, created } = await provisionSample(ctx, { userId: user.id, workspaceId: callerWorkspaceId });
 
   invalidateCache.user(user.id);
   log.info(created ? 'Sample created' : 'Sample joined', { organizationId: organization.id, projectIds: projects.map(({ id }) => id) });
