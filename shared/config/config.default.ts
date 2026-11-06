@@ -233,7 +233,7 @@ export const config = {
   enabledOAuthProviders: ['github'] as const,
   /** Identity federations institutions sign in through, keyed by federation (the `sso` strategy). Empty: raak has none. */
   federations: {} as Record<string, FederationConfig>,
-  tokenTypes: ['oauth-verification', 'invitation', 'confirm-mfa', 'magic', 'oauth-connect', 'step-up'] as const,
+  tokenTypes: ['oauth-verification', 'invitation', 'confirm-mfa', 'magic', 'oauth-connect', 'step-up', 'sandbox-keep'] as const,
 
   /**
    * Maximum concurrent sessions per user. On sign-in, the oldest sessions beyond the cap are

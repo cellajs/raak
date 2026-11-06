@@ -345,7 +345,7 @@ export type MeAuthData = {
     deviceType: 'desktop' | 'mobile';
     deviceOs: string | null;
     browser: string | null;
-    authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic';
+    authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox';
     connectionId: string | null;
     ipHash: string | null;
     ipSubnetHash: string | null;
@@ -714,7 +714,7 @@ export type Tenant = {
      */
     allowUnregisteredClients: boolean;
   };
-  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
+  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox'>;
   subscriptionId: string | null;
   subscriptionStatus: 'none' | 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled';
   subscriptionPlan: string | null;
@@ -1392,7 +1392,7 @@ export type GetPendingMfaResponse = GetPendingMfaResponses[keyof GetPendingMfaRe
 export type InvokeTokenData = {
   body?: never;
   path: {
-    type: 'oauth-verification' | 'invitation' | 'magic';
+    type: 'oauth-verification' | 'invitation' | 'magic' | 'sandbox-keep';
     token: string;
   };
   query?: never;
@@ -1431,7 +1431,7 @@ export type InvokeTokenError = InvokeTokenErrors[keyof InvokeTokenErrors];
 export type GetTokenDataData = {
   body?: never;
   path: {
-    type: 'oauth-verification' | 'invitation' | 'magic';
+    type: 'oauth-verification' | 'invitation' | 'magic' | 'sandbox-keep';
     id: string;
   };
   query?: never;
@@ -3538,7 +3538,7 @@ export type RevokeMySessionsResponses = {
       deviceType: 'desktop' | 'mobile';
       deviceOs: string | null;
       browser: string | null;
-      authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic';
+      authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox';
       connectionId: string | null;
       ipHash: string | null;
       ipSubnetHash: string | null;
@@ -5144,7 +5144,7 @@ export type UpdateTenantData = {
     subscriptionId?: string | null;
     subscriptionStatus?: 'none' | 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled';
     subscriptionPlan?: string | null;
-    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
+    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox'>;
     /**
      * Partial restrictions override
      */
@@ -6457,6 +6457,155 @@ export type ProvisionSampleResponses = {
 };
 
 export type ProvisionSampleResponse = ProvisionSampleResponses[keyof ProvisionSampleResponses];
+
+export type GetSandboxData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/sandbox';
+};
+
+export type GetSandboxErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized
+   */
+  401: UnauthorizedError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetSandboxError = GetSandboxErrors[keyof GetSandboxErrors];
+
+export type GetSandboxResponses = {
+  /**
+   * Sandbox
+   */
+  200: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed unless kept.
+     */
+    expiresAt: string | null;
+  };
+};
+
+export type GetSandboxResponse = GetSandboxResponses[keyof GetSandboxResponses];
+
+export type ClaimSandboxData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/sandbox';
+};
+
+export type ClaimSandboxErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Conflict
+   */
+  409: ConflictError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type ClaimSandboxError = ClaimSandboxErrors[keyof ClaimSandboxErrors];
+
+export type ClaimSandboxResponses = {
+  /**
+   * Sandbox of this browser
+   */
+  200: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed unless kept.
+     */
+    expiresAt: string | null;
+  };
+  /**
+   * Sandbox claimed
+   *
+   * The session cookie for its account is set.
+   */
+  201: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed unless kept.
+     */
+    expiresAt: string | null;
+  };
+};
+
+export type ClaimSandboxResponse = ClaimSandboxResponses[keyof ClaimSandboxResponses];
+
+export type KeepSandboxData = {
+  body: {
+    firstName: string;
+    lastName?: string;
+    email: string;
+    organizationName?: string;
+  };
+  path?: never;
+  query?: never;
+  url: '/sandbox/keep';
+};
+
+export type KeepSandboxErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized
+   */
+  401: UnauthorizedError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Payload too large
+   */
+  413: PayloadTooLargeError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type KeepSandboxError = KeepSandboxErrors[keyof KeepSandboxErrors];
+
+export type KeepSandboxResponses = {
+  /**
+   * Keep link sent
+   */
+  204: void;
+};
+
+export type KeepSandboxResponse = KeepSandboxResponses[keyof KeepSandboxResponses];
 
 export type DeleteWorkspacesData = {
   body: {

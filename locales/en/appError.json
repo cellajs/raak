@@ -7,6 +7,16 @@
   "project_not_in_workspace.text": "This project is not in one of your workspaces.",
   "project_without_primary_label": "Project has no task type",
   "project_without_primary_label.text": "Every task needs a task type, and the project has none. Add a task type to the project first.",
+  "sandbox_gone": "Sandbox no longer there",
+  "sandbox_gone.text": "This sandbox ended before its link was opened. Start a new one from the home page.",
+  "sandbox_signed_in": "You are signed in",
+  "sandbox_signed_in.text": "Your own account is signed in in this browser, so it opens no sandbox.",
+  "sandbox_unavailable": "No sandbox right now",
+  "sandbox_unavailable.text": "Every sandbox for today is taken. Try again tomorrow, or sign up.",
+  "sandbox-keep_expired": "Keep link expired",
+  "sandbox-keep_expired.text": "This link to keep your sandbox is no longer valid. Ask for a new one from the sandbox.",
+  "sandbox-keep_not_found": "Keep link not valid",
+  "sandbox-keep_not_found.text": "This link was already used or does not exist. Ask for a new one from the sandbox.",
   "workspace_in_other_organization": "Project not assigned",
   "workspace_in_other_organization.text": "A project can only go into a workspace of its own organization."
 }

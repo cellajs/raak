@@ -248,6 +248,15 @@
           "insertEntityLock": {
             "name": "Create lock",
             "description": "One create at a time for each tenant. A second one during that time gets a 409."
+          },
+          "sandboxClaimLimiter": {
+            "name": "Sandboxes claimed",
+            "description": "New sandboxes for each IP address a day. Returning to the sandbox a browser holds does not count.",
+            "policy": {
+              "mode": "success",
+              "points": 5,
+              "duration": 86400
+            }
           }
         }
       },
@@ -413,6 +422,12 @@
     {
       "name": "samples",
       "description": "Endpoints for the sample: two projects with tasks by a sample team, which an organization adds to try the product before its own work is in. The sample team are accounts nobody signs in to, shared by every organization with the sample. Removing the sample deletes its projects and takes the sample team out of the organization.",
+      "x-parent": "app",
+      "x-kind": "module"
+    },
+    {
+      "name": "sandboxes",
+      "description": "Endpoints for sandboxes: a visitor's own copy of the product to try, a provisional account with an organization holding the sample, kept in a pool so claiming one is instant. A sandbox ends after a week unless its owner keeps it by proving an inbox, which makes it an account like any other.",
       "x-parent": "app",
       "x-kind": "module"
     },
@@ -1723,7 +1738,7 @@
                 },
                 "authStrategy": {
                   "type": "string",
-                  "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
+                  "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "sandbox"]
                 },
                 "connectionId": {
                   "type": ["string", "null"],
@@ -3157,7 +3172,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
+              "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "sandbox"]
             }
           },
           "subscriptionId": {
@@ -5524,7 +5539,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["oauth-verification", "invitation", "magic"]
+              "enum": ["oauth-verification", "invitation", "magic", "sandbox-keep"]
             },
             "required": true,
             "name": "type",
@@ -5586,7 +5601,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["oauth-verification", "invitation", "magic"]
+              "enum": ["oauth-verification", "invitation", "magic", "sandbox-keep"]
             },
             "required": true,
             "name": "type",
@@ -9012,7 +9027,7 @@
                           },
                           "authStrategy": {
                             "type": "string",
-                            "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
+                            "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "sandbox"]
                           },
                           "connectionId": {
                             "type": ["string", "null"],
@@ -12118,9 +12133,9 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
+                      "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "sandbox"]
                     },
-                    "maxItems": 7
+                    "maxItems": 8
                   },
                   "restrictions": {
                     "type": "object",
@@ -15934,6 +15949,190 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/sandbox": {
+      "post": {
+        "security": [],
+        "operationId": "claimSandbox",
+        "tags": ["sandboxes", "app"],
+        "summary": "Claim a sandbox",
+        "description": "Gives this browser a sandbox, a provisional account with an organization holding the sample, and signs it in. A browser signed in to a sandbox gets that one back. Asked for when a visitor acts on the about page board.",
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["sandboxClaimLimiter"],
+        "responses": {
+          "200": {
+            "description": "Sandbox of this browser",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                    },
+                    "expiresAt": {
+                      "type": ["string", "null"],
+                      "description": "When the sandbox is removed unless kept."
+                    }
+                  },
+                  "required": ["path", "expiresAt"]
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Sandbox claimed\n\nThe session cookie for its account is set.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                    },
+                    "expiresAt": {
+                      "type": ["string", "null"],
+                      "description": "When the sandbox is removed unless kept."
+                    }
+                  },
+                  "required": ["path", "expiresAt"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      },
+      "get": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "operationId": "getSandbox",
+        "tags": ["sandboxes", "app"],
+        "summary": "Get sandbox",
+        "description": "The signed-in account's sandbox while it is one: where it opens and when it ends.",
+        "x-guard": ["userGuard"],
+        "x-rate-limiter": ["readLimiter"],
+        "responses": {
+          "200": {
+            "description": "Sandbox",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                    },
+                    "expiresAt": {
+                      "type": ["string", "null"],
+                      "description": "When the sandbox is removed unless kept."
+                    }
+                  },
+                  "required": ["path", "expiresAt"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/sandbox/keep": {
+      "post": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "operationId": "keepSandbox",
+        "tags": ["sandboxes", "app"],
+        "summary": "Keep sandbox",
+        "description": "Takes the name and organization name, and mails a link that keeps the sandbox to the address: opening it proves the inbox, publishes the organization and ends the expiry. The answer is the same whether the address has an account.",
+        "x-guard": ["userGuard"],
+        "x-rate-limiter": ["spamLimiter"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^[^\\p{Cc}<>]+$"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^[^\\p{Cc}<>]+$"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "minLength": 4,
+                    "maxLength": 255
+                  },
+                  "organizationName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^[^\\p{Cc}<>]+$"
+                  }
+                },
+                "required": ["firstName", "email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Keep link sent"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLargeError"
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequestsError"
