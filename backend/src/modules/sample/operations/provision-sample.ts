@@ -1,10 +1,11 @@
-import { nanoid } from 'nanoid';
 import { buildSubject, hierarchy } from 'shared';
 import { labelSlug } from 'shared/config/labels-config';
 import { defaultOrder, orderGap } from 'shared/utils/display-order';
 import { generateId } from 'shared/utils/entity-id';
+import { nanoid } from 'shared/utils/nanoid';
 import slugify from 'slugify';
 import type { ActorContext, OrgContext, UserContext } from '#/core/context';
+import { AppError } from '#/core/error';
 import { createServerStx } from '#/core/stx/create-server-stx';
 import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
@@ -33,7 +34,7 @@ import { log } from '#/utils/logger';
 const sampleProjectSlugs = async (ctx: ActorContext, organizationSlug: string) => {
   const bases = sampleContent.projects.map(({ name }) => slugify(`${name} ${organizationSlug}`, { lower: true, strict: true }));
   const available = await checkSlugsAvailable(ctx, bases, 'project');
-  return bases.map((base) => (available.get(base) ? base : `${base}-${nanoid(6).toLowerCase()}`));
+  return bases.map((base) => (available.get(base) ? base : `${base}-${nanoid(6)}`));
 };
 
 /** Writes the sample projects with their labels and tasks, as the sample people made them, and returns the projects. */
@@ -87,7 +88,9 @@ const createSampleProjects = async (ctx: OrgContext, txCtx: ActorContext): Promi
   const types = await findLivePrimaryLabels(txCtx, { projectIds: projects.map(({ id }) => id) });
   const typeId = (projectId: string, slug: string) => {
     const projectTypes = types.filter((type) => type.projectId === projectId).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
-    return (projectTypes.find((type) => type.slug === slug) ?? projectTypes[0]).id;
+    const type = projectTypes.find((candidate) => candidate.slug === slug) ?? projectTypes[0];
+    if (!type) throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId } });
+    return type.id;
   };
   const labelId = (projectId: string, name: string) => labels.find((label) => label.projectId === projectId && label.name === name)?.id;
 
