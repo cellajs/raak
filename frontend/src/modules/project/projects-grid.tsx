@@ -1,5 +1,8 @@
+import { BirdIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from '~/hooks/use-search-params';
+import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { SearchScope } from '~/modules/common/match-highlight/match-scope';
 import { BaseEntityGrid, ChannelTile, EntityGridBar, gridSortDefaults, gridSortOptions } from '~/modules/entities/entity-grid';
@@ -17,9 +20,12 @@ interface ProjectsGridProps {
   saveDataInSearch?: boolean;
   /** Keeps the bar up for a short list too, so the toggle stays reachable. */
   viewToggle?: ReactNode;
+  /** Offered under "No projects yet", when no search narrows the list. */
+  emptyAction?: ReactNode;
 }
 
-export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, viewToggle }: ProjectsGridProps) {
+export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, viewToggle, emptyAction }: ProjectsGridProps) {
+  const { t } = useTranslation();
   const { search: baseSearch, setSearch } = useSearchParams<ProjectGridSearch>({ saveDataInSearch, defaults: gridSortDefaults(sortOptions) });
 
   const search: ProjectSearch = { ...baseSearch, ...fixedQuery };
@@ -30,6 +36,7 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, viewTogg
   const isFiltered = !!search.q;
 
   const { rows: entities, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(queryOptions);
+  const offersEmptyAction = !!emptyAction && !isFiltered && !isFetching && !error && entities?.length === 0;
 
   return (
     <div className="flex h-full flex-col gap-2">
@@ -48,20 +55,26 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, viewTogg
         viewToggle={viewToggle}
       />
 
-      <SearchScope q={search.q}>
-        <BaseEntityGrid
-          label="c:project"
-          renderTile={(entity) => <ChannelTile entity={entity} hideOwnRole={ofAnotherUser} />}
-          entities={entities}
-          isLoading={isLoading}
-          isFetching={isFetching}
-          error={error}
-          hasNextPage={hasNextPage}
-          fetchMore={fetchMore}
-          isFiltered={isFiltered}
-          onResetFilters={() => setSearch({ q: '' })}
-        />
-      </SearchScope>
+      {offersEmptyAction ? (
+        <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:project', { count: 0 }) }}>
+          {emptyAction}
+        </ContentPlaceholder>
+      ) : (
+        <SearchScope q={search.q}>
+          <BaseEntityGrid
+            label="c:project"
+            renderTile={(entity) => <ChannelTile entity={entity} hideOwnRole={ofAnotherUser} />}
+            entities={entities}
+            isLoading={isLoading}
+            isFetching={isFetching}
+            error={error}
+            hasNextPage={hasNextPage}
+            fetchMore={fetchMore}
+            isFiltered={isFiltered}
+            onResetFilters={() => setSearch({ q: '' })}
+          />
+        </SearchScope>
+      )}
     </div>
   );
 }

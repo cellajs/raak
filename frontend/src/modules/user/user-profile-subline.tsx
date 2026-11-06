@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { GetUserResponse } from 'sdk';
 import { appConfig } from 'shared';
 import { MiddleCut } from '~/modules/common/middle-cut';
+import { SampleBadge } from '~/modules/sample/sample-badge';
+import { isSamplePerson } from '~/modules/sample/sample-content';
 
 interface UserProfileSublineProps {
   user: GetUserResponse;
@@ -15,9 +17,14 @@ export function UserProfileSubline({ user }: UserProfileSublineProps) {
   return (
     // The text column clips: pr-1 keeps it from scrolling when the link takes focus
     <div className="text-muted-foreground flex min-w-0 items-center gap-2 pr-1">
-      <a href={`mailto:${user.email}`} className="group/email focus-inset text-foreground -m-1 truncate rounded-sm p-1">
-        <MiddleCut text={user.email} className="link-decoration group-active/email:link-decoration-strong group-hover/email:underline" />
-      </a>
+      {/* fork: a person of the sample team has a placeholder address, which nothing can reach (modules/sample) */}
+      {isSamplePerson(user.id) ? (
+        <SampleBadge />
+      ) : (
+        <a href={`mailto:${user.email}`} className="group/email focus-inset text-foreground -m-1 truncate rounded-sm p-1">
+          <MiddleCut text={user.email} className="link-decoration group-active/email:link-decoration-strong group-hover/email:underline" />
+        </a>
+      )}
       {user.mfaRequired !== undefined && (
         <span className="flex shrink-0 items-center gap-2 max-sm:hidden">
           <span aria-hidden="true" className="text-faint-foreground">

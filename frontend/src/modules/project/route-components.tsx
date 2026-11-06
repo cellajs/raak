@@ -3,8 +3,10 @@ import { getRouteApi } from '@tanstack/react-router';
 import { Suspense } from 'react';
 import { Spinner } from '~/modules/common/spinner';
 import { EntityViewToggle } from '~/modules/entities/entity-grid/entity-view-toggle';
+import { useCan } from '~/modules/entities/use-can';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { projectQueryOptions } from '~/modules/project/query';
+import { AddSampleButton } from '~/modules/sample/add-sample-button';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
 import { Board } from '~/modules/task/board/lazy-board';
 import { lazyNamed } from '~/utils/lazy-named';
@@ -49,10 +51,13 @@ export function OrganizationProjectsComponent() {
   const tenantId = orgProjectsApi.useRouteContext({ select: (context) => context.tenantId });
   const view = orgProjectsApi.useSearch({ select: (search) => search.view });
   const { data } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
+  const can = useCan();
+  // The organization-wide list holds every project a member may read: empty, the organization has none
+  const emptyAction = can('create', 'project', data) && <AddSampleButton />;
   return (
     <Suspense>
       {view === 'table' ? (
-        <ProjectsTable key={data.id} organization={data} />
+        <ProjectsTable key={data.id} organization={data} emptyAction={emptyAction} />
       ) : (
         <ProjectsGrid
           key={data.id}
@@ -60,6 +65,7 @@ export function OrganizationProjectsComponent() {
           saveDataInSearch
           focusView
           viewToggle={<EntityViewToggle />}
+          emptyAction={emptyAction}
         />
       )}
     </Suspense>

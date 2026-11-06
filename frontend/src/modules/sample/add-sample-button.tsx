@@ -5,8 +5,8 @@ import { useSampleProvisionMutation } from '~/modules/sample/query';
 import { Button } from '~/modules/ui/button';
 
 interface AddSampleButtonProps {
-  /** The workspace the sample projects go into for the caller. */
-  workspaceId: string;
+  /** The workspace the sample projects go into for the caller; the server picks their first one when absent. */
+  workspaceId?: string;
 }
 
 /** Puts the sample projects on the board, for a team that has nothing to try the product on yet. */

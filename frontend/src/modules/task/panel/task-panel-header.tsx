@@ -8,6 +8,7 @@ import { EntityChip } from '~/modules/common/entity-chip';
 import { myMembershipsQueryOptions } from '~/modules/me/query';
 import { PublicBadge } from '~/modules/project/public-badge';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
+import { SampleBadge } from '~/modules/sample/sample-badge';
 import { isSampleProject } from '~/modules/sample/sample-content';
 import { NewTaskButton } from '~/modules/task/board/new-task-button';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
@@ -105,11 +106,7 @@ export function TaskPanelHeader({ project, publicView, statuses, showProject, gr
           {t('c:read_only')}
         </Badge>
       )}
-      {!isReadOnly && isInWorkspace && isSampleProject(project) && (
-        <Badge soft className="text-xs font-normal">
-          {t('c:sample')}
-        </Badge>
-      )}
+      {!isReadOnly && isInWorkspace && isSampleProject(project) && <SampleBadge />}
       {!publicView && isInWorkspace && <ProjectActionsMenu project={project} className="h-8 px-1.5" />}
       {isInWorkspace && <NewTaskButton project={project} className="-ml-1" />}
     </>
