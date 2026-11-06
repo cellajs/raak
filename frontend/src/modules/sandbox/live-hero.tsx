@@ -86,8 +86,8 @@ export function LiveHero({ scripted, className, label, caption }: LiveHeroProps)
   return (
     <>
       <div
-        role={live ? undefined : 'img'}
-        aria-label={live ? undefined : label}
+        role={live ? 'region' : 'img'}
+        aria-label={live ? t('c:your_sandbox') : label}
         className={className}
         onPointerEnter={isPhone ? undefined : () => void claim()}
       >
