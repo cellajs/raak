@@ -4,8 +4,7 @@ import { registerBenchSeed } from '../registry';
 import { CORE_ID_VARIANTS, ORG_ID, projectId, TENANT_ID, taskId, userId } from './ids';
 import { labelId } from './label-id';
 import { TOTAL_PROJECTS } from './project.bench';
-
-export const TOTAL_TASKS = 500;
+import { TOTAL_TASKS } from './task-constants';
 
 /**
  * Generate a load-test task row by index.

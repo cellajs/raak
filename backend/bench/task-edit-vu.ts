@@ -1,7 +1,7 @@
 import type { Vu } from '@cellajs/cli/bench';
 import { benchUser, ORG_PATH } from './bench-user';
 import { taskId } from './seeds/ids';
-import { TOTAL_TASKS } from './seeds/task.bench';
+import { TOTAL_TASKS } from './seeds/task-constants';
 import { allEditBuilders } from './task-edits';
 
 /** The VU of both task scenarios: `loops` edits of the user's own task, cycling through the edit types. */

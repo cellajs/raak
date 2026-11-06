@@ -3,17 +3,6 @@
     "20261104T1806-pr-title-check",
     "20261104T1950-infra-deploy-ipam-write",
     "20261105T2349-infra-cron-is-the-runner",
-    "20261106T1431-invitation-answer-route",
-    "20261106T1508-schema-buckets",
-    "20261106T1514-testbed",
-    "20261106T1515-style-gate",
-    "20261106T1516-bench-in-cli",
-    "20261106T1517-a11y-screenshots-cli",
-    "20261106T1518-a11y-ledger-move",
-    "20261106T1519-literal-typed-translations",
-    "20261106T1537-changed-fields-on-the-bus",
-    "20261106T1539-showcase-seed",
-    "20261106T1541-followed-invitation-column",
-    "20261106T1706-locale-types-untracked"
+    "20261106T1514-testbed"
   ]
 }
