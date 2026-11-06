@@ -2,9 +2,6 @@
   "pending": [
     "20261104T1806-pr-title-check",
     "20261104T1950-infra-deploy-ipam-write",
-    "20261105T2349-infra-cron-is-the-runner",
-    "20261106T0840-shots-menu-archived-fold",
-    "20261106T1046-shots-mfa-showcase",
-    "20261106T1106-unseen-from-membership"
+    "20261105T2349-infra-cron-is-the-runner"
   ]
 }
