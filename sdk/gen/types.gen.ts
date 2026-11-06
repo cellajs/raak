@@ -1392,7 +1392,7 @@ export type GetPendingMfaResponse = GetPendingMfaResponses[keyof GetPendingMfaRe
 export type InvokeTokenData = {
   body?: never;
   path: {
-    type: 'oauth-verification' | 'invitation' | 'magic' | 'sandbox-keep';
+    type: 'oauth-verification' | 'invitation' | 'magic';
     token: string;
   };
   query?: never;
@@ -1431,7 +1431,7 @@ export type InvokeTokenError = InvokeTokenErrors[keyof InvokeTokenErrors];
 export type GetTokenDataData = {
   body?: never;
   path: {
-    type: 'oauth-verification' | 'invitation' | 'magic' | 'sandbox-keep';
+    type: 'oauth-verification' | 'invitation' | 'magic';
     id: string;
   };
   query?: never;
@@ -6500,7 +6500,7 @@ export type GetSandboxResponses = {
      */
     path: string;
     /**
-     * When the sandbox is removed unless kept.
+     * When the sandbox is removed.
      */
     expiresAt: string | null;
   };
@@ -6542,9 +6542,17 @@ export type ClaimSandboxResponses = {
      */
     path: string;
     /**
-     * When the sandbox is removed unless kept.
+     * When the sandbox is removed.
      */
     expiresAt: string | null;
+    /**
+     * Whether this request took the sandbox; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
   };
   /**
    * Sandbox claimed
@@ -6557,59 +6565,21 @@ export type ClaimSandboxResponses = {
      */
     path: string;
     /**
-     * When the sandbox is removed unless kept.
+     * When the sandbox is removed.
      */
     expiresAt: string | null;
+    /**
+     * Whether this request took the sandbox; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
   };
 };
 
 export type ClaimSandboxResponse = ClaimSandboxResponses[keyof ClaimSandboxResponses];
-
-export type KeepSandboxData = {
-  body: {
-    firstName: string;
-    lastName?: string;
-    email: string;
-    organizationName?: string;
-  };
-  path?: never;
-  query?: never;
-  url: '/sandbox/keep';
-};
-
-export type KeepSandboxErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized
-   */
-  401: UnauthorizedError;
-  /**
-   * Not found
-   */
-  404: NotFoundError;
-  /**
-   * Payload too large
-   */
-  413: PayloadTooLargeError;
-  /**
-   * Too many requests
-   */
-  429: TooManyRequestsError;
-};
-
-export type KeepSandboxError = KeepSandboxErrors[keyof KeepSandboxErrors];
-
-export type KeepSandboxResponses = {
-  /**
-   * Keep link sent
-   */
-  204: void;
-};
-
-export type KeepSandboxResponse = KeepSandboxResponses[keyof KeepSandboxResponses];
 
 export type DeleteWorkspacesData = {
   body: {

@@ -1,0 +1,4 @@
+/* A sandbox shows its board alone: on a phone the floating menu would lead to the rest of the app */
+.sandbox-view #floating-nav {
+  display: none;
+}

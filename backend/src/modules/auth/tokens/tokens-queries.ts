@@ -139,8 +139,6 @@ const replacementSubjects = {
   'step-up': (token) => (token.sessionId ? eq(tokensTable.sessionId, token.sessionId) : undefined),
   // Every sign-in holds its own second-factor challenge.
   'confirm-mfa': () => undefined,
-  // fork: one keep link per sandbox account at a time (modules/sandbox)
-  'sandbox-keep': (token) => (token.userId ? eq(tokensTable.userId, token.userId) : undefined),
 } satisfies Record<TokenType, (token: ReplacingToken) => SQL | undefined>;
 
 /** The earlier tokens a new one replaces, by its type's subject. */

@@ -427,7 +427,7 @@
     },
     {
       "name": "sandboxes",
-      "description": "Endpoints for sandboxes: a visitor's own copy of the product to try, a provisional account with an organization holding the sample, kept in a pool so claiming one is instant. A sandbox ends after a week unless its owner keeps it by proving an inbox, which makes it an account like any other.",
+      "description": "Endpoints for sandboxes: a visitor's own copy of the product to try, a provisional account with an organization holding the sample, kept in a pool so claiming one is instant. A sandbox ends after a week with everything in it; it never becomes an account.",
       "x-parent": "app",
       "x-kind": "module"
     },
@@ -5539,7 +5539,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["oauth-verification", "invitation", "magic", "sandbox-keep"]
+              "enum": ["oauth-verification", "invitation", "magic"]
             },
             "required": true,
             "name": "type",
@@ -5601,7 +5601,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["oauth-verification", "invitation", "magic", "sandbox-keep"]
+              "enum": ["oauth-verification", "invitation", "magic"]
             },
             "required": true,
             "name": "type",
@@ -15986,10 +15986,21 @@
                     },
                     "expiresAt": {
                       "type": ["string", "null"],
-                      "description": "When the sandbox is removed unless kept."
+                      "description": "When the sandbox is removed."
+                    },
+                    "claimed": {
+                      "type": "boolean",
+                      "description": "Whether this request took the sandbox; false for the one this browser held already."
+                    },
+                    "foldedProjectIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The sample projects its board first opens folded."
                     }
                   },
-                  "required": ["path", "expiresAt"]
+                  "required": ["path", "expiresAt", "claimed", "foldedProjectIds"]
                 }
               }
             }
@@ -16007,10 +16018,21 @@
                     },
                     "expiresAt": {
                       "type": ["string", "null"],
-                      "description": "When the sandbox is removed unless kept."
+                      "description": "When the sandbox is removed."
+                    },
+                    "claimed": {
+                      "type": "boolean",
+                      "description": "Whether this request took the sandbox; false for the one this browser held already."
+                    },
+                    "foldedProjectIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The sample projects its board first opens folded."
                     }
                   },
-                  "required": ["path", "expiresAt"]
+                  "required": ["path", "expiresAt", "claimed", "foldedProjectIds"]
                 }
               }
             }
@@ -16052,7 +16074,7 @@
                     },
                     "expiresAt": {
                       "type": ["string", "null"],
-                      "description": "When the sandbox is removed unless kept."
+                      "description": "When the sandbox is removed."
                     }
                   },
                   "required": ["path", "expiresAt"]
@@ -16068,78 +16090,6 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      }
-    },
-    "/sandbox/keep": {
-      "post": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "keepSandbox",
-        "tags": ["sandboxes", "app"],
-        "summary": "Keep sandbox",
-        "description": "Takes the name and organization name, and mails a link that keeps the sandbox to the address: opening it proves the inbox, publishes the organization and ends the expiry. The answer is the same whether the address has an account.",
-        "x-guard": ["userGuard"],
-        "x-rate-limiter": ["spamLimiter"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "firstName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 255,
-                    "pattern": "^[^\\p{Cc}<>]+$"
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 255,
-                    "pattern": "^[^\\p{Cc}<>]+$"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "minLength": 4,
-                    "maxLength": 255
-                  },
-                  "organizationName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 255,
-                    "pattern": "^[^\\p{Cc}<>]+$"
-                  }
-                },
-                "required": ["firstName", "email"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Keep link sent"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLargeError"
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequestsError"

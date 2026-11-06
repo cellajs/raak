@@ -11,7 +11,6 @@ import { handleOAuthVerification } from '#/modules/auth/oauth/operations/handle-
 import { findSession } from '#/modules/auth/sessions/operations/resolve-session';
 import { forgetLinkRequest, invokeToken } from '#/modules/auth/tokens/token-lifecycle';
 import type { LinkTokenType } from '#/modules/auth/tokens/token-policies';
-import { openSandboxKeepLink } from '#/modules/sandbox/operations/keep-sandbox';
 import { log } from '#/utils/logger';
 
 /** Answers a click on an emailed link, from the raw value in its URL. */
@@ -47,8 +46,6 @@ const linkHandlers = {
     log.info('Token invoked, redirecting with single use token in cookie', { tokenId: token.id, userId: token.userId });
     return ctx.redirect(`${appConfig.frontendUrl}/auth/authenticate?tokenId=${token.id}`, 302);
   },
-  // fork: raak's keep link turns a sandbox into the account of the inbox it proves (modules/sandbox)
-  'sandbox-keep': (ctx, rawToken) => openSandboxKeepLink(ctx, rawToken),
 } satisfies Record<LinkTokenType, LinkHandler>;
 
 /** Opens an emailed link of `type` from the raw value in its URL, by what that type's link does. */

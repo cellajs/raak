@@ -9,7 +9,7 @@ import type { YjsMaterializerContext } from '#/modules/yjs/yjs-materializers';
 
 /**
  * What the guards give a request of `user` in `organization`, for work on the user's behalf that runs without one: the
- * pool's builds and the keep link. No system-administrator bypass.
+ * pool's builds. No system-administrator bypass.
  * @throws AppError 404 when the organization's tenant is gone.
  */
 export const memberContext = async (user: UserModel, organization: OrganizationModel): Promise<YjsMaterializerContext> => {

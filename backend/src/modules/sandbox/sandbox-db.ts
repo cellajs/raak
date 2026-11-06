@@ -5,11 +5,11 @@ import { isoTimestamp } from '#/db/utils/timestamp-columns';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { usersTable } from '#/modules/user/user-db';
 
-export const sandboxStatuses = ['ready', 'claimed', 'kept'] as const;
+export const sandboxStatuses = ['ready', 'claimed'] as const;
 
 /**
- * A sandbox: a provisional account with a tenant and a draft organization holding the sample. The pool keeps some
- * `ready`; a visitor's claim makes one `claimed` until `expiresAt`; proving an inbox makes it `kept`, an account like any.
+ * A sandbox: a throwaway account with a tenant and a draft organization holding the sample. The pool keeps some
+ * `ready`; a visitor's claim makes one `claimed` until `expiresAt`, when it is removed.
  */
 export const sandboxesTable = snakeCase.table(
   'sandboxes',

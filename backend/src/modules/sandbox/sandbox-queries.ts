@@ -1,11 +1,9 @@
-import { and, count, eq, gte, isNull, lt, ne, or, sql } from 'drizzle-orm';
+import { and, count, eq, gte, lt, ne, or, sql } from 'drizzle-orm';
 import type { DbContext } from '#/core/context';
-import { updateStamps } from '#/db/utils/stamps';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { type SandboxModel, sandboxesTable } from '#/modules/sandbox/sandbox-db';
 import { workspacesTable } from '#/modules/workspace/workspace-db';
-import { getIsoDate } from '#/utils/iso-date';
 
 export const insertSandbox = async (ctx: DbContext, { values }: { values: typeof sandboxesTable.$inferInsert }) => {
   const [sandbox] = await ctx.var.db.insert(sandboxesTable).values(values).returning();
@@ -73,9 +71,6 @@ export const countClaimsSince = async (ctx: DbContext, { since }: { since: strin
   return total;
 };
 
-export const markSandboxKept = async (ctx: DbContext, { id }: { id: string }) =>
-  ctx.var.db.update(sandboxesTable).set({ status: 'kept', expiresAt: null }).where(eq(sandboxesTable.id, id));
-
 /** Where a sandbox opens: its organization's slug and the slug of its account's workspace there. */
 export const findSandboxPlace = async (ctx: DbContext, { userId, organizationId }: { userId: string; organizationId: string }) => {
   const [place] = await ctx.var.db
@@ -89,26 +84,4 @@ export const findSandboxPlace = async (ctx: DbContext, { userId, organizationId 
     .orderBy(membershipsTable.displayOrder)
     .limit(1);
   return place;
-};
-
-export const findSandboxOrganization = async (ctx: DbContext, { id }: { id: string }) => {
-  const [organization] = await ctx.var.db.select().from(organizationsTable).where(eq(organizationsTable.id, id)).limit(1);
-  return organization;
-};
-
-export const renameSandboxOrganization = async (ctx: DbContext, { id, name, by }: { id: string; name: string; by: string }) =>
-  ctx.var.db
-    .update(organizationsTable)
-    .set({ name, shortName: name, ...updateStamps(by) })
-    .where(eq(organizationsTable.id, id));
-
-/** Publishes a sandbox's draft organization; undefined when it was published already. */
-export const publishSandboxOrganization = async (ctx: DbContext, { id, by }: { id: string; by: string }) => {
-  const at = getIsoDate();
-  const [published] = await ctx.var.db
-    .update(organizationsTable)
-    .set({ publishedAt: at, ...updateStamps(by, at) })
-    .where(and(eq(organizationsTable.id, id), isNull(organizationsTable.publishedAt)))
-    .returning();
-  return published;
 };

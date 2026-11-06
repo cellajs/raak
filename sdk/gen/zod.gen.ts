@@ -1311,12 +1311,12 @@ export const zGetPendingMfaResponse = z.object({
 });
 
 export const zInvokeTokenPath = z.object({
-  type: z.enum(['oauth-verification', 'invitation', 'magic', 'sandbox-keep']),
+  type: z.enum(['oauth-verification', 'invitation', 'magic']),
   token: z.string().max(255),
 });
 
 export const zGetTokenDataPath = z.object({
-  type: z.enum(['oauth-verification', 'invitation', 'magic', 'sandbox-keep']),
+  type: z.enum(['oauth-verification', 'invitation', 'magic']),
   id: z.string().max(50),
 });
 
@@ -3186,38 +3186,16 @@ export const zClaimSandboxResponse = z.union([
   z.object({
     path: z.string(),
     expiresAt: z.string().nullable(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
   }),
   z.object({
     path: z.string(),
     expiresAt: z.string().nullable(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
   }),
 ]);
-
-export const zKeepSandboxBody = z.object({
-  firstName: z
-    .string()
-    .min(1)
-    .max(255)
-    .regex(/^[^\p{Cc}<>]+$/u),
-  lastName: z
-    .string()
-    .min(1)
-    .max(255)
-    .regex(/^[^\p{Cc}<>]+$/u)
-    .optional(),
-  email: z.email().min(4).max(255),
-  organizationName: z
-    .string()
-    .min(1)
-    .max(255)
-    .regex(/^[^\p{Cc}<>]+$/u)
-    .optional(),
-});
-
-/**
- * Keep link sent
- */
-export const zKeepSandboxResponse = z.void();
 
 export const zDeleteWorkspacesBody = z.object({
   ids: z.array(z.string().max(50)).min(1).max(50),

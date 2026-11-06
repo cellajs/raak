@@ -5,7 +5,7 @@ import { findSandboxByUser } from '#/modules/sandbox/sandbox-queries';
 
 /**
  * The signed-in account's sandbox while it is one: where it opens and when it ends.
- * @throws AppError 404 for an account that is no sandbox, a kept one included.
+ * @throws AppError 404 for an account that is no sandbox.
  */
 export async function getSandboxOp(ctx: UserContext) {
   const sandbox = await findSandboxByUser(ctx, { userId: ctx.var.user.id });

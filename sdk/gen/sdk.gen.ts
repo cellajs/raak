@@ -292,9 +292,6 @@ import type {
   HandleMembershipInvitationResponses,
   InvokeTokenData,
   InvokeTokenErrors,
-  KeepSandboxData,
-  KeepSandboxErrors,
-  KeepSandboxResponses,
   LinkAttachmentKeysData,
   LinkAttachmentKeysErrors,
   LinkAttachmentKeysResponses,
@@ -541,7 +538,6 @@ import {
   zGetWorkspacesResponse,
   zGetYjsTokenResponse,
   zHandleMembershipInvitationResponse,
-  zKeepSandboxResponse,
   zLinkAttachmentKeysResponse,
   zMarkNotificationsReadResponse,
   zMarkSeenResponse,
@@ -3152,34 +3148,6 @@ export const claimSandbox = <ThrowOnError extends boolean = true>(
     responseStyle: 'data',
     url: '/sandbox',
     ...options,
-  });
-
-/**
- * Keep sandbox
- *
- * Takes the name and organization name, and mails a link that keeps the sandbox to the address: opening it proves the inbox, publishes the organization and ends the expiry. The answer is the same whether the address has an account.
- *
- * **POST /sandbox/keep** ·· [keepSandbox](https://www.raak.dev/docs/operations?operationTag=sandboxes#tag/sandboxes/POST/sandbox/keep) ·· _sandboxes · app_
- *
- * @param {keepSandboxData} options
- * @param {string} options.body.firstName - `string`
- * @param {string=} options.body.lastName - `string` (optional)
- * @param {string} options.body.email - `string`
- * @param {string=} options.body.organizationName - `string` (optional)
- * @returns Possible status codes: 204, 400, 401, 404, 413, 429
- */
-export const keepSandbox = <ThrowOnError extends boolean = true>(
-  options: Options<KeepSandboxData, ThrowOnError>,
-): RequestResult<KeepSandboxResponses, KeepSandboxErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).post<KeepSandboxResponses, KeepSandboxErrors, ThrowOnError, 'data'>({
-    responseValidator: async (data) => await zKeepSandboxResponse.parseAsync(data),
-    responseStyle: 'data',
-    url: '/sandbox/keep',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
   });
 
 /**

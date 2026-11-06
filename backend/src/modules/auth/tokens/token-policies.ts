@@ -45,8 +45,6 @@ export const tokenPolicies = {
   'confirm-mfa': { carrier: 'cookie', ttl: new TimeSpan(10, 'm'), sameSite: 'strict' },
   'oauth-connect': { carrier: 'cookie', ttl: new TimeSpan(10, 'm'), sameSite: 'lax' },
   'step-up': { carrier: 'code', ttl: new TimeSpan(10, 'm') },
-  // fork: raak's keep link proves the inbox a sandbox account takes as its address (modules/sandbox)
-  'sandbox-keep': { carrier: 'link', ttl: new TimeSpan(1, 'd'), singleUseWindow: new TimeSpan(5, 'm'), sameSite: 'strict' },
 } as const satisfies Record<TokenType, TokenPolicy>;
 
 type TokenTypeCarriedBy<C extends TokenPolicy['carrier']> = {

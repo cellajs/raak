@@ -19,7 +19,7 @@ const dbCtx = { var: { db: baseDb } };
 
 /**
  * Builds a ready sandbox: a provisional account under a reserved address with no email row, its own tenant with a draft
- * organization it administers (a draft holds invitations until the sandbox is kept), its workspace, and the sample.
+ * organization it administers (a draft, so its invitations never go out), its workspace, and the sample.
  * Creates no tenant notice: nobody asked for an organization yet. A failed build removes what it wrote.
  */
 export async function buildSandbox() {
