@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.3.0](https://github.com/cellajs/raak/compare/0.2.1...0.3.0) (2026-11-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* number tasks and labels per organization ([#258](https://github.com/cellajs/raak/issues/258))
+
+### 🎉 New features
+
+* **label:** labels sort by heat, a drag nudges it, picker recency store dropped ([#257](https://github.com/cellajs/raak/issues/257)) ([6eef0ce](https://github.com/cellajs/raak/commit/6eef0cefd672362bf523c92bbaf4a12dc4ad3d2d))
+* number tasks and labels per organization ([#258](https://github.com/cellajs/raak/issues/258)) ([57cd233](https://github.com/cellajs/raak/commit/57cd23375f5e51d5764baf7762d6188d95d24037))
+* **task:** panel status marks, To do / In progress / Done phone tabs, one-bar label tile ([#267](https://github.com/cellajs/raak/issues/267)) ([516fbd4](https://github.com/cellajs/raak/commit/516fbd4a2e5f06e7e7b6e6fcfa5a4924a08989eb))
+* **task:** status split button, Assigned to filter, board fit handle, load and touch fixes ([#261](https://github.com/cellajs/raak/issues/261)) ([bf960f5](https://github.com/cellajs/raak/commit/bf960f5e60863dee1158fd594696adc586e09ff4))
+* **task:** To do, In progress and Done panels, status pies, editing pill, #number copies content ([#265](https://github.com/cellajs/raak/issues/265)) ([4c29d70](https://github.com/cellajs/raak/commit/4c29d7041d3b5c315c514a390029a047b0204ae3))
+
+
+### 🔧 Small improvements
+
+* **label:** labels drop their number ([#264](https://github.com/cellajs/raak/issues/264)) ([02781b6](https://github.com/cellajs/raak/commit/02781b630b1b0f9da0287450fd31d4642bb3de5e))
+
+
+### 🧹 Chores
+
+* take the mechanism review (cella refactor/mechanism-review) ([#260](https://github.com/cellajs/raak/issues/260)) ([fcfa337](https://github.com/cellajs/raak/commit/fcfa33751a3138a9e140109d5e51f34d4c3de05a))
+* upgrade cella to v0.34.0 (3403cfe06) ([#262](https://github.com/cellajs/raak/issues/262)) ([15ae0f4](https://github.com/cellajs/raak/commit/15ae0f4c98ab48e2cd0a5bed63b74f9da208aa04))
+* upgrade cella to v0.35.0 (5996e03df) ([#263](https://github.com/cellajs/raak/issues/263)) ([5d1d337](https://github.com/cellajs/raak/commit/5d1d33726b13fc8a88d19fd99188f665d39e0c34))
+* upgrade cella to v0.36.0 (4466cb08d) ([#266](https://github.com/cellajs/raak/issues/266)) ([01c105e](https://github.com/cellajs/raak/commit/01c105e428f4708ee27962c563269a515cd81728))
+* upgrade cella to v0.36.0 (da1406530) ([#268](https://github.com/cellajs/raak/issues/268)) ([5352c67](https://github.com/cellajs/raak/commit/5352c675efb5b84a9d0a6d1e7609c9d1341ad722))
+
 ## [0.2.1](https://github.com/cellajs/raak/compare/0.2.0...0.2.1) (2026-11-03)
 
 
