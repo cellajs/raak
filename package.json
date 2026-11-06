@@ -65,8 +65,7 @@
     "a11y": "pnpm -C a11y a11y",
     "a11y:run": "pnpm -C a11y stack",
     "deps:bundle:analyze": "cross-env ANALYZE=true pnpm --filter frontend build",
-    "unused": "knip --dependencies --include files,exports,nsExports",
-    "session": "bash session.sh"
+    "unused": "knip --dependencies --include files,exports,nsExports"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.4",

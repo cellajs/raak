@@ -3,3 +3,4 @@ config:
   infra:projectId: e2e322db-51db-4141-8b2b-1602966a9ca0
   infra:bootstrapComplete: "2026-07-05T07:23:35.901Z"
   infra:iamModel: v2
+  bootstrap:legacyServers: '{"backend":["10.0.0.14"],"backend-internal":["10.0.0.14"],"yjs":["10.0.0.14"],"frontend":["10.0.0.14"]}'

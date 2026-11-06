@@ -1,7 +1,6 @@
 import { Building2Icon, FolderIcon, UsersIcon } from 'lucide-react';
 import type { GetPublicCountsResponse } from 'sdk';
 import { appConfig } from 'shared';
-import { nanoid } from 'shared/utils/nanoid';
 import type { TKey } from '~/lib/i18n-locales';
 import type { IconComponent } from '~/modules/common/icons/types';
 import type { InfoCard } from '~/modules/marketing/about/info-cards';
@@ -76,22 +75,6 @@ export const counts = [
   { id: 'organization', title: 'c:organization_other', icon: Building2Icon },
   { id: 'project', title: 'c:project_other', icon: FolderIcon },
 ] as const satisfies readonly { id: keyof GetPublicCountsResponse; title: TKey; icon: IconComponent }[];
-
-// About - Why
-
-export const whyItems = [{ id: 'simple' }, { id: 'automation' }, { id: 'instant' }];
-
-export const whyLightSlides = [
-  { id: nanoid(), url: '/static/marketing/screenshots/board.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/table.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/task.webp' },
-];
-
-export const whyDarkSlides = [
-  { id: nanoid(), url: '/static/marketing/screenshots/board-dark.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/table-dark.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/task-dark.webp' },
-];
 
 // Dedicated marketing pages
 

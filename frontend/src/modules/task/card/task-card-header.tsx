@@ -1,4 +1,5 @@
 import { useMatch } from '@tanstack/react-router';
+import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -12,6 +13,7 @@ import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-b
 import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
 import { focusItem } from '~/modules/task/helpers/focus-item';
 import { ProductRefButton } from '~/modules/task/product-ref';
+import { TaskDemoOffline } from '~/modules/task/task-demo-scope';
 import { taskCardGhostClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { useOpenUserSheet } from '~/modules/user/use-open-user-sheet';
@@ -27,7 +29,9 @@ interface TaskCardHeaderProps {
 
 export function TaskCardHeader({ task, isSheet = false, animateClose = false, showDragHandle = false }: TaskCardHeaderProps) {
   const { t } = useTranslation();
-  const isOnline = useOnlineManager();
+  const isAppOnline = useOnlineManager();
+  const isDemoOffline = useContext(TaskDemoOffline);
+  const isOnline = isAppOnline && !isDemoOffline;
   const openUserSheet = useOpenUserSheet();
   // The public layout mounts no user sheet, so the param would open nothing there
   const isPublicRoute = useMatch({
