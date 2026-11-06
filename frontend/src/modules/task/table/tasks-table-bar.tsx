@@ -6,6 +6,7 @@ import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { ViewMenu } from '~/modules/common/data-table/view-menu';
 import { DropdownToggleItem } from '~/modules/common/dropdowner/dropdown-toggle-item';
 import { FocusView } from '~/modules/common/focus-view';
+import { isFramed } from '~/modules/sandbox/sandbox-account';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
 import { ProjectHeaderToggle } from '~/modules/task/board/project-header-toggle';
@@ -94,7 +95,7 @@ export function TasksTableBar({
 
             {/* A public view has no menu to hold the toggle on a phone */}
             <DisplayOptions className={publicView ? undefined : 'max-sm:hidden'} />
-            <FocusView iconOnly />
+            {!isFramed() && <FocusView iconOnly />}
           </>
         }
       />
