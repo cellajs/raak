@@ -7,7 +7,8 @@
   ],
   "projects": [
     { "key": "website", "name": "Website", "by": "lena", "age": "6w", "labels": ["design", "copy"] },
-    { "key": "mobile-app", "name": "Mobile app", "by": "lena", "age": "5w", "labels": ["auth", "ios", "android"] }
+    { "key": "mobile-app", "name": "Mobile app", "by": "lena", "age": "5w", "labels": ["auth", "ios", "android"] },
+    { "key": "help-center", "name": "Help center", "by": "noor", "age": "3w", "labels": ["docs"], "folded": true }
   ],
   "tasks": [
     {
@@ -309,6 +310,46 @@
       "by": "noor",
       "labels": ["ios"],
       "age": "5h"
+    },
+    {
+      "number": 27,
+      "project": "help-center",
+      "name": "Getting started article",
+      "type": "feature",
+      "status": "started",
+      "by": "noor",
+      "assigned": ["noor"],
+      "labels": ["docs"],
+      "age": "9d",
+      "statusAge": "2d"
+    },
+    {
+      "number": 28,
+      "project": "help-center",
+      "name": "Screenshots for the import guide",
+      "type": "chore",
+      "status": "unstarted",
+      "by": "noor",
+      "age": "6d"
+    },
+    {
+      "number": 29,
+      "project": "help-center",
+      "name": "Search finds nothing for short words",
+      "type": "bug",
+      "status": "unstarted",
+      "by": "sam",
+      "age": "2d"
+    },
+    {
+      "number": 30,
+      "project": "help-center",
+      "name": "Contact form in the footer",
+      "type": "feature",
+      "status": "accepted",
+      "by": "noor",
+      "age": "3w",
+      "statusAge": "1w"
     }
   ]
 }

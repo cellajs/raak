@@ -8,4 +8,5 @@ export const sampleProvisionQuerySchema = z.object({
 export const sampleProvisionResponseSchema = z.object({
   created: z.boolean().describe('Whether this request wrote the sample; false when the organization had it and the caller joined it.'),
   projectIds: z.array(z.string()),
+  foldedProjectIds: z.array(z.string()).describe('The sample projects a board shows folded at first.'),
 });

@@ -20,7 +20,7 @@ import { resolveProjectWorkspaceId } from '#/modules/project/operations/project-
 import type { ProjectModel } from '#/modules/project/project-db';
 import { insertProjects } from '#/modules/project/project-queries';
 import { sampleDescription } from '#/modules/sample/helpers/sample-description';
-import { sampleContent, sampleMoment, samplePersonId, samplePersonIds, sampleStatus } from '#/modules/sample/sample-content';
+import { foldedSampleProjectIds, sampleContent, sampleMoment, samplePersonId, samplePersonIds, sampleStatus } from '#/modules/sample/sample-content';
 import { findHeldProjectIds, findSampleProjects, insertSamplePeople, lockOrganizationSample } from '#/modules/sample/sample-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import type { InsertTaskModel } from '#/modules/task/task-db';
@@ -127,7 +127,7 @@ const createSampleProjects = async (ctx: OrgContext, txCtx: ActorContext): Promi
 };
 
 /**
- * Gives `userId` the organization's sample, creating it first when the organization has none: two projects with their
+ * Gives `userId` the organization's sample, creating it first when the organization has none: projects with their
  * labels and tasks as the sample people wrote them, the sample people as members. Whoever creates it becomes its admin,
  * a later member a member. Runs as `ctx`'s actor, whom the caller has allowed to create projects in the organization;
  * a job or a seed passes an organization context of its own. Memberships go under `workspaceId` when given, else under
@@ -169,7 +169,7 @@ export async function provisionSample(ctx: OrgContext, { userId, workspaceId }: 
 
 /**
  * Gives the caller the organization's sample, as {@link provisionSample} does, filed under `workspaceId` when given.
- * @returns The sample's project ids, and `created` when this request wrote them.
+ * @returns The sample's project ids, those a board starts folded, and `created` when this request wrote them.
  * @throws AppError 403 when the caller may not create projects in the organization, or past a quota.
  */
 export async function provisionSampleOp(ctx: UserContext, { workspaceId }: { workspaceId?: string }) {
@@ -182,5 +182,5 @@ export async function provisionSampleOp(ctx: UserContext, { workspaceId }: { wor
   invalidateCache.user(user.id);
   log.info(created ? 'Sample created' : 'Sample joined', { organizationId: organization.id, projectIds: projects.map(({ id }) => id) });
 
-  return { created, projectIds: projects.map(({ id }) => id) };
+  return { created, projectIds: projects.map(({ id }) => id), foldedProjectIds: foldedSampleProjectIds(projects) };
 }

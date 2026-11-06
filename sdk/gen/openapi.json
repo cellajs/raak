@@ -412,7 +412,7 @@
     },
     {
       "name": "samples",
-      "description": "Endpoints for the sample: two projects with tasks by a sample team, which an organization adds to try the product before its own work is in. The sample team are accounts nobody signs in to, shared by every organization with the sample. Removing the sample deletes its projects and takes the sample team out of the organization.",
+      "description": "Endpoints for the sample: projects with tasks by a sample team, which an organization adds to try the product before its own work is in. The sample team are accounts nobody signs in to, shared by every organization with the sample. Removing the sample deletes its projects and takes the sample team out of the organization.",
       "x-parent": "app",
       "x-kind": "module"
     },
@@ -15778,7 +15778,7 @@
         "operationId": "provisionSample",
         "tags": ["samples", "app", "channel"],
         "summary": "Add the sample",
-        "description": "Adds the current user to the organization's sample: two projects with tasks by a sample team. The first to add it creates it and becomes its admin; every later member joins the same projects.",
+        "description": "Adds the current user to the organization's sample: projects with tasks by a sample team. The first to add it creates it and becomes its admin; every later member joins the same projects.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["insertEntityLock", "pointsLimiter"],
         "parameters": [
@@ -15829,9 +15829,16 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "foldedProjectIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The sample projects a board shows folded at first."
                     }
                   },
-                  "required": ["created", "projectIds"]
+                  "required": ["created", "projectIds", "foldedProjectIds"]
                 }
               }
             }

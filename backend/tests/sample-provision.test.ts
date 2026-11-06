@@ -11,7 +11,7 @@ import { withOrganizationDefaults } from '#/modules/organization/helpers/select'
 import type { OrganizationModel } from '#/modules/organization/organization-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { provisionSample } from '#/modules/sample/operations/provision-sample';
-import { sampleContent, samplePersonIds } from '#/modules/sample/sample-content';
+import { foldedSampleProjectIds, sampleContent, samplePersonIds } from '#/modules/sample/sample-content';
 import { tasksTable } from '#/modules/task/task-db';
 import { loadTenant } from '#/modules/tenants/load-tenant';
 import { emailsTable } from '#/modules/user/emails-db';
@@ -71,16 +71,17 @@ const firstBlockText = (description: string | null) => JSON.parse(description ??
 describe('Provisioning the sample', () => {
   afterEach(async () => await clearSecurityTestData());
 
-  it('writes two projects with tasks #1 to #26 in dataset order, by four accounts no mail reaches', async () => {
+  it('writes three projects with tasks #1 to #30 in dataset order, by four accounts no mail reaches', async () => {
     const { organization, admin } = await organizationWithMembers();
 
     const { projects, created } = await provisionAs(organization, admin.id);
 
     expect(created).toBe(true);
-    expect(projects.map(({ name }) => name).sort()).toEqual(['Mobile app', 'Website']);
+    expect(projects.map(({ name }) => name).sort()).toEqual(['Help center', 'Mobile app', 'Website']);
+    expect(foldedSampleProjectIds(projects)).toEqual(projects.filter(({ name }) => name === 'Help center').map(({ id }) => id));
 
     const tasks = await adminDb.select().from(tasksTable).where(eq(tasksTable.organizationId, organization.id)).orderBy(asc(tasksTable.number));
-    expect(tasks.map(({ number }) => number)).toEqual(Array.from({ length: 26 }, (_, index) => index + 1));
+    expect(tasks.map(({ number }) => number)).toEqual(Array.from({ length: 30 }, (_, index) => index + 1));
     expect(tasks.map(({ description }) => firstBlockText(description))).toEqual(sampleContent.tasks.map(({ name }) => name));
 
     expect(await adminDb.select({ id: usersTable.id }).from(usersTable).where(inArray(usersTable.id, samplePersonIds))).toHaveLength(4);
@@ -91,7 +92,7 @@ describe('Provisioning the sample', () => {
       .select({ workspaceId: membershipsTable.workspaceId })
       .from(membershipsTable)
       .where(and(eq(membershipsTable.userId, admin.id), eq(membershipsTable.channelType, 'project')));
-    expect(filed).toEqual([{ workspaceId: expect.any(String) }, { workspaceId: expect.any(String) }]);
+    expect(filed).toEqual(projects.map(() => ({ workspaceId: expect.any(String) })));
   });
 
   it('adds a later caller to the same projects as a member', async () => {
@@ -113,8 +114,8 @@ describe('Provisioning the sample', () => {
 
     expect(results.filter(({ created }) => created)).toHaveLength(1);
     expect(again.created).toBe(false);
-    expect(await countIn(projectsTable, organization.id)).toBe(2);
-    expect(await countIn(tasksTable, organization.id)).toBe(26);
+    expect(await countIn(projectsTable, organization.id)).toBe(sampleContent.projects.length);
+    expect(await countIn(tasksTable, organization.id)).toBe(sampleContent.tasks.length);
     expect(Object.keys(await projectRolesOf(admin.id)).sort()).toEqual(idsOf(again.projects));
     expect(Object.keys(await projectRolesOf(member.id)).sort()).toEqual(idsOf(again.projects));
   });
