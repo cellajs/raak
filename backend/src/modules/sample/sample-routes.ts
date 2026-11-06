@@ -13,7 +13,7 @@ const sampleRoutes = createXRoutes(['samples', 'app', 'channel'], {
     xRateLimiter: [insertEntityLock, bulkPointsLimiter],
     summary: 'Add the sample',
     description:
-      "Adds the current user to the organization's sample: two projects with tasks by a sample team. " +
+      "Adds the current user to the organization's sample: projects with tasks by a sample team. " +
       'The first to add it creates it and becomes its admin; every later member joins the same projects.',
     request: { params: tenantOrgParamSchema, query: sampleProvisionQuerySchema },
     responses: { 200: json('Sample in place', sampleProvisionResponseSchema) },

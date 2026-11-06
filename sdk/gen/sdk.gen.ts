@@ -3094,7 +3094,7 @@ export const removeSample = <ThrowOnError extends boolean = true>(
 /**
  * Add the sample
  *
- * Adds the current user to the organization's sample: two projects with tasks by a sample team. The first to add it creates it and becomes its admin; every later member joins the same projects.
+ * Adds the current user to the organization's sample: projects with tasks by a sample team. The first to add it creates it and becomes its admin; every later member joins the same projects.
  *
  * **POST /{tenantId}/{organizationId}/sample** ·· [provisionSample](https://www.raak.dev/docs/operations?operationTag=samples#tag/samples/POST/{tenantId}/{organizationId}/sample) ·· _samples · app · channel_
  *

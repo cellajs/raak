@@ -28,7 +28,17 @@ const sampleContentSchema = z
   .object({
     people: z.array(z.object({ key: z.string(), id: z.uuid(), firstName: z.string(), lastName: z.string() })).min(1),
     projects: z
-      .array(z.object({ key: z.string(), name: z.string(), by: z.string(), age: ageSchema, labels: z.array(z.string()).default([]) }))
+      .array(
+        z.object({
+          key: z.string(),
+          name: z.string(),
+          by: z.string(),
+          age: ageSchema,
+          labels: z.array(z.string()).default([]),
+          /** Starts folded on the board of whoever adds the sample, so it reads as one of many projects. */
+          folded: z.boolean().default(false),
+        }),
+      )
       .min(1),
     tasks: z.array(
       z.object({
@@ -73,7 +83,7 @@ const sampleContentSchema = z
 export type SampleContent = z.infer<typeof sampleContentSchema>;
 export type SampleTask = SampleContent['tasks'][number];
 
-/** The sample team, its two projects and their tasks, which every organization's sample is provisioned from. */
+/** The sample team, its projects and their tasks, which every organization's sample is provisioned from. */
 export const sampleContent: SampleContent = sampleContentSchema.parse(sampleJson);
 
 /** The accounts of the sample team: shared by every organization with the sample, never signed in, never mailed. */
@@ -91,3 +101,11 @@ export const sampleMoment = (age: string) => isoDateAgo(new TimeSpan(ageMs(age),
 
 /** The stored status of a dataset status name. */
 export const sampleStatus = (name: SampleTask['status']) => statusByName[name];
+
+/** The ids of these sample projects that start folded: matched by name and maker, so a renamed one stays open. */
+export const foldedSampleProjectIds = (projects: { id: string; name: string; createdBy: string | null }[]) => {
+  const folded = sampleContent.projects.filter((project) => project.folded);
+  return projects
+    .filter((project) => folded.some(({ name, by }) => project.name === name && project.createdBy === samplePersonId(by)))
+    .map(({ id }) => id);
+};

@@ -3171,6 +3171,7 @@ export const zProvisionSampleQuery = z.object({
 export const zProvisionSampleResponse = z.object({
   created: z.boolean(),
   projectIds: z.array(z.string()),
+  foldedProjectIds: z.array(z.string()),
 });
 
 /**

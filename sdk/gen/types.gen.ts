@@ -6453,6 +6453,10 @@ export type ProvisionSampleResponses = {
      */
     created: boolean;
     projectIds: Array<string>;
+    /**
+     * The sample projects a board shows folded at first.
+     */
+    foldedProjectIds: Array<string>;
   };
 };
 

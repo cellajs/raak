@@ -1,6 +1,7 @@
 import { SparklesIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
+import { boardStore } from '~/modules/common/board/board-store';
 import { useSampleProvisionMutation } from '~/modules/sample/query';
 import { Button } from '~/modules/ui/button';
 
@@ -16,7 +17,20 @@ export function AddSampleButton({ workspaceId }: AddSampleButtonProps) {
   const { mutate, isPending } = useSampleProvisionMutation();
 
   return (
-    <Button variant="secondary" loading={isPending} onClick={() => mutate({ path: { tenantId, organizationId }, query: { workspaceId } })}>
+    <Button
+      variant="secondary"
+      loading={isPending}
+      onClick={() =>
+        mutate(
+          { path: { tenantId, organizationId }, query: { workspaceId } },
+          {
+            onSuccess: ({ foldedProjectIds }) => {
+              for (const projectId of foldedProjectIds) boardStore.getState().setPanelCollapsed(projectId, true);
+            },
+          },
+        )
+      }
+    >
       <SparklesIcon />
       <span>{t('c:add_sample')}</span>
     </Button>
