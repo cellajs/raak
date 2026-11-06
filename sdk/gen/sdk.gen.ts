@@ -121,6 +121,7 @@ import type {
   GetApiProtectedResourceMetadataResponses,
   GetAppStreamData,
   GetAppStreamErrors,
+  GetAppStreamResponse,
   GetAppStreamResponses,
   GetAttachmentData,
   GetAttachmentErrors,
@@ -474,6 +475,7 @@ import {
   zGenerateTotpKeyResponse,
   zGetApiKeysResponse,
   zGetApiProtectedResourceMetadataResponse,
+  zGetAppStreamResponse,
   zGetAttachmentResponse,
   zGetAttachmentsResponse,
   zGetAuthHealthResponse,
@@ -1528,9 +1530,10 @@ export const checkSlug = <ThrowOnError extends boolean = true>(
  * @returns Possible status codes: 200, 400, 401, 429
  */
 export const getAppStream = <ThrowOnError extends boolean = true>(
-  options?: Options<GetAppStreamData, ThrowOnError, unknown>,
+  options?: Options<GetAppStreamData, ThrowOnError, GetAppStreamResponse>,
 ): Promise<ServerSentEventsResult<GetAppStreamResponses>> =>
   (options?.client ?? client).sse.get<GetAppStreamResponses, GetAppStreamErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zGetAppStreamResponse.parseAsync(data),
     responseStyle: 'data',
     url: '/entities/app/stream',
     ...options,
@@ -1697,6 +1700,28 @@ export const getMyInvitations = <ThrowOnError extends boolean = true>(
     responseValidator: async (data) => await zGetMyInvitationsResponse.parseAsync(data),
     responseStyle: 'data',
     url: '/me/invitations',
+    ...options,
+  });
+
+/**
+ * Respond to membership invitation
+ *
+ * Accepting makes the caller a member of the invited channel, or leaves a membership they hold as it is; rejecting declines the invitation, and its emailed link stops working. Either answer returns the invitation's organization.
+ *
+ * **POST /me/invitations/{id}/{acceptOrReject}** ·· [handleMembershipInvitation](https://www.raak.dev/docs/operations?operationTag=me#tag/me/POST/me/invitations/{id}/{acceptOrReject}) ·· _me · cella_
+ *
+ * @param {handleMembershipInvitationData} options
+ * @param {string} options.path.id - `string`
+ * @param {enum} options.path.acceptOrReject - `enum`
+ * @returns Possible status codes: 200, 400, 401, 404, 409, 429
+ */
+export const handleMembershipInvitation = <ThrowOnError extends boolean = true>(
+  options: Options<HandleMembershipInvitationData, ThrowOnError>,
+): RequestResult<HandleMembershipInvitationResponses, HandleMembershipInvitationErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<HandleMembershipInvitationResponses, HandleMembershipInvitationErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zHandleMembershipInvitationResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/me/invitations/{id}/{acceptOrReject}',
     ...options,
   });
 
@@ -3676,28 +3701,6 @@ export const updateMembership = <ThrowOnError extends boolean = true>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
-  });
-
-/**
- * Respond to membership invitation
- *
- * Accepting makes the caller a member of the invited channel, or leaves a membership they hold as it is; rejecting declines the invitation, and its emailed link stops working. Either answer returns the invitation's organization.
- *
- * **POST /{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}** ·· [handleMembershipInvitation](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/POST/{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}) ·· _memberships · cella_
- *
- * @param {handleMembershipInvitationData} options
- * @param {string} options.path.id - `string`
- * @param {enum} options.path.acceptOrReject - `enum`
- * @returns Possible status codes: 200, 400, 401, 404, 409, 429
- */
-export const handleMembershipInvitation = <ThrowOnError extends boolean = true>(
-  options: Options<HandleMembershipInvitationData, ThrowOnError>,
-): RequestResult<HandleMembershipInvitationResponses, HandleMembershipInvitationErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).post<HandleMembershipInvitationResponses, HandleMembershipInvitationErrors, ThrowOnError, 'data'>({
-    responseValidator: async (data) => await zHandleMembershipInvitationResponse.parseAsync(data),
-    responseStyle: 'data',
-    url: '/{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}',
-    ...options,
   });
 
 /**

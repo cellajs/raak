@@ -5,7 +5,7 @@ import type { ActorId } from '#/db/utils/ids';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { requestScope, requestScopeWhere } from '#/db/utils/request-scope';
 import { deleteStamps, updateStamps } from '#/db/utils/stamps';
-import { stripChangedFields } from '#/db/utils/strip-changed-fields';
+import { stxWithIds } from '#/db/utils/stx-ids';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -55,7 +55,7 @@ export const deleteTasksByIds = async (ctx: ActorContext, { ids, actorId, stx }:
   const { db } = ctx.var;
   return db
     .update(tasksTable)
-    .set({ ...deleteStamps(actorId), stx: stripChangedFields(tasksTable.stx, stx) })
+    .set({ ...deleteStamps(actorId), stx: stxWithIds(tasksTable.stx, stx) })
     .where(and(inArray(tasksTable.id, ids), requestScopeWhere(ctx, tasksTable, 'task'), isNull(tasksTable.deletedAt)))
     .returning();
 };
@@ -233,7 +233,6 @@ export const reassignTasksFromDeletedPrimaries = async (
         LIMIT 1
       )`,
       ...updateStamps(updatedBy),
-      stx: stripChangedFields(tasksTable.stx),
     })
     .where(and(inArray(tasksTable.primaryLabelId, deletedPrimaryIds), requestScopeWhere(ctx, tasksTable, 'task')));
 };
