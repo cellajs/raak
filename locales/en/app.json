@@ -11,7 +11,7 @@
   "board_view": "Board view",
   "bug": "Bug",
   "chore": "Chore",
-  "confirm.remove_sample": "Delete both sample projects with their tasks? The sample team leaves the organization too.",
+  "confirm.remove_sample": "Delete the sample projects with their tasks? The sample team leaves the organization too.",
   "continue_after_org.text": "Finished setting up your organization? Create your workspace and add projects to it.",
   "count_assigned": "{{count}} assigned",
   "create_first_label.text": "Create your first label",
