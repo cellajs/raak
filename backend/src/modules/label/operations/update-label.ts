@@ -3,10 +3,9 @@ import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
 import { updateStamps } from '#/db/utils/stamps';
-import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { normalizeLabelName } from '#/modules/label/helpers/label-name';
-import { type LabelModel, labelsTable } from '#/modules/label/label-db';
+import type { LabelModel } from '#/modules/label/label-db';
 import { type UpdateLabelValues, updateLabel } from '#/modules/label/label-queries';
 import { labelContract, type labelUpdateStxBodySchema } from '#/modules/label/label-schema';
 import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
@@ -50,10 +49,9 @@ export async function updateLabelOp(ctx: OrgContext, id: string, input: UpdateLa
     const resolved = labelContract.resolveUpdateOps(before, rawOps, stx);
 
     const values: UpdateLabelValues = {
-      ...(resolved.changed ? resolved.values : {}),
+      // A write that changes no field keeps the stored stx.
+      ...(resolved.changed ? { ...resolved.values, stx: resolved.stx } : {}),
       ...updateStamps(ctx.var.actor.id),
-      // The yjs handler and CDC read the stx as the fields this write wrote: a write that changes none drops the earlier set.
-      stx: resolved.changed ? resolved.stx : stripChangedFields(labelsTable.stx),
     };
     if (typeof values.name === 'string') values.name = normalizeLabelName(values.name, before.mode);
 
@@ -87,7 +85,11 @@ export async function updateLabelOp(ctx: OrgContext, id: string, input: UpdateLa
 
     const updatedLabel = await updateLabel(txCtx, { id, values });
     // Inside the transaction, `before`/`after` index-aligned as the mutation bus contract requires.
-    await dispatchMutation(txCtx, 'label.updated', { before: [before], after: [updatedLabel] });
+    await dispatchMutation(txCtx, 'label.updated', {
+      before: [before],
+      after: [updatedLabel],
+      ...(resolved.changed && { changedFields: [resolved.acceptedFieldNames] }),
+    });
     return updatedLabel;
   });
 }

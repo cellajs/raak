@@ -51,9 +51,6 @@ sdk/src/.spec-hash
 .pnpm-store
 .worktrees
 
-# Baselines of the Artillery-era bench; runs now keep theirs in the git directory (cella-bench/)
-bench/.baselines/
-a11y/results/
 
 # Migration scripts
 scripts/migration/
@@ -75,6 +72,8 @@ infra/Pulumi.*.exposure.yaml
 *storybook.log
 storybook-static
 .locales-cache
+# Written by frontend/vite/write-locale-types.ts on install, typecheck and every Vite start
+locales/resources.gen.d.ts
 .dev-session-cookie
 
 # GeoIP databases (downloaded at runtime, not committed)

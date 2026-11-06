@@ -13,7 +13,7 @@ import {
   maxLength,
   orderSchema,
   productListQuerySchema,
-  stxStoredSchema,
+  stxBaseSchema,
   validIdSchema,
   validUuidSchema,
 } from '#/schemas';
@@ -38,7 +38,7 @@ export const labelSchema = z
   .object({
     ...labelSelectSchema.omit({ stx: true, createdBy: true, updatedBy: true, deletedBy: true }).shape,
     mode: z.enum(labelModes),
-    stx: stxStoredSchema,
+    stx: stxBaseSchema,
   })
   .openapi('Label', {
     description: 'A label used to categorize and filter tasks within a project.',

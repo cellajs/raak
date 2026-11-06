@@ -15,7 +15,7 @@ import {
   orderSchema,
   paginationQuerySchema,
   productListQuerySchema,
-  stxStoredSchema,
+  stxBaseSchema,
   uniqueIdsSchema,
   validIdSchema,
   validUuidSchema,
@@ -38,7 +38,7 @@ export const taskSchema = z
     assignedTo: z.array(userMinimalBaseSchema),
     ...auditShape,
     ...tombstoneShape,
-    stx: stxStoredSchema,
+    stx: stxBaseSchema,
   })
   .openapi('Task', {
     description: 'A task representing a unit of work, assignable to users with status tracking and labels.',

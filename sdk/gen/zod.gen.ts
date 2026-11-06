@@ -3,157 +3,6 @@
 import * as z from 'zod';
 
 /**
- * Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone.
- */
-export const zActorRef = z.union([
-  z.object({
-    id: z.string(),
-    name: z.string(),
-    thumbnailUrl: z.string().nullable(),
-    kind: z.enum(['user']),
-    slug: z.string(),
-  }),
-  z.object({
-    id: z.string(),
-    name: z.string(),
-    thumbnailUrl: z.string().nullable(),
-    kind: z.enum(['service']),
-    slug: z.null(),
-  }),
-]);
-
-/**
- * The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.
- */
-export const zUserMinimalBase = z.object({
-  id: z.string(),
-  name: z.string(),
-  slug: z.string(),
-  thumbnailUrl: z.string().nullable(),
-  entityType: z.enum(['user']),
-});
-
-/**
- * The user fields shown to every user who shares an organization with this one: name, slug, profile images, description and email address. User lookups and member lists return it with the last-seen time added; member lists add the membership too.
- */
-export const zUserBase = z.object({
-  id: z.string(),
-  name: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string().nullable(),
-  slug: z.string(),
-  thumbnailUrl: z.string().nullable(),
-  bannerUrl: z.string().nullable(),
-  description: z.string().nullable(),
-  email: z.email(),
-  entityType: z.enum(['user']),
-});
-
-/**
- * The fields every channel entity shares, such as organization; a channel owns memberships and roles. Used where a response names a channel without its details, such as the channel an invitation is for.
- */
-export const zChannelBase = z.object({
-  id: z.string(),
-  name: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string().nullable(),
-  tenantId: z.string(),
-  entityType: z.enum(['organization', 'workspace', 'project']),
-  slug: z.string(),
-  thumbnailUrl: z.string().nullable(),
-  bannerUrl: z.string().nullable(),
-});
-
-/**
- * A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.
- */
-export const zMembershipBase = z.object({
-  id: z.uuid(),
-  tenantId: z.string().max(24),
-  channelType: z.enum(['organization', 'workspace', 'project']),
-  channelId: z.uuid(),
-  userId: z.uuid(),
-  role: z.enum(['admin', 'member', 'guest']),
-  archived: z.boolean(),
-  muted: z.boolean(),
-  displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
-  organizationId: z.uuid(),
-  workspaceId: z.uuid().nullable(),
-  projectId: z.uuid().nullable(),
-});
-
-/**
- * The sync envelope on every product write: a mutation ID, a source ID and per-field timestamps. Clients send it with each create and update; the server merges concurrent edits by its timestamps, and a client recognizes its own writes coming back by the source ID.
- */
-export const zStxBase = z.object({
-  mutationId: z.string().max(36),
-  sourceId: z.string().max(64),
-  fieldTimestamps: z.record(z.string(), z.string().max(33)),
-  replayed: z.boolean().optional(),
-});
-
-/**
- * The sync envelope as a product row stores and returns it: StxBase plus changedFields, the fields the last write changed, which the server sets and the Yjs materializer reads. A request carries StxBase only.
- */
-export const zStxStored = zStxBase.and(
-  z.object({
-    changedFields: z.array(z.string().max(64)).max(100).optional(),
-  }),
-);
-
-/**
- * A live change of product rows, naming each row with its sequence position and the write that changed it, but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
- */
-export const zStreamChange = z.object({
-  action: z.enum(['create', 'update', 'delete', 'moveOut']),
-  productType: z.enum(['task', 'label', 'attachment']),
-  organizationId: z.string(),
-  tenantId: z.string(),
-  channelId: z.string().nullable(),
-  rows: z.array(
-    z.object({
-      subjectId: z.string(),
-      seq: z.int().nullable(),
-      stx: zStxBase.nullable(),
-      actorId: z.string().nullable(),
-    }),
-  ),
-  overflow: z
-    .object({
-      afterSeq: z.int().nullable(),
-      untilSeq: z.int().nullable(),
-      subjectIds: z.array(z.string()).nullable(),
-    })
-    .nullable(),
-  spreadWindow: z.int().nullable(),
-  propagation: z
-    .object({
-      embeddedProduct: z.enum(['task', 'label', 'attachment']),
-      update: z.array(z.string()),
-      remove: z.array(z.string()),
-    })
-    .nullable(),
-});
-
-/**
- * A live message that something which is not a product row changed, such as a membership or an inbox row. It arrives as a `signal` event on `/entities/app/stream`; the handler the type registers refetches what it shows.
- */
-export const zStreamSignal = z.object({
-  type: z.string(),
-  organizationId: z.string().nullable(),
-  subjectId: z.string().nullable(),
-  version: z.int().optional(),
-});
-
-/**
- * Why the server ends an app stream. It arrives as an `error` event on `/entities/app/stream` just before the stream closes; `unauthorized` ends it for good, any other code tells the client to reconnect.
- */
-export const zStreamError = z.object({
-  code: z.enum(['unauthorized', 'session_replaced', 'access_changed', 'resync']),
-  message: z.string(),
-});
-
-/**
  * The body of every error response. `type` is a stable code to branch on, `message` is readable text, and `requestId` identifies the request in the server logs.
  */
 export const zApiError = z.object({
@@ -237,27 +86,18 @@ export const zTooManyRequestsError = zApiError.and(
 );
 
 /**
- * The sign-in entry of one institution at one organization: the federation it goes through, the institution, the organization, and whether it is active. Public by the connection's id, which is the link an institution shares.
+ * The fields every channel entity shares, such as organization; a channel owns memberships and roles. Used where a response names a channel without its details, such as the channel an invitation is for.
  */
-export const zSsoEntry = z.object({
+export const zChannelBase = z.object({
   id: z.string(),
-  status: z.enum(['pending', 'active', 'disabled']),
-  federation: z.object({
-    key: z.string(),
-    label: z.string(),
-  }),
-  institution: z.object({
-    displayName: z.string(),
-    logoUrl: z.string().nullable(),
-  }),
-  organization: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      slug: z.string(),
-      thumbnailUrl: z.string().nullable(),
-    })
-    .nullable(),
+  name: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+  tenantId: z.string(),
+  entityType: z.enum(['organization', 'workspace', 'project']),
+  slug: z.string(),
+  thumbnailUrl: z.string().nullable(),
+  bannerUrl: z.string().nullable(),
 });
 
 /**
@@ -314,6 +154,68 @@ export const zConnection = z.object({
       }),
     ])
     .nullable(),
+});
+
+/**
+ * The sync envelope on every product write: a mutation ID, a source ID and per-field timestamps. Clients send it with each create and update; the server merges concurrent edits by its timestamps, and a client recognizes its own writes coming back by the source ID.
+ */
+export const zStxBase = z.object({
+  mutationId: z.string().max(36),
+  sourceId: z.string().max(64),
+  fieldTimestamps: z.record(z.string(), z.string().max(33)),
+  replayed: z.boolean().optional(),
+});
+
+/**
+ * A live change of product rows, naming each row with its sequence position and the write that changed it, but not their content. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
+ */
+export const zStreamChange = z.object({
+  action: z.enum(['create', 'update', 'delete', 'moveOut']),
+  productType: z.enum(['task', 'label', 'attachment']),
+  organizationId: z.string(),
+  tenantId: z.string(),
+  channelId: z.string().nullable(),
+  rows: z.array(
+    z.object({
+      subjectId: z.string(),
+      seq: z.int().nullable(),
+      stx: zStxBase.nullable(),
+      actorId: z.string().nullable(),
+    }),
+  ),
+  overflow: z
+    .object({
+      afterSeq: z.int().nullable(),
+      untilSeq: z.int().nullable(),
+      subjectIds: z.array(z.string()).nullable(),
+    })
+    .nullable(),
+  spreadWindow: z.int().nullable(),
+  propagation: z
+    .object({
+      embeddedProduct: z.enum(['task', 'label', 'attachment']),
+      update: z.array(z.string()),
+      remove: z.array(z.string()),
+    })
+    .nullable(),
+});
+
+/**
+ * A live message that something which is not a product row changed, such as a membership or an inbox row. It arrives as a `signal` event on `/entities/app/stream`; the handler the type registers refetches what it shows.
+ */
+export const zStreamSignal = z.object({
+  type: z.string(),
+  organizationId: z.string().nullable(),
+  subjectId: z.string().nullable(),
+  version: z.int().optional(),
+});
+
+/**
+ * Why the server ends an app stream. It arrives as an `error` event on `/entities/app/stream` just before the stream closes; `unauthorized` ends it for good, any other code tells the client to reconnect.
+ */
+export const zStreamError = z.object({
+  code: z.enum(['unauthorized', 'session_replaced', 'access_changed', 'resync']),
+  message: z.string(),
 });
 
 /**
@@ -427,24 +329,24 @@ export const zMeAuthData = z.object({
 });
 
 /**
- * An invitation to join a channel that is not accepted yet: the invited email, the role and who invited. It becomes a membership once accepted; the signed-in user's invitations list it with the channel it is for.
+ * Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone.
  */
-export const zInactiveMembership = z.object({
-  createdAt: z.string(),
-  id: z.uuid(),
-  tenantId: z.string().max(24),
-  channelType: z.enum(['organization', 'workspace', 'project']),
-  channelId: z.uuid(),
-  email: z.string().max(255),
-  userId: z.uuid().nullable(),
-  role: z.enum(['admin', 'member', 'guest']),
-  rejectedAt: z.string().nullable(),
-  remindedAt: z.string().nullable(),
-  createdBy: zActorRef,
-  organizationId: z.uuid(),
-  workspaceId: z.uuid().nullable(),
-  projectId: z.uuid().nullable(),
-});
+export const zActorRef = z.union([
+  z.object({
+    id: z.string(),
+    name: z.string(),
+    thumbnailUrl: z.string().nullable(),
+    kind: z.enum(['user']),
+    slug: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+    name: z.string(),
+    thumbnailUrl: z.string().nullable(),
+    kind: z.enum(['service']),
+    slug: z.null(),
+  }),
+]);
 
 /**
  * Permission to upload files with one upload template, signed for the upload service, with the storage prefix the files land under. A client requests one before uploading; the template decides whether files are stored public or private.
@@ -465,16 +367,32 @@ export const zUploadToken = z.object({
 });
 
 /**
- * An app the signed-in user consented to: its OAuth client, the scopes it may use and when the consent expires. Listed under Connected apps in account settings, where the user can revoke it.
+ * A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.
  */
-export const zConnectedApp = z.object({
+export const zMembershipBase = z.object({
+  id: z.uuid(),
+  tenantId: z.string().max(24),
+  channelType: z.enum(['organization', 'workspace', 'project']),
+  channelId: z.uuid(),
+  userId: z.uuid(),
+  role: z.enum(['admin', 'member', 'guest']),
+  archived: z.boolean(),
+  muted: z.boolean(),
+  displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
+  organizationId: z.uuid(),
+  workspaceId: z.uuid().nullable(),
+  projectId: z.uuid().nullable(),
+});
+
+/**
+ * The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.
+ */
+export const zUserMinimalBase = z.object({
   id: z.string(),
-  clientId: z.string(),
-  clientName: z.string(),
-  scopes: z.array(z.string()),
-  resources: z.array(z.string()),
-  createdAt: z.string(),
-  expiresAt: z.string().nullable(),
+  name: z.string(),
+  slug: z.string(),
+  thumbnailUrl: z.string().nullable(),
+  entityType: z.enum(['user']),
 });
 
 /**
@@ -736,7 +654,7 @@ export const zTask = z.object({
     })
     .nullable(),
   assignedTo: z.array(zUserMinimalBase),
-  stx: zStxStored,
+  stx: zStxBase,
 });
 
 /**
@@ -816,6 +734,22 @@ export const zTenant = z.object({
       entityType: z.enum(['organization']),
     })
     .nullable(),
+});
+
+/**
+ * The user fields shown to every user who shares an organization with this one: name, slug, profile images, description and email address. User lookups and member lists return it with the last-seen time added; member lists add the membership too.
+ */
+export const zUserBase = z.object({
+  id: z.string(),
+  name: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+  slug: z.string(),
+  thumbnailUrl: z.string().nullable(),
+  bannerUrl: z.string().nullable(),
+  description: z.string().nullable(),
+  email: z.email(),
+  entityType: z.enum(['user']),
 });
 
 /**
@@ -1150,7 +1084,7 @@ export const zAttachment = z.object({
       }),
     ])
     .nullable(),
-  stx: zStxStored,
+  stx: zStxBase,
   description: z.string().max(1000000).nullable(),
   keywords: z.string().max(1000000),
   deletedAt: z.string().nullable(),
@@ -1215,7 +1149,7 @@ export const zLabel = z.object({
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327).nullable(),
   projectId: z.uuid(),
   organizationId: z.uuid(),
-  stx: zStxStored,
+  stx: zStxBase,
 });
 
 /**
@@ -1399,6 +1333,7 @@ export const zGetTokenDataResponse = z.object({
     .object({
       entityType: z.enum(['organization', 'workspace', 'project']),
       entityName: z.string(),
+      organizationName: z.string().optional(),
       role: z.enum(['admin', 'member', 'guest']),
       inviterName: z.string(),
     })
@@ -1611,9 +1546,28 @@ export const zGetSsoEntryPath = z.object({
 });
 
 /**
- * SSO entry
+ * The sign-in entry of one institution at one organization: the federation it goes through, the institution, the organization, and whether it is active. Public by the connection's id, which is the link an institution shares.
  */
-export const zGetSsoEntryResponse = zSsoEntry;
+export const zGetSsoEntryResponse = z.object({
+  id: z.string(),
+  status: z.enum(['pending', 'active', 'disabled']),
+  federation: z.object({
+    key: z.string(),
+    label: z.string(),
+  }),
+  institution: z.object({
+    displayName: z.string(),
+    logoUrl: z.string().nullable(),
+  }),
+  organization: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      thumbnailUrl: z.string().nullable(),
+    })
+    .nullable(),
+});
 
 export const zStartSsoPath = z.object({
   connectionId: z.string().max(50),
@@ -1811,6 +1765,13 @@ export const zCheckSlugPath = z.object({
  */
 export const zCheckSlugResponse = z.void();
 
+/**
+ * SSE stream started
+ *
+ * Each `change`, `signal` or `error` event carries one of these frames as its data.
+ */
+export const zGetAppStreamResponse = z.union([zStreamChange, zStreamSignal, zStreamError]);
+
 export const zPostAppCatchupBody = z.object({
   views: z
     .array(
@@ -1924,12 +1885,37 @@ export const zGetMyInvitationsResponse = z.object({
   items: z.array(
     z.object({
       entity: zChannelBase,
-      inactiveMembership: zInactiveMembership,
+      inactiveMembership: z.object({
+        createdAt: z.string(),
+        id: z.uuid(),
+        tenantId: z.string().max(24),
+        channelType: z.enum(['organization', 'workspace', 'project']),
+        channelId: z.uuid(),
+        email: z.string().max(255),
+        userId: z.uuid().nullable(),
+        role: z.enum(['admin', 'member', 'guest']),
+        rejectedAt: z.string().nullable(),
+        remindedAt: z.string().nullable(),
+        createdBy: zActorRef,
+        organizationId: z.uuid(),
+        workspaceId: z.uuid().nullable(),
+        projectId: z.uuid().nullable(),
+      }),
       organizationName: z.string().nullable(),
     }),
   ),
   total: z.number(),
 });
+
+export const zHandleMembershipInvitationPath = z.object({
+  id: z.string().max(50),
+  acceptOrReject: z.enum(['accept', 'reject']),
+});
+
+/**
+ * The invitation's organization
+ */
+export const zHandleMembershipInvitationResponse = zChannelBase;
 
 export const zRevokeMySessionsBody = z.object({
   ids: z.array(z.string().max(50)).min(1).max(50),
@@ -2000,7 +1986,17 @@ export const zGetMyMembershipsResponse = z.object({
  * Connected apps
  */
 export const zGetConnectedAppsResponse = z.object({
-  items: z.array(zConnectedApp),
+  items: z.array(
+    z.object({
+      id: z.string(),
+      clientId: z.string(),
+      clientName: z.string(),
+      scopes: z.array(z.string()),
+      resources: z.array(z.string()),
+      createdAt: z.string(),
+      expiresAt: z.string().nullable(),
+    }),
+  ),
 });
 
 export const zRevokeConnectedAppPath = z.object({
@@ -2053,7 +2049,13 @@ export const zGetNotificationsResponse = z.object({
       organizationId: z.uuid(),
       tenantId: z.string().max(24),
       readAt: z.string().nullable(),
-      actor: zUserMinimalBase.nullable(),
+      actor: zUserMinimalBase
+        .and(
+          z.object({
+            firstName: z.string().nullable(),
+          }),
+        )
+        .nullable(),
       channelName: z.string(),
       channelThumbnailUrl: z.string().nullable(),
       organizationName: z.string(),
@@ -3776,16 +3778,6 @@ export const zUpdateMembershipResponse = z.object({
   muted: z.boolean().optional(),
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327).optional(),
 });
-
-export const zHandleMembershipInvitationPath = z.object({
-  id: z.string().max(50),
-  acceptOrReject: z.enum(['accept', 'reject']),
-});
-
-/**
- * The invitation's organization
- */
-export const zHandleMembershipInvitationResponse = zChannelBase;
 
 export const zGetMembersPath = z.object({
   tenantId: z.string().max(50),

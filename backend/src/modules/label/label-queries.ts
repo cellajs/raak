@@ -8,7 +8,7 @@ import type { ActorId } from '#/db/utils/ids';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { requestScopeWhere } from '#/db/utils/request-scope';
 import { deleteStamps, updateStamps } from '#/db/utils/stamps';
-import { stripChangedFields } from '#/db/utils/strip-changed-fields';
+import { stxWithIds } from '#/db/utils/stx-ids';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { heatClock } from '#/modules/label/helpers/label-heat';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
@@ -73,7 +73,7 @@ export const bumpLabelHeat = async (ctx: ActorContext, bumps: Map<string, number
       .set({
         // greatest skips a null rank, and floors the exponent where power would underflow
         displayOrder: sql`ln(power(2, greatest(${labelsTable.displayOrder} - ${clock}::float8, -1000)) + ${heat}::float8 * (case when ${labelsTable.mode} = 'epic' then 2 else 1 end)) / ln(2.0) + ${clock}::float8`,
-        stx: stripChangedFields(labelsTable.stx, { mutationId, sourceId }),
+        stx: stxWithIds(labelsTable.stx, { mutationId, sourceId }),
       })
       .where(
         and(eq(labelsTable.id, id), ne(labelsTable.mode, 'primary'), isNull(labelsTable.deletedAt), requestScopeWhere(ctx, labelsTable, 'label')),
@@ -93,7 +93,7 @@ export const deleteLabelsByIds = async (ctx: ActorContext, { ids, actorId, stx }
   const { db } = ctx.var;
   return db
     .update(labelsTable)
-    .set({ ...deleteStamps(actorId), stx: stripChangedFields(labelsTable.stx, stx) })
+    .set({ ...deleteStamps(actorId), stx: stxWithIds(labelsTable.stx, stx) })
     .where(and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)))
     .returning();
 };
@@ -181,8 +181,7 @@ interface PropagateSetupConfigLabelsOpts {
 /**
  * Propagate edited setupConfig entries onto still-tracked primary rows across all of the
  * organization's projects, matched by slug. Unlinked rows (organizationTracked=false) and
- * per-project displayOrder are left alone. Server-origin write, so the stored stx drops its
- * changedFields. Runs inside a tenant context. The organization update route has no orgGuard,
+ * per-project displayOrder are left alone. Runs inside a tenant context. The organization update route has no orgGuard,
  * so the scope is the organization id passed in.
  */
 export const propagateSetupConfigLabels = async (
@@ -193,7 +192,7 @@ export const propagateSetupConfigLabels = async (
   for (const entry of entries) {
     await db
       .update(labelsTable)
-      .set({ name: entry.name, color: entry.color, icon: entry.icon, ...updateStamps(updatedBy), stx: stripChangedFields(labelsTable.stx) })
+      .set({ name: entry.name, color: entry.color, icon: entry.icon, ...updateStamps(updatedBy) })
       .where(
         and(
           eq(labelsTable.organizationId, organizationId),

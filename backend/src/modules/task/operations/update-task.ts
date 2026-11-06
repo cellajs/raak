@@ -112,7 +112,11 @@ export async function updateTaskOp(
     }
 
     const updatedTaskRecord = await updateTask(txCtx, { id, values: updateValues });
-    await dispatchMutation(txCtx, 'task.updated', { before: [entity], after: [updatedTaskRecord] });
+    await dispatchMutation(txCtx, 'task.updated', {
+      before: [entity],
+      after: [updatedTaskRecord],
+      changedFields: [resolved.acceptedFieldNames],
+    });
 
     // The lite response serves the client's optimistic cache; a move rewrites relations server-side, so it hydrates them
     if (!fullResponse && !isProjectMove) return hydrateTaskLite(updatedTaskRecord, user);

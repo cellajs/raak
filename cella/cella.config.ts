@@ -31,6 +31,7 @@ export default defineConfig({
       'frontend/public/static/common',
       'frontend/src/modules/common/morph-animation',
       'frontend/src/routes/routeTree.gen.ts',
+      'locales/resources.gen.d.ts',
       'frontend/src/routes/_public/_marketing',
       'frontend/src/routes/_public/_marketing.tsx',
       '.github/release-please-manifest.json',
@@ -48,7 +49,7 @@ export default defineConfig({
       'locales/nl/about.json',
       'locales/en/appError.json',
       'locales/nl/appError.json',
-      'json/accessibility-conformance.json',
+      'cella/a11y-ledger.json',
     ],
     // Paths pinned to the app: the app copy always wins, upstream hunks never merge in. Adopt them by hand
     // from the analyze list ("protected but behind upstream").
@@ -62,13 +63,12 @@ export default defineConfig({
       'backend/src/schemas/app-schemas.ts',
       'frontend/src/routes-config.tsx',
       'frontend/src/alert-config.tsx',
-      'cella/skills/screenshots/shots-config.mjs',
       'frontend/src/entity-sync-queries.ts',
       'frontend/src/styling/gradients.css',
-      'a11y/scope-config.ts',
-      'bench/src/seeds/attachment-home.ts',
+      'backend/bench/seeds/attachment-home.ts',
       'backend/src/mocks/app-product-mocks.ts',
       'frontend/src/query/extra-local-user-stores.ts',
+      'json/showcase.json',
     ],
   },
 });

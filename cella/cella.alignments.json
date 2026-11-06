@@ -2,6 +2,7 @@
   "pending": [
     "20261104T1806-pr-title-check",
     "20261104T1950-infra-deploy-ipam-write",
-    "20261105T2349-infra-cron-is-the-runner"
+    "20261105T2349-infra-cron-is-the-runner",
+    "20261106T1514-testbed"
   ]
 }
