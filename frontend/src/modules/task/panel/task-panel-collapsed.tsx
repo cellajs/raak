@@ -26,14 +26,5 @@ export function TaskPanelCollapsed({ panelId, project, group, counts, windowScro
   const sections = [...section('accepted', 'top'), ...section('iced', 'bottom')];
   const name = projectPanelName(project, group);
 
-  return (
-    <CollapsedPanelStrip
-      panelId={panelId}
-      name={name}
-      title={group && name}
-      mainCount={collapsedMainCount(counts)}
-      sections={sections}
-      windowScroll={windowScroll}
-    />
-  );
+  return <CollapsedPanelStrip panelId={panelId} name={name} mainCount={collapsedMainCount(counts)} sections={sections} windowScroll={windowScroll} />;
 }

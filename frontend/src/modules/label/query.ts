@@ -6,7 +6,6 @@ import {
   deleteLabels,
   type GetLabelsData,
   getLabel,
-  getLabelOlderAcceptedCounts,
   getLabels,
   type Label,
   type UpdateLabelData,
@@ -17,7 +16,6 @@ import { appConfig } from 'shared';
 import { labelName } from 'shared/config/labels-config';
 import { registerDescriptionColumns } from '~/modules/common/blocknote/yjs-owned-fields';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheRemove, cacheUpdate, cancelKeepingMark, removeDetailQueriesById, writeKeepingMark } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
@@ -102,22 +100,6 @@ export const labelsCanonicalOptions = ({ organizationId, tenantId, projectId }: 
     }),
     { organizationId, tenantId, channelId: projectId },
   );
-};
-
-/** Per label, the project's tasks accepted before the board's cut-off: what the board list leaves out of a label's status counts. */
-export const labelOlderAcceptedCountsOptions = ({
-  organizationId,
-  tenantId,
-  projectId,
-}: {
-  organizationId: string;
-  tenantId: string;
-  projectId: string;
-}) => {
-  return queryOptions({
-    queryKey: ['label', 'older-accepted-counts', organizationId, projectId],
-    queryFn: () => getLabelOlderAcceptedCounts({ path: { organizationId, tenantId }, query: { projectId, acceptedCutOff: boardAcceptedCutOffDays } }),
-  });
 };
 
 const createLabelMutationFn = async ({ tenantId, organizationId, data, stx }: CreateLabelFullVars) => {

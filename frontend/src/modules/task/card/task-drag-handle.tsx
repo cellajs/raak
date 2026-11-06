@@ -14,7 +14,8 @@ import { tw } from '~/utils/tw';
 
 // Grid fr tracks animate both sizes, so it slides in above the type button or beside it. Folded beside it on a phone,
 // a margin would still pull the type button left.
-const foldClass = tw(
+/** Folds a keyboard-only grip away until it has focus; its inner wrapper needs `min-h-0 min-w-0 overflow-clip`. */
+export const gripFoldClass = tw(
   'grid shrink-0 grid-cols-[0fr] grid-rows-[0fr] opacity-0 transition-[grid-template-columns,grid-template-rows,opacity] duration-200 ease-out data-open:-ml-0.5 data-open:grid-cols-[1fr] data-open:grid-rows-[1fr] data-open:opacity-100 motion-reduce:transition-none',
 );
 
@@ -60,7 +61,7 @@ export function TaskDragHandle({ task }: TaskDragHandleProps) {
   if (index === -1) return null;
 
   return (
-    <div data-open={hasFocus || undefined} className={foldClass} onFocus={() => setHasFocus(true)} onBlur={handleBlur}>
+    <div data-open={hasFocus || undefined} className={gripFoldClass} onFocus={() => setHasFocus(true)} onBlur={handleBlur}>
       {/* overflow-clip is no scroll container, so focusing the folded button does not scroll it */}
       <div className="min-h-0 min-w-0 overflow-clip">
         <ReorderHandle

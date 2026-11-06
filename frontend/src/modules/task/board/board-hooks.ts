@@ -8,7 +8,14 @@ import { boardStore, useBoardStore } from '~/modules/common/board/board-store';
 import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
 import { LABELS_PANEL_ID } from '~/modules/label/types';
 import type { ProjectWithMembership } from '~/modules/project/types';
-import { normalizePanelWidths, prepareBoardPanels, projectPanelName, sortByMembership, statusTabLists } from '~/modules/task/helpers/board-helpers';
+import {
+  findProjectPageGroup,
+  normalizePanelWidths,
+  prepareBoardPanels,
+  projectPageGroups,
+  projectPanelName,
+  sortByMembership,
+} from '~/modules/task/helpers/board-helpers';
 import { isBoardSearchActive } from '~/modules/task/helpers/search-filter';
 import { useBoardSearch } from '~/modules/task/hooks/use-board-search';
 import type { BoardResizablePanel } from '~/modules/task/types';
@@ -160,11 +167,11 @@ export function useTabProject(projects: ProjectWithMembership[]) {
   return sorted.find((project) => project.slug === projectSlug) ?? sorted[0];
 }
 
-/** The statuses a mobile project board's open tab lists; undefined for all of them, as with a search active. */
-export function useStatusTabList() {
-  const statusTab = useSearch({ strict: false, select: (search) => search.statusTab });
+/** A phone project page's open tab, To do while none is chosen; none while a search lists every status. */
+export function useProjectPageTab() {
+  const panelTab = useSearch({ strict: false, select: (search) => search.panelTab });
   const isSearching = isBoardSearchActive(useBoardSearch());
-  return statusTab && !isSearching ? statusTabLists.get(statusTab) : undefined;
+  return isSearching ? undefined : (findProjectPageGroup(panelTab) ?? projectPageGroups[0]);
 }
 
 /** Whether the board shows the getting-started panel: in a workspace, until its welcome text has been seen. */

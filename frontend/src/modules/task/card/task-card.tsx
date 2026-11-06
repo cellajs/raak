@@ -180,6 +180,7 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
   // On a touch screen the current card is just the last one tapped: it keeps its role, not the look of one in hand
   const showsCurrent = isCurrent && !isTouchInteraction();
   const dropIndicatorEdge = mobileClosestEdge ?? closestEdge ?? landingEdge;
+  const isDraggable = !isSheet && !isReadOnly && effectiveState === 'collapsed';
 
   return (
     <>
@@ -200,12 +201,14 @@ export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, st
         // Ahead of the guest alert's close button above it. An editable sheet card's editor takes focus itself.
         data-autofocus={(isSheet && isReadOnly) || undefined}
         data-match-current={isCurrent || undefined}
-        draggable={!isSheet && !isReadOnly && effectiveState === 'collapsed'}
+        draggable={isDraggable}
         tabIndex={isSheet || isFocused ? 0 : -1}
         ref={taskRef}
         className={cn(
           'group/task relative rounded-none border-0 border-b bg-transparent bg-linear-to-br from-transparent via-transparent via-58% py-0 focus-visible:outline-hidden sm:py-0',
           isDragging && 'opacity-30',
+          // A drag takes the press, and the click opens the editor without a caret at its point: no text cursor promises either
+          isDraggable && 'cursor-default',
           // Hover, current and an open card take the card fill, the only change on unstarted cards, which have no gradient.
           // An open card keeps it, so it stands out among the closed ones.
           showsCurrent && 'is-focused bg-card',

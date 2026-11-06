@@ -21,3 +21,22 @@ export const toggleLabelFilter = (slug: string) => {
     search: (prev) => ({ ...prev, labels: toggleFilterValue(boardFilterList.parse(prev.labels), slug) }),
   });
 };
+
+/** A label tile's status segment: puts the label and the status in the board search, or takes the status out when both are in. */
+export const toggleLabelStatusFilter = (slug: string, status: string) => {
+  getRouter().navigate({
+    to: '.',
+    replace: true,
+    resetScroll: false,
+    search: (prev) => {
+      const labels = boardFilterList.parse(prev.labels);
+      const statuses = boardFilterList.parse(prev.status);
+      if (labels.includes(slug) && statuses.includes(status)) return { ...prev, status: statuses.filter((other) => other !== status) };
+      return {
+        ...prev,
+        labels: labels.includes(slug) ? labels : [...labels, slug],
+        status: statuses.includes(status) ? statuses : [...statuses, status],
+      };
+    },
+  });
+};
