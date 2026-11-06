@@ -1,5 +1,5 @@
 import { PlusIcon } from 'lucide-react';
-import { memo, useRef } from 'react';
+import { memo, useContext, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { BoardPanelContent } from '~/modules/common/board/board-layout';
@@ -16,6 +16,7 @@ import { openCreateTaskDialog } from '~/modules/task/mobile-create-task-dialog';
 import { TaskPanelCollapsed } from '~/modules/task/panel/task-panel-collapsed';
 import { TaskPanelContent } from '~/modules/task/panel/task-panel-content';
 import { TaskPanelHeader } from '~/modules/task/panel/task-panel-header';
+import { TaskDemoScope } from '~/modules/task/task-demo-scope';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { ProjectPageGroup, Task, TaskCounts } from '~/modules/task/types';
 import { WorkspaceArrivalBalloon } from '~/modules/workspace/workspace-arrival-balloon';
@@ -30,6 +31,8 @@ export interface BoardPanelProps {
   panelId: string;
   /** The statuses it lists; all of them when absent. */
   statuses?: TaskStatus[];
+  /** Names the project in the panel header, for a board of several projects outside a workspace. */
+  showProject?: boolean;
   group?: ProjectPageGroup;
   windowScroll?: boolean;
 }
@@ -41,6 +44,7 @@ export const BoardPanel = memo(function BoardPanel({
   publicView,
   panelId,
   statuses,
+  showProject,
   group,
   windowScroll,
 }: BoardPanelProps) {
@@ -48,6 +52,7 @@ export const BoardPanel = memo(function BoardPanel({
   const isMobile = useBreakpointBelow('sm');
   const search = useBoardSearch();
   const isReadOnly = useIsProjectReadOnly(project.id);
+  const isDemo = useContext(TaskDemoScope);
 
   const { expandIced, expandAccepted } = useProjectPanelPrefs(project.id);
   const isCollapsed = useBoardStore((state) => !!state.panelCollapseState[panelId]);
@@ -93,7 +98,7 @@ export const BoardPanel = memo(function BoardPanel({
       {isMobile ? (
         <div ref={panelRef} data-highlighted={highlightProject || undefined} className="group/paneldrop flex h-full flex-col">
           <TaskPanelContent project={project} panelId={panelId} emptyTitle={emptyTitle} tasks={tasks} counts={counts} />
-          {!isReadOnly && (
+          {!isReadOnly && !isDemo && (
             <FloatingAction
               icon={PlusIcon}
               label={t('c:create_resource', { resource: t('c:task') })}
@@ -111,6 +116,7 @@ export const BoardPanel = memo(function BoardPanel({
             project={project}
             publicView={publicView}
             statuses={statuses}
+            showProject={showProject}
             group={group}
             panelId={panelId}
             windowScroll={windowScroll}

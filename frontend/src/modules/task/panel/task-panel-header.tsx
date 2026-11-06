@@ -20,10 +20,11 @@ import { cn } from '~/utils/cn';
 
 interface PanelLeadingProps extends Pick<BoardPanelProps, 'project' | 'statuses' | 'group'> {
   isInWorkspace: boolean;
+  showProject: boolean;
   isCollapsed: boolean;
 }
 
-function PanelLeading({ project, statuses, group, isInWorkspace, isCollapsed }: PanelLeadingProps) {
+function PanelLeading({ project, statuses, group, isInWorkspace, showProject, isCollapsed }: PanelLeadingProps) {
   const { t } = useTranslation();
   // Off outside a workspace: a public board may have no session to ask with
   const { data: role } = useQuery({
@@ -32,7 +33,7 @@ function PanelLeading({ project, statuses, group, isInWorkspace, isCollapsed }: 
     select: (data) => findMembership(data.items, project.id)?.role,
   });
 
-  if (isInWorkspace) {
+  if (showProject) {
     return (
       <PanelDragHandleButton
         name={project.name}
@@ -82,16 +83,16 @@ function PanelLeading({ project, statuses, group, isInWorkspace, isCollapsed }: 
   );
 }
 
-interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses' | 'group' | 'windowScroll'> {
+interface TaskPanelHeaderProps extends Pick<BoardPanelProps, 'project' | 'publicView' | 'statuses' | 'showProject' | 'group' | 'windowScroll'> {
   panelId: string;
 }
 
 /** A project's panel header. */
-export function TaskPanelHeader({ project, publicView, statuses, group, panelId, windowScroll }: TaskPanelHeaderProps) {
+export function TaskPanelHeader({ project, publicView, statuses, showProject, group, panelId, windowScroll }: TaskPanelHeaderProps) {
   const { t } = useTranslation();
 
-  // A project page panel is named by its group; a panel without one is a workspace board's project
-  const isInWorkspace = !group;
+  // A project page panel is named by its group; a panel without one is a workspace board's project, unless it names its project outside a workspace
+  const isInWorkspace = !group && !showProject;
 
   const isCollapsed = useBoardStore((state) => !!state.panelCollapseState[panelId]);
   const isReadOnly = useIsProjectReadOnly(project.id);
@@ -111,7 +112,16 @@ export function TaskPanelHeader({ project, publicView, statuses, group, panelId,
   return (
     <BoardPanelHeader
       className={cn('bg-card', windowScroll && 'sticky top-0')}
-      leading={<PanelLeading project={project} statuses={statuses} group={group} isInWorkspace={isInWorkspace} isCollapsed={isCollapsed} />}
+      leading={
+        <PanelLeading
+          project={project}
+          statuses={statuses}
+          group={group}
+          isInWorkspace={isInWorkspace}
+          showProject={isInWorkspace || !!showProject}
+          isCollapsed={isCollapsed}
+        />
+      }
       actions={actionsSlot}
       isCollapsed={isCollapsed}
     />

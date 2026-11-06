@@ -1,7 +1,6 @@
-import { Building2Icon, FolderIcon, UsersIcon } from 'lucide-react';
+import { ArrowRightIcon, Building2Icon, FolderIcon, SearchIcon, UsersIcon, ZapIcon } from 'lucide-react';
 import type { GetPublicCountsResponse } from 'sdk';
 import { appConfig } from 'shared';
-import { nanoid } from 'shared/utils/nanoid';
 import type { TKey } from '~/lib/i18n-locales';
 import type { IconComponent } from '~/modules/common/icons/types';
 import type { InfoCard } from '~/modules/marketing/about/info-cards';
@@ -77,20 +76,12 @@ export const counts = [
   { id: 'project', title: 'c:project_other', icon: FolderIcon },
 ] as const satisfies readonly { id: keyof GetPublicCountsResponse; title: TKey; icon: IconComponent }[];
 
-// About - Why
+// About - Highlights
 
-export const whyItems = [{ id: 'simple' }, { id: 'automation' }, { id: 'instant' }];
-
-export const whyLightSlides = [
-  { id: nanoid(), url: '/static/marketing/screenshots/board.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/table.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/task.webp' },
-];
-
-export const whyDarkSlides = [
-  { id: nanoid(), url: '/static/marketing/screenshots/board-dark.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/table-dark.webp' },
-  { id: nanoid(), url: '/static/marketing/screenshots/task-dark.webp' },
+export const highlightItems = [
+  { id: 'search', icon: SearchIcon, className: 'bg-green-500/10 text-green-700 dark:text-green-400' },
+  { id: 'next-step', icon: ArrowRightIcon, className: 'bg-orange-500/10 text-orange-700 dark:text-orange-400' },
+  { id: 'instant', icon: ZapIcon, className: 'bg-sky-500/10 text-sky-700 dark:text-sky-400' },
 ];
 
 // Dedicated marketing pages

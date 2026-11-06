@@ -1,26 +1,15 @@
-import { ArrowDownIcon, CheckIcon } from 'lucide-react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { scrollToSectionById } from '~/hooks/scroll-spy-store';
-import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollSpy } from '~/hooks/use-scroll-spy';
+import { AboutDemo } from '~/modules/marketing/about/about-demo';
 // import { FAQ } from '~/modules/marketing/about/faq';
 import { Hero } from '~/modules/marketing/about/hero';
+import { Highlights } from '~/modules/marketing/about/highlights';
 import { AboutSection } from '~/modules/marketing/about/section';
-import { Why } from '~/modules/marketing/about/why';
 import { MarketingFooter } from '~/modules/marketing/footer';
 import { MarketingNav } from '~/modules/marketing/nav';
-import { WaitlistForm } from '~/modules/requests/waitlist-form';
-import { Button } from '~/modules/ui/button';
 
 const aboutSectionIds = ['welcome', 'product'] as const;
 
 export function AboutPage() {
-  const { t } = useTranslation();
-  const isMobile = useBreakpointBelow('sm', false);
-
-  const [joinedToWaitlist, setJoinedToWaitlist] = useState(false);
-
   useScrollSpy(aboutSectionIds);
 
   return (
@@ -28,30 +17,11 @@ export function AboutPage() {
       <MarketingNav />
 
       <main className="focus:outline-hidden">
-        <Hero title="about:title_1" text={isMobile ? undefined : 'about:text_1'}>
-          {joinedToWaitlist ? (
-            <span className="border-success ring-primary/5 flex items-center justify-between gap-2 rounded-full border-2 px-4 py-3.5 ring-4">
-              <CheckIcon className="text-success size-8" />
-              <span className="p-2">{t('c:in_waitlist')}</span>
-            </span>
-          ) : (
-            <WaitlistForm
-              className="[&>button]:ring-primary/10 md:flex-row [&>button]:h-14 [&>button]:rounded-full [&>button]:ring-4 md:[&>button]:max-w-40"
-              inputClassName="xs:min-w-80 w-full py-6 h-14 px-8 rounded-full border border-gray-400/40 bg-background/50 text-base/6 ring-4 ring-primary/10 transition focus:border-gray-400 focus:outline-hidden focus-visible:ring-primary/20"
-              buttonContent={t('c:waitlist_request')}
-              callback={() => setJoinedToWaitlist(true)}
-            />
-          )}
-
-          <Button variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8 max-sm:hidden">
-            <span>{t('about:why')}</span>
-            <ArrowDownIcon className="repeat-5 animate-bounce motion-reduce:animate-none" />
-          </Button>
-        </Hero>
+        <Hero title="about:title_1" text="about:tagline" demo={<AboutDemo />} />
 
         <div className="my-12">
           <AboutSection sectionId="product" title="about:title_2" text="about:text_2">
-            <Why />
+            <Highlights />
           </AboutSection>
 
           {/* <AboutSection sectionId="faqs" title="about:title_7" alternate>
