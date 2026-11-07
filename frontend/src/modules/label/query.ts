@@ -6,6 +6,7 @@ import {
   deleteLabels,
   type GetLabelsData,
   getLabel,
+  getLabelOlderAcceptedCounts,
   getLabels,
   type Label,
   type UpdateLabelData,
@@ -25,6 +26,7 @@ import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
 import { liveItems } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
+import { isQueryData } from '~/query/basic/mutate-query';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
 import { syncedListOptions } from '~/query/basic/synced-list-options';
 import type { CreateVariables, DeleteVariables, UpdateVariables } from '~/query/offline/mutation-variables';
@@ -82,6 +84,12 @@ const patchCachedLabel = (queryClient: QueryClient, organizationId: string, row:
 
 export const findLabelInCache = createCacheFinder<Label>('label');
 
+/** The slugs of a project's labels in the cache; none until its list has loaded. */
+export const cachedLabelSlugs = (organizationId: string, projectId: string): string[] => {
+  const data = queryClient.getQueryData(keys.list.home(organizationId, projectId));
+  return isQueryData<Label>(data) ? data.items.map(({ slug }) => slug) : [];
+};
+
 /**
  * One flat list per project (labels are project-homed): the canonical home list live sync splices into.
  * Org and workspace views aggregate these per-project lists client-side.
@@ -101,6 +109,27 @@ export const labelsCanonicalOptions = ({ organizationId, tenantId, projectId }: 
     { organizationId, tenantId, channelId: projectId },
   );
 };
+
+/**
+ * Label id → how many of a project's tasks were accepted before `acceptedCutOff` days ago: the done tasks a board list leaves out.
+ * Those tasks are old, so a count goes stale only when one is reopened; a few minutes' staleness is fine.
+ */
+export const labelOlderAcceptedCountsOptions = ({
+  organizationId,
+  tenantId,
+  projectId,
+  acceptedCutOff,
+}: {
+  organizationId: string;
+  tenantId: string;
+  projectId: string;
+  acceptedCutOff: number;
+}) =>
+  queryOptions({
+    queryKey: ['label', 'older-accepted-counts', organizationId, projectId, acceptedCutOff] as const,
+    queryFn: () => getLabelOlderAcceptedCounts({ path: { organizationId, tenantId }, query: { projectId, acceptedCutOff } }),
+    staleTime: 5 * 60 * 1000,
+  });
 
 const createLabelMutationFn = async ({ tenantId, organizationId, data, stx }: CreateLabelFullVars) => {
   const result = await createLabels({ body: data.map((row) => ({ ...row, stx })), path: { organizationId, tenantId } });
