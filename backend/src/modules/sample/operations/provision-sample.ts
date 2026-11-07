@@ -20,7 +20,15 @@ import { resolveProjectWorkspaceId } from '#/modules/project/operations/project-
 import type { ProjectModel } from '#/modules/project/project-db';
 import { insertProjects } from '#/modules/project/project-queries';
 import { sampleDescription } from '#/modules/sample/helpers/sample-description';
-import { foldedSampleProjectIds, sampleContent, sampleMoment, samplePersonId, samplePersonIds, sampleStatus } from '#/modules/sample/sample-content';
+import {
+  foldedSampleProjectIds,
+  sampleContent,
+  sampleMoment,
+  samplePersonId,
+  samplePersonIds,
+  sampleProjectId,
+  sampleStatus,
+} from '#/modules/sample/sample-content';
 import { findHeldProjectIds, findSampleProjects, insertSamplePeople, lockOrganizationSample } from '#/modules/sample/sample-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import type { InsertTaskModel } from '#/modules/task/task-db';
@@ -49,6 +57,7 @@ const createSampleProjects = async (ctx: OrgContext, txCtx: ActorContext): Promi
   const projects = await insertProjects(txCtx, {
     projects: sampleContent.projects.map((project, index) => ({
       ...scope,
+      id: sampleProjectId(project.color),
       entityType: 'project' as const,
       name: project.name,
       slug: slugs[index],

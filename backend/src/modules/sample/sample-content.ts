@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { generateId } from 'shared/utils/entity-id';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { isoDateAgo } from '#/utils/iso-date';
 import { TimeSpan } from '#/utils/time-span';
@@ -37,6 +38,8 @@ const sampleContentSchema = z
           labels: z.array(z.string()).default([]),
           /** Starts folded on the board of whoever adds the sample, so it reads as one of many projects. */
           folded: z.boolean().default(false),
+          /** Its avatar's color, an index into `appConfig.placeholderColors`, the same in every organization. */
+          color: z.number().int().min(0).max(9).optional(),
         }),
       )
       .min(1),
@@ -101,6 +104,15 @@ export const sampleMoment = (age: string) => isoDateAgo(new TimeSpan(ageMs(age),
 
 /** The stored status of a dataset status name. */
 export const sampleStatus = (name: SampleTask['status']) => statusByName[name];
+
+/**
+ * A new id for a sample project whose last character is its `color`: the avatar's placeholder color is read from it, so
+ * the projects look as the about page's picture shows them. The character is one of the id's random ones.
+ */
+export const sampleProjectId = (color: number | undefined) => {
+  const id = generateId();
+  return color === undefined ? id : `${id.slice(0, -1)}${color}`;
+};
 
 /** The ids of these sample projects that start folded: matched by name and maker, so a renamed one stays open. */
 export const foldedSampleProjectIds = (projects: { id: string; name: string; createdBy: string | null }[]) => {
