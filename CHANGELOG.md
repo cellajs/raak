@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.2](https://github.com/cellajs/raak/compare/0.3.1...0.3.2) (2026-11-07)
+
+
+### 🎉 New features
+
+* **label:** epic tiles with progress, project picking and older done tasks on the board ([#277](https://github.com/cellajs/raak/issues/277)) ([690a049](https://github.com/cellajs/raak/commit/690a0492b3145b37d8c76f59f62b10db2cdabcbf)), closes [#2753](https://github.com/cellajs/raak/issues/2753)
+* Preview/about demo board ([#271](https://github.com/cellajs/raak/issues/271)) ([3bdc362](https://github.com/cellajs/raak/commit/3bdc3626bec8f1dea1b646aa2842d8de0f2e6a4d))
+* **sample:** sample projects an organization adds to try raak ([#274](https://github.com/cellajs/raak/issues/274)) ([7303cd0](https://github.com/cellajs/raak/commit/7303cd0a2121d8e854fdb8ad6fcf7078b86ad6c4))
+
+
+### 🧹 Chores
+
+* upgrade cella to v0.37.0 (e3806114e) ([#273](https://github.com/cellajs/raak/issues/273)) ([9b5074f](https://github.com/cellajs/raak/commit/9b5074f4c5967d887c254da4cb4ab91d4ca07304))
+
 ## [0.3.1](https://github.com/cellajs/raak/compare/0.3.0...0.3.1) (2026-11-06)
 
 
