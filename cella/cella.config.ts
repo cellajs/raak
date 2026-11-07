@@ -69,6 +69,7 @@ export default defineConfig({
       'backend/src/mocks/app-product-mocks.ts',
       'frontend/src/query/extra-local-user-stores.ts',
       'json/showcase.json',
+      'backend/scripts/seeds/showcase.app.ts',
     ],
   },
 });

@@ -52,6 +52,12 @@ const tidyBoard = async (page: Page) => {
     await explainer.first().waitFor({ state: 'detached' });
   }
   await hideDevUi(page);
+  // The shots show the team's own board; the sample's Sample mark, true of the seeded data, would tell a reader otherwise
+  await page.evaluate(() => {
+    for (const badge of document.querySelectorAll<HTMLElement>('[data-slot="badge"]')) {
+      if (badge.textContent === 'Sample') badge.style.display = 'none';
+    }
+  });
   // The rail's unread counts arrive late on a seeded database, and differ between the runs of a light and dark pair
   await page.addStyleTag({ content: '[data-sidebar="menu-button"] span.rounded-full.font-bold { visibility: hidden; }' });
 };
