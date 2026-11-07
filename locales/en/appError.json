@@ -7,6 +7,14 @@
   "project_not_in_workspace.text": "This project is not in one of your workspaces.",
   "project_without_primary_label": "Project has no task type",
   "project_without_primary_label.text": "Every task needs a task type, and the project has none. Add a task type to the project first.",
+  "sandbox_ended": "This demo board has ended",
+  "sandbox_ended.text": "Demo boards are cleared after two days, with everything in them.",
+  "sandbox_full": "This demo board is full",
+  "sandbox_full.text": "Five people are in it already, as many as a demo board takes.",
+  "sandbox_signed_in": "You are signed in",
+  "sandbox_signed_in.text": "Your own account is signed in in this browser, so it opens no demo board.",
+  "sandbox_unavailable": "No demo board right now",
+  "sandbox_unavailable.text": "Every demo board for today is taken. Try again tomorrow, or sign up.",
   "workspace_in_other_organization": "Project not assigned",
   "workspace_in_other_organization.text": "A project can only go into a workspace of its own organization."
 }

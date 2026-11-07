@@ -18,6 +18,9 @@ import type {
   CheckSlugData,
   CheckSlugErrors,
   CheckSlugResponses,
+  ClaimSandboxData,
+  ClaimSandboxErrors,
+  ClaimSandboxResponses,
   ConfirmInvitationAddressData,
   ConfirmInvitationAddressErrors,
   ConfirmInvitationAddressResponses,
@@ -216,6 +219,12 @@ import type {
   GetRequestsData,
   GetRequestsErrors,
   GetRequestsResponses,
+  GetSandboxData,
+  GetSandboxErrors,
+  GetSandboxInviteData,
+  GetSandboxInviteErrors,
+  GetSandboxInviteResponses,
+  GetSandboxResponses,
   GetServiceAccountsData,
   GetServiceAccountsErrors,
   GetServiceAccountsResponses,
@@ -286,6 +295,9 @@ import type {
   HandleMembershipInvitationResponses,
   InvokeTokenData,
   InvokeTokenErrors,
+  JoinSandboxData,
+  JoinSandboxErrors,
+  JoinSandboxResponses,
   LinkAttachmentKeysData,
   LinkAttachmentKeysErrors,
   LinkAttachmentKeysResponses,
@@ -449,6 +461,7 @@ import {
   zCheckEmailResponse,
   zCheckMembershipInviteResponse,
   zCheckSlugResponse,
+  zClaimSandboxResponse,
   zConfirmInvitationAddressResponse,
   zCreateApiKeyResponse,
   zCreateAttachmentsResponse,
@@ -513,6 +526,8 @@ import {
   zGetPublicTasksResponse,
   zGetPushVapidResponse,
   zGetRequestsResponse,
+  zGetSandboxInviteResponse,
+  zGetSandboxResponse,
   zGetServiceAccountsResponse,
   zGetSsoEntryResponse,
   zGetStepUpPasskeyChallengeResponse,
@@ -530,6 +545,7 @@ import {
   zGetWorkspacesResponse,
   zGetYjsTokenResponse,
   zHandleMembershipInvitationResponse,
+  zJoinSandboxResponse,
   zLinkAttachmentKeysResponse,
   zMarkNotificationsReadResponse,
   zMarkSeenResponse,
@@ -3100,6 +3116,93 @@ export const provisionSample = <ThrowOnError extends boolean = true>(
     responseStyle: 'data',
     url: '/{tenantId}/{organizationId}/sample',
     ...options,
+  });
+
+/**
+ * Get sandbox
+ *
+ * The signed-in account's sandbox while it is one: where it opens and when it ends.
+ *
+ * **GET /sandbox** ·· [getSandbox](https://www.raak.dev/docs/operations?operationTag=sandboxes#tag/sandboxes/GET/sandbox) ·· _sandboxes · app_
+ *
+ * @param {getSandboxData} options
+ * @returns Possible status codes: 200, 400, 401, 404, 429
+ */
+export const getSandbox = <ThrowOnError extends boolean = true>(
+  options?: Options<GetSandboxData, ThrowOnError>,
+): RequestResult<GetSandboxResponses, GetSandboxErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetSandboxResponses, GetSandboxErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zGetSandboxResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/sandbox',
+    ...options,
+  });
+
+/**
+ * Claim a sandbox
+ *
+ * Gives this browser a sandbox, a provisional account with an organization holding the sample, and signs it in. A browser signed in to a sandbox gets that one back. Asked for when a visitor acts on the about page board.
+ *
+ * **POST /sandbox** ·· [claimSandbox](https://www.raak.dev/docs/operations?operationTag=sandboxes#tag/sandboxes/POST/sandbox) ·· _sandboxes · app_
+ *
+ * @param {claimSandboxData} options
+ * @returns Possible status codes: 200, 201, 400, 409, 429
+ */
+export const claimSandbox = <ThrowOnError extends boolean = true>(
+  options?: Options<ClaimSandboxData, ThrowOnError>,
+): RequestResult<ClaimSandboxResponses, ClaimSandboxErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).post<ClaimSandboxResponses, ClaimSandboxErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zClaimSandboxResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/sandbox',
+    ...options,
+  });
+
+/**
+ * Get sandbox invite
+ *
+ * Who is in the sandbox a share link leads to, when it ends, and whether this browser can join it.
+ *
+ * **GET /sandbox/join/{shareCode}** ·· [getSandboxInvite](https://www.raak.dev/docs/operations?operationTag=sandboxes#tag/sandboxes/GET/sandbox/join/{shareCode}) ·· _sandboxes · app_
+ *
+ * @param {getSandboxInviteData} options
+ * @param {string} options.path.shareCode - `string`
+ * @returns Possible status codes: 200, 400, 404, 429
+ */
+export const getSandboxInvite = <ThrowOnError extends boolean = true>(
+  options: Options<GetSandboxInviteData, ThrowOnError>,
+): RequestResult<GetSandboxInviteResponses, GetSandboxInviteErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetSandboxInviteResponses, GetSandboxInviteErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zGetSandboxInviteResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/sandbox/join/{shareCode}',
+    ...options,
+  });
+
+/**
+ * Join a sandbox
+ *
+ * Lets this browser into the sandbox of a share link, on a sandbox account of its own under the given first name, and signs it in. A browser in that sandbox already gets it back.
+ *
+ * **POST /sandbox/join/{shareCode}** ·· [joinSandbox](https://www.raak.dev/docs/operations?operationTag=sandboxes#tag/sandboxes/POST/sandbox/join/{shareCode}) ·· _sandboxes · app_
+ *
+ * @param {joinSandboxData} options
+ * @param {string} options.path.shareCode - `string`
+ * @param {string} options.body.firstName - `string`
+ * @returns Possible status codes: 200, 201, 400, 404, 409, 413, 429
+ */
+export const joinSandbox = <ThrowOnError extends boolean = true>(
+  options: Options<JoinSandboxData, ThrowOnError>,
+): RequestResult<JoinSandboxResponses, JoinSandboxErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<JoinSandboxResponses, JoinSandboxErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zJoinSandboxResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/sandbox/join/{shareCode}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**

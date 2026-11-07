@@ -297,7 +297,7 @@ export const zMeAuthData = z.object({
       deviceType: z.enum(['desktop', 'mobile']),
       deviceOs: z.string().max(255).nullable(),
       browser: z.string().max(255).nullable(),
-      authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']),
+      authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic', 'sandbox']),
       connectionId: z.uuid().nullable(),
       ipHash: z.string().max(64).nullable(),
       ipSubnetHash: z.string().max(64).nullable(),
@@ -683,7 +683,7 @@ export const zTenant = z.object({
     }),
     allowUnregisteredClients: z.boolean(),
   }),
-  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])),
+  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic', 'sandbox'])),
   subscriptionId: z.string().max(255).nullable(),
   subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']),
   subscriptionPlan: z.string().max(255).nullable(),
@@ -1934,7 +1934,7 @@ export const zRevokeMySessionsResponse = z.object({
       deviceType: z.enum(['desktop', 'mobile']),
       deviceOs: z.string().max(255).nullable(),
       browser: z.string().max(255).nullable(),
-      authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']),
+      authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic', 'sandbox']),
       connectionId: z.uuid().nullable(),
       ipHash: z.string().max(64).nullable(),
       ipSubnetHash: z.string().max(64).nullable(),
@@ -2453,8 +2453,8 @@ export const zUpdateTenantBody = z.object({
   subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']).optional(),
   subscriptionPlan: z.string().max(255).nullish(),
   authStrategies: z
-    .array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']))
-    .max(7)
+    .array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic', 'sandbox']))
+    .max(8)
     .optional(),
   restrictions: z
     .object({
@@ -3173,6 +3173,75 @@ export const zProvisionSampleResponse = z.object({
   projectIds: z.array(z.string()),
   foldedProjectIds: z.array(z.string()),
 });
+
+/**
+ * Sandbox
+ */
+export const zGetSandboxResponse = z.object({
+  path: z.string(),
+  expiresAt: z.string(),
+  shareCode: z.string(),
+});
+
+export const zClaimSandboxResponse = z.union([
+  z.object({
+    path: z.string(),
+    expiresAt: z.string(),
+    shareCode: z.string(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
+  }),
+  z.object({
+    path: z.string(),
+    expiresAt: z.string(),
+    shareCode: z.string(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
+  }),
+]);
+
+export const zGetSandboxInvitePath = z.object({
+  shareCode: z.string().max(16),
+});
+
+/**
+ * Sandbox invite
+ */
+export const zGetSandboxInviteResponse = z.object({
+  people: z.array(z.string()),
+  expiresAt: z.string(),
+  full: z.boolean(),
+  joined: z.boolean(),
+});
+
+export const zJoinSandboxBody = z.object({
+  firstName: z
+    .string()
+    .min(1)
+    .max(255)
+    .regex(/^[^\p{Cc}<>]+$/u),
+});
+
+export const zJoinSandboxPath = z.object({
+  shareCode: z.string().max(16),
+});
+
+export const zJoinSandboxResponse = z.union([
+  z.object({
+    path: z.string(),
+    expiresAt: z.string(),
+    shareCode: z.string(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
+  }),
+  z.object({
+    path: z.string(),
+    expiresAt: z.string(),
+    shareCode: z.string(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
+  }),
+]);
 
 export const zDeleteWorkspacesBody = z.object({
   ids: z.array(z.string().max(50)).min(1).max(50),

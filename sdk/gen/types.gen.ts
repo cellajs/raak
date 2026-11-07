@@ -345,7 +345,7 @@ export type MeAuthData = {
     deviceType: 'desktop' | 'mobile';
     deviceOs: string | null;
     browser: string | null;
-    authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic';
+    authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox';
     connectionId: string | null;
     ipHash: string | null;
     ipSubnetHash: string | null;
@@ -714,7 +714,7 @@ export type Tenant = {
      */
     allowUnregisteredClients: boolean;
   };
-  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
+  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox'>;
   subscriptionId: string | null;
   subscriptionStatus: 'none' | 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled';
   subscriptionPlan: string | null;
@@ -3538,7 +3538,7 @@ export type RevokeMySessionsResponses = {
       deviceType: 'desktop' | 'mobile';
       deviceOs: string | null;
       browser: string | null;
-      authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic';
+      authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox';
       connectionId: string | null;
       ipHash: string | null;
       ipSubnetHash: string | null;
@@ -5144,7 +5144,7 @@ export type UpdateTenantData = {
     subscriptionId?: string | null;
     subscriptionStatus?: 'none' | 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled';
     subscriptionPlan?: string | null;
-    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
+    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox'>;
     /**
      * Partial restrictions override
      */
@@ -6461,6 +6461,282 @@ export type ProvisionSampleResponses = {
 };
 
 export type ProvisionSampleResponse = ProvisionSampleResponses[keyof ProvisionSampleResponses];
+
+export type GetSandboxData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/sandbox';
+};
+
+export type GetSandboxErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized
+   */
+  401: UnauthorizedError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetSandboxError = GetSandboxErrors[keyof GetSandboxErrors];
+
+export type GetSandboxResponses = {
+  /**
+   * Sandbox
+   */
+  200: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+  };
+};
+
+export type GetSandboxResponse = GetSandboxResponses[keyof GetSandboxResponses];
+
+export type ClaimSandboxData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/sandbox';
+};
+
+export type ClaimSandboxErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Conflict
+   */
+  409: ConflictError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type ClaimSandboxError = ClaimSandboxErrors[keyof ClaimSandboxErrors];
+
+export type ClaimSandboxResponses = {
+  /**
+   * Sandbox of this browser
+   */
+  200: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+  /**
+   * Sandbox claimed
+   *
+   * The session cookie for its account is set.
+   */
+  201: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+};
+
+export type ClaimSandboxResponse = ClaimSandboxResponses[keyof ClaimSandboxResponses];
+
+export type GetSandboxInviteData = {
+  body?: never;
+  path: {
+    shareCode: string;
+  };
+  query?: never;
+  url: '/sandbox/join/{shareCode}';
+};
+
+export type GetSandboxInviteErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetSandboxInviteError = GetSandboxInviteErrors[keyof GetSandboxInviteErrors];
+
+export type GetSandboxInviteResponses = {
+  /**
+   * Sandbox invite
+   */
+  200: {
+    /**
+     * The first names of the people in the sandbox, its taker first; a guest without one is left out.
+     */
+    people: Array<string>;
+    /**
+     * When the sandbox is removed.
+     */
+    expiresAt: string;
+    /**
+     * Whether it holds as many people as a sandbox takes.
+     */
+    full: boolean;
+    /**
+     * Whether this browser is in it already.
+     */
+    joined: boolean;
+  };
+};
+
+export type GetSandboxInviteResponse = GetSandboxInviteResponses[keyof GetSandboxInviteResponses];
+
+export type JoinSandboxData = {
+  body: {
+    firstName: string;
+  };
+  path: {
+    shareCode: string;
+  };
+  query?: never;
+  url: '/sandbox/join/{shareCode}';
+};
+
+export type JoinSandboxErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Conflict
+   */
+  409: ConflictError;
+  /**
+   * Payload too large
+   */
+  413: PayloadTooLargeError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type JoinSandboxError = JoinSandboxErrors[keyof JoinSandboxErrors];
+
+export type JoinSandboxResponses = {
+  /**
+   * Sandbox of this browser
+   */
+  200: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+  /**
+   * Sandbox joined
+   *
+   * The session cookie for the new account is set.
+   */
+  201: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+};
+
+export type JoinSandboxResponse = JoinSandboxResponses[keyof JoinSandboxResponses];
 
 export type DeleteWorkspacesData = {
   body: {

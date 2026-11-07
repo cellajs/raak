@@ -9,6 +9,8 @@ const builtInLabels = {
   microsoft: 'Microsoft',
   magic: 'Magic link',
   email: 'Email',
+  // fork: raak's sandbox sessions (modules/sandbox)
+  sandbox: 'Sandbox',
 };
 
 const federationLabels = Object.fromEntries(Object.entries(appConfig.federations).map(([key, federation]) => [key, federation.label]));

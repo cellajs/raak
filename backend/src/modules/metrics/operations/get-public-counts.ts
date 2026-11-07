@@ -3,6 +3,8 @@ import type { DbContext } from '#/core/context';
 import { TTLCache } from '#/lib/ttl-cache';
 import { countEntityRows } from '#/modules/metrics/metrics-queries';
 import { type publicCountsSchema, publicCountTypes } from '#/modules/metrics/metrics-schema';
+// fork: raak's demo boards are not customers, so their rows leave the counts (modules/sandbox)
+import { countSandboxRows } from '#/modules/sandbox/sandbox-queries';
 import { log } from '#/utils/logger';
 import { TimeSpan } from '#/utils/time-span';
 
@@ -17,7 +19,7 @@ export async function getPublicCountsOp(ctx: DbContext) {
       publicCountTypes.map(async (entityType) => {
         try {
           const total = await countEntityRows(ctx, { entityType });
-          return [entityType, total];
+          return [entityType, total - (await countSandboxRows(ctx, { entityType }))];
         } catch (err) {
           // A failed count reports 0 so the other counts still return
           log.warn('Public count failed', { entityType, err });
