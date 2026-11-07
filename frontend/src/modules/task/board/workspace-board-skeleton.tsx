@@ -34,7 +34,7 @@ export function WorkspaceBoardSkeleton({ workspace, withHeader = true }: Workspa
     return (
       <>
         {withHeader && <BoardHeaderSkeleton isInWorkspace />}
-        <BoardEmpty />
+        <BoardEmpty workspaceId={workspace.id} />
       </>
     );
   }

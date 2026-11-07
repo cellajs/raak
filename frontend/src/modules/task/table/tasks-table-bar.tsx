@@ -94,7 +94,7 @@ export function TasksTableBar({
 
             {/* A public view has no menu to hold the toggle on a phone */}
             <DisplayOptions className={publicView ? undefined : 'max-sm:hidden'} />
-            <FocusView iconOnly />
+            <FocusView iconOnly className="focus-view-toggle" />
           </>
         }
       />

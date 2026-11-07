@@ -297,7 +297,7 @@ export const zMeAuthData = z.object({
       deviceType: z.enum(['desktop', 'mobile']),
       deviceOs: z.string().max(255).nullable(),
       browser: z.string().max(255).nullable(),
-      authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']),
+      authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic', 'demo']),
       connectionId: z.uuid().nullable(),
       ipHash: z.string().max(64).nullable(),
       ipSubnetHash: z.string().max(64).nullable(),
@@ -683,7 +683,7 @@ export const zTenant = z.object({
     }),
     allowUnregisteredClients: z.boolean(),
   }),
-  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])),
+  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic', 'demo'])),
   subscriptionId: z.string().max(255).nullable(),
   subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']),
   subscriptionPlan: z.string().max(255).nullable(),
@@ -1934,7 +1934,7 @@ export const zRevokeMySessionsResponse = z.object({
       deviceType: z.enum(['desktop', 'mobile']),
       deviceOs: z.string().max(255).nullable(),
       browser: z.string().max(255).nullable(),
-      authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']),
+      authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic', 'demo']),
       connectionId: z.uuid().nullable(),
       ipHash: z.string().max(64).nullable(),
       ipSubnetHash: z.string().max(64).nullable(),
@@ -2453,8 +2453,8 @@ export const zUpdateTenantBody = z.object({
   subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']).optional(),
   subscriptionPlan: z.string().max(255).nullish(),
   authStrategies: z
-    .array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']))
-    .max(7)
+    .array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic', 'demo']))
+    .max(8)
     .optional(),
   restrictions: z
     .object({
@@ -3141,6 +3141,107 @@ export const zMoveProjectToWorkspaceResponse = zProject.and(
       .optional(),
   }),
 );
+
+export const zRemoveSamplePath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Success
+ */
+export const zRemoveSampleResponse = z.object({
+  data: z.array(z.unknown()),
+  rejectedIds: z.array(z.string()),
+  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+});
+
+export const zProvisionSamplePath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+export const zProvisionSampleQuery = z.object({
+  workspaceId: z.string().max(50).optional(),
+});
+
+/**
+ * Sample in place
+ */
+export const zProvisionSampleResponse = z.object({
+  created: z.boolean(),
+  projectIds: z.array(z.string()),
+  foldedProjectIds: z.array(z.string()),
+});
+
+/**
+ * Demo
+ */
+export const zGetDemoResponse = z.object({
+  path: z.string(),
+  expiresAt: z.string(),
+  shareCode: z.string(),
+});
+
+export const zClaimDemoResponse = z.union([
+  z.object({
+    path: z.string(),
+    expiresAt: z.string(),
+    shareCode: z.string(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
+  }),
+  z.object({
+    path: z.string(),
+    expiresAt: z.string(),
+    shareCode: z.string(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
+  }),
+]);
+
+export const zGetDemoInvitePath = z.object({
+  shareCode: z.string().max(16),
+});
+
+/**
+ * Demo invite
+ */
+export const zGetDemoInviteResponse = z.object({
+  people: z.array(z.string()),
+  expiresAt: z.string(),
+  full: z.boolean(),
+  joined: z.boolean(),
+});
+
+export const zJoinDemoBody = z.object({
+  firstName: z
+    .string()
+    .min(1)
+    .max(255)
+    .regex(/^[^\p{Cc}<>]+$/u),
+});
+
+export const zJoinDemoPath = z.object({
+  shareCode: z.string().max(16),
+});
+
+export const zJoinDemoResponse = z.union([
+  z.object({
+    path: z.string(),
+    expiresAt: z.string(),
+    shareCode: z.string(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
+  }),
+  z.object({
+    path: z.string(),
+    expiresAt: z.string(),
+    shareCode: z.string(),
+    claimed: z.boolean(),
+    foldedProjectIds: z.array(z.string()),
+  }),
+]);
 
 export const zDeleteWorkspacesBody = z.object({
   ids: z.array(z.string().max(50)).min(1).max(50),

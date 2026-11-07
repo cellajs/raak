@@ -345,7 +345,7 @@ export type MeAuthData = {
     deviceType: 'desktop' | 'mobile';
     deviceOs: string | null;
     browser: string | null;
-    authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic';
+    authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'demo';
     connectionId: string | null;
     ipHash: string | null;
     ipSubnetHash: string | null;
@@ -714,7 +714,7 @@ export type Tenant = {
      */
     allowUnregisteredClients: boolean;
   };
-  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
+  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'demo'>;
   subscriptionId: string | null;
   subscriptionStatus: 'none' | 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled';
   subscriptionPlan: string | null;
@@ -3538,7 +3538,7 @@ export type RevokeMySessionsResponses = {
       deviceType: 'desktop' | 'mobile';
       deviceOs: string | null;
       browser: string | null;
-      authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic';
+      authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'demo';
       connectionId: string | null;
       ipHash: string | null;
       ipSubnetHash: string | null;
@@ -5144,7 +5144,7 @@ export type UpdateTenantData = {
     subscriptionId?: string | null;
     subscriptionStatus?: 'none' | 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled';
     subscriptionPlan?: string | null;
-    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
+    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'demo'>;
     /**
      * Partial restrictions override
      */
@@ -6342,6 +6342,401 @@ export type MoveProjectToWorkspaceResponses = {
 };
 
 export type MoveProjectToWorkspaceResponse = MoveProjectToWorkspaceResponses[keyof MoveProjectToWorkspaceResponses];
+
+export type RemoveSampleData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/sample';
+};
+
+export type RemoveSampleErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden
+   */
+  403: ForbiddenError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type RemoveSampleError = RemoveSampleErrors[keyof RemoveSampleErrors];
+
+export type RemoveSampleResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: Array<unknown>;
+    /**
+     * Identifiers of items that could not be processed
+     */
+    rejectedIds: Array<string>;
+    /**
+     * Map of reason code to rejected item IDs
+     */
+    rejectionReasons?: {
+      [key: string]: Array<string>;
+    };
+  };
+};
+
+export type RemoveSampleResponse = RemoveSampleResponses[keyof RemoveSampleResponses];
+
+export type ProvisionSampleData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: {
+    /**
+     * The workspace the caller files the sample projects under; their first one when absent.
+     */
+    workspaceId?: string;
+  };
+  url: '/{tenantId}/{organizationId}/sample';
+};
+
+export type ProvisionSampleErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden
+   */
+  403: ForbiddenError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Conflict
+   */
+  409: ConflictError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type ProvisionSampleError = ProvisionSampleErrors[keyof ProvisionSampleErrors];
+
+export type ProvisionSampleResponses = {
+  /**
+   * Sample in place
+   */
+  200: {
+    /**
+     * Whether this request wrote the sample; false when the organization had it and the caller joined it.
+     */
+    created: boolean;
+    projectIds: Array<string>;
+    /**
+     * The sample projects a board shows folded at first.
+     */
+    foldedProjectIds: Array<string>;
+  };
+};
+
+export type ProvisionSampleResponse = ProvisionSampleResponses[keyof ProvisionSampleResponses];
+
+export type GetDemoData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/demo';
+};
+
+export type GetDemoErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized
+   */
+  401: UnauthorizedError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetDemoError = GetDemoErrors[keyof GetDemoErrors];
+
+export type GetDemoResponses = {
+  /**
+   * Demo
+   */
+  200: {
+    /**
+     * Where the demo opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the demo is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+  };
+};
+
+export type GetDemoResponse = GetDemoResponses[keyof GetDemoResponses];
+
+export type ClaimDemoData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/demo';
+};
+
+export type ClaimDemoErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Conflict
+   */
+  409: ConflictError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type ClaimDemoError = ClaimDemoErrors[keyof ClaimDemoErrors];
+
+export type ClaimDemoResponses = {
+  /**
+   * Demo of this browser
+   */
+  200: {
+    /**
+     * Where the demo opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the demo is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the demo, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+  /**
+   * Demo claimed
+   *
+   * The session cookie for its account is set.
+   */
+  201: {
+    /**
+     * Where the demo opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the demo is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the demo, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+};
+
+export type ClaimDemoResponse = ClaimDemoResponses[keyof ClaimDemoResponses];
+
+export type GetDemoInviteData = {
+  body?: never;
+  path: {
+    shareCode: string;
+  };
+  query?: never;
+  url: '/demo/join/{shareCode}';
+};
+
+export type GetDemoInviteErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetDemoInviteError = GetDemoInviteErrors[keyof GetDemoInviteErrors];
+
+export type GetDemoInviteResponses = {
+  /**
+   * Demo invite
+   */
+  200: {
+    /**
+     * The first names of the people in the demo, its taker first; a guest without one is left out.
+     */
+    people: Array<string>;
+    /**
+     * When the demo is removed.
+     */
+    expiresAt: string;
+    /**
+     * Whether it holds as many people as a demo takes.
+     */
+    full: boolean;
+    /**
+     * Whether this browser is in it already.
+     */
+    joined: boolean;
+  };
+};
+
+export type GetDemoInviteResponse = GetDemoInviteResponses[keyof GetDemoInviteResponses];
+
+export type JoinDemoData = {
+  body: {
+    firstName: string;
+  };
+  path: {
+    shareCode: string;
+  };
+  query?: never;
+  url: '/demo/join/{shareCode}';
+};
+
+export type JoinDemoErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Conflict
+   */
+  409: ConflictError;
+  /**
+   * Payload too large
+   */
+  413: PayloadTooLargeError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type JoinDemoError = JoinDemoErrors[keyof JoinDemoErrors];
+
+export type JoinDemoResponses = {
+  /**
+   * Demo of this browser
+   */
+  200: {
+    /**
+     * Where the demo opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the demo is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the demo, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+  /**
+   * Demo joined
+   *
+   * The session cookie for the new account is set.
+   */
+  201: {
+    /**
+     * Where the demo opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the demo is removed.
+     */
+    expiresAt: string;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the demo, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+};
+
+export type JoinDemoResponse = JoinDemoResponses[keyof JoinDemoResponses];
 
 export type DeleteWorkspacesData = {
   body: {

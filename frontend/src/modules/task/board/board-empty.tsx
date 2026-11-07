@@ -2,9 +2,15 @@ import { BirdIcon, PlusIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { createNewProject } from '~/modules/project/project-actions';
+import { AddSampleButton } from '~/modules/sample/add-sample-button';
 import { Button } from '~/modules/ui/button';
 
-export function BoardEmpty() {
+interface BoardEmptyProps {
+  /** A workspace board's: it offers the sample projects there. */
+  workspaceId?: string;
+}
+
+export function BoardEmpty({ workspaceId }: BoardEmptyProps) {
   const { t } = useTranslation();
 
   return (
@@ -15,11 +21,12 @@ export function BoardEmpty() {
         title="c:no_resource_yet"
         titleOptions={{ resource: t('c:project_other') }}
       >
-        <div className="max-md:mt-4">
+        <div className="flex flex-wrap justify-center gap-2 max-md:mt-4">
           <Button variant="secondary" onClick={createNewProject}>
             <PlusIcon />
             <span>{t('c:add_resource', { resource: t('c:project') })}</span>
           </Button>
+          {workspaceId && <AddSampleButton workspaceId={workspaceId} />}
         </div>
       </ContentPlaceholder>
     </div>

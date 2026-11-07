@@ -1,0 +1,125 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "6cf4867d-a87b-4268-9a69-aecfa172d31d",
+  "prevIds": [
+    "df53d320-cf55-42f6-8d5d-a3cc0fb735bd"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "sandboxes",
+        "share_code"
+      ],
+      "writes": [
+        "s|col|public.sandboxes.share_code",
+        "n|col|public.sandboxes.share_code",
+        "e|col|public.sandboxes.share_code"
+      ],
+      "reads": [
+        "n|tbl|public.sandboxes",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "sandboxes",
+        "guest_ids"
+      ],
+      "writes": [
+        "s|col|public.sandboxes.guest_ids",
+        "n|col|public.sandboxes.guest_ids",
+        "e|col|public.sandboxes.guest_ids"
+      ],
+      "reads": [
+        "n|tbl|public.sandboxes",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "sandboxes",
+        "sandboxes_share_code_index"
+      ],
+      "writes": [
+        "s|idx|public.sandboxes_share_code_index",
+        "n|idx|public.sandboxes_share_code_index",
+        "e|idx|public.sandboxes_share_code_index",
+        "n|rel|public.sandboxes_share_code_index"
+      ],
+      "reads": [
+        "n|tbl|public.sandboxes",
+        "n|sch|public",
+        "n|col|public.sandboxes.share_code"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "sandboxes",
+        "name": "share_code",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "substr(md5(gen_random_uuid()::text), 1, 16)",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "sandboxes",
+        "name": "guest_ids",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "sandboxes",
+        "name": "sandboxes_share_code_index",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "share_code",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

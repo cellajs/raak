@@ -1,4 +1,12 @@
 {
+  "demo_ended": "This demo board has ended",
+  "demo_ended.text": "Demo boards are cleared after two days, with everything in them.",
+  "demo_full": "This demo board is full",
+  "demo_full.text": "Five people are in it already, as many as a demo board takes.",
+  "demo_signed_in": "You are signed in",
+  "demo_signed_in.text": "Your own account is signed in in this browser, so it opens no demo board.",
+  "demo_unavailable": "No demo board right now",
+  "demo_unavailable.text": "Every demo board for today is taken. Try again tomorrow, or sign up.",
   "label_description_epic_only": "Description not saved",
   "label_description_epic_only.text": "Only an epic carries a description.",
   "primary_label_mode_fixed": "Mode not changed",

@@ -18,6 +18,9 @@ import type {
   CheckSlugData,
   CheckSlugErrors,
   CheckSlugResponses,
+  ClaimDemoData,
+  ClaimDemoErrors,
+  ClaimDemoResponses,
   ConfirmInvitationAddressData,
   ConfirmInvitationAddressErrors,
   ConfirmInvitationAddressResponses,
@@ -138,6 +141,12 @@ import type {
   GetConnectionsData,
   GetConnectionsErrors,
   GetConnectionsResponses,
+  GetDemoData,
+  GetDemoErrors,
+  GetDemoInviteData,
+  GetDemoInviteErrors,
+  GetDemoInviteResponses,
+  GetDemoResponses,
   GetLabelData,
   GetLabelErrors,
   GetLabelOlderAcceptedCountsData,
@@ -286,6 +295,9 @@ import type {
   HandleMembershipInvitationResponses,
   InvokeTokenData,
   InvokeTokenErrors,
+  JoinDemoData,
+  JoinDemoErrors,
+  JoinDemoResponses,
   LinkAttachmentKeysData,
   LinkAttachmentKeysErrors,
   LinkAttachmentKeysResponses,
@@ -310,6 +322,9 @@ import type {
   PostAppCatchupData,
   PostAppCatchupErrors,
   PostAppCatchupResponses,
+  ProvisionSampleData,
+  ProvisionSampleErrors,
+  ProvisionSampleResponses,
   PublishOrganizationData,
   PublishOrganizationErrors,
   PublishOrganizationResponses,
@@ -325,6 +340,9 @@ import type {
   RedirectToTaskData,
   RedirectToTaskErrors,
   RedirectToTaskResponses,
+  RemoveSampleData,
+  RemoveSampleErrors,
+  RemoveSampleResponses,
   ResendInvitationWithTokenData,
   ResendInvitationWithTokenErrors,
   ResendInvitationWithTokenResponses,
@@ -443,6 +461,7 @@ import {
   zCheckEmailResponse,
   zCheckMembershipInviteResponse,
   zCheckSlugResponse,
+  zClaimDemoResponse,
   zConfirmInvitationAddressResponse,
   zCreateApiKeyResponse,
   zCreateAttachmentsResponse,
@@ -481,6 +500,8 @@ import {
   zGetAuthHealthResponse,
   zGetConnectedAppsResponse,
   zGetConnectionsResponse,
+  zGetDemoInviteResponse,
+  zGetDemoResponse,
   zGetLabelOlderAcceptedCountsResponse,
   zGetLabelResponse,
   zGetLabelsResponse,
@@ -524,15 +545,18 @@ import {
   zGetWorkspacesResponse,
   zGetYjsTokenResponse,
   zHandleMembershipInvitationResponse,
+  zJoinDemoResponse,
   zLinkAttachmentKeysResponse,
   zMarkNotificationsReadResponse,
   zMarkSeenResponse,
   zMembershipInviteResponse,
   zMoveProjectToWorkspaceResponse,
   zPostAppCatchupResponse,
+  zProvisionSampleResponse,
   zPublishOrganizationResponse,
   zPullYjsDocumentResponse,
   zPushYjsUpdateResponse,
+  zRemoveSampleResponse,
   zResendInvitationWithTokenResponse,
   zResendPendingInvitationResponse,
   zResolveTaskLinkByNumberResponse,
@@ -3047,6 +3071,138 @@ export const moveProjectToWorkspace = <ThrowOnError extends boolean = true>(
     responseStyle: 'data',
     url: '/{tenantId}/{organizationId}/projects/{id}/move',
     ...options,
+  });
+
+/**
+ * Remove the sample
+ *
+ * Deletes the sample projects with their tasks; the sample team leaves the organization once none is left.
+ *
+ * **DELETE /{tenantId}/{organizationId}/sample** ·· [removeSample](https://www.raak.dev/docs/operations?operationTag=samples#tag/samples/DELETE/{tenantId}/{organizationId}/sample) ·· _samples · app · channel_
+ *
+ * @param {removeSampleData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {string} options.path.organizationId - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 429
+ */
+export const removeSample = <ThrowOnError extends boolean = true>(
+  options: Options<RemoveSampleData, ThrowOnError>,
+): RequestResult<RemoveSampleResponses, RemoveSampleErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<RemoveSampleResponses, RemoveSampleErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zRemoveSampleResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/{tenantId}/{organizationId}/sample',
+    ...options,
+  });
+
+/**
+ * Add the sample
+ *
+ * Adds the current user to the organization's sample: projects with tasks by a sample team. The first to add it creates it and becomes its admin; every later member joins the same projects.
+ *
+ * **POST /{tenantId}/{organizationId}/sample** ·· [provisionSample](https://www.raak.dev/docs/operations?operationTag=samples#tag/samples/POST/{tenantId}/{organizationId}/sample) ·· _samples · app · channel_
+ *
+ * @param {provisionSampleData} options
+ * @param {string} options.path.tenantId - `string`
+ * @param {string} options.path.organizationId - `string`
+ * @param {string=} options.query.workspaceId - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const provisionSample = <ThrowOnError extends boolean = true>(
+  options: Options<ProvisionSampleData, ThrowOnError>,
+): RequestResult<ProvisionSampleResponses, ProvisionSampleErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<ProvisionSampleResponses, ProvisionSampleErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zProvisionSampleResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/{tenantId}/{organizationId}/sample',
+    ...options,
+  });
+
+/**
+ * Get demo
+ *
+ * The signed-in account's demo while it is one: where it opens and when it ends.
+ *
+ * **GET /demo** ·· [getDemo](https://www.raak.dev/docs/operations?operationTag=demos#tag/demos/GET/demo) ·· _demos · app_
+ *
+ * @param {getDemoData} options
+ * @returns Possible status codes: 200, 400, 401, 404, 429
+ */
+export const getDemo = <ThrowOnError extends boolean = true>(
+  options?: Options<GetDemoData, ThrowOnError>,
+): RequestResult<GetDemoResponses, GetDemoErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetDemoResponses, GetDemoErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zGetDemoResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/demo',
+    ...options,
+  });
+
+/**
+ * Claim a demo
+ *
+ * Gives this browser a demo, a provisional account with an organization holding the sample, and signs it in. A browser signed in to a demo gets that one back. Asked for when a visitor acts on the about page board.
+ *
+ * **POST /demo** ·· [claimDemo](https://www.raak.dev/docs/operations?operationTag=demos#tag/demos/POST/demo) ·· _demos · app_
+ *
+ * @param {claimDemoData} options
+ * @returns Possible status codes: 200, 201, 400, 409, 429
+ */
+export const claimDemo = <ThrowOnError extends boolean = true>(
+  options?: Options<ClaimDemoData, ThrowOnError>,
+): RequestResult<ClaimDemoResponses, ClaimDemoErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).post<ClaimDemoResponses, ClaimDemoErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zClaimDemoResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/demo',
+    ...options,
+  });
+
+/**
+ * Get demo invite
+ *
+ * Who is in the demo a share link leads to, when it ends, and whether this browser can join it.
+ *
+ * **GET /demo/join/{shareCode}** ·· [getDemoInvite](https://www.raak.dev/docs/operations?operationTag=demos#tag/demos/GET/demo/join/{shareCode}) ·· _demos · app_
+ *
+ * @param {getDemoInviteData} options
+ * @param {string} options.path.shareCode - `string`
+ * @returns Possible status codes: 200, 400, 404, 429
+ */
+export const getDemoInvite = <ThrowOnError extends boolean = true>(
+  options: Options<GetDemoInviteData, ThrowOnError>,
+): RequestResult<GetDemoInviteResponses, GetDemoInviteErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetDemoInviteResponses, GetDemoInviteErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zGetDemoInviteResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/demo/join/{shareCode}',
+    ...options,
+  });
+
+/**
+ * Join a demo
+ *
+ * Lets this browser into the demo of a share link, on a demo account of its own under the given first name, and signs it in. A browser in that demo already gets it back.
+ *
+ * **POST /demo/join/{shareCode}** ·· [joinDemo](https://www.raak.dev/docs/operations?operationTag=demos#tag/demos/POST/demo/join/{shareCode}) ·· _demos · app_
+ *
+ * @param {joinDemoData} options
+ * @param {string} options.path.shareCode - `string`
+ * @param {string} options.body.firstName - `string`
+ * @returns Possible status codes: 200, 201, 400, 404, 409, 413, 429
+ */
+export const joinDemo = <ThrowOnError extends boolean = true>(
+  options: Options<JoinDemoData, ThrowOnError>,
+): RequestResult<JoinDemoResponses, JoinDemoErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<JoinDemoResponses, JoinDemoErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zJoinDemoResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/demo/join/{shareCode}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**

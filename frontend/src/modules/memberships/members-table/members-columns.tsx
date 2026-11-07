@@ -9,6 +9,7 @@ import { countColumn, dateColumn, emailColumn } from '~/modules/common/data-tabl
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { useColumnVisibility } from '~/modules/common/data-table/use-column-visibility';
 import type { Member } from '~/modules/memberships/types';
+import { markSampleMembers } from '~/modules/sample/sample-members';
 import { UserCell } from '~/modules/user/user-cell';
 import { dateShort } from '~/utils/date-short';
 
@@ -120,5 +121,6 @@ export const useColumns = (canUpdate: boolean, isSheet: boolean, entityType: Cha
       ),
   ];
 
-  return useColumnVisibility(columns);
+  // fork: the sample team shows as Sample, without its placeholder addresses (modules/sample)
+  return useColumnVisibility(markSampleMembers(columns));
 };

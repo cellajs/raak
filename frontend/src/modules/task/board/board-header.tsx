@@ -69,7 +69,7 @@ export function BoardHeader({ projects, workspace, publicView }: Pick<ResolvedBo
             {!publicView && projects.length > 0 && <LabelsDrawerButton entity={scope.entity} entityId={scope.entityId} />}
             <DisplayOptions className="max-sm:hidden" />
             {/* Focus view hides app chrome, which public pages do not have */}
-            {!publicView && <FocusView iconOnly />}
+            {!publicView && <FocusView iconOnly className="focus-view-toggle" />}
           </>
         }
       />

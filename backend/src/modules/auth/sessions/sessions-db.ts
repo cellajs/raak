@@ -18,7 +18,8 @@ import { usersTable } from '#/modules/user/user-db';
 const sessionTypes = ['regular', 'mfa'] as const;
 export type SessionType = (typeof sessionTypes)[number];
 
-const baseAuthStrategies = [...oauthProviders, 'passkey', 'totp', 'email', 'magic'] as const;
+// fork: raak's demo sessions sign in a provisional account (modules/demo)
+const baseAuthStrategies = [...oauthProviders, 'passkey', 'totp', 'email', 'magic', 'demo'] as const;
 /** A sign-in method as a session records it: a built-in one, or a federation key from `appConfig.federations`. */
 export type AuthStrategy = (typeof baseAuthStrategies)[number] | FederationKey;
 /** Every {@link AuthStrategy}: the enum of the columns and request fields that hold one. */

@@ -1,4 +1,5 @@
 import { BirdIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
@@ -15,10 +16,12 @@ import type { EnrichedProject, ProjectsRouteSearchParams } from '~/modules/proje
 
 interface ProjectsTableProps {
   organization: EnrichedOrganization;
+  /** Offered under "No projects yet", when no search narrows the list. */
+  emptyAction?: ReactNode;
 }
 
 /** Every project of an organization the user may read, whether or not they are a member of it. */
-export function ProjectsTable({ organization }: ProjectsTableProps) {
+export function ProjectsTable({ organization, emptyAction }: ProjectsTableProps) {
   const { t } = useTranslation();
 
   const { search, setSearch } = useSearchParams<ProjectsRouteSearchParams>({ from: '/_app/$tenantId/$organizationSlug/organization/projects' });
@@ -56,7 +59,11 @@ export function ProjectsTable({ organization }: ProjectsTableProps) {
             onSelectedRowsChange,
             sortColumns,
             onSortColumnsChange,
-            NoRowsComponent: <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:project_other') }} />,
+            NoRowsComponent: (
+              <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:project_other') }}>
+                {emptyAction}
+              </ContentPlaceholder>
+            ),
           }}
         />
       </SearchScope>

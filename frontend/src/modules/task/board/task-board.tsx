@@ -43,7 +43,7 @@ function BoardView({ boardId, projects, workspace, publicView, isLoading }: Boar
 
   if (isLoading && workspace) return <WorkspaceBoardSkeleton workspace={workspace} withHeader={false} />;
   if (isLoading) return <BoardSkeleton boardId={boardId} withHeader={false} publicView={publicView} />;
-  if (!projects.length) return <BoardEmpty />;
+  if (!projects.length) return <BoardEmpty workspaceId={workspace?.id} />;
   if (isMobile && workspace) return <MobileWorkspaceBoard projects={projects} />;
   if (isMobile) return <MobileProjectBoard project={projects[0]} publicView={publicView} />;
   if (!workspace) return <ProjectBoard boardId={boardId} projects={projects} publicView={publicView} />;

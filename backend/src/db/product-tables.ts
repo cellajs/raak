@@ -21,7 +21,7 @@ export const productTables = { attachment: () => attachmentsTable, label: () => 
 export const appPartitionConfigs: AppPartitionConfig[] = [];
 
 /** App tables outside RLS that runtime_role may read and write (application-layer guards), merged into the RLS migration grants. */
-export const appFullCrudTables: string[] = ['product_numbering'];
+export const appFullCrudTables: string[] = ['product_numbering', 'demos'];
 
 /** App tables outside RLS that runtime_role may only read, merged into the RLS migration grants. */
 export const appReadOnlyTables: string[] = [];

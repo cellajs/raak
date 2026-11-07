@@ -1,6 +1,8 @@
 import type { z } from '@hono/zod-openapi';
 import type { DbContext } from '#/core/context';
 import { TTLCache } from '#/lib/ttl-cache';
+// fork: raak's demo boards are not customers, so their rows leave the counts (modules/demo)
+import { countDemoRows } from '#/modules/demo/demo-queries';
 import { countEntityRows } from '#/modules/metrics/metrics-queries';
 import { type publicCountsSchema, publicCountTypes } from '#/modules/metrics/metrics-schema';
 import { log } from '#/utils/logger';
@@ -17,7 +19,7 @@ export async function getPublicCountsOp(ctx: DbContext) {
       publicCountTypes.map(async (entityType) => {
         try {
           const total = await countEntityRows(ctx, { entityType });
-          return [entityType, total];
+          return [entityType, total - (await countDemoRows(ctx, { entityType }))];
         } catch (err) {
           // A failed count reports 0 so the other counts still return
           log.warn('Public count failed', { entityType, err });

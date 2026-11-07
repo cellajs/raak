@@ -1,6 +1,5 @@
 {
-  "demo_caption": "Demonstration with real but simplified interface.",
-  "demo_label": "A board of two projects, where a team adds a task, starts one, changes a bug to a chore, adds a label, moves a card to the other project and resizes the panels.",
+  "demo_label": "A raak board: the projects Website and Mobile app open with their tasks, Help center folded, and labels on the right.",
   "highlights.text_1": "Matches show up in each project at the same time, so you never search one project after another.",
   "highlights.text_2": "Edit a description together, with each person's cursor and name in view. Nothing waits for a save.",
   "highlights.text_3": "Tasks are stored locally for offline search and direct updates. Changes are synced as you get back online.",

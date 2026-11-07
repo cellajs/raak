@@ -128,7 +128,10 @@ export function usePanelLayout(
 
   const boardPanels = [...prepareBoardPanels(projects, projectPage), ...extraPanels];
   const panels = projectPage ? boardPanels : sortPanelsByOrder(boardPanels, localOrders);
-  const defaultLayout = normalizePanelWidths(storedBoardLayout ?? {}, panels, projectPage ? [LABELS_PANEL_ID] : []);
+  // Folded before this board stored a width for it, as a sample's first view is; unsubscribed, as the layout only seeds the group
+  const folded = boardStore.getState().panelCollapseState;
+  const startCollapsed = panels.filter(({ panelId }) => folded[panelId]).map(({ panelId }) => panelId);
+  const defaultLayout = normalizePanelWidths(storedBoardLayout ?? {}, panels, projectPage ? [LABELS_PANEL_ID, ...startCollapsed] : startCollapsed);
 
   return { panels, defaultLayout };
 }
