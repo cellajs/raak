@@ -75,6 +75,13 @@ describe('fitBoardSearch', () => {
     });
     expect(fitBoardSearch({ type: ['chore'], assigned: ['u2'] }, tasks)).toEqual({ type: [], labels: [], assigned: [] });
   });
+
+  it('keeps a known label whose tasks the lists leave out, as one accepted before the cut-off', () => {
+    expect(fitBoardSearch({ labels: ['performance', 'old-epic', 'gone'] }, [task()], undefined, ['old-epic']).labels).toEqual([
+      'performance',
+      'old-epic',
+    ]);
+  });
 });
 
 describe('replaceFilterValue', () => {

@@ -77,13 +77,17 @@ export const parseBoardSearch = ({ q, status = [], type = [], labels = [], assig
 
 export type ParsedBoardSearch = ReturnType<typeof parseBoardSearch>;
 
-/** The filters without the types, labels and assignees none of `tasks` carries: no chip could name them, and nothing would match. You and No one always have a name. */
+/**
+ * The filters without the types, labels and assignees none of `tasks` carries: no chip could name them, and nothing would match. You and No one
+ * always have a name. A label in `knownLabels` stays too: its tasks can all be accepted before the cut-off, out of `tasks` but still on the board.
+ */
 export const fitBoardSearch = (
   { type = [], labels = [], assigned = [] }: BoardSearch,
   tasks: Task[],
   userId?: string,
+  knownLabels: string[] = [],
 ): Required<Pick<BoardSearch, 'type' | 'labels' | 'assigned'>> => {
-  const carried = { type: new Set<string>(), labels: new Set<string>(), assigned: new Set([noAssignee, ...(userId ? [userId] : [])]) };
+  const carried = { type: new Set<string>(), labels: new Set(knownLabels), assigned: new Set([noAssignee, ...(userId ? [userId] : [])]) };
   for (const task of tasks) {
     if (task.primaryLabel) carried.type.add(task.primaryLabel.slug);
     for (const { slug } of task.labels) carried.labels.add(slug);

@@ -28,4 +28,6 @@ export type LabelRow = Label & {
   projectUsage: Record<string, number>;
   siblingIds: string[];
   projectIds: string[];
+  /** The group's identity, its kind and slug: it holds while another sibling comes to represent the group, so an open tile stays open. */
+  groupKey: string;
 };

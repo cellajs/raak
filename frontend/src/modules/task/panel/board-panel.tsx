@@ -35,6 +35,8 @@ export interface BoardPanelProps {
   showProject?: boolean;
   group?: ProjectPageGroup;
   windowScroll?: boolean;
+  /** `fetchedTasks` hold the searched labels' accepted tasks from before the cut-off too, so none is left to point to. */
+  includesOlderAccepted?: boolean;
 }
 
 export const BoardPanel = memo(function BoardPanel({
@@ -47,6 +49,7 @@ export const BoardPanel = memo(function BoardPanel({
   showProject,
   group,
   windowScroll,
+  includesOlderAccepted = false,
 }: BoardPanelProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
@@ -86,7 +89,12 @@ export const BoardPanel = memo(function BoardPanel({
     total: filteredTasks.length,
     // A status filter without accepted rules out the older accepted tasks too, though the board never fetched them
     acceptedCutOff:
-      (!statuses || statuses.includes(TaskStatus.Accepted)) && (!search.statuses.length || search.statuses.includes('accepted')) ? hiddenAccepted : 0,
+      !includesOlderAccepted &&
+      (!statuses || statuses.includes(TaskStatus.Accepted)) &&
+      (!search.statuses.length || search.statuses.includes('accepted'))
+        ? hiddenAccepted
+        : 0,
+    includesOlderAccepted,
     showAccepted: folds,
     showIced: folds,
     accepted: folds ? acceptedCount : 0,

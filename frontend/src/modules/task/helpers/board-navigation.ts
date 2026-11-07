@@ -22,20 +22,44 @@ export const toggleLabelFilter = (slug: string) => {
   });
 };
 
-/** A label tile's status segment: puts the label and the status in the board search, or takes the status out when both are in. */
-export const toggleLabelStatusFilter = (slug: string, status: string) => {
+interface BoardFilterSearch {
+  q?: string;
+  labels?: unknown;
+  status?: unknown;
+  type?: unknown;
+  assigned?: unknown;
+}
+
+/** Whether the board search is this label with exactly these statuses, and no words or other filter. */
+export const isLabelStatusSearch = (search: BoardFilterSearch, slug: string, statuses: string[]) => {
+  const labels = boardFilterList.parse(search.labels);
+  const current = boardFilterList.parse(search.status);
+  return (
+    !search.q &&
+    !boardFilterList.parse(search.type).length &&
+    !boardFilterList.parse(search.assigned).length &&
+    labels.length === 1 &&
+    labels[0] === slug &&
+    current.length === statuses.length &&
+    statuses.every((status) => current.includes(status))
+  );
+};
+
+/** An epic bar part: the board search becomes exactly this label and these statuses, so a press always shows the same tasks; a press on the search it already made clears it. */
+export const replaceWithLabelStatusSearch = (slug: string, statuses: string[]) => {
   getRouter().navigate({
     to: '.',
     replace: true,
     resetScroll: false,
     search: (prev) => {
-      const labels = boardFilterList.parse(prev.labels);
-      const statuses = boardFilterList.parse(prev.status);
-      if (labels.includes(slug) && statuses.includes(status)) return { ...prev, status: statuses.filter((other) => other !== status) };
+      const isCurrent = isLabelStatusSearch(prev, slug, statuses);
       return {
         ...prev,
-        labels: labels.includes(slug) ? labels : [...labels, slug],
-        status: statuses.includes(status) ? statuses : [...statuses, status],
+        q: undefined,
+        type: undefined,
+        assigned: undefined,
+        labels: isCurrent ? undefined : [slug],
+        status: isCurrent ? undefined : statuses,
       };
     },
   });

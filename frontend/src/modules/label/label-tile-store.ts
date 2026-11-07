@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 interface LabelTileState {
+  /** The open tile's `groupKey`, which outlives a change of the row that represents its group. */
   expandedId: string | null;
   expand: (id: string) => void;
   collapse: (id: string) => void;

@@ -7,6 +7,7 @@ import { useSearchParams } from '~/hooks/use-search-params';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { SearchFilters } from '~/modules/common/search-chips/types';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
+import { cachedLabelSlugs } from '~/modules/label/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { type RecentBoardSearch, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { subscribeToTaskCache } from '~/modules/task/helpers/active-task';
@@ -298,7 +299,8 @@ export function useFitBoardSearch(scopeId: string, projects: Pick<EnrichedProjec
       labels: boardFilterList.parse(search.labels),
       assigned: boardFilterList.parse(search.assigned),
     };
-    const fitted = fitBoardSearch(current, tasks, userId);
+    const knownLabels = publicView ? [] : projects.flatMap(({ id, organizationId }) => cachedLabelSlugs(organizationId, id));
+    const fitted = fitBoardSearch(current, tasks, userId, knownLabels);
     // Fitting only drops values, so an unchanged length is an unchanged filter
     if (
       fitted.type.length === current.type.length &&
