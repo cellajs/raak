@@ -42,7 +42,9 @@ export function useSandboxFrame(framed: boolean) {
     };
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== window.parent) return;
-      if (isSandboxFrameMessage(event.data) && event.data.kind === 'release') engaged = false;
+      if (!isSandboxFrameMessage(event.data)) return;
+      if (event.data.kind === 'release') engaged = false;
+      if (event.data.kind === 'hold') engaged = true;
     };
 
     window.addEventListener('wheel', handOver, { capture: true, passive: false });

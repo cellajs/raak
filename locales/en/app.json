@@ -54,6 +54,7 @@
   "label_name": "Label name",
   "label_name.text": "Lowercase, spaces become dashes. It is added to this task.",
   "label_other": "Labels",
+  "leave_full_window": "Back to the page",
   "leave_project": "Leave project",
   "move": "Move",
   "move_project": "Move project",

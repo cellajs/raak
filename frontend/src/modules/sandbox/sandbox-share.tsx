@@ -35,7 +35,7 @@ export function SandboxShare({ shareCode, expiresAt, trigger }: SandboxShareProp
     const name = firstName.trim();
     if (needsName && !name) return;
 
-    const url = `${window.location.origin}/try/${shareCode}`;
+    const url = `${window.location.origin}/about?sandbox=${shareCode}`;
     const text = t('c:sandbox_share.message');
     // Started alongside, not awaited first: the share sheet and the clipboard need the press itself
     const saving = needsName ? updateSelf({ firstName: name }) : undefined;

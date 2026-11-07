@@ -17,9 +17,10 @@ export const sandboxFrameMessage = 'sandbox-frame';
 
 /**
  * From the frame: `ready` once its layout has mounted, `wheel` for a scroll it hands to the page while the visitor has
- * not pressed inside it, `engaged` at that first press. From the page: `release`, which hands the wheel back.
+ * not pressed inside it, `engaged` at that first press. From the page: `release`, which hands the wheel back, and
+ * `hold`, which keeps it in the frame while the frame fills the window.
  */
-export type SandboxFrameMessageBody = { kind: 'ready' | 'engaged' | 'release' } | { kind: 'wheel'; deltaX: number; deltaY: number };
+export type SandboxFrameMessageBody = { kind: 'ready' | 'engaged' | 'release' | 'hold' } | { kind: 'wheel'; deltaX: number; deltaY: number };
 export type SandboxFrameMessage = SandboxFrameMessageBody & { type: typeof sandboxFrameMessage };
 
 export const isSandboxFrameMessage = (data: unknown): data is SandboxFrameMessage =>

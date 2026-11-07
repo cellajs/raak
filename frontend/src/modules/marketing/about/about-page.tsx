@@ -13,7 +13,8 @@ export function AboutPage() {
   useScrollSpy(aboutSectionIds);
 
   return (
-    <>
+    // The live board's full window keeps the board alone in focus view
+    <div className="focus-view-scope contents">
       <MarketingNav />
 
       <main className="focus:outline-hidden">
@@ -30,6 +31,6 @@ export function AboutPage() {
         </div>
       </main>
       <MarketingFooter />
-    </>
+    </div>
   );
 }

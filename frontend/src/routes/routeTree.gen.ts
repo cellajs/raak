@@ -19,7 +19,6 @@ import { Route as AppSystemRouteRouteImport } from './_app/system/route'
 import { Route as AppWelcomeRouteImport } from './_app/welcome'
 import { Route as PublicContentRouteRouteImport } from './_public/_content/route'
 import { Route as PublicMarketingRouteImport } from './_public/_marketing'
-import { Route as PublicSandboxRouteImport } from './_public/_sandbox'
 import { Route as PublicAuthRouteRouteImport } from './_public/auth/route'
 import { Route as PublicErrorRouteImport } from './_public/error'
 import { Route as AppTenantIdOrganizationSlugRouteRouteImport } from './_app/$tenantId.$organizationSlug/route'
@@ -49,7 +48,6 @@ import { Route as PublicContentDocsSchemasRouteImport } from './_public/_content
 import { Route as PublicContentTIdRouteImport } from './_public/_content/t.$id'
 import { Route as PublicMarketingLegalIndexRouteImport } from './_public/_marketing/legal.index'
 import { Route as PublicMarketingLegalSubjectRouteImport } from './_public/_marketing/legal.$subject'
-import { Route as PublicSandboxTryShareCodeRouteImport } from './_public/_sandbox/try.$shareCode'
 import { Route as PublicAuthEmailVerificationReasonRouteImport } from './_public/auth/email-verification.$reason'
 import { Route as PublicAuthSsoConnectionIdRouteImport } from './_public/auth/sso.$connectionId'
 import { Route as AppTenantIdOrganizationSlugOrganizationToolRouteImport } from './_app/$tenantId.$organizationSlug/organization/$tool'
@@ -107,10 +105,6 @@ const PublicContentRouteRoute = PublicContentRouteRouteImport.update({
 } as any)
 const PublicMarketingRoute = PublicMarketingRouteImport.update({
   id: '/_marketing',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
-const PublicSandboxRoute = PublicSandboxRouteImport.update({
-  id: '/_sandbox',
   getParentRoute: () => PublicRouteRoute,
 } as any)
 const PublicAuthRouteRoute = PublicAuthRouteRouteImport.update({
@@ -266,12 +260,6 @@ const PublicMarketingLegalSubjectRoute =
     path: '/legal/$subject',
     getParentRoute: () => PublicMarketingRoute,
   } as any)
-const PublicSandboxTryShareCodeRoute =
-  PublicSandboxTryShareCodeRouteImport.update({
-    id: '/try/$shareCode',
-    path: '/try/$shareCode',
-    getParentRoute: () => PublicSandboxRoute,
-  } as any)
 const PublicAuthEmailVerificationReasonRoute =
   PublicAuthEmailVerificationReasonRouteImport.update({
     id: '/email-verification/$reason',
@@ -379,7 +367,6 @@ export interface FileRoutesByFullPath {
   '/docs/schemas': typeof PublicContentDocsSchemasRoute
   '/t/$id': typeof PublicContentTIdRoute
   '/legal/$subject': typeof PublicMarketingLegalSubjectRoute
-  '/try/$shareCode': typeof PublicSandboxTryShareCodeRoute
   '/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
   '/auth/sso/$connectionId': typeof PublicAuthSsoConnectionIdRoute
   '/docs/': typeof PublicContentDocsIndexRoute
@@ -428,7 +415,6 @@ export interface FileRoutesByTo {
   '/docs/schemas': typeof PublicContentDocsSchemasRoute
   '/t/$id': typeof PublicContentTIdRoute
   '/legal/$subject': typeof PublicMarketingLegalSubjectRoute
-  '/try/$shareCode': typeof PublicSandboxTryShareCodeRoute
   '/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
   '/auth/sso/$connectionId': typeof PublicAuthSsoConnectionIdRoute
   '/docs': typeof PublicContentDocsIndexRoute
@@ -456,7 +442,6 @@ export interface FileRoutesById {
   '/_app/n': typeof AppNRoute
   '/_app/welcome': typeof AppWelcomeRoute
   '/_public/_marketing': typeof PublicMarketingRouteWithChildren
-  '/_public/_sandbox': typeof PublicSandboxRouteWithChildren
   '/_public/error': typeof PublicErrorRoute
   '/_app/': typeof AppIndexRoute
   '/_app/$tenantId/$organizationSlug': typeof AppTenantIdOrganizationSlugRouteRouteWithChildren
@@ -484,7 +469,6 @@ export interface FileRoutesById {
   '/_public/_content/docs/schemas': typeof PublicContentDocsSchemasRoute
   '/_public/_content/t/$id': typeof PublicContentTIdRoute
   '/_public/_marketing/legal/$subject': typeof PublicMarketingLegalSubjectRoute
-  '/_public/_sandbox/try/$shareCode': typeof PublicSandboxTryShareCodeRoute
   '/_public/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
   '/_public/auth/sso/$connectionId': typeof PublicAuthSsoConnectionIdRoute
   '/_public/_content/docs/': typeof PublicContentDocsIndexRoute
@@ -536,7 +520,6 @@ export interface FileRouteTypes {
     | '/docs/schemas'
     | '/t/$id'
     | '/legal/$subject'
-    | '/try/$shareCode'
     | '/auth/email-verification/$reason'
     | '/auth/sso/$connectionId'
     | '/docs/'
@@ -585,7 +568,6 @@ export interface FileRouteTypes {
     | '/docs/schemas'
     | '/t/$id'
     | '/legal/$subject'
-    | '/try/$shareCode'
     | '/auth/email-verification/$reason'
     | '/auth/sso/$connectionId'
     | '/docs'
@@ -612,7 +594,6 @@ export interface FileRouteTypes {
     | '/_app/n'
     | '/_app/welcome'
     | '/_public/_marketing'
-    | '/_public/_sandbox'
     | '/_public/error'
     | '/_app/'
     | '/_app/$tenantId/$organizationSlug'
@@ -640,7 +621,6 @@ export interface FileRouteTypes {
     | '/_public/_content/docs/schemas'
     | '/_public/_content/t/$id'
     | '/_public/_marketing/legal/$subject'
-    | '/_public/_sandbox/try/$shareCode'
     | '/_public/auth/email-verification/$reason'
     | '/_public/auth/sso/$connectionId'
     | '/_public/_content/docs/'
@@ -732,13 +712,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof PublicMarketingRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/_sandbox': {
-      id: '/_public/_sandbox'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof PublicSandboxRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/auth': {
@@ -943,13 +916,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/legal/$subject'
       preLoaderRoute: typeof PublicMarketingLegalSubjectRouteImport
       parentRoute: typeof PublicMarketingRoute
-    }
-    '/_public/_sandbox/try/$shareCode': {
-      id: '/_public/_sandbox/try/$shareCode'
-      path: '/try/$shareCode'
-      fullPath: '/try/$shareCode'
-      preLoaderRoute: typeof PublicSandboxTryShareCodeRouteImport
-      parentRoute: typeof PublicSandboxRoute
     }
     '/_public/auth/email-verification/$reason': {
       id: '/_public/auth/email-verification/$reason'
@@ -1225,23 +1191,10 @@ const PublicMarketingRouteWithChildren = PublicMarketingRoute._addFileChildren(
   PublicMarketingRouteChildren,
 )
 
-interface PublicSandboxRouteChildren {
-  PublicSandboxTryShareCodeRoute: typeof PublicSandboxTryShareCodeRoute
-}
-
-const PublicSandboxRouteChildren: PublicSandboxRouteChildren = {
-  PublicSandboxTryShareCodeRoute: PublicSandboxTryShareCodeRoute,
-}
-
-const PublicSandboxRouteWithChildren = PublicSandboxRoute._addFileChildren(
-  PublicSandboxRouteChildren,
-)
-
 interface PublicRouteRouteChildren {
   PublicContentRouteRoute: typeof PublicContentRouteRouteWithChildren
   PublicAuthRouteRoute: typeof PublicAuthRouteRouteWithChildren
   PublicMarketingRoute: typeof PublicMarketingRouteWithChildren
-  PublicSandboxRoute: typeof PublicSandboxRouteWithChildren
   PublicErrorRoute: typeof PublicErrorRoute
 }
 
@@ -1249,7 +1202,6 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicContentRouteRoute: PublicContentRouteRouteWithChildren,
   PublicAuthRouteRoute: PublicAuthRouteRouteWithChildren,
   PublicMarketingRoute: PublicMarketingRouteWithChildren,
-  PublicSandboxRoute: PublicSandboxRouteWithChildren,
   PublicErrorRoute: PublicErrorRoute,
 }
 
