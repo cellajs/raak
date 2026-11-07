@@ -161,7 +161,7 @@ export function PanelStatusSection({
           <span className="min-w-8 text-center">{count}</span>
           <span className={cn('flex gap-1', hintFadeOut)}>
             <span>{t(`c:${statusOptionsByValue[isTop ? TaskStatus.Accepted : TaskStatus.Iced].name}`).toLowerCase()}</span>
-            {!isIced && (
+            {!isIced && !counts.includesOlderAccepted && (
               <>
                 <span>{t('c:since')}</span>
                 <span>{formatAcceptedCutOff()}</span>

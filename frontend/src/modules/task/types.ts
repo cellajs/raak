@@ -41,6 +41,8 @@ export type TaskCounts = {
   iced: number;
   /** Total accepted tasks including those beyond the cutoff. 0 = no cutoff data available, or a panel without accepted tasks. */
   acceptedCutOff: number;
+  /** The panel lists the accepted tasks from before the cut-off too, which the board fetches for a search of labels and Accepted. */
+  includesOlderAccepted?: boolean;
 };
 
 export type BoardSearchParams = z.infer<typeof tasksTableSearchSchema>;

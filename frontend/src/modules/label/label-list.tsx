@@ -17,7 +17,7 @@ import { LabelTile, labelTileDomId } from '~/modules/label/label-tile';
 import { labelTileStore } from '~/modules/label/label-tile-store';
 import { labelsCanonicalOptions, useLabelUpdateMutation } from '~/modules/label/query';
 import type { LabelsHostProps, LabelsScopeProps } from '~/modules/label/types';
-import { type LabelUsage, useBoardLabelUsage } from '~/modules/label/use-label-usage';
+import { type LabelUsage, useBoardLabelUsage, useEpicProgress } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { useReadOnlyProjectIds } from '~/modules/project/use-read-only';
 import { firstItemInView, registerPanelNav } from '~/modules/task/helpers/panel-nav-registry';
@@ -65,14 +65,15 @@ function WorkspaceLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   });
   const usage = useBoardLabelUsage(projectIds ?? []);
 
-  return <LabelListView labels={labels} usage={usage} isLoading={projectIds === undefined || pending} showProjectUsage {...hostProps} />;
+  return <LabelListView labels={labels} usage={usage} isLoading={projectIds === undefined || pending} scopeProjectIds={projectIds} {...hostProps} />;
 }
 
 interface LabelListViewProps extends LabelsHostProps {
   labels: Label[];
   usage: LabelUsage;
   isLoading: boolean;
-  showProjectUsage?: boolean;
+  /** On a workspace: its projects, where an epic can be picked to live. */
+  scopeProjectIds?: string[];
 }
 
 function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
@@ -84,7 +85,8 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const rows = groupLabelRows(labels, { usage }).sort(compareLabelHeat);
-  const itemIds = rows.map((row) => labelTileDomId(row.id));
+  const epicProgress = useEpicProgress(rows);
+  const itemIds = rows.map((row) => labelTileDomId(row.groupKey));
   const readOnlyProjectIds = useReadOnlyProjectIds([...new Set(rows.flatMap((row) => row.projectIds))]);
   const rowsRef = useLatestRef(rows);
   const updateLabelRef = useLatestRef(updateLabel);
@@ -121,13 +123,13 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
     });
   }, [navPanelId, itemIds]);
 
-  // A label link opens its tile once, then leaves the URL: closing the tile must not leave a stale link behind
+  // A label link opens an epic's tile once, or brings a tag's into view, then leaves the URL: closing the tile must not leave a stale link behind
   useEffect(() => {
     if (!labelPageId || isLoading) return;
     const row = rows.find((candidate) => candidate.siblingIds.includes(labelPageId));
     if (row) {
-      labelTileStore.getState().expand(row.id);
-      requestAnimationFrame(() => document.getElementById(labelTileDomId(row.id))?.scrollIntoView({ block: 'nearest' }));
+      if (row.mode === 'epic') labelTileStore.getState().expand(row.groupKey);
+      requestAnimationFrame(() => document.getElementById(labelTileDomId(row.groupKey))?.scrollIntoView({ block: 'nearest' }));
     }
     navigate({ to: '.', replace: true, resetScroll: false, search: (prev) => ({ ...prev, labelPageId: undefined }) });
   }, [labelPageId, isLoading]);
@@ -139,8 +141,9 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
     <ul aria-label={t('c:label_other')}>
       {rows.map((row, index) => (
         <LabelTile
-          key={row.id}
+          key={row.groupKey}
           row={row}
+          progress={epicProgress[row.id]}
           lockedByProjectIds={row.projectIds.filter((projectId) => readOnlyProjectIds.includes(projectId))}
           onBoard={!!navPanelId}
           position={navPanelId ? { index, total: rows.length } : undefined}

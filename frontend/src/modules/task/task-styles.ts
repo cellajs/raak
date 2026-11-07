@@ -91,6 +91,20 @@ export const newTaskButtonClass = tw('relative hidden rounded sm:inline-flex');
 
 export const taskBarClass = tw('bg-background z-85 flex items-center max-sm:justify-between max-sm:p-2 sm:gap-2');
 
+/** An epic's progress in the accepted green: a closed tile's tint and edge line, an open tile's bar. In progress is a weaker step of it, To do bare. */
+export const epicProgressColors = {
+  done: {
+    tint: 'bg-green-600/13 dark:bg-green-500/17',
+    line: 'after:bg-green-600 dark:after:bg-green-500',
+    fill: 'bg-green-600 text-green-950 dark:bg-green-500',
+  },
+  inProgress: {
+    tint: 'bg-green-600/5 dark:bg-green-500/7',
+    line: 'after:bg-green-600/45 dark:after:bg-green-500/45',
+    fill: 'bg-green-600/40 text-foreground dark:bg-green-500/40',
+  },
+};
+
 /** Shared by the panel section headers, the collapsed panel and the board skeleton, so a strip keeps its fill through a collapse. */
 export const statusSectionColors = {
   accepted: {

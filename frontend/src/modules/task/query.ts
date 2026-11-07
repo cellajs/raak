@@ -263,6 +263,49 @@ export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: {
   );
 };
 
+/** The key of a project's tasks with `labels` accepted before the cut-off; no sort or order, which every table key carries, so the two never share one. */
+export const olderAcceptedListKey = (organizationId: string, projectId: string, labels: string[]) =>
+  taskKeys.list.filtered(organizationId, { projectId, status: 'accepted', labels: [...labels].sort().join(',') });
+
+/**
+ * A project's tasks with any of `labels` accepted before the board's cut-off, which its home list leaves out. The board adds them while its
+ * search holds labels and Accepted, so a label's done tasks all show. Only those older than the cut-off are kept: a task is never in this
+ * list and the home list at once, and the board's total does not count it twice.
+ */
+export const tasksOlderAcceptedOptions = ({
+  organizationId,
+  tenantId,
+  projectId,
+  labels,
+}: {
+  organizationId: string;
+  tenantId: string;
+  projectId: string;
+  labels: string[];
+}) => {
+  const queryKey = olderAcceptedListKey(organizationId, projectId, labels);
+  const labelsQuery = queryKey[3].labels;
+  return syncedListOptions(
+    queryOptions({
+      queryKey,
+      queryFn: async () => {
+        const cutOff = Date.now() - boardAcceptedCutOffDays * 24 * 60 * 60 * 1000;
+        const read = await fetchAllPages(
+          ({ limit, offset }) =>
+            getTasks({ path: { organizationId, tenantId }, query: { projectId, status: 'accepted', labels: labelsQuery, limit, offset } }).then(
+              liveItems,
+            ),
+          appConfig.requestLimits.tasks,
+        );
+        const items = read.items.filter((task) => Date.parse(task.statusChangedAt) <= cutOff);
+        return { items, total: items.length };
+      },
+      meta: { persist: false },
+      staleTime: syncStaleTime,
+    }),
+  );
+};
+
 /** Task-table defaults shared by the member and public query options. */
 export const tasksTableQueryDefaults = { sort: 'createdAt', order: 'desc' } as const;
 

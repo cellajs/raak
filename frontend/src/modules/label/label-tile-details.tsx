@@ -1,31 +1,28 @@
 import { LockIcon } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '~/modules/common/spinner';
-import { LabelStatusBar } from '~/modules/label/label-status-bar';
-import { labelTileReveal } from '~/modules/label/label-tile-reveal';
-import { useLabelUpdateMutation } from '~/modules/label/query';
+import type { EpicProgress } from '~/modules/label/epic-progress';
+import { EpicProgressBar } from '~/modules/label/epic-progress-bar';
+import { EpicProjectLine } from '~/modules/label/epic-projects';
 import type { LabelRow, LabelsHostProps } from '~/modules/label/types';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
-import { Switch } from '~/modules/ui/switch';
-import { cn } from '~/utils/cn';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const LabelDescriptionForm = lazyNamed(() => import('~/modules/label/label-description-form'), 'LabelDescriptionForm');
 
 interface LabelTileDetailsProps extends Pick<LabelsHostProps, 'onAction'> {
   row: LabelRow;
+  progress: EpicProgress;
   lockedByProjectIds: string[];
-  showProjectUsage?: boolean;
+  /** On a workspace: the projects a label can live in, for the epic's project picker. */
+  scopeProjectIds?: string[];
 }
 
-/** Body of an expanded tile: the epic switch, its tasks per status and, for epics, the description. */
-export function LabelTileDetails({ row, lockedByProjectIds, showProjectUsage, onAction }: LabelTileDetailsProps) {
+/** Body of an open epic: its progress, its projects and Close as epic, then the description. Only an epic opens. */
+export function LabelTileDetails({ row, progress, lockedByProjectIds, scopeProjectIds, onAction }: LabelTileDetailsProps) {
   const { t } = useTranslation();
-  const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
 
-  const switchId = `epic-switch-${row.id}`;
   const isLocked = lockedByProjectIds.length > 0;
   const lockingProject = lockedByProjectIds.length === 1 ? findProjectByIdOrSlug(lockedByProjectIds[0], row.tenantId) : undefined;
   const lockReason =
@@ -37,39 +34,21 @@ export function LabelTileDetails({ row, lockedByProjectIds, showProjectUsage, on
 
   return (
     <>
-      <div className="flex flex-col gap-3 px-4 pt-2 pb-3">
-        <div className="flex items-center gap-2">
-          {/* Promoting acts on this row only; same-slug siblings in other projects stay tags */}
-          <Switch
-            id={switchId}
-            checked={row.mode === 'epic'}
-            disabled={isLocked}
-            onCheckedChange={(checked) => updateLabel.mutate({ id: row.id, ops: { mode: checked ? 'epic' : 'secondary' } })}
-          />
-          <label htmlFor={switchId} className={cn('pl-1 text-sm leading-none select-none', isLocked ? 'text-muted-foreground' : 'cursor-pointer')}>
-            {t('c:epic')}
-          </label>
-        </div>
-
+      <div className="flex flex-col gap-2 px-4 pt-1 pb-2">
         {isLocked && (
           <p className="text-muted-foreground flex gap-2 text-xs">
             <LockIcon aria-hidden className="mt-px size-3.5 shrink-0" />
             {lockReason}
           </p>
         )}
-
-        <LabelStatusBar row={row} showProjects={showProjectUsage} onAction={onAction} />
+        <EpicProgressBar slug={row.slug} progress={progress} onAction={onAction} />
+        <EpicProjectLine row={row} isLocked={isLocked} scopeProjectIds={scopeProjectIds} />
       </div>
-
-      <AnimatePresence initial={false}>
-        {row.mode === 'epic' && (
-          <motion.div key="description" {...labelTileReveal} className="border-t">
-            <Suspense fallback={<Spinner className="my-6" noDelay />}>
-              <LabelDescriptionForm label={row} isLocked={isLocked} />
-            </Suspense>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="border-t">
+        <Suspense fallback={<Spinner className="my-6" noDelay />}>
+          <LabelDescriptionForm label={row} isLocked={isLocked} />
+        </Suspense>
+      </div>
     </>
   );
 }

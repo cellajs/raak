@@ -1,4 +1,4 @@
-import { EllipsisVerticalIcon, LinkIcon, TrashIcon } from 'lucide-react';
+import { EllipsisVerticalIcon, LinkIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
@@ -20,16 +20,18 @@ import { cn } from '~/utils/cn';
 interface LabelOptionsButtonProps {
   row: LabelRow;
   canManage: boolean;
+  /** Starts the rename on the tile, the one place a label is renamed. */
+  onRename: () => void;
   className?: string;
 }
 
-/** Ellipsis button on an expanded label tile: copy its link and, for members, delete it. */
-export function LabelOptionsButton({ row, canManage, className }: LabelOptionsButtonProps) {
+/** Ellipsis button on a label tile: for members rename it, copy its link, and for members delete it. */
+export function LabelOptionsButton({ row, canManage, onRename, className }: LabelOptionsButtonProps) {
   const { t } = useTranslation();
   const { copyToClipboard } = useCopyToClipboard(2000);
 
-  // Epics keep per-row identity across projects; a secondary tag is one logical label over its slug group
-  const deleteIds = row.mode === 'epic' ? [row.id] : row.siblingIds;
+  // A tag or an epic is one logical label over its slug group, one row per project
+  const deleteIds = row.siblingIds;
 
   const handleCopyLink = async () => {
     const link = `${window.location.origin}${window.location.pathname}?labelPageId=${row.id}`;
@@ -37,13 +39,19 @@ export function LabelOptionsButton({ row, canManage, className }: LabelOptionsBu
   };
 
   const collapseOnDelete = ({ status }: CallbackArgs<Label[]>) => {
-    if (status === 'success') labelTileStore.getState().collapse(row.id);
+    if (status === 'success') labelTileStore.getState().collapse(row.groupKey);
   };
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const labels = deleteIds.map((id) => findLabelInCache(id)).filter((label): label is Label => !!label);
+    let renameChosen = false;
     dropdowner.getState().create(
       <>
+        {canManage && (
+          <DropdownActionItem icon={PencilIcon} onSelect={() => (renameChosen = true)}>
+            {t('c:rename')}
+          </DropdownActionItem>
+        )}
         <DropdownActionItem icon={LinkIcon} closeOnSelect={false} onSelect={handleCopyLink}>
           {t('c:copy_as_link')}
         </DropdownActionItem>
@@ -64,13 +72,17 @@ export function LabelOptionsButton({ row, canManage, className }: LabelOptionsBu
         )}
       </>,
       {
-        id: `label-options-${row.id}`,
-        triggerId: `label-options-btn-${row.id}`,
+        id: `label-options-${row.groupKey}`,
+        triggerId: `label-options-btn-${row.groupKey}`,
         triggerRef: { current: currentTarget },
         align: 'end',
         kind: 'menu',
         lead: <NamedText i18nKey="c:resource_named" name={row.name} values={{ resource: t('c:label') }} />,
         popupClassName: 'min-w-48',
+        // The menu hands focus back to its trigger as it closes; the rename field mounts after that, or it would lose focus and commit at once
+        onClose: () => {
+          if (renameChosen) requestAnimationFrame(() => requestAnimationFrame(onRename));
+        },
       },
     );
   };
