@@ -6,9 +6,9 @@
     { "key": "tom", "id": "01a1b0ba-e200-7000-8000-5a3e1e000004", "firstName": "Tom", "lastName": "Berg" }
   ],
   "projects": [
-    { "key": "website", "name": "Website", "by": "lena", "age": "6w", "labels": ["design", "copy"] },
-    { "key": "mobile-app", "name": "Mobile app", "by": "lena", "age": "5w", "labels": ["auth", "ios", "android"] },
-    { "key": "help-center", "name": "Help center", "by": "noor", "age": "3w", "labels": ["docs"], "folded": true }
+    { "key": "website", "name": "Website", "by": "lena", "age": "6w", "labels": ["design", "copy"], "color": 9 },
+    { "key": "mobile-app", "name": "Mobile app", "by": "lena", "age": "5w", "labels": ["auth", "ios", "android"], "color": 3 },
+    { "key": "help-center", "name": "Help center", "by": "noor", "age": "3w", "labels": ["docs"], "folded": true, "color": 2 }
   ],
   "tasks": [
     {

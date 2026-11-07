@@ -79,6 +79,10 @@ describe('Provisioning the sample', () => {
     expect(created).toBe(true);
     expect(projects.map(({ name }) => name).sort()).toEqual(['Help center', 'Mobile app', 'Website']);
     expect(foldedSampleProjectIds(projects)).toEqual(projects.filter(({ name }) => name === 'Help center').map(({ id }) => id));
+    // The avatar color comes from the id's last character, so every organization's sample looks like the about page's picture
+    expect(Object.fromEntries(projects.map(({ name, id }) => [name, id.at(-1)]))).toEqual(
+      Object.fromEntries(sampleContent.projects.map(({ name, color }) => [name, String(color)])),
+    );
 
     const tasks = await adminDb.select().from(tasksTable).where(eq(tasksTable.organizationId, organization.id)).orderBy(asc(tasksTable.number));
     expect(tasks.map(({ number }) => number)).toEqual(Array.from({ length: 30 }, (_, index) => index + 1));
