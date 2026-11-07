@@ -40,18 +40,18 @@ const project = (slug: string, name: string): ProjectWithMembership => ({
   included: {},
 });
 
-export const website = project('website', 'Website');
-export const mobileApp = project('mobile-app', 'Mobile app');
+const website = project('website', 'Website');
+const mobileApp = project('mobile-app', 'Mobile app');
 export const demoProjects = [website, mobileApp];
 
 /** The types a new organization starts with, so the demo's picker lists what a new team finds. */
-export const demoTypes = appConfig.defaultSetupConfig.primaryLabels.map(
+const demoTypes = appConfig.defaultSetupConfig.primaryLabels.map(
   ({ slug, name, color, icon }): TaskLabel => ({ id: `demo-type-${slug}`, name, slug, color, mode: 'primary', icon, projectId: website.id }),
 );
 
-export const demoType = (slug: string) => demoTypes.find((type) => type.slug === slug) ?? demoTypes[0];
+const demoType = (slug: string) => demoTypes.find((type) => type.slug === slug) ?? demoTypes[0];
 
-export const demoLabel = (name: string): TaskLabel => ({
+const demoLabel = (name: string): TaskLabel => ({
   id: `demo-label-${name}`,
   name,
   slug: name,
@@ -62,7 +62,7 @@ export const demoLabel = (name: string): TaskLabel => ({
 });
 
 /** A task's summary: a one-block BlockNote document. */
-export const summaryOf = (text: string) =>
+const summaryOf = (text: string) =>
   JSON.stringify([
     {
       id: 'demo-block',
@@ -120,36 +120,8 @@ const task = ({ id, number, name, type, status, order, in: taskProject = website
   organizationId,
 });
 
-const { Unstarted, Started, Finished, Reviewed } = TaskStatus;
+const { Unstarted, Started, Finished } = TaskStatus;
 
-const heroImagesTask = task({
-  id: 'images',
-  number: 12,
-  name: 'Compress the hero images',
-  type: 'chore',
-  status: Finished,
-  order: 900,
-  assigned: ['sam'],
-});
-export const darkModeTask = task({
-  id: 'dark-mode',
-  number: 18,
-  name: 'Dark mode for the settings page',
-  type: 'feature',
-  status: Unstarted,
-  order: 900,
-  assigned: ['noor'],
-});
-export const typoTask = task({ id: 'typo', number: 19, name: 'Typo on the pricing page', type: 'bug', status: Unstarted, order: 800, by: 'sam' });
-export const syncStateTask = task({
-  id: 'sync-state',
-  number: 21,
-  name: 'Show the sync state in the header',
-  type: 'feature',
-  status: Unstarted,
-  order: 800,
-  in: mobileApp,
-});
 export const exportTask = task({
   id: 'export',
   number: 23,
@@ -159,45 +131,6 @@ export const exportTask = task({
   order: 2000,
   by: 'noor',
 });
-
-/** What the board starts from: few rows, as everything that changes must stand on the first screen, and on a phone in the three its frame holds. */
-export const demoSeed = (isPhone: boolean) => [
-  ...(isPhone ? [] : [heroImagesTask]),
-  darkModeTask,
-  typoTask,
-  task({
-    id: 'offline',
-    number: 9,
-    name: 'Offline mode for the task list',
-    type: 'feature',
-    status: Reviewed,
-    order: 900,
-    in: mobileApp,
-    assigned: ['sam'],
-  }),
-  task({
-    id: 'magic-link',
-    number: 11,
-    name: 'Sign in with a magic link',
-    type: 'feature',
-    status: Started,
-    order: 900,
-    in: mobileApp,
-    labels: ['auth'],
-    assigned: ['tom'],
-  }),
-  task({
-    id: 'push',
-    number: 16,
-    name: 'Push notification opens the wrong task',
-    type: 'bug',
-    status: Unstarted,
-    order: 900,
-    in: mobileApp,
-    assigned: ['tom'],
-  }),
-  syncStateTask,
-];
 
 /** The highlights follow the hero's export task: the search finds it, two people write its todos, it is worked on offline. */
 export const searchQuery = 'export';

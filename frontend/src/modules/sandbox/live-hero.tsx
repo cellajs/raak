@@ -42,7 +42,7 @@ interface LiveHeroProps {
  * The about page's board, which becomes the visitor's own sandbox: a picture of its first view until the visitor moves
  * onto it, then a card that says what it is while the sandbox's workspace loads behind it, the app itself in a frame.
  * A browser that holds a sandbox gets it back on arrival, and the page's address then carries its share code. That
- * address (`?sandbox=<code>`) lets a colleague in: the card asks their first name instead.
+ * address (`?sandbox=<code>`) lets a colleague in: the card asks their first name.
  *
  * The frame hands the wheel to the page until the visitor presses inside it, which a line under the board says. The
  * full window is this board in focus view, filling the window: on a phone the only way to it, as a frame in the page

@@ -6,7 +6,7 @@ import { isoTimestamp } from '#/db/utils/timestamp-columns';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { usersTable } from '#/modules/user/user-db';
 
-export const sandboxStatuses = ['ready', 'claimed'] as const;
+const sandboxStatuses = ['ready', 'claimed'] as const;
 
 /**
  * A sandbox: a throwaway account with a tenant and a draft organization holding the sample. The pool keeps some

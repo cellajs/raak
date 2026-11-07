@@ -10,6 +10,7 @@ import { removeSandbox } from '#/modules/sandbox/operations/remove-sandbox';
 import { insertSandboxAccount } from '#/modules/sandbox/operations/sandbox-account';
 import { sandboxContentVersion } from '#/modules/sandbox/sandbox-constants';
 import { insertSandbox } from '#/modules/sandbox/sandbox-queries';
+import { defaultRestrictions } from '#/modules/tenants/tenant-restrictions';
 import { insertTenant } from '#/modules/tenants/tenants-queries';
 import { ensureUserWorkspace } from '#/modules/workspace/operations/ensure-workspace';
 import { log } from '#/utils/logger';
@@ -27,7 +28,12 @@ export async function buildSandbox() {
   const handle = nanoid(10);
 
   const user = await insertSandboxAccount({ id: userId, handle });
-  const tenant = await insertTenant(dbCtx, { values: { name: 'Sandbox', createdBy: userId } });
+  // One seat, taken from the start: an invitation from a sandbox is refused before it mails anyone. Its people come in
+  // through the share link, which seats them directly.
+  const restrictions = defaultRestrictions();
+  const tenant = await insertTenant(dbCtx, {
+    values: { name: 'Sandbox', createdBy: userId, restrictions: { ...restrictions, quotas: { ...restrictions.quotas, user: 1 } } },
+  });
 
   try {
     const [organization] = await insertOrganizations(dbCtx, {
