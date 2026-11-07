@@ -18,7 +18,6 @@ import { SandboxShare } from '~/modules/sandbox/sandbox-share';
 import { cn } from '~/utils/cn';
 
 type HeroState = 'still' | 'claiming' | 'loading' | 'live' | 'unavailable';
-type Hint = 'passive' | 'engaged';
 
 /** How long a frame may take to report its layout before the still stays. */
 const frameTimeoutMs = 15_000;
@@ -26,7 +25,6 @@ const frameTimeoutMs = 15_000;
 const settleMs = 600;
 /** The card explains the board at least this long, which covers most of the wait for it. */
 const cardMs = 3_000;
-const hintMs = 2_500;
 
 const pillButtonClass = 'bg-background/15 hover:bg-background/25 inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-sm font-medium';
 const fullWindowClass = 'fixed inset-0 z-50 h-dvh max-w-none rounded-none border-0 shadow-none ring-0';
@@ -46,8 +44,9 @@ interface LiveHeroProps {
  * A browser that holds a sandbox gets it back on arrival, and the page's address then carries its share code. That
  * address (`?sandbox=<code>`) lets a colleague in: the card asks their first name instead.
  *
- * The frame hands the wheel to the page until the visitor presses inside it. The full window is this board in focus
- * view, filling the window: on a phone the only way to it, as a frame in the page would catch the thumb that scrolls.
+ * The frame hands the wheel to the page until the visitor presses inside it, which a line under the board says. The
+ * full window is this board in focus view, filling the window: on a phone the only way to it, as a frame in the page
+ * would catch the thumb that scrolls.
  */
 export function LiveHero({ still, className, label }: LiveHeroProps) {
   const { t } = useTranslation();
@@ -57,14 +56,12 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const claiming = useRef<Promise<string | undefined>>(undefined);
-  const hintsShown = useRef(new Set<Hint>());
   const [state, setState] = useState<HeroState>('still');
   const [entry, setEntry] = useState<{ path: string; shareCode: string; expiresAt: string | null }>();
   const [cardOpen, setCardOpen] = useState(false);
   const [cardLong, setCardLong] = useState(false);
   const [stillGone, setStillGone] = useState(false);
   const [engaged, setEngaged] = useState(false);
-  const [hint, setHint] = useState<Hint>();
   const [full, setFull] = useState(false);
   const [joining, setJoining] = useState(false);
   const { mutateAsync: claimSandbox } = useSandboxClaimMutation();
@@ -87,8 +84,6 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
   const unavailable = state === 'unavailable';
   const frameShown = !isPhone || full;
   const fullRef = useLatestRef(full);
-  // Hints wait for the board itself: live, and the card gone
-  const hintsAllowed = useLatestRef(live && (!cardOpen || cardLong) && !full);
 
   // A link into a sandbox this browser is not in: the card asks to join it, or says why it cannot
   const linked = !!shareCode && !entry && !invite?.joined;
@@ -157,13 +152,6 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
 
   const dropLink = () => navigate({ search: {}, replace: true, resetScroll: false });
 
-  const showHint = (kind: Hint) => {
-    if (!hintsAllowed.current || hintsShown.current.has(kind)) return;
-    hintsShown.current.add(kind);
-    setHint(kind);
-    window.setTimeout(() => setHint((current) => (current === kind ? undefined : current)), hintMs);
-  };
-
   // A browser back at its sandbox opens it at once, without the card it has seen
   const reopen = useEffectEvent(() => void claim());
   useEffect(() => {
@@ -194,14 +182,8 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
         window.clearTimeout(settle);
         settle = window.setTimeout(() => setState((current) => (current === 'loading' ? 'live' : current)), settleMs);
       }
-      if (message.kind === 'wheel') {
-        window.scrollBy({ left: message.deltaX, top: message.deltaY, behavior: 'instant' });
-        showHint('passive');
-      }
-      if (message.kind === 'engaged') {
-        setEngaged(true);
-        showHint('engaged');
-      }
+      if (message.kind === 'wheel') window.scrollBy({ left: message.deltaX, top: message.deltaY, behavior: 'instant' });
+      if (message.kind === 'engaged') setEngaged(true);
     };
     window.addEventListener('message', onMessage);
     return () => {
@@ -252,107 +234,114 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
   const frameMounted = !!path && !unavailable && (!isPhone || full || stillGone);
 
   return (
-    <div ref={boxRef} className={cn(className, 'focus-view-container flex flex-col', full && fullWindowClass)} onPointerEnter={lookAt}>
-      {full && <SandboxAlert expiresAt={entry?.expiresAt ?? null} shareCode={entry?.shareCode} onClose={closeFull} />}
+    <>
+      <div ref={boxRef} className={cn(className, 'focus-view-container flex flex-col', full && fullWindowClass)} onPointerEnter={lookAt}>
+        {full && <SandboxAlert expiresAt={entry?.expiresAt ?? null} shareCode={entry?.shareCode} onClose={closeFull} />}
 
-      <div role={live ? 'region' : 'img'} aria-label={live ? t('c:your_sandbox') : label} className="relative min-h-0 flex-1">
-        {(!stillGone || !frameShown) && still}
-        {frameMounted && (
-          <iframe
-            ref={frameRef}
-            src={path}
-            title={t('c:your_sandbox')}
-            className={cn(
-              'bg-background absolute inset-0 size-full opacity-0 transition-opacity duration-500',
-              live && 'opacity-100',
-              !frameShown && 'invisible',
-            )}
-          />
+        <div role={live ? 'region' : 'img'} aria-label={live ? t('c:your_sandbox') : label} className="relative min-h-0 flex-1">
+          {(!stillGone || !frameShown) && still}
+          {frameMounted && (
+            <iframe
+              ref={frameRef}
+              src={path}
+              title={t('c:your_sandbox')}
+              className={cn(
+                'bg-background absolute inset-0 size-full opacity-0 transition-opacity duration-500',
+                live && 'opacity-100',
+                !frameShown && 'invisible',
+              )}
+            />
+          )}
+        </div>
+
+        {engaged && !full && (
+          <div aria-hidden className="ring-foreground/70 pointer-events-none absolute inset-0 z-10 rounded-[inherit] ring-2 ring-inset" />
         )}
-      </div>
 
-      {engaged && !full && (
-        <div aria-hidden className="ring-foreground/70 pointer-events-none absolute inset-0 z-10 rounded-[inherit] ring-2 ring-inset" />
-      )}
-
-      <div
-        aria-hidden={!cardVisible}
-        inert={!cardVisible}
-        className={cn(
-          'bg-background/60 pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4 opacity-0 transition-opacity duration-500',
-          cardVisible && 'opacity-100',
-        )}
-      >
-        <section
-          role={interactive ? undefined : 'status'}
+        <div
+          aria-hidden={!cardVisible}
+          inert={!cardVisible}
           className={cn(
-            'bg-card text-card-foreground flex max-h-full w-full max-w-md flex-col gap-3 overflow-y-auto rounded-xl border p-5 text-left shadow-xl sm:p-6',
-            interactive && cardVisible && 'pointer-events-auto',
+            'bg-background/60 pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4 opacity-0 transition-opacity duration-500',
+            cardVisible && 'opacity-100',
           )}
         >
-          {interactive ? (
-            <SandboxInviteCard invite={invite} refusal={refusal} account={me} joining={joining} onJoin={join} onOwn={dropLink} />
-          ) : (
-            <>
-              <h2 className="flex items-center gap-2.5 text-lg font-semibold">
-                <FlaskConicalIcon className="size-5" />
-                {t('c:your_sandbox')}
-              </h2>
-              <p className="text-[0.9375rem] leading-6">{t('c:sandbox_card.text')}</p>
-              {cardLong && !live ? (
-                <p className="text-muted-foreground flex items-center gap-2 text-sm">
-                  <Spinner className="size-4" noDelay />
-                  {t('c:sandbox_card.waiting')}
-                </p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <div className="bg-muted h-0.5 overflow-hidden rounded-full">
-                    <div
-                      className={cn('bg-foreground h-full w-0 transition-[width] ease-linear', cardVisible && 'w-full')}
-                      style={{ transitionDuration: `${cardMs}ms` }}
-                    />
+          <section
+            role={interactive ? undefined : 'status'}
+            className={cn(
+              'bg-card text-card-foreground flex max-h-full w-full max-w-md flex-col gap-3 overflow-y-auto rounded-xl border p-5 text-left shadow-xl sm:p-6',
+              interactive && cardVisible && 'pointer-events-auto',
+            )}
+          >
+            {interactive ? (
+              <SandboxInviteCard invite={invite} refusal={refusal} account={me} joining={joining} onJoin={join} onOwn={dropLink} />
+            ) : (
+              <>
+                <h2 className="flex items-center gap-2.5 text-lg font-semibold">
+                  <FlaskConicalIcon className="size-5" />
+                  {t('c:your_sandbox')}
+                </h2>
+                <p className="text-[0.9375rem] leading-6">{t('c:sandbox_card.text')}</p>
+                {cardLong && !live ? (
+                  <p className="text-muted-foreground flex items-center gap-2 text-sm">
+                    <Spinner className="size-4" noDelay />
+                    {t('c:sandbox_card.waiting')}
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <div className="bg-muted h-0.5 overflow-hidden rounded-full">
+                      <div
+                        className={cn('bg-foreground h-full w-0 transition-[width] ease-linear', cardVisible && 'w-full')}
+                        style={{ transitionDuration: `${cardMs}ms` }}
+                      />
+                    </div>
+                    <span className="text-muted-foreground text-sm">{t('c:sandbox_card.loading')}</span>
                   </div>
-                  <span className="text-muted-foreground text-sm">{t('c:sandbox_card.loading')}</span>
-                </div>
+                )}
+              </>
+            )}
+          </section>
+        </div>
+
+        {!unavailable && !full && !linked && (
+          // Above the about page's floating menu, which a phone shows over the board's foot
+          <div className="pointer-events-none absolute inset-x-0 bottom-16 z-20 flex justify-center px-4 sm:bottom-4">
+            <div className="bg-foreground text-background pointer-events-auto flex items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4 shadow-lg">
+              <FlaskConicalIcon className="size-4 shrink-0" />
+              <span className="hidden text-sm font-medium sm:inline">{t('c:your_sandbox')}</span>
+              {entry && live && (
+                <SandboxShare
+                  shareCode={entry.shareCode}
+                  expiresAt={entry.expiresAt}
+                  trigger={
+                    <button type="button" className={pillButtonClass}>
+                      <UsersIcon className="size-4" />
+                      {t('c:try_together')}
+                    </button>
+                  }
+                />
               )}
-            </>
-          )}
-        </section>
+              <button type="button" disabled={pending} onClick={() => void openFull()} className={pillButtonClass}>
+                {t('c:open_full_window')}
+                {pending ? <Spinner className="size-4" noDelay /> : <Maximize2Icon className="size-4" />}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {hint && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-18 z-20 flex justify-center px-4">
-          <span className="bg-foreground text-background rounded-full px-3.5 py-2 text-sm font-medium shadow-lg">
-            {t(`c:sandbox_scroll.${hint}`)}
-          </span>
-        </div>
+      {/* Positioned: the block behind the board's foot would paint over it */}
+      {!isPhone && (
+        <p
+          aria-live="polite"
+          className={cn(
+            'text-muted-foreground relative z-10 mt-3 text-center text-sm opacity-0 transition-opacity duration-500',
+            live && !full && 'opacity-100',
+          )}
+        >
+          {t(engaged ? 'c:sandbox_scroll.engaged' : 'c:sandbox_scroll.passive')}
+        </p>
       )}
-
-      {!unavailable && !full && !linked && (
-        // Above the about page's floating menu, which a phone shows over the board's foot
-        <div className="pointer-events-none absolute inset-x-0 bottom-16 z-20 flex justify-center px-4 sm:bottom-4">
-          <div className="bg-foreground text-background pointer-events-auto flex items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4 shadow-lg">
-            <FlaskConicalIcon className="size-4 shrink-0" />
-            <span className="hidden text-sm font-medium sm:inline">{t('c:your_sandbox')}</span>
-            {entry && live && (
-              <SandboxShare
-                shareCode={entry.shareCode}
-                expiresAt={entry.expiresAt}
-                trigger={
-                  <button type="button" className={pillButtonClass}>
-                    <UsersIcon className="size-4" />
-                    {t('c:try_together')}
-                  </button>
-                }
-              />
-            )}
-            <button type="button" disabled={pending} onClick={() => void openFull()} className={pillButtonClass}>
-              {t('c:open_full_window')}
-              {pending ? <Spinner className="size-4" noDelay /> : <Maximize2Icon className="size-4" />}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
