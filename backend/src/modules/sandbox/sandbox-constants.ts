@@ -8,6 +8,9 @@ export const sandboxPoolSize = appConfig.mode === 'production' ? 10 : 0;
 
 export const sandboxLifetime = new TimeSpan(7, 'd');
 
+/** People in one sandbox: the visitor who took it and the colleagues who joined through its link. */
+export const sandboxPeopleCap = 5;
+
 /** A ready sandbox older than this is rebuilt, so the sample's relative dates read fresh at the claim. */
 export const readySandboxMaxAge = new TimeSpan(1, 'd');
 

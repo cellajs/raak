@@ -4,11 +4,11 @@ import { sandboxAnswer } from '#/modules/sandbox/operations/sandbox-place';
 import { findSandboxByUser } from '#/modules/sandbox/sandbox-queries';
 
 /**
- * The signed-in account's sandbox while it is one: where it opens and when it ends.
+ * The signed-in account's sandbox while it is one: where it opens, when it ends, and its share code.
  * @throws AppError 404 for an account that is no sandbox.
  */
 export async function getSandboxOp(ctx: UserContext) {
   const sandbox = await findSandboxByUser(ctx, { userId: ctx.var.user.id });
   if (sandbox?.status !== 'claimed') throw new AppError(404, 'not_found', 'info', { entityType: 'user' });
-  return sandboxAnswer(sandbox);
+  return sandboxAnswer(sandbox, ctx.var.user.id);
 }

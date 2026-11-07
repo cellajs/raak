@@ -6503,6 +6503,10 @@ export type GetSandboxResponses = {
      * When the sandbox is removed.
      */
     expiresAt: string | null;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
   };
 };
 
@@ -6546,7 +6550,11 @@ export type ClaimSandboxResponses = {
      */
     expiresAt: string | null;
     /**
-     * Whether this request took the sandbox; false for the one this browser held already.
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
      */
     claimed: boolean;
     /**
@@ -6569,7 +6577,11 @@ export type ClaimSandboxResponses = {
      */
     expiresAt: string | null;
     /**
-     * Whether this request took the sandbox; false for the one this browser held already.
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
      */
     claimed: boolean;
     /**
@@ -6580,6 +6592,151 @@ export type ClaimSandboxResponses = {
 };
 
 export type ClaimSandboxResponse = ClaimSandboxResponses[keyof ClaimSandboxResponses];
+
+export type GetSandboxInviteData = {
+  body?: never;
+  path: {
+    shareCode: string;
+  };
+  query?: never;
+  url: '/sandbox/join/{shareCode}';
+};
+
+export type GetSandboxInviteErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetSandboxInviteError = GetSandboxInviteErrors[keyof GetSandboxInviteErrors];
+
+export type GetSandboxInviteResponses = {
+  /**
+   * Sandbox invite
+   */
+  200: {
+    /**
+     * The first names of the people in the sandbox, its taker first; a guest without one is left out.
+     */
+    people: Array<string>;
+    /**
+     * When the sandbox is removed.
+     */
+    expiresAt: string | null;
+    /**
+     * Whether it holds as many people as a sandbox takes.
+     */
+    full: boolean;
+    /**
+     * Whether this browser is in it already.
+     */
+    joined: boolean;
+  };
+};
+
+export type GetSandboxInviteResponse = GetSandboxInviteResponses[keyof GetSandboxInviteResponses];
+
+export type JoinSandboxData = {
+  body: {
+    firstName: string;
+  };
+  path: {
+    shareCode: string;
+  };
+  query?: never;
+  url: '/sandbox/join/{shareCode}';
+};
+
+export type JoinSandboxErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError;
+  /**
+   * Not found
+   */
+  404: NotFoundError;
+  /**
+   * Conflict
+   */
+  409: ConflictError;
+  /**
+   * Payload too large
+   */
+  413: PayloadTooLargeError;
+  /**
+   * Too many requests
+   */
+  429: TooManyRequestsError;
+};
+
+export type JoinSandboxError = JoinSandboxErrors[keyof JoinSandboxErrors];
+
+export type JoinSandboxResponses = {
+  /**
+   * Sandbox of this browser
+   */
+  200: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed.
+     */
+    expiresAt: string | null;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+  /**
+   * Sandbox joined
+   *
+   * The session cookie for the new account is set.
+   */
+  201: {
+    /**
+     * Where the sandbox opens in the app: its account's workspace board.
+     */
+    path: string;
+    /**
+     * When the sandbox is removed.
+     */
+    expiresAt: string | null;
+    /**
+     * The code of its share link, which lets a colleague join.
+     */
+    shareCode: string;
+    /**
+     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     */
+    claimed: boolean;
+    /**
+     * The sample projects its board first opens folded.
+     */
+    foldedProjectIds: Array<string>;
+  };
+};
+
+export type JoinSandboxResponse = JoinSandboxResponses[keyof JoinSandboxResponses];
 
 export type DeleteWorkspacesData = {
   body: {

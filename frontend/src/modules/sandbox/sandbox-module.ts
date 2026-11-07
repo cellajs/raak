@@ -6,7 +6,7 @@ defineFrontendModule({
   name: 'sandboxes',
   owner: 'app',
   scope: ['frontend', 'backend'],
-  description: "A visitor's own sandbox: the about page's live board, and the bar on top of the app.",
+  description: "A visitor's own sandbox: the about page's live board, the bar on top of the app, and the share link that lets colleagues join.",
 });
 
 // The root page signs a remembered account back in; a sandbox ends on its own, after which that would land on sign-in

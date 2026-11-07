@@ -2,6 +2,7 @@ import { and, count, eq, gte, lt, ne, or, sql } from 'drizzle-orm';
 import type { DbContext } from '#/core/context';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
+import { projectsTable } from '#/modules/project/project-db';
 import { type SandboxModel, sandboxesTable } from '#/modules/sandbox/sandbox-db';
 import { workspacesTable } from '#/modules/workspace/workspace-db';
 
@@ -38,10 +39,40 @@ export const claimSandbox = async (ctx: DbContext, { id, claimedAt, expiresAt }:
   return claimed;
 };
 
+/** The sandbox of a sandbox account: the one it took, or the one it joined. */
 export const findSandboxByUser = async (ctx: DbContext, { userId }: { userId: string }) => {
-  const [sandbox] = await ctx.var.db.select().from(sandboxesTable).where(eq(sandboxesTable.userId, userId)).limit(1);
+  const [sandbox] = await ctx.var.db
+    .select()
+    .from(sandboxesTable)
+    .where(or(eq(sandboxesTable.userId, userId), sql`${userId}::uuid = any(${sandboxesTable.guestIds})`))
+    .limit(1);
   return sandbox;
 };
+
+export const findClaimedSandboxByShareCode = async (ctx: DbContext, { shareCode }: { shareCode: string }) => {
+  const [sandbox] = await ctx.var.db
+    .select()
+    .from(sandboxesTable)
+    .where(and(eq(sandboxesTable.shareCode, shareCode), eq(sandboxesTable.status, 'claimed')))
+    .limit(1);
+  return sandbox;
+};
+
+/** Holds a place for `userId` among the sandbox's guests; undefined once `cap` people are in it. */
+export const addSandboxGuest = async (ctx: DbContext, { id, userId, cap }: { id: string; userId: string; cap: number }) => {
+  const [sandbox] = await ctx.var.db
+    .update(sandboxesTable)
+    .set({ guestIds: sql`array_append(${sandboxesTable.guestIds}, ${userId}::uuid)` })
+    .where(and(eq(sandboxesTable.id, id), eq(sandboxesTable.status, 'claimed'), sql`cardinality(${sandboxesTable.guestIds}) < ${cap - 1}`))
+    .returning();
+  return sandbox;
+};
+
+export const removeSandboxGuest = async (ctx: DbContext, { id, userId }: { id: string; userId: string }) =>
+  ctx.var.db
+    .update(sandboxesTable)
+    .set({ guestIds: sql`array_remove(${sandboxesTable.guestIds}, ${userId}::uuid)` })
+    .where(eq(sandboxesTable.id, id));
 
 export const countReadySandboxes = async (ctx: DbContext, { contentVersion }: { contentVersion: string }) => {
   const [{ total }] = await ctx.var.db
@@ -85,3 +116,6 @@ export const findSandboxPlace = async (ctx: DbContext, { userId, organizationId 
     .limit(1);
   return place;
 };
+
+export const findOrganizationProjects = async (ctx: DbContext, { organizationId }: { organizationId: string }) =>
+  ctx.var.db.select().from(projectsTable).where(eq(projectsTable.organizationId, organizationId));

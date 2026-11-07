@@ -1,19 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { FlaskConicalIcon } from 'lucide-react';
+import { FlaskConicalIcon, UsersIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { endSession } from '~/modules/auth/end-session';
 import { sandboxQueryOptions } from '~/modules/sandbox/query';
 import { isFramed, isSandboxAddress } from '~/modules/sandbox/sandbox-account';
 import { useSandboxFrame, useSandboxView } from '~/modules/sandbox/sandbox-frame';
+import { SandboxShare } from '~/modules/sandbox/sandbox-share';
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '~/modules/ui/alert';
 import { Button } from '~/modules/ui/button';
 import { useUserStore } from '~/modules/user/user-store';
 import { dateShort } from '~/utils/date-short';
 
 /**
- * On top of a sandbox account's board: what a sandbox is, when it is cleared, and the way out to a sign-in. Inside the
- * about page's frame it shows nothing, and the board stands alone.
+ * On top of a sandbox account's board: what a sandbox is, when it is cleared, its link for a colleague, and the way out
+ * to a sign-in. Inside the about page's frame it shows nothing, and the board stands alone.
  */
 export function SandboxBar() {
   const { t } = useTranslation();
@@ -37,8 +38,20 @@ export function SandboxBar() {
       <FlaskConicalIcon />
       <AlertTitle>{t('c:sandbox_bar')}</AlertTitle>
       <AlertDescription>{t('c:sandbox_bar.text', { date: dateShort(sandbox?.expiresAt) ?? '' })}</AlertDescription>
-      <AlertAction>
-        <Button size="sm" onClick={signIn}>
+      <AlertAction className="flex gap-2">
+        {sandbox && (
+          <SandboxShare
+            shareCode={sandbox.shareCode}
+            expiresAt={sandbox.expiresAt}
+            trigger={
+              <Button size="sm">
+                <UsersIcon />
+                {t('c:try_together')}
+              </Button>
+            }
+          />
+        )}
+        <Button size="sm" variant="outline" onClick={signIn}>
           {t('c:sign_in')}
         </Button>
       </AlertAction>

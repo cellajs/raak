@@ -251,7 +251,7 @@
           },
           "sandboxClaimLimiter": {
             "name": "Sandboxes claimed",
-            "description": "New sandboxes for each IP address a day. Returning to the sandbox a browser holds does not count.",
+            "description": "Sandboxes each IP address takes or joins a day. Returning to the sandbox a browser holds does not count.",
             "policy": {
               "mode": "success",
               "points": 5,
@@ -427,7 +427,7 @@
     },
     {
       "name": "sandboxes",
-      "description": "Endpoints for sandboxes: a visitor's own copy of the product to try, a provisional account with an organization holding the sample, kept in a pool so claiming one is instant. A sandbox ends after a week with everything in it; it never becomes an account.",
+      "description": "Endpoints for sandboxes: a visitor's own copy of the product to try, a provisional account with an organization holding the sample, kept in a pool so claiming one is instant. Its link lets up to four colleagues join, each on a sandbox account of their own. A sandbox ends after a week with everything and everyone in it; it never becomes an account.",
       "x-parent": "app",
       "x-kind": "module"
     },
@@ -15988,9 +15988,13 @@
                       "type": ["string", "null"],
                       "description": "When the sandbox is removed."
                     },
+                    "shareCode": {
+                      "type": "string",
+                      "description": "The code of its share link, which lets a colleague join."
+                    },
                     "claimed": {
                       "type": "boolean",
-                      "description": "Whether this request took the sandbox; false for the one this browser held already."
+                      "description": "Whether this request took the sandbox, or joined it; false for the one this browser held already."
                     },
                     "foldedProjectIds": {
                       "type": "array",
@@ -16000,7 +16004,7 @@
                       "description": "The sample projects its board first opens folded."
                     }
                   },
-                  "required": ["path", "expiresAt", "claimed", "foldedProjectIds"]
+                  "required": ["path", "expiresAt", "shareCode", "claimed", "foldedProjectIds"]
                 }
               }
             }
@@ -16020,9 +16024,13 @@
                       "type": ["string", "null"],
                       "description": "When the sandbox is removed."
                     },
+                    "shareCode": {
+                      "type": "string",
+                      "description": "The code of its share link, which lets a colleague join."
+                    },
                     "claimed": {
                       "type": "boolean",
-                      "description": "Whether this request took the sandbox; false for the one this browser held already."
+                      "description": "Whether this request took the sandbox, or joined it; false for the one this browser held already."
                     },
                     "foldedProjectIds": {
                       "type": "array",
@@ -16032,7 +16040,7 @@
                       "description": "The sample projects its board first opens folded."
                     }
                   },
-                  "required": ["path", "expiresAt", "claimed", "foldedProjectIds"]
+                  "required": ["path", "expiresAt", "shareCode", "claimed", "foldedProjectIds"]
                 }
               }
             }
@@ -16075,9 +16083,13 @@
                     "expiresAt": {
                       "type": ["string", "null"],
                       "description": "When the sandbox is removed."
+                    },
+                    "shareCode": {
+                      "type": "string",
+                      "description": "The code of its share link, which lets a colleague join."
                     }
                   },
-                  "required": ["path", "expiresAt"]
+                  "required": ["path", "expiresAt", "shareCode"]
                 }
               }
             }
@@ -16090,6 +16102,199 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/sandbox/join/{shareCode}": {
+      "get": {
+        "security": [],
+        "operationId": "getSandboxInvite",
+        "tags": ["sandboxes", "app"],
+        "summary": "Get sandbox invite",
+        "description": "Who is in the sandbox a share link leads to, when it ends, and whether this browser can join it.",
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["readLimiter"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 16
+            },
+            "required": true,
+            "name": "shareCode",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sandbox invite",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "people": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The first names of the people in the sandbox, its taker first; a guest without one is left out."
+                    },
+                    "expiresAt": {
+                      "type": ["string", "null"],
+                      "description": "When the sandbox is removed."
+                    },
+                    "full": {
+                      "type": "boolean",
+                      "description": "Whether it holds as many people as a sandbox takes."
+                    },
+                    "joined": {
+                      "type": "boolean",
+                      "description": "Whether this browser is in it already."
+                    }
+                  },
+                  "required": ["people", "expiresAt", "full", "joined"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      },
+      "post": {
+        "security": [],
+        "operationId": "joinSandbox",
+        "tags": ["sandboxes", "app"],
+        "summary": "Join a sandbox",
+        "description": "Lets this browser into the sandbox of a share link, on a sandbox account of its own under the given first name, and signs it in. A browser in that sandbox already gets it back.",
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["sandboxClaimLimiter"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 16
+            },
+            "required": true,
+            "name": "shareCode",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^[^\\p{Cc}<>]+$"
+                  }
+                },
+                "required": ["firstName"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sandbox of this browser",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                    },
+                    "expiresAt": {
+                      "type": ["string", "null"],
+                      "description": "When the sandbox is removed."
+                    },
+                    "shareCode": {
+                      "type": "string",
+                      "description": "The code of its share link, which lets a colleague join."
+                    },
+                    "claimed": {
+                      "type": "boolean",
+                      "description": "Whether this request took the sandbox, or joined it; false for the one this browser held already."
+                    },
+                    "foldedProjectIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The sample projects its board first opens folded."
+                    }
+                  },
+                  "required": ["path", "expiresAt", "shareCode", "claimed", "foldedProjectIds"]
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Sandbox joined\n\nThe session cookie for the new account is set.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                    },
+                    "expiresAt": {
+                      "type": ["string", "null"],
+                      "description": "When the sandbox is removed."
+                    },
+                    "shareCode": {
+                      "type": "string",
+                      "description": "The code of its share link, which lets a colleague join."
+                    },
+                    "claimed": {
+                      "type": "boolean",
+                      "description": "Whether this request took the sandbox, or joined it; false for the one this browser held already."
+                    },
+                    "foldedProjectIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The sample projects its board first opens folded."
+                    }
+                  },
+                  "required": ["path", "expiresAt", "shareCode", "claimed", "foldedProjectIds"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLargeError"
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequestsError"

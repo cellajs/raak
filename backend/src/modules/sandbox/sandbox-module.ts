@@ -12,6 +12,6 @@ defineBackendModule({
     { name: 'sandbox-expiry', cron: '23 * * * *', run: () => expireSandboxes() },
   ],
   description: `Endpoints for sandboxes: a visitor's own copy of the product to try, a provisional account with an
-    organization holding the sample, kept in a pool so claiming one is instant. A sandbox ends after a week with everything in it; it never
-    becomes an account.`,
+    organization holding the sample, kept in a pool so claiming one is instant. Its link lets up to four colleagues join, each
+    on a sandbox account of their own. A sandbox ends after a week with everything and everyone in it; it never becomes an account.`,
 });

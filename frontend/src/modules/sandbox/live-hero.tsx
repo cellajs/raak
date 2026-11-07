@@ -1,14 +1,13 @@
-import { FlaskConicalIcon, Maximize2Icon } from 'lucide-react';
+import { FlaskConicalIcon, Maximize2Icon, UsersIcon } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useLatestRef } from '~/hooks/use-latest-ref';
 import { Spinner } from '~/modules/common/spinner';
-import { meQueryOptions } from '~/modules/me/query';
-import { foldSandboxFirstView } from '~/modules/sandbox/first-view';
+import { enterSandbox } from '~/modules/sandbox/first-view';
 import { useSandboxClaimMutation } from '~/modules/sandbox/query';
 import { isSandboxFrameMessage, sandboxFrameMessage } from '~/modules/sandbox/sandbox-account';
-import { queryClient } from '~/query/query-client';
+import { SandboxShare } from '~/modules/sandbox/sandbox-share';
 import { cn } from '~/utils/cn';
 
 type HeroState = 'still' | 'claiming' | 'loading' | 'live' | 'unavailable';
@@ -21,6 +20,8 @@ const settleMs = 600;
 /** The card explains the board at least this long, which covers most of the wait for it. */
 const cardMs = 3_000;
 const hintMs = 2_500;
+
+const pillButtonClass = 'bg-background/15 hover:bg-background/25 inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-sm font-medium';
 
 interface LiveHeroProps {
   /** The sandbox's first view as a picture: shown until the sandbox is live, and for good when none can be had. */
@@ -43,7 +44,7 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
   const claiming = useRef<Promise<string | undefined>>(undefined);
   const hintsShown = useRef(new Set<Hint>());
   const [state, setState] = useState<HeroState>('still');
-  const [path, setPath] = useState<string>();
+  const [entry, setEntry] = useState<{ path: string; shareCode: string; expiresAt: string | null }>();
   const [cardOpen, setCardOpen] = useState(false);
   const [cardLong, setCardLong] = useState(false);
   const [stillGone, setStillGone] = useState(false);
@@ -51,6 +52,7 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
   const [hint, setHint] = useState<Hint>();
   const { mutateAsync: claimSandbox } = useSandboxClaimMutation();
 
+  const path = entry?.path;
   const live = state === 'live';
   // Hints wait for the board itself: live, and the card gone
   const hintsAllowed = useLatestRef(live && (!cardOpen || cardLong));
@@ -61,10 +63,8 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
       setState('claiming');
       try {
         const sandbox = await claimSandbox();
-        // The frame's app reads the account from the stored user, so it opens without a sign-in round
-        await queryClient.fetchQuery(meQueryOptions());
-        if (sandbox.claimed) await foldSandboxFirstView(sandbox.foldedProjectIds);
-        setPath(sandbox.path);
+        await enterSandbox(sandbox);
+        setEntry(sandbox);
         setState('loading');
         return sandbox.path;
       } catch {
@@ -218,22 +218,25 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
           <div className="bg-foreground text-background pointer-events-auto flex items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4 shadow-lg">
             <FlaskConicalIcon className="size-4 shrink-0" />
             <span className="hidden text-sm font-medium sm:inline">{t('c:your_sandbox')}</span>
+            {entry && live && (
+              <SandboxShare
+                shareCode={entry.shareCode}
+                expiresAt={entry.expiresAt}
+                trigger={
+                  <button type="button" className={pillButtonClass}>
+                    <UsersIcon className="size-4" />
+                    {t('c:try_together')}
+                  </button>
+                }
+              />
+            )}
             {path && !isPhone ? (
-              <a
-                href={path}
-                target="_top"
-                className="bg-background/15 hover:bg-background/25 inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-sm font-medium"
-              >
+              <a href={path} target="_top" className={pillButtonClass}>
                 {t('c:open_full_window')}
                 <Maximize2Icon className="size-4" />
               </a>
             ) : (
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() => void openFull()}
-                className="bg-background/15 hover:bg-background/25 inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-sm font-medium"
-              >
+              <button type="button" disabled={pending} onClick={() => void openFull()} className={pillButtonClass}>
                 {t('c:open_full_window')}
                 {pending ? <Spinner className="size-4" noDelay /> : <Maximize2Icon className="size-4" />}
               </button>
