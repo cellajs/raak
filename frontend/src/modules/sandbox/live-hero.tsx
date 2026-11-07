@@ -1,12 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
 import { FlaskConicalIcon, Maximize2Icon, UsersIcon } from 'lucide-react';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useLatestRef } from '~/hooks/use-latest-ref';
 import { Spinner } from '~/modules/common/spinner';
+import { meQueryOptions } from '~/modules/me/query';
 import { enterSandbox } from '~/modules/sandbox/first-view';
 import { useSandboxClaimMutation } from '~/modules/sandbox/query';
-import { isSandboxFrameMessage, sandboxFrameMessage } from '~/modules/sandbox/sandbox-account';
+import { isSandboxAddress, isSandboxFrameMessage, sandboxFrameMessage } from '~/modules/sandbox/sandbox-account';
 import { SandboxShare } from '~/modules/sandbox/sandbox-share';
 import { cn } from '~/utils/cn';
 
@@ -33,6 +35,7 @@ interface LiveHeroProps {
 /**
  * The about page's board, which becomes the visitor's own sandbox: a picture of its first view until the visitor moves
  * onto it, then a card that says what it is while the sandbox's workspace loads behind it, the app itself in a frame.
+ * A browser that holds a sandbox gets it back on arrival.
  * The frame hands the wheel to the page until the visitor presses inside it. On a phone the pill opens the sandbox
  * full screen, as a frame would catch the thumb that scrolls the page.
  */
@@ -51,6 +54,9 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
   const [engaged, setEngaged] = useState(false);
   const [hint, setHint] = useState<Hint>();
   const { mutateAsync: claimSandbox } = useSandboxClaimMutation();
+  // The public layout asks `/me`, which is never stored: an answer means this page load found the session alive
+  const { data: me } = useQuery({ ...meQueryOptions(), enabled: false });
+  const holdsSandbox = isSandboxAddress(me?.email);
 
   const path = entry?.path;
   const live = state === 'live';
@@ -63,6 +69,7 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
       setState('claiming');
       try {
         const sandbox = await claimSandbox();
+        if (!sandbox.claimed) setCardOpen(false);
         await enterSandbox(sandbox);
         setEntry(sandbox);
         setState('loading');
@@ -92,6 +99,12 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
     window.setTimeout(() => setHint((current) => (current === kind ? undefined : current)), hintMs);
   };
 
+  // A browser back at its sandbox opens it at once, without the card it has seen
+  const reopen = useEffectEvent(() => void claim());
+  useEffect(() => {
+    if (holdsSandbox && !isPhone) reopen();
+  }, [holdsSandbox, isPhone]);
+
   useEffect(() => {
     if (!cardOpen) return;
     const long = window.setTimeout(() => setCardLong(true), cardMs);
@@ -105,7 +118,10 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
       if (event.origin !== window.location.origin || event.source !== frameRef.current?.contentWindow) return;
       if (!isSandboxFrameMessage(event.data)) return;
       const message = event.data;
-      if (message.kind === 'ready') settle = window.setTimeout(() => setState((current) => (current === 'loading' ? 'live' : current)), settleMs);
+      if (message.kind === 'ready') {
+        window.clearTimeout(settle);
+        settle = window.setTimeout(() => setState((current) => (current === 'loading' ? 'live' : current)), settleMs);
+      }
       if (message.kind === 'wheel') {
         window.scrollBy({ left: message.deltaX, top: message.deltaY, behavior: 'instant' });
         showHint('passive');
