@@ -67,7 +67,7 @@ const countIn = async (table: typeof projectsTable | typeof tasksTable, organiza
 
 const firstBlockText = (description: string | null) => JSON.parse(description ?? '[]')[0]?.content?.[0]?.text;
 
-/** The showcase seed and the sandbox provision the sample without a request, and read its numbers and accounts. */
+/** The showcase seed and the demo provision the sample without a request, and read its numbers and accounts. */
 describe('Provisioning the sample', () => {
   afterEach(async () => await clearSecurityTestData());
 

@@ -345,7 +345,7 @@ export type MeAuthData = {
     deviceType: 'desktop' | 'mobile';
     deviceOs: string | null;
     browser: string | null;
-    authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox';
+    authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'demo';
     connectionId: string | null;
     ipHash: string | null;
     ipSubnetHash: string | null;
@@ -714,7 +714,7 @@ export type Tenant = {
      */
     allowUnregisteredClients: boolean;
   };
-  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox'>;
+  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'demo'>;
   subscriptionId: string | null;
   subscriptionStatus: 'none' | 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled';
   subscriptionPlan: string | null;
@@ -3538,7 +3538,7 @@ export type RevokeMySessionsResponses = {
       deviceType: 'desktop' | 'mobile';
       deviceOs: string | null;
       browser: string | null;
-      authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox';
+      authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'demo';
       connectionId: string | null;
       ipHash: string | null;
       ipSubnetHash: string | null;
@@ -5144,7 +5144,7 @@ export type UpdateTenantData = {
     subscriptionId?: string | null;
     subscriptionStatus?: 'none' | 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled';
     subscriptionPlan?: string | null;
-    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'sandbox'>;
+    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic' | 'demo'>;
     /**
      * Partial restrictions override
      */
@@ -6462,14 +6462,14 @@ export type ProvisionSampleResponses = {
 
 export type ProvisionSampleResponse = ProvisionSampleResponses[keyof ProvisionSampleResponses];
 
-export type GetSandboxData = {
+export type GetDemoData = {
   body?: never;
   path?: never;
   query?: never;
-  url: '/sandbox';
+  url: '/demo';
 };
 
-export type GetSandboxErrors = {
+export type GetDemoErrors = {
   /**
    * Bad request
    */
@@ -6488,19 +6488,19 @@ export type GetSandboxErrors = {
   429: TooManyRequestsError;
 };
 
-export type GetSandboxError = GetSandboxErrors[keyof GetSandboxErrors];
+export type GetDemoError = GetDemoErrors[keyof GetDemoErrors];
 
-export type GetSandboxResponses = {
+export type GetDemoResponses = {
   /**
-   * Sandbox
+   * Demo
    */
   200: {
     /**
-     * Where the sandbox opens in the app: its account's workspace board.
+     * Where the demo opens in the app: its account's workspace board.
      */
     path: string;
     /**
-     * When the sandbox is removed.
+     * When the demo is removed.
      */
     expiresAt: string;
     /**
@@ -6510,16 +6510,16 @@ export type GetSandboxResponses = {
   };
 };
 
-export type GetSandboxResponse = GetSandboxResponses[keyof GetSandboxResponses];
+export type GetDemoResponse = GetDemoResponses[keyof GetDemoResponses];
 
-export type ClaimSandboxData = {
+export type ClaimDemoData = {
   body?: never;
   path?: never;
   query?: never;
-  url: '/sandbox';
+  url: '/demo';
 };
 
-export type ClaimSandboxErrors = {
+export type ClaimDemoErrors = {
   /**
    * Bad request
    */
@@ -6534,19 +6534,19 @@ export type ClaimSandboxErrors = {
   429: TooManyRequestsError;
 };
 
-export type ClaimSandboxError = ClaimSandboxErrors[keyof ClaimSandboxErrors];
+export type ClaimDemoError = ClaimDemoErrors[keyof ClaimDemoErrors];
 
-export type ClaimSandboxResponses = {
+export type ClaimDemoResponses = {
   /**
-   * Sandbox of this browser
+   * Demo of this browser
    */
   200: {
     /**
-     * Where the sandbox opens in the app: its account's workspace board.
+     * Where the demo opens in the app: its account's workspace board.
      */
     path: string;
     /**
-     * When the sandbox is removed.
+     * When the demo is removed.
      */
     expiresAt: string;
     /**
@@ -6554,7 +6554,7 @@ export type ClaimSandboxResponses = {
      */
     shareCode: string;
     /**
-     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     * Whether this request took the demo, or joined it; false for the one this browser held already.
      */
     claimed: boolean;
     /**
@@ -6563,17 +6563,17 @@ export type ClaimSandboxResponses = {
     foldedProjectIds: Array<string>;
   };
   /**
-   * Sandbox claimed
+   * Demo claimed
    *
    * The session cookie for its account is set.
    */
   201: {
     /**
-     * Where the sandbox opens in the app: its account's workspace board.
+     * Where the demo opens in the app: its account's workspace board.
      */
     path: string;
     /**
-     * When the sandbox is removed.
+     * When the demo is removed.
      */
     expiresAt: string;
     /**
@@ -6581,7 +6581,7 @@ export type ClaimSandboxResponses = {
      */
     shareCode: string;
     /**
-     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     * Whether this request took the demo, or joined it; false for the one this browser held already.
      */
     claimed: boolean;
     /**
@@ -6591,18 +6591,18 @@ export type ClaimSandboxResponses = {
   };
 };
 
-export type ClaimSandboxResponse = ClaimSandboxResponses[keyof ClaimSandboxResponses];
+export type ClaimDemoResponse = ClaimDemoResponses[keyof ClaimDemoResponses];
 
-export type GetSandboxInviteData = {
+export type GetDemoInviteData = {
   body?: never;
   path: {
     shareCode: string;
   };
   query?: never;
-  url: '/sandbox/join/{shareCode}';
+  url: '/demo/join/{shareCode}';
 };
 
-export type GetSandboxInviteErrors = {
+export type GetDemoInviteErrors = {
   /**
    * Bad request
    */
@@ -6617,23 +6617,23 @@ export type GetSandboxInviteErrors = {
   429: TooManyRequestsError;
 };
 
-export type GetSandboxInviteError = GetSandboxInviteErrors[keyof GetSandboxInviteErrors];
+export type GetDemoInviteError = GetDemoInviteErrors[keyof GetDemoInviteErrors];
 
-export type GetSandboxInviteResponses = {
+export type GetDemoInviteResponses = {
   /**
-   * Sandbox invite
+   * Demo invite
    */
   200: {
     /**
-     * The first names of the people in the sandbox, its taker first; a guest without one is left out.
+     * The first names of the people in the demo, its taker first; a guest without one is left out.
      */
     people: Array<string>;
     /**
-     * When the sandbox is removed.
+     * When the demo is removed.
      */
     expiresAt: string;
     /**
-     * Whether it holds as many people as a sandbox takes.
+     * Whether it holds as many people as a demo takes.
      */
     full: boolean;
     /**
@@ -6643,9 +6643,9 @@ export type GetSandboxInviteResponses = {
   };
 };
 
-export type GetSandboxInviteResponse = GetSandboxInviteResponses[keyof GetSandboxInviteResponses];
+export type GetDemoInviteResponse = GetDemoInviteResponses[keyof GetDemoInviteResponses];
 
-export type JoinSandboxData = {
+export type JoinDemoData = {
   body: {
     firstName: string;
   };
@@ -6653,10 +6653,10 @@ export type JoinSandboxData = {
     shareCode: string;
   };
   query?: never;
-  url: '/sandbox/join/{shareCode}';
+  url: '/demo/join/{shareCode}';
 };
 
-export type JoinSandboxErrors = {
+export type JoinDemoErrors = {
   /**
    * Bad request
    */
@@ -6679,19 +6679,19 @@ export type JoinSandboxErrors = {
   429: TooManyRequestsError;
 };
 
-export type JoinSandboxError = JoinSandboxErrors[keyof JoinSandboxErrors];
+export type JoinDemoError = JoinDemoErrors[keyof JoinDemoErrors];
 
-export type JoinSandboxResponses = {
+export type JoinDemoResponses = {
   /**
-   * Sandbox of this browser
+   * Demo of this browser
    */
   200: {
     /**
-     * Where the sandbox opens in the app: its account's workspace board.
+     * Where the demo opens in the app: its account's workspace board.
      */
     path: string;
     /**
-     * When the sandbox is removed.
+     * When the demo is removed.
      */
     expiresAt: string;
     /**
@@ -6699,7 +6699,7 @@ export type JoinSandboxResponses = {
      */
     shareCode: string;
     /**
-     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     * Whether this request took the demo, or joined it; false for the one this browser held already.
      */
     claimed: boolean;
     /**
@@ -6708,17 +6708,17 @@ export type JoinSandboxResponses = {
     foldedProjectIds: Array<string>;
   };
   /**
-   * Sandbox joined
+   * Demo joined
    *
    * The session cookie for the new account is set.
    */
   201: {
     /**
-     * Where the sandbox opens in the app: its account's workspace board.
+     * Where the demo opens in the app: its account's workspace board.
      */
     path: string;
     /**
-     * When the sandbox is removed.
+     * When the demo is removed.
      */
     expiresAt: string;
     /**
@@ -6726,7 +6726,7 @@ export type JoinSandboxResponses = {
      */
     shareCode: string;
     /**
-     * Whether this request took the sandbox, or joined it; false for the one this browser held already.
+     * Whether this request took the demo, or joined it; false for the one this browser held already.
      */
     claimed: boolean;
     /**
@@ -6736,7 +6736,7 @@ export type JoinSandboxResponses = {
   };
 };
 
-export type JoinSandboxResponse = JoinSandboxResponses[keyof JoinSandboxResponses];
+export type JoinDemoResponse = JoinDemoResponses[keyof JoinDemoResponses];
 
 export type DeleteWorkspacesData = {
   body: {

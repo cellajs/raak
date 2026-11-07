@@ -18,9 +18,9 @@ import type {
   CheckSlugData,
   CheckSlugErrors,
   CheckSlugResponses,
-  ClaimSandboxData,
-  ClaimSandboxErrors,
-  ClaimSandboxResponses,
+  ClaimDemoData,
+  ClaimDemoErrors,
+  ClaimDemoResponses,
   ConfirmInvitationAddressData,
   ConfirmInvitationAddressErrors,
   ConfirmInvitationAddressResponses,
@@ -141,6 +141,12 @@ import type {
   GetConnectionsData,
   GetConnectionsErrors,
   GetConnectionsResponses,
+  GetDemoData,
+  GetDemoErrors,
+  GetDemoInviteData,
+  GetDemoInviteErrors,
+  GetDemoInviteResponses,
+  GetDemoResponses,
   GetLabelData,
   GetLabelErrors,
   GetLabelOlderAcceptedCountsData,
@@ -219,12 +225,6 @@ import type {
   GetRequestsData,
   GetRequestsErrors,
   GetRequestsResponses,
-  GetSandboxData,
-  GetSandboxErrors,
-  GetSandboxInviteData,
-  GetSandboxInviteErrors,
-  GetSandboxInviteResponses,
-  GetSandboxResponses,
   GetServiceAccountsData,
   GetServiceAccountsErrors,
   GetServiceAccountsResponses,
@@ -295,9 +295,9 @@ import type {
   HandleMembershipInvitationResponses,
   InvokeTokenData,
   InvokeTokenErrors,
-  JoinSandboxData,
-  JoinSandboxErrors,
-  JoinSandboxResponses,
+  JoinDemoData,
+  JoinDemoErrors,
+  JoinDemoResponses,
   LinkAttachmentKeysData,
   LinkAttachmentKeysErrors,
   LinkAttachmentKeysResponses,
@@ -461,7 +461,7 @@ import {
   zCheckEmailResponse,
   zCheckMembershipInviteResponse,
   zCheckSlugResponse,
-  zClaimSandboxResponse,
+  zClaimDemoResponse,
   zConfirmInvitationAddressResponse,
   zCreateApiKeyResponse,
   zCreateAttachmentsResponse,
@@ -500,6 +500,8 @@ import {
   zGetAuthHealthResponse,
   zGetConnectedAppsResponse,
   zGetConnectionsResponse,
+  zGetDemoInviteResponse,
+  zGetDemoResponse,
   zGetLabelOlderAcceptedCountsResponse,
   zGetLabelResponse,
   zGetLabelsResponse,
@@ -526,8 +528,6 @@ import {
   zGetPublicTasksResponse,
   zGetPushVapidResponse,
   zGetRequestsResponse,
-  zGetSandboxInviteResponse,
-  zGetSandboxResponse,
   zGetServiceAccountsResponse,
   zGetSsoEntryResponse,
   zGetStepUpPasskeyChallengeResponse,
@@ -545,7 +545,7 @@ import {
   zGetWorkspacesResponse,
   zGetYjsTokenResponse,
   zHandleMembershipInvitationResponse,
-  zJoinSandboxResponse,
+  zJoinDemoResponse,
   zLinkAttachmentKeysResponse,
   zMarkNotificationsReadResponse,
   zMarkSeenResponse,
@@ -3119,85 +3119,85 @@ export const provisionSample = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Get sandbox
+ * Get demo
  *
- * The signed-in account's sandbox while it is one: where it opens and when it ends.
+ * The signed-in account's demo while it is one: where it opens and when it ends.
  *
- * **GET /sandbox** ·· [getSandbox](https://www.raak.dev/docs/operations?operationTag=sandboxes#tag/sandboxes/GET/sandbox) ·· _sandboxes · app_
+ * **GET /demo** ·· [getDemo](https://www.raak.dev/docs/operations?operationTag=demos#tag/demos/GET/demo) ·· _demos · app_
  *
- * @param {getSandboxData} options
+ * @param {getDemoData} options
  * @returns Possible status codes: 200, 400, 401, 404, 429
  */
-export const getSandbox = <ThrowOnError extends boolean = true>(
-  options?: Options<GetSandboxData, ThrowOnError>,
-): RequestResult<GetSandboxResponses, GetSandboxErrors, ThrowOnError, 'data'> =>
-  (options?.client ?? client).get<GetSandboxResponses, GetSandboxErrors, ThrowOnError, 'data'>({
-    responseValidator: async (data) => await zGetSandboxResponse.parseAsync(data),
+export const getDemo = <ThrowOnError extends boolean = true>(
+  options?: Options<GetDemoData, ThrowOnError>,
+): RequestResult<GetDemoResponses, GetDemoErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetDemoResponses, GetDemoErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zGetDemoResponse.parseAsync(data),
     responseStyle: 'data',
-    url: '/sandbox',
+    url: '/demo',
     ...options,
   });
 
 /**
- * Claim a sandbox
+ * Claim a demo
  *
- * Gives this browser a sandbox, a provisional account with an organization holding the sample, and signs it in. A browser signed in to a sandbox gets that one back. Asked for when a visitor acts on the about page board.
+ * Gives this browser a demo, a provisional account with an organization holding the sample, and signs it in. A browser signed in to a demo gets that one back. Asked for when a visitor acts on the about page board.
  *
- * **POST /sandbox** ·· [claimSandbox](https://www.raak.dev/docs/operations?operationTag=sandboxes#tag/sandboxes/POST/sandbox) ·· _sandboxes · app_
+ * **POST /demo** ·· [claimDemo](https://www.raak.dev/docs/operations?operationTag=demos#tag/demos/POST/demo) ·· _demos · app_
  *
- * @param {claimSandboxData} options
+ * @param {claimDemoData} options
  * @returns Possible status codes: 200, 201, 400, 409, 429
  */
-export const claimSandbox = <ThrowOnError extends boolean = true>(
-  options?: Options<ClaimSandboxData, ThrowOnError>,
-): RequestResult<ClaimSandboxResponses, ClaimSandboxErrors, ThrowOnError, 'data'> =>
-  (options?.client ?? client).post<ClaimSandboxResponses, ClaimSandboxErrors, ThrowOnError, 'data'>({
-    responseValidator: async (data) => await zClaimSandboxResponse.parseAsync(data),
+export const claimDemo = <ThrowOnError extends boolean = true>(
+  options?: Options<ClaimDemoData, ThrowOnError>,
+): RequestResult<ClaimDemoResponses, ClaimDemoErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).post<ClaimDemoResponses, ClaimDemoErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zClaimDemoResponse.parseAsync(data),
     responseStyle: 'data',
-    url: '/sandbox',
+    url: '/demo',
     ...options,
   });
 
 /**
- * Get sandbox invite
+ * Get demo invite
  *
- * Who is in the sandbox a share link leads to, when it ends, and whether this browser can join it.
+ * Who is in the demo a share link leads to, when it ends, and whether this browser can join it.
  *
- * **GET /sandbox/join/{shareCode}** ·· [getSandboxInvite](https://www.raak.dev/docs/operations?operationTag=sandboxes#tag/sandboxes/GET/sandbox/join/{shareCode}) ·· _sandboxes · app_
+ * **GET /demo/join/{shareCode}** ·· [getDemoInvite](https://www.raak.dev/docs/operations?operationTag=demos#tag/demos/GET/demo/join/{shareCode}) ·· _demos · app_
  *
- * @param {getSandboxInviteData} options
+ * @param {getDemoInviteData} options
  * @param {string} options.path.shareCode - `string`
  * @returns Possible status codes: 200, 400, 404, 429
  */
-export const getSandboxInvite = <ThrowOnError extends boolean = true>(
-  options: Options<GetSandboxInviteData, ThrowOnError>,
-): RequestResult<GetSandboxInviteResponses, GetSandboxInviteErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).get<GetSandboxInviteResponses, GetSandboxInviteErrors, ThrowOnError, 'data'>({
-    responseValidator: async (data) => await zGetSandboxInviteResponse.parseAsync(data),
+export const getDemoInvite = <ThrowOnError extends boolean = true>(
+  options: Options<GetDemoInviteData, ThrowOnError>,
+): RequestResult<GetDemoInviteResponses, GetDemoInviteErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetDemoInviteResponses, GetDemoInviteErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zGetDemoInviteResponse.parseAsync(data),
     responseStyle: 'data',
-    url: '/sandbox/join/{shareCode}',
+    url: '/demo/join/{shareCode}',
     ...options,
   });
 
 /**
- * Join a sandbox
+ * Join a demo
  *
- * Lets this browser into the sandbox of a share link, on a sandbox account of its own under the given first name, and signs it in. A browser in that sandbox already gets it back.
+ * Lets this browser into the demo of a share link, on a demo account of its own under the given first name, and signs it in. A browser in that demo already gets it back.
  *
- * **POST /sandbox/join/{shareCode}** ·· [joinSandbox](https://www.raak.dev/docs/operations?operationTag=sandboxes#tag/sandboxes/POST/sandbox/join/{shareCode}) ·· _sandboxes · app_
+ * **POST /demo/join/{shareCode}** ·· [joinDemo](https://www.raak.dev/docs/operations?operationTag=demos#tag/demos/POST/demo/join/{shareCode}) ·· _demos · app_
  *
- * @param {joinSandboxData} options
+ * @param {joinDemoData} options
  * @param {string} options.path.shareCode - `string`
  * @param {string} options.body.firstName - `string`
  * @returns Possible status codes: 200, 201, 400, 404, 409, 413, 429
  */
-export const joinSandbox = <ThrowOnError extends boolean = true>(
-  options: Options<JoinSandboxData, ThrowOnError>,
-): RequestResult<JoinSandboxResponses, JoinSandboxErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).post<JoinSandboxResponses, JoinSandboxErrors, ThrowOnError, 'data'>({
-    responseValidator: async (data) => await zJoinSandboxResponse.parseAsync(data),
+export const joinDemo = <ThrowOnError extends boolean = true>(
+  options: Options<JoinDemoData, ThrowOnError>,
+): RequestResult<JoinDemoResponses, JoinDemoErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<JoinDemoResponses, JoinDemoErrors, ThrowOnError, 'data'>({
+    responseValidator: async (data) => await zJoinDemoResponse.parseAsync(data),
     responseStyle: 'data',
-    url: '/sandbox/join/{shareCode}',
+    url: '/demo/join/{shareCode}',
     ...options,
     headers: {
       'Content-Type': 'application/json',

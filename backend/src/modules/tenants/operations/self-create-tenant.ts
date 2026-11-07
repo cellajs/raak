@@ -21,8 +21,8 @@ type SelfCreateTenantInput = z.infer<typeof selfCreateTenantBodySchema>;
 export async function selfCreateTenantOp(ctx: UserContext, input: SelfCreateTenantInput) {
   const { actor, isSystemAdmin } = ctx.var;
   const createdBy = actor.id;
-  // fork: a sandbox makes no tenant, whose organization would mail invitations its own refuses (modules/sandbox)
-  if (actor.kind === 'user' && actor.authStrategy === 'sandbox')
+  // fork: a demo makes no tenant, whose organization would mail invitations its own refuses (modules/demo)
+  if (actor.kind === 'user' && actor.authStrategy === 'demo')
     throw new AppError(403, 'restrict_by_app', 'warn', { meta: { resource: 'tenant', quota: 0 } });
 
   const id = await ctx.var.db.transaction(async (tx) => {

@@ -249,9 +249,9 @@
             "name": "Create lock",
             "description": "One create at a time for each tenant. A second one during that time gets a 409."
           },
-          "sandboxClaimLimiter": {
-            "name": "Sandboxes claimed",
-            "description": "Sandboxes each IP address takes or joins a day. Returning to the sandbox a browser holds does not count.",
+          "demoClaimLimiter": {
+            "name": "Demos claimed",
+            "description": "Demos each IP address takes or joins a day. Returning to the demo a browser holds does not count.",
             "policy": {
               "mode": "success",
               "points": 5,
@@ -426,8 +426,8 @@
       "x-kind": "module"
     },
     {
-      "name": "sandboxes",
-      "description": "Endpoints for demo boards, sandboxes in code: a visitor's own copy of the product to try, a provisional account with an organization holding the sample, built at the claim. Its link lets up to four colleagues join, each on a sandbox account of their own. A sandbox ends after two days with everything and everyone in it; it never becomes an account.",
+      "name": "demos",
+      "description": "Endpoints for demo boards: a visitor's own copy of the product to try, a provisional account with an organization holding the sample, built at the claim. Its link lets up to four colleagues join, each on a demo account of their own. A demo board ends after two days with everything and everyone in it; it never becomes an account.",
       "x-parent": "app",
       "x-kind": "module"
     },
@@ -1738,7 +1738,7 @@
                 },
                 "authStrategy": {
                   "type": "string",
-                  "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "sandbox"]
+                  "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "demo"]
                 },
                 "connectionId": {
                   "type": ["string", "null"],
@@ -3172,7 +3172,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "sandbox"]
+              "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "demo"]
             }
           },
           "subscriptionId": {
@@ -9027,7 +9027,7 @@
                           },
                           "authStrategy": {
                             "type": "string",
-                            "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "sandbox"]
+                            "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "demo"]
                           },
                           "connectionId": {
                             "type": ["string", "null"],
@@ -12133,7 +12133,7 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "sandbox"]
+                      "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic", "demo"]
                     },
                     "maxItems": 8
                   },
@@ -15963,18 +15963,18 @@
         }
       }
     },
-    "/sandbox": {
+    "/demo": {
       "post": {
         "security": [],
-        "operationId": "claimSandbox",
-        "tags": ["sandboxes", "app"],
-        "summary": "Claim a sandbox",
-        "description": "Gives this browser a sandbox, a provisional account with an organization holding the sample, and signs it in. A browser signed in to a sandbox gets that one back. Asked for when a visitor acts on the about page board.",
+        "operationId": "claimDemo",
+        "tags": ["demos", "app"],
+        "summary": "Claim a demo",
+        "description": "Gives this browser a demo, a provisional account with an organization holding the sample, and signs it in. A browser signed in to a demo gets that one back. Asked for when a visitor acts on the about page board.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["sandboxClaimLimiter"],
+        "x-rate-limiter": ["demoClaimLimiter"],
         "responses": {
           "200": {
-            "description": "Sandbox of this browser",
+            "description": "Demo of this browser",
             "content": {
               "application/json": {
                 "schema": {
@@ -15982,11 +15982,11 @@
                   "properties": {
                     "path": {
                       "type": "string",
-                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                      "description": "Where the demo opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
                       "type": "string",
-                      "description": "When the sandbox is removed."
+                      "description": "When the demo is removed."
                     },
                     "shareCode": {
                       "type": "string",
@@ -15994,7 +15994,7 @@
                     },
                     "claimed": {
                       "type": "boolean",
-                      "description": "Whether this request took the sandbox, or joined it; false for the one this browser held already."
+                      "description": "Whether this request took the demo, or joined it; false for the one this browser held already."
                     },
                     "foldedProjectIds": {
                       "type": "array",
@@ -16010,7 +16010,7 @@
             }
           },
           "201": {
-            "description": "Sandbox claimed\n\nThe session cookie for its account is set.",
+            "description": "Demo claimed\n\nThe session cookie for its account is set.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16018,11 +16018,11 @@
                   "properties": {
                     "path": {
                       "type": "string",
-                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                      "description": "Where the demo opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
                       "type": "string",
-                      "description": "When the sandbox is removed."
+                      "description": "When the demo is removed."
                     },
                     "shareCode": {
                       "type": "string",
@@ -16030,7 +16030,7 @@
                     },
                     "claimed": {
                       "type": "boolean",
-                      "description": "Whether this request took the sandbox, or joined it; false for the one this browser held already."
+                      "description": "Whether this request took the demo, or joined it; false for the one this browser held already."
                     },
                     "foldedProjectIds": {
                       "type": "array",
@@ -16062,15 +16062,15 @@
             "cookieAuth": []
           }
         ],
-        "operationId": "getSandbox",
-        "tags": ["sandboxes", "app"],
-        "summary": "Get sandbox",
-        "description": "The signed-in account's sandbox while it is one: where it opens and when it ends.",
+        "operationId": "getDemo",
+        "tags": ["demos", "app"],
+        "summary": "Get demo",
+        "description": "The signed-in account's demo while it is one: where it opens and when it ends.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": ["readLimiter"],
         "responses": {
           "200": {
-            "description": "Sandbox",
+            "description": "Demo",
             "content": {
               "application/json": {
                 "schema": {
@@ -16078,11 +16078,11 @@
                   "properties": {
                     "path": {
                       "type": "string",
-                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                      "description": "Where the demo opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
                       "type": "string",
-                      "description": "When the sandbox is removed."
+                      "description": "When the demo is removed."
                     },
                     "shareCode": {
                       "type": "string",
@@ -16109,13 +16109,13 @@
         }
       }
     },
-    "/sandbox/join/{shareCode}": {
+    "/demo/join/{shareCode}": {
       "get": {
         "security": [],
-        "operationId": "getSandboxInvite",
-        "tags": ["sandboxes", "app"],
-        "summary": "Get sandbox invite",
-        "description": "Who is in the sandbox a share link leads to, when it ends, and whether this browser can join it.",
+        "operationId": "getDemoInvite",
+        "tags": ["demos", "app"],
+        "summary": "Get demo invite",
+        "description": "Who is in the demo a share link leads to, when it ends, and whether this browser can join it.",
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["readLimiter"],
         "parameters": [
@@ -16131,7 +16131,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Sandbox invite",
+            "description": "Demo invite",
             "content": {
               "application/json": {
                 "schema": {
@@ -16142,15 +16142,15 @@
                       "items": {
                         "type": "string"
                       },
-                      "description": "The first names of the people in the sandbox, its taker first; a guest without one is left out."
+                      "description": "The first names of the people in the demo, its taker first; a guest without one is left out."
                     },
                     "expiresAt": {
                       "type": "string",
-                      "description": "When the sandbox is removed."
+                      "description": "When the demo is removed."
                     },
                     "full": {
                       "type": "boolean",
-                      "description": "Whether it holds as many people as a sandbox takes."
+                      "description": "Whether it holds as many people as a demo takes."
                     },
                     "joined": {
                       "type": "boolean",
@@ -16175,12 +16175,12 @@
       },
       "post": {
         "security": [],
-        "operationId": "joinSandbox",
-        "tags": ["sandboxes", "app"],
-        "summary": "Join a sandbox",
-        "description": "Lets this browser into the sandbox of a share link, on a sandbox account of its own under the given first name, and signs it in. A browser in that sandbox already gets it back.",
+        "operationId": "joinDemo",
+        "tags": ["demos", "app"],
+        "summary": "Join a demo",
+        "description": "Lets this browser into the demo of a share link, on a demo account of its own under the given first name, and signs it in. A browser in that demo already gets it back.",
         "x-guard": ["publicGuard"],
-        "x-rate-limiter": ["sandboxClaimLimiter"],
+        "x-rate-limiter": ["demoClaimLimiter"],
         "parameters": [
           {
             "schema": {
@@ -16213,7 +16213,7 @@
         },
         "responses": {
           "200": {
-            "description": "Sandbox of this browser",
+            "description": "Demo of this browser",
             "content": {
               "application/json": {
                 "schema": {
@@ -16221,11 +16221,11 @@
                   "properties": {
                     "path": {
                       "type": "string",
-                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                      "description": "Where the demo opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
                       "type": "string",
-                      "description": "When the sandbox is removed."
+                      "description": "When the demo is removed."
                     },
                     "shareCode": {
                       "type": "string",
@@ -16233,7 +16233,7 @@
                     },
                     "claimed": {
                       "type": "boolean",
-                      "description": "Whether this request took the sandbox, or joined it; false for the one this browser held already."
+                      "description": "Whether this request took the demo, or joined it; false for the one this browser held already."
                     },
                     "foldedProjectIds": {
                       "type": "array",
@@ -16249,7 +16249,7 @@
             }
           },
           "201": {
-            "description": "Sandbox joined\n\nThe session cookie for the new account is set.",
+            "description": "Demo joined\n\nThe session cookie for the new account is set.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16257,11 +16257,11 @@
                   "properties": {
                     "path": {
                       "type": "string",
-                      "description": "Where the sandbox opens in the app: its account's workspace board."
+                      "description": "Where the demo opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
                       "type": "string",
-                      "description": "When the sandbox is removed."
+                      "description": "When the demo is removed."
                     },
                     "shareCode": {
                       "type": "string",
@@ -16269,7 +16269,7 @@
                     },
                     "claimed": {
                       "type": "boolean",
-                      "description": "Whether this request took the sandbox, or joined it; false for the one this browser held already."
+                      "description": "Whether this request took the demo, or joined it; false for the one this browser held already."
                     },
                     "foldedProjectIds": {
                       "type": "array",

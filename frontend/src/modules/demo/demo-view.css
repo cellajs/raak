@@ -1,0 +1,5 @@
+/* A demo board shows the board alone: no phone menu, and no focus-view toggle, which would store that view for every tab and the next account */
+.demo-view #floating-nav,
+.demo-view .focus-view-toggle {
+  display: none !important;
+}

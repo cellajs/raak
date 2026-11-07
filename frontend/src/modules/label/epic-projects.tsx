@@ -30,7 +30,7 @@ const useSlugLabels = ({ tenantId, organizationId, slug }: EpicTemplate, project
   }).filter((label) => label.slug === slug && label.mode !== 'primary');
 
 /** Moves a slug between tag and epic per project; a label is per project, so an epic over several projects is one label in each. */
-export const useEpicMode = ({ tenantId, organizationId }: Pick<LabelRow, 'tenantId' | 'organizationId'>) => {
+const useEpicMode = ({ tenantId, organizationId }: Pick<LabelRow, 'tenantId' | 'organizationId'>) => {
   const { mutate: updateLabel } = useLabelUpdateMutation(tenantId, organizationId);
   const { mutate: createLabel } = useLabelCreateMutation(tenantId, organizationId);
 

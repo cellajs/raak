@@ -1,0 +1,157 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "6c0968f7-512a-4767-b972-31ac633f34dc",
+  "prevIds": [
+    "c6e30a25-6f52-43b6-9ad0-6487553b829e"
+  ],
+  "footprints": [
+    {
+      "statementType": "rename_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "sandboxes"
+      ],
+      "writes": [
+        "s|tbl|public.sandboxes",
+        "n|tbl|public.sandboxes",
+        "n|rel|public.sandboxes",
+        "n|type|public.sandboxes",
+        "s|tbl|public.demos",
+        "n|tbl|public.demos",
+        "n|rel|public.demos",
+        "n|type|public.demos"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "rename_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "demos",
+        "sandboxes_created_at_index"
+      ],
+      "writes": [
+        "s|idx|public.sandboxes_created_at_index",
+        "n|idx|public.sandboxes_created_at_index",
+        "n|rel|public.sandboxes_created_at_index",
+        "s|idx|public.demos_created_at_index",
+        "n|idx|public.demos_created_at_index",
+        "n|rel|public.demos_created_at_index"
+      ],
+      "reads": [
+        "e|tbl|public.demos",
+        "n|sch|public",
+        "e|col|public.demos.created_at"
+      ]
+    },
+    {
+      "statementType": "rename_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "demos",
+        "sandboxes_expires_at_index"
+      ],
+      "writes": [
+        "s|idx|public.sandboxes_expires_at_index",
+        "n|idx|public.sandboxes_expires_at_index",
+        "n|rel|public.sandboxes_expires_at_index",
+        "s|idx|public.demos_expires_at_index",
+        "n|idx|public.demos_expires_at_index",
+        "n|rel|public.demos_expires_at_index"
+      ],
+      "reads": [
+        "e|tbl|public.demos",
+        "n|sch|public",
+        "e|col|public.demos.expires_at"
+      ]
+    },
+    {
+      "statementType": "rename_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "demos",
+        "sandboxes_user_id_index"
+      ],
+      "writes": [
+        "s|idx|public.sandboxes_user_id_index",
+        "n|idx|public.sandboxes_user_id_index",
+        "n|rel|public.sandboxes_user_id_index",
+        "s|idx|public.demos_user_id_index",
+        "n|idx|public.demos_user_id_index",
+        "n|rel|public.demos_user_id_index"
+      ],
+      "reads": [
+        "e|tbl|public.demos",
+        "n|sch|public",
+        "e|col|public.demos.user_id"
+      ]
+    },
+    {
+      "statementType": "rename_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "demos",
+        "sandboxes_share_code_index"
+      ],
+      "writes": [
+        "s|idx|public.sandboxes_share_code_index",
+        "n|idx|public.sandboxes_share_code_index",
+        "n|rel|public.sandboxes_share_code_index",
+        "s|idx|public.demos_share_code_index",
+        "n|idx|public.demos_share_code_index",
+        "n|rel|public.demos_share_code_index"
+      ],
+      "reads": [
+        "e|tbl|public.demos",
+        "n|sch|public",
+        "e|col|public.demos.share_code"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "rename",
+      "key": "tables\u0000[\"public\",\"sandboxes\"]",
+      "set": {
+        "name": "demos"
+      }
+    },
+    {
+      "op": "rename",
+      "key": "indexes\u0000[\"public\",\"sandboxes_created_at_index\"]",
+      "set": {
+        "name": "demos_created_at_index"
+      }
+    },
+    {
+      "op": "rename",
+      "key": "indexes\u0000[\"public\",\"sandboxes_expires_at_index\"]",
+      "set": {
+        "name": "demos_expires_at_index"
+      }
+    },
+    {
+      "op": "rename",
+      "key": "indexes\u0000[\"public\",\"sandboxes_user_id_index\"]",
+      "set": {
+        "name": "demos_user_id_index"
+      }
+    },
+    {
+      "op": "rename",
+      "key": "indexes\u0000[\"public\",\"sandboxes_share_code_index\"]",
+      "set": {
+        "name": "demos_share_code_index"
+      }
+    }
+  ]
+}

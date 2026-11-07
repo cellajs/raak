@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { LiveHero } from '~/modules/sandbox/live-hero';
+import { LiveHero } from '~/modules/demo/live-hero';
 
 const stills = '/static/marketing/hero';
 
-/** One theme's picture of a new sandbox's board, the phone's below the `sm` breakpoint. */
+/** One theme's picture of a new demo's board, the phone's below the `sm` breakpoint. */
 function Still({ theme, className }: { theme: 'light' | 'dark'; className: string }) {
   const suffix = theme === 'dark' ? '-dark' : '';
   return (
@@ -14,7 +14,7 @@ function Still({ theme, className }: { theme: 'light' | 'dark'; className: strin
   );
 }
 
-/** The hero's board: a picture of a new sandbox until the visitor takes it over as their own. Its height keeps the whole frame on the first screen. */
+/** The hero's board: a picture of a new demo until the visitor takes it over as their own. Its height keeps the whole frame on the first screen. */
 export function AboutDemo() {
   const { t } = useTranslation();
 

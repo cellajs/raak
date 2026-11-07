@@ -28,7 +28,7 @@ export function PrivacyText() {
           keep it secure and reliable and count its use (legitimate interest, Art. 6(1)(f)). We do not sell your data, use it for advertising or make
           automated decisions about you.
         </p>
-        {/* fork: raak's demo board on the about page (modules/sandbox) */}
+        {/* fork: raak's demo board on the about page (modules/demo) */}
         <p>
           The demo board on our about page runs on a throwaway account we create when you press it, with no email address. It keeps a session cookie
           in your browser and a hash of your IP address against misuse, and it is cleared with everything in it after two days. A link you share lets
