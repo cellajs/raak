@@ -1,7 +1,6 @@
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { FocusView } from '~/modules/common/focus-view';
 import { LabelsDrawerButton } from '~/modules/label/labels-drawer';
-import { isSandboxView } from '~/modules/sandbox/sandbox-account';
 import { useTabProject } from '~/modules/task/board/board-hooks';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { NewTaskButton } from '~/modules/task/board/new-task-button';
@@ -70,7 +69,7 @@ export function BoardHeader({ projects, workspace, publicView }: Pick<ResolvedBo
             {!publicView && projects.length > 0 && <LabelsDrawerButton entity={scope.entity} entityId={scope.entityId} />}
             <DisplayOptions className="max-sm:hidden" />
             {/* Focus view hides app chrome, which public pages do not have */}
-            {!publicView && !isSandboxView() && <FocusView iconOnly />}
+            {!publicView && <FocusView iconOnly className="focus-view-toggle" />}
           </>
         }
       />

@@ -8,31 +8,32 @@ import { provisionSample } from '#/modules/sample/operations/provision-sample';
 import { memberContext } from '#/modules/sandbox/operations/member-context';
 import { removeSandbox } from '#/modules/sandbox/operations/remove-sandbox';
 import { insertSandboxAccount } from '#/modules/sandbox/operations/sandbox-account';
-import { sandboxContentVersion } from '#/modules/sandbox/sandbox-constants';
+import { sandboxLifetime } from '#/modules/sandbox/sandbox-constants';
 import { insertSandbox } from '#/modules/sandbox/sandbox-queries';
 import { defaultRestrictions } from '#/modules/tenants/tenant-restrictions';
 import { insertTenant } from '#/modules/tenants/tenants-queries';
 import { ensureUserWorkspace } from '#/modules/workspace/operations/ensure-workspace';
+import { isoDateIn } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 import { defaultWelcomeText } from '#json/text-blocks.json';
 
 const dbCtx = { var: { db: baseDb } };
 
 /**
- * Builds a ready sandbox: a provisional account, its own tenant with a draft organization it administers (a draft, so
- * its invitations never go out), its workspace, and the sample.
- * Creates no tenant notice: nobody asked for an organization yet. A failed build removes what it wrote.
+ * Builds a sandbox for a claim: a provisional account, its own tenant with a draft organization it administers, its
+ * workspace, and the sample. Creates no tenant notice: nobody asked for an organization yet. A failed build removes
+ * what it wrote.
  */
 export async function buildSandbox() {
   const userId = generateId();
   const handle = nanoid(10);
 
   const user = await insertSandboxAccount({ id: userId, handle });
-  // One seat, taken from the start: an invitation from a sandbox is refused before it mails anyone. Its people come in
-  // through the share link, which seats them directly.
+  // One seat, taken from the start: an invitation from a sandbox is refused before it mails anyone; its people come in
+  // through the share link, which seats them directly. One attachment: enough to try, too few to park files in.
   const restrictions = defaultRestrictions();
   const tenant = await insertTenant(dbCtx, {
-    values: { name: 'Sandbox', createdBy: userId, restrictions: { ...restrictions, quotas: { ...restrictions.quotas, user: 1 } } },
+    values: { name: 'Sandbox', createdBy: userId, restrictions: { ...restrictions, quotas: { ...restrictions.quotas, user: 1, attachment: 1 } } },
   });
 
   try {
@@ -57,10 +58,10 @@ export async function buildSandbox() {
     await provisionSample(await memberContext(user, organization), { userId, workspaceId });
 
     const sandbox = await insertSandbox(dbCtx, {
-      values: { tenantId: tenant.id, organizationId: organization.id, userId, contentVersion: sandboxContentVersion },
+      values: { tenantId: tenant.id, organizationId: organization.id, userId, expiresAt: isoDateIn(sandboxLifetime) },
     });
     log.info('Sandbox built', { sandboxId: sandbox.id, tenantId: tenant.id });
-    return sandbox;
+    return { sandbox, user };
   } catch (error) {
     await removeSandbox({ tenantId: tenant.id, userId });
     throw error;

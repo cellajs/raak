@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
-import { FlaskConicalIcon, Maximize2Icon, UsersIcon } from 'lucide-react';
+import { FlaskConicalIcon, Maximize2Icon, PlayIcon, UsersIcon } from 'lucide-react';
 import { type ReactNode, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -32,17 +32,17 @@ const fullWindowClass = 'fixed inset-0 z-50 h-dvh max-w-none rounded-none border
 const aboutRoute = getRouteApi('/_public/_marketing/about');
 
 interface LiveHeroProps {
-  /** The sandbox's first view as a picture: shown until the sandbox is live, and for good when none can be had. */
+  /** The demo board's first view as a picture: shown until the board is live, and for good when none can be had. */
   still: ReactNode;
   className: string;
   label: string;
 }
 
 /**
- * The about page's board, which becomes the visitor's own sandbox: a picture of its first view until the visitor moves
- * onto it, then a card that says what it is while the sandbox's workspace loads behind it, the app itself in a frame.
- * A browser that holds a sandbox gets it back on arrival, and the page's address then carries its share code. That
- * address (`?sandbox=<code>`) lets a colleague in: the card asks their first name.
+ * The about page's board, which becomes the visitor's own demo board: a picture of its first view until the visitor
+ * presses it, then a card that says what it is while the board's workspace loads behind it, the app itself in a frame.
+ * A browser that holds a demo board gets it back on arrival, and the page's address then carries its share code. That
+ * address (`?demo=<code>`) lets a colleague in: the card asks their first name.
  *
  * The frame hands the wheel to the page until the visitor presses inside it, which a line under the board says. The
  * full window is this board in focus view, filling the window: on a phone the only way to it, as a frame in the page
@@ -52,12 +52,12 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
   const { t } = useTranslation();
   const isPhone = useBreakpointBelow('sm');
   const navigate = aboutRoute.useNavigate();
-  const shareCode = aboutRoute.useSearch({ select: (search) => search.sandbox });
+  const shareCode = aboutRoute.useSearch({ select: (search) => search.demo });
   const boxRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const claiming = useRef<Promise<string | undefined>>(undefined);
   const [state, setState] = useState<HeroState>('still');
-  const [entry, setEntry] = useState<{ path: string; shareCode: string; expiresAt: string | null }>();
+  const [entry, setEntry] = useState<{ path: string; shareCode: string; expiresAt: string }>();
   const [cardOpen, setCardOpen] = useState(false);
   const [cardLong, setCardLong] = useState(false);
   const [stillGone, setStillGone] = useState(false);
@@ -72,10 +72,7 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
     data: invite,
     error: inviteError,
     refetch: refetchInvite,
-  } = useQuery({
-    ...sandboxInviteQueryOptions(shareCode ?? ''),
-    enabled: !!shareCode,
-  });
+  } = useQuery({ ...sandboxInviteQueryOptions(shareCode ?? ''), enabled: !!shareCode });
   useSandboxView(full);
 
   const holdsSandbox = isSandboxAddress(me?.email);
@@ -85,7 +82,7 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
   const frameShown = !isPhone || full;
   const fullRef = useLatestRef(full);
 
-  // A link into a sandbox this browser is not in: the card asks to join it, or says why it cannot
+  // A link into a demo board this browser is not in: the card asks to join it, or says why it cannot
   const linked = !!shareCode && !entry && !invite?.joined;
   const refusal = linked && !joining ? (refusalOf(inviteError) ?? (invite?.full ? 'sandbox_full' : refusalOf(joinError))) : undefined;
   const asking = !!shareCode && !live && (joining || (linked && !!invite && !refusal));
@@ -134,15 +131,17 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
     })();
   };
 
-  const lookAt = () => {
-    if (isPhone || claiming.current || linked) return;
-    setCardOpen(true);
-    void claim();
-  };
-
   const openFull = async () => {
     if (!entry) setCardOpen(true);
     if (await claim()) setFull(true);
+  };
+
+  // The visitor's press takes a demo board: in the page on a desktop, in the full window on a phone
+  const start = () => {
+    if (claiming.current || linked) return;
+    if (isPhone) return void openFull();
+    setCardOpen(true);
+    void claim();
   };
 
   const closeFull = () => {
@@ -152,16 +151,16 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
 
   const dropLink = () => navigate({ search: {}, replace: true, resetScroll: false });
 
-  // A browser back at its sandbox opens it at once, without the card it has seen
+  // A browser back at its demo board opens it at once, without the card it has seen
   const reopen = useEffectEvent(() => void claim());
   useEffect(() => {
     if (holdsSandbox && !isPhone && !linked) reopen();
   }, [holdsSandbox, isPhone, linked]);
 
-  // The address carries the share code of the sandbox on the board, so copying it shares the sandbox
+  // The address carries the share code of the board on the page, so copying it shares the board
   useEffect(() => {
     if (!entry || shareCode === entry.shareCode) return;
-    navigate({ search: { sandbox: entry.shareCode }, replace: true, resetScroll: false });
+    navigate({ search: { demo: entry.shareCode }, replace: true, resetScroll: false });
   }, [entry, shareCode, navigate]);
 
   useEffect(() => {
@@ -232,10 +231,11 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
   const pending = state === 'claiming' || (isPhone && state === 'loading');
   // A phone keeps the frame once it has been live in the full window, so going back to it is instant
   const frameMounted = !!path && !unavailable && (!isPhone || full || stillGone);
+  const startable = state === 'still' && !linked && !holdsSandbox;
 
   return (
     <>
-      <div ref={boxRef} className={cn(className, 'focus-view-container flex flex-col', full && fullWindowClass)} onPointerEnter={lookAt}>
+      <div ref={boxRef} className={cn(className, 'focus-view-container flex flex-col', full && fullWindowClass)}>
         {full && <SandboxAlert expiresAt={entry?.expiresAt ?? null} shareCode={entry?.shareCode} onClose={closeFull} />}
 
         <div role={live ? 'region' : 'img'} aria-label={live ? t('c:your_sandbox') : label} className="relative min-h-0 flex-1">
@@ -251,6 +251,10 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
                 !frameShown && 'invisible',
               )}
             />
+          )}
+          {/* The picture itself starts the board; the pill's button is the one in the tab order */}
+          {startable && (
+            <button type="button" tabIndex={-1} aria-label={t('c:try_demo')} onClick={start} className="absolute inset-0 cursor-pointer" />
           )}
         </div>
 
@@ -308,23 +312,32 @@ export function LiveHero({ still, className, label }: LiveHeroProps) {
           <div className="pointer-events-none absolute inset-x-0 bottom-16 z-20 flex justify-center px-4 sm:bottom-4">
             <div className="bg-foreground text-background pointer-events-auto flex items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4 shadow-lg">
               <FlaskConicalIcon className="size-4 shrink-0" />
-              <span className="hidden text-sm font-medium sm:inline">{t('c:your_sandbox')}</span>
-              {entry && live && (
-                <SandboxShare
-                  shareCode={entry.shareCode}
-                  expiresAt={entry.expiresAt}
-                  trigger={
-                    <button type="button" className={pillButtonClass}>
-                      <UsersIcon className="size-4" />
-                      {t('c:try_together')}
-                    </button>
-                  }
-                />
+              {entry ? (
+                <>
+                  <span className="hidden text-sm font-medium sm:inline">{t('c:your_sandbox')}</span>
+                  {live && (
+                    <SandboxShare
+                      shareCode={entry.shareCode}
+                      expiresAt={entry.expiresAt}
+                      trigger={
+                        <button type="button" className={pillButtonClass}>
+                          <UsersIcon className="size-4" />
+                          {t('c:try_together')}
+                        </button>
+                      }
+                    />
+                  )}
+                  <button type="button" disabled={pending} onClick={() => void openFull()} className={pillButtonClass}>
+                    {t('c:open_full_window')}
+                    {pending ? <Spinner className="size-4" noDelay /> : <Maximize2Icon className="size-4" />}
+                  </button>
+                </>
+              ) : (
+                <button type="button" disabled={pending} onClick={start} className={pillButtonClass}>
+                  {t('c:try_demo')}
+                  {pending ? <Spinner className="size-4" noDelay /> : <PlayIcon className="size-4" />}
+                </button>
               )}
-              <button type="button" disabled={pending} onClick={() => void openFull()} className={pillButtonClass}>
-                {t('c:open_full_window')}
-                {pending ? <Spinner className="size-4" noDelay /> : <Maximize2Icon className="size-4" />}
-              </button>
             </div>
           </div>
         )}

@@ -37,7 +37,7 @@ export function SandboxAlert({ expiresAt, shareCode, onClose, className }: Sandb
       <AlertTitle>{t('c:sandbox_bar')}</AlertTitle>
       <AlertDescription className="max-sm:hidden">{t('c:sandbox_bar.text', { date: dateShort(expiresAt) ?? '' })}</AlertDescription>
       <AlertAction className="flex gap-2">
-        {shareCode && (
+        {shareCode && expiresAt && (
           <SandboxShare
             shareCode={shareCode}
             expiresAt={expiresAt}

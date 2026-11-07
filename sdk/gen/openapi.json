@@ -427,7 +427,7 @@
     },
     {
       "name": "sandboxes",
-      "description": "Endpoints for sandboxes: a visitor's own copy of the product to try, a provisional account with an organization holding the sample, kept in a pool so claiming one is instant. Its link lets up to four colleagues join, each on a sandbox account of their own. A sandbox ends after a week with everything and everyone in it; it never becomes an account.",
+      "description": "Endpoints for demo boards, sandboxes in code: a visitor's own copy of the product to try, a provisional account with an organization holding the sample, built at the claim. Its link lets up to four colleagues join, each on a sandbox account of their own. A sandbox ends after two days with everything and everyone in it; it never becomes an account.",
       "x-parent": "app",
       "x-kind": "module"
     },
@@ -15985,7 +15985,7 @@
                       "description": "Where the sandbox opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
-                      "type": ["string", "null"],
+                      "type": "string",
                       "description": "When the sandbox is removed."
                     },
                     "shareCode": {
@@ -16021,7 +16021,7 @@
                       "description": "Where the sandbox opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
-                      "type": ["string", "null"],
+                      "type": "string",
                       "description": "When the sandbox is removed."
                     },
                     "shareCode": {
@@ -16081,7 +16081,7 @@
                       "description": "Where the sandbox opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
-                      "type": ["string", "null"],
+                      "type": "string",
                       "description": "When the sandbox is removed."
                     },
                     "shareCode": {
@@ -16145,7 +16145,7 @@
                       "description": "The first names of the people in the sandbox, its taker first; a guest without one is left out."
                     },
                     "expiresAt": {
-                      "type": ["string", "null"],
+                      "type": "string",
                       "description": "When the sandbox is removed."
                     },
                     "full": {
@@ -16224,7 +16224,7 @@
                       "description": "Where the sandbox opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
-                      "type": ["string", "null"],
+                      "type": "string",
                       "description": "When the sandbox is removed."
                     },
                     "shareCode": {
@@ -16260,7 +16260,7 @@
                       "description": "Where the sandbox opens in the app: its account's workspace board."
                     },
                     "expiresAt": {
-                      "type": ["string", "null"],
+                      "type": "string",
                       "description": "When the sandbox is removed."
                     },
                     "shareCode": {

@@ -6502,7 +6502,7 @@ export type GetSandboxResponses = {
     /**
      * When the sandbox is removed.
      */
-    expiresAt: string | null;
+    expiresAt: string;
     /**
      * The code of its share link, which lets a colleague join.
      */
@@ -6548,7 +6548,7 @@ export type ClaimSandboxResponses = {
     /**
      * When the sandbox is removed.
      */
-    expiresAt: string | null;
+    expiresAt: string;
     /**
      * The code of its share link, which lets a colleague join.
      */
@@ -6575,7 +6575,7 @@ export type ClaimSandboxResponses = {
     /**
      * When the sandbox is removed.
      */
-    expiresAt: string | null;
+    expiresAt: string;
     /**
      * The code of its share link, which lets a colleague join.
      */
@@ -6631,7 +6631,7 @@ export type GetSandboxInviteResponses = {
     /**
      * When the sandbox is removed.
      */
-    expiresAt: string | null;
+    expiresAt: string;
     /**
      * Whether it holds as many people as a sandbox takes.
      */
@@ -6693,7 +6693,7 @@ export type JoinSandboxResponses = {
     /**
      * When the sandbox is removed.
      */
-    expiresAt: string | null;
+    expiresAt: string;
     /**
      * The code of its share link, which lets a colleague join.
      */
@@ -6720,7 +6720,7 @@ export type JoinSandboxResponses = {
     /**
      * When the sandbox is removed.
      */
-    expiresAt: string | null;
+    expiresAt: string;
     /**
      * The code of its share link, which lets a colleague join.
      */

@@ -13,7 +13,7 @@ import { isTouchInteraction } from '~/utils/input-modality';
 
 interface SandboxShareProps {
   shareCode: string;
-  expiresAt: string | null;
+  expiresAt: string;
   /** The button that opens it, as the bar and the about page's pill each style theirs. */
   trigger: ReactElement;
 }
@@ -35,7 +35,7 @@ export function SandboxShare({ shareCode, expiresAt, trigger }: SandboxShareProp
     const name = firstName.trim();
     if (needsName && !name) return;
 
-    const url = `${window.location.origin}/about?sandbox=${shareCode}`;
+    const url = `${window.location.origin}/about?demo=${shareCode}`;
     const text = t('c:sandbox_share.message');
     // Started alongside, not awaited first: the share sheet and the clipboard need the press itself
     const saving = needsName ? updateSelf({ firstName: name }) : undefined;

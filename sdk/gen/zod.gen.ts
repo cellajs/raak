@@ -3179,21 +3179,21 @@ export const zProvisionSampleResponse = z.object({
  */
 export const zGetSandboxResponse = z.object({
   path: z.string(),
-  expiresAt: z.string().nullable(),
+  expiresAt: z.string(),
   shareCode: z.string(),
 });
 
 export const zClaimSandboxResponse = z.union([
   z.object({
     path: z.string(),
-    expiresAt: z.string().nullable(),
+    expiresAt: z.string(),
     shareCode: z.string(),
     claimed: z.boolean(),
     foldedProjectIds: z.array(z.string()),
   }),
   z.object({
     path: z.string(),
-    expiresAt: z.string().nullable(),
+    expiresAt: z.string(),
     shareCode: z.string(),
     claimed: z.boolean(),
     foldedProjectIds: z.array(z.string()),
@@ -3209,7 +3209,7 @@ export const zGetSandboxInvitePath = z.object({
  */
 export const zGetSandboxInviteResponse = z.object({
   people: z.array(z.string()),
-  expiresAt: z.string().nullable(),
+  expiresAt: z.string(),
   full: z.boolean(),
   joined: z.boolean(),
 });
@@ -3229,14 +3229,14 @@ export const zJoinSandboxPath = z.object({
 export const zJoinSandboxResponse = z.union([
   z.object({
     path: z.string(),
-    expiresAt: z.string().nullable(),
+    expiresAt: z.string(),
     shareCode: z.string(),
     claimed: z.boolean(),
     foldedProjectIds: z.array(z.string()),
   }),
   z.object({
     path: z.string(),
-    expiresAt: z.string().nullable(),
+    expiresAt: z.string(),
     shareCode: z.string(),
     claimed: z.boolean(),
     foldedProjectIds: z.array(z.string()),

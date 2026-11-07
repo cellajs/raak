@@ -3,7 +3,7 @@ import { validNameSchema } from '#/schemas';
 
 export const sandboxSchema = z.object({
   path: z.string().describe("Where the sandbox opens in the app: its account's workspace board."),
-  expiresAt: z.string().nullable().describe('When the sandbox is removed.'),
+  expiresAt: z.string().describe('When the sandbox is removed.'),
   shareCode: z.string().describe('The code of its share link, which lets a colleague join.'),
 });
 
@@ -14,7 +14,7 @@ export const sandboxClaimSchema = sandboxSchema.extend({
 
 export const sandboxInviteSchema = z.object({
   people: z.array(z.string()).describe('The first names of the people in the sandbox, its taker first; a guest without one is left out.'),
-  expiresAt: z.string().nullable().describe('When the sandbox is removed.'),
+  expiresAt: z.string().describe('When the sandbox is removed.'),
   full: z.boolean().describe('Whether it holds as many people as a sandbox takes.'),
   joined: z.boolean().describe('Whether this browser is in it already.'),
 });

@@ -12,7 +12,7 @@ import { insertSandboxAccount } from '#/modules/sandbox/operations/sandbox-accou
 import { sandboxEntryAnswer } from '#/modules/sandbox/operations/sandbox-place';
 import { sandboxPeopleCap } from '#/modules/sandbox/sandbox-constants';
 import type { SandboxModel } from '#/modules/sandbox/sandbox-db';
-import { addSandboxGuest, findClaimedSandboxByShareCode, findOrganizationProjects, removeSandboxGuest } from '#/modules/sandbox/sandbox-queries';
+import { addSandboxGuest, findOrganizationProjects, findSandboxByShareCode, removeSandboxGuest } from '#/modules/sandbox/sandbox-queries';
 import { deleteAccounts } from '#/modules/user/operations/delete-accounts';
 import type { UserModel } from '#/modules/user/user-db';
 import { findUserModelsByIds } from '#/modules/user/user-queries';
@@ -26,8 +26,8 @@ const peopleOf = (sandbox: SandboxModel) => [sandbox.userId, ...sandbox.guestIds
 
 /** @throws AppError 404 `sandbox_ended` for a code no running sandbox holds. */
 const runningSandbox = async (shareCode: string) => {
-  const sandbox = await findClaimedSandboxByShareCode(dbCtx, { shareCode });
-  if (!sandbox || (sandbox.expiresAt && sandbox.expiresAt < getIsoDate())) throw new AppError(404, 'sandbox_ended', 'info');
+  const sandbox = await findSandboxByShareCode(dbCtx, { shareCode });
+  if (!sandbox || sandbox.expiresAt < getIsoDate()) throw new AppError(404, 'sandbox_ended', 'info');
   return sandbox;
 };
 

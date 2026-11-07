@@ -1,4 +1,5 @@
-/* A sandbox shows its board alone: on a phone the floating menu would lead to the rest of the app */
-.sandbox-view #floating-nav {
-  display: none;
+/* A demo board shows the board alone: no phone menu, and no focus-view toggle, which would store that view for every tab and the next account */
+.sandbox-view #floating-nav,
+.sandbox-view .focus-view-toggle {
+  display: none !important;
 }

@@ -9,6 +9,6 @@ import { findSandboxByUser } from '#/modules/sandbox/sandbox-queries';
  */
 export async function getSandboxOp(ctx: UserContext) {
   const sandbox = await findSandboxByUser(ctx, { userId: ctx.var.user.id });
-  if (sandbox?.status !== 'claimed') throw new AppError(404, 'not_found', 'info', { entityType: 'user' });
+  if (!sandbox) throw new AppError(404, 'not_found', 'info', { entityType: 'user' });
   return sandboxAnswer(sandbox, ctx.var.user.id);
 }

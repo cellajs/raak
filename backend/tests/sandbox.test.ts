@@ -2,11 +2,12 @@ import '#/modules'; // composition root: the label module gives each new project
 
 import { and, eq, inArray } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
+import { sessionLifetime } from '#/modules/auth/sessions/operations/create-session';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { samplePersonIds } from '#/modules/sample/sample-content';
-import { expireSandboxes } from '#/modules/sandbox/operations/sandbox-pool';
-import { sandboxPeopleCap } from '#/modules/sandbox/sandbox-constants';
+import { expireSandboxes } from '#/modules/sandbox/operations/sandbox-expiry';
+import { sandboxLifetime, sandboxPeopleCap } from '#/modules/sandbox/sandbox-constants';
 import { sandboxesTable } from '#/modules/sandbox/sandbox-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { usersTable } from '#/modules/user/user-db';
@@ -51,8 +52,14 @@ const sandboxOf = async (shareCode: string) => {
 describe('Sandboxes', () => {
   afterEach(async () => await clearSecurityTestData());
 
-  it('gives a browser its sandbox, and back again', async () => {
+  it('ends no later than the session that holds it', () => {
+    expect(sandboxLifetime.milliseconds()).toBeLessThanOrEqual(sessionLifetime.milliseconds());
+  });
+
+  it('gives a browser its sandbox, and back again, and leaves the public counts alone', async () => {
+    const countsBefore = await (await browser('10.0.1.9').request('/metrics/public')).json();
     const { visitor, sandbox } = await claim('10.0.1.1');
+    expect(await (await browser('10.0.1.9').request('/metrics/public')).json()).toEqual(countsBefore);
     expect(sandbox).toMatchObject({
       claimed: true,
       path: expect.stringMatching(/\/workspace\//),
@@ -124,6 +131,9 @@ describe('Sandboxes', () => {
     await expectRefusal(await invite('project', project.id, 'member'), 403, 'restrict_by_org', 'project');
     await expectRefusal(await visitor.request('/tenants/self', { method: 'POST', body: { name: 'Elsewhere' } }), 403, 'restrict_by_app');
     expect(sentMails()).toEqual([]);
+
+    const [tenant] = await adminDb.select({ restrictions: tenantsTable.restrictions }).from(tenantsTable).where(eq(tenantsTable.id, tenantId));
+    expect(tenant.restrictions.quotas).toMatchObject({ user: 1, attachment: 1 });
   });
 
   it('refuses a code no running sandbox holds', async () => {
